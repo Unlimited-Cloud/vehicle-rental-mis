@@ -8,6 +8,11 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleDetailsController;
 use App\Http\Controllers\Admin\CrewProfilesController;
 use App\Http\Controllers\Admin\VehicleAssignmentController;
+use App\Http\Controllers\Admin\VehicleBookingController;
+use App\Http\Controllers\Admin\GpsDashboardController;
+
+
+
 // Route::get('/', function () {
 //     return view('welcome');
 // });
@@ -33,4 +38,21 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle_details', VehicleDetailsController::class);
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+    Route::resource('vehicle_bookings', VehicleBookingController::class)
+        ->except(['show'])
+        ->parameters([
+            'vehicle_bookings' => 'vehicle_booking'
+        ]);
+    Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
+        ->name('vehicle_bookings.events');
+
+
+
+
+    Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
+    Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');
+    Route::get('/gpsdashboard/vehicle/{imei}', [GpsDashboardController::class, 'getVehicleDetails'])->name('gpsdashboard.vehicle.details');
+    Route::get('/gpsdashboard/vehicle/{imei}/history', [GpsDashboardController::class, 'getVehicleHistory'])->name('gpsdashboard.vehicle.history');
+    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
+    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
 });

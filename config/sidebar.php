@@ -44,4 +44,19 @@ return [
     ],
 
 
+    [
+        'title' => 'Vehicle Bookings',
+        'icon' => 'fas fa-calendar-alt',
+        'route' => 'admin.vehicle_bookings.index',
+        'permission' => '',
+    ],
+
+    [
+        'title' => 'GPS',
+        'icon' => 'fas fa-map-marker-alt',
+        'route' => 'admin.gpsdashboard',
+        'permission' => '',
+    ],
+
+
 ];

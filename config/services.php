@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'gps' => [
+        'base_url' => env('GPS_BASE_URL'),
+        'api_key' => env('GPS_API_KEY'),
+        'version' => env('GPS_API_VERSION', '1.0'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
