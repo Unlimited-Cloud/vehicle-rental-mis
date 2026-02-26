@@ -119,14 +119,14 @@
         </div>
     </div>
 
-    <div class="col-md-4">
+    {{-- <div class="col-md-4">
         <div class="form-group">
             <label>Balance</label>
             <input type="number" step="0.01" name="balance" id="balance" class="form-control" readonly
                    value="{{ old('balance', $petrolPumpTransaction->balance ?? 0) }}">
             <small class="text-muted">Auto-calculated (Amount - Paid)</small>
         </div>
-    </div>
+    </div> --}}
 
     <div class="col-md-4">
         <div class="form-group">

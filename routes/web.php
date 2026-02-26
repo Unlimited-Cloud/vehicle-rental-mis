@@ -44,7 +44,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
     Route::resource('vehicle_bookings', VehicleBookingController::class)
-        ->except(['show'])
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
         ]);

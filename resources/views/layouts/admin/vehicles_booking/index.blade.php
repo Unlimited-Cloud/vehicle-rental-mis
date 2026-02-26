@@ -128,7 +128,7 @@
                                             <span>{{ $booking->vehicle->vehicle_name ?? '' }}</span>
                                         </div>
                                     </td>
-                                    <td>{{ $booking->customer_name }}</td>
+                                    <td>{{ $booking->customer->name ?? '-' }}</td>
                                     <td>{{ $booking->from_destination ?? '-' }}</td>
                                     <td>{{ $booking->to_destination ?? '-' }}</td>
                                     <td>{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
@@ -141,6 +141,9 @@
                                     <td>
                                         <a href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
+                                        </a>
+                                         <a href="{{ route('admin.vehicle_bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                         <button class="btn btn-sm btn-danger" onclick="deleteBooking({{ $booking->id }})">
                                             <i class="fas fa-trash"></i>

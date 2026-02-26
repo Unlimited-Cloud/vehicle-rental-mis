@@ -15,7 +15,8 @@ class Vehicle extends Model
         'fuel_type',
         'transmission',
         'image',
-        'status'
+        'status',
+        'is_helper_needed'
     ];
 
     public function vehicleDetail()

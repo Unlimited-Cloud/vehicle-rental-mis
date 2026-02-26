@@ -60,6 +60,17 @@
                                 <th>Transmission:</th>
                                 <td>{{ $vehicle_detail->vehicle->transmission ?? '-' }}</td>
                             </tr>
+
+                            <tr>
+                                <th>Is Helper Needed:</th>
+                                <td>
+                                    @if($vehicle_detail->vehicle && $vehicle_detail->vehicle->is_helper_needed)
+                                        <span class="badge badge-success">Yes</span>
+                                    @else
+                                        <span class="badge badge-danger">No</span>
+                                    @endif
+                                </td>
+                            </tr>
                             <tr>
                                 <th>Status:</th>
                                 <td>
