@@ -10,6 +10,11 @@ use App\Http\Controllers\Admin\CrewProfilesController;
 use App\Http\Controllers\Admin\VehicleAssignmentController;
 use App\Http\Controllers\Admin\VehicleBookingController;
 use App\Http\Controllers\Admin\GpsDashboardController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\PetrolPumpController;
+use App\Http\Controllers\Admin\PetrolPumpTransactionController;
+
+
 
 
 
@@ -47,6 +52,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
         ->name('vehicle_bookings.events');
 
 
+    Route::resource('customers', CustomerController::class);
+    Route::resource('petrol_pumps', PetrolPumpController::class);
+    Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
+    Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
+        ->name('petrol_pumps.balance');
 
 
     Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');

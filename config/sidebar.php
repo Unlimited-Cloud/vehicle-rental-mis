@@ -17,6 +17,13 @@ return [
     ],
 
     [
+        'title' => 'Customers',
+        'icon' => 'fas fa-user-tie',
+        'route' => 'admin.customers.index',
+        'permission' => '',
+    ],
+
+    [
         'title' => 'Vehicles',
         'icon' => 'fas fa-car',
         'route' => 'admin.vehicles.index',
@@ -57,6 +64,27 @@ return [
         'route' => 'admin.gpsdashboard',
         'permission' => '',
     ],
+
+    [
+        'title' => 'Petrol Pumps',
+        'icon' => 'fas fa-gas-pump',
+        'permission' => null, // parent menu; show if any child visible
+        'children' => [
+            [
+                'title' => 'Petrol Pumps',
+                'icon' => 'fas fa-gas-pump',
+                'route' => 'admin.petrol_pumps.index',
+                'permission' => '',
+            ],
+            [
+                'title' => 'Transactions',
+                'icon' => 'fas fa-exchange-alt',
+                'route' => 'admin.petrol_pump_transactions.index',
+                'permission' => '',
+            ],
+        ],
+    ],
+
 
 
 ];
