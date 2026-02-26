@@ -44,7 +44,7 @@
                  <i class="nav-icon {{ $item['icon'] }}"></i>
                  <p>
                     {{ $item['title'] }}
-                    <i class="right fas fa-angle-left"></i>
+                    <i class="right fas fa-angle-right"></i>
                  </p>
               </a>
               <ul class="nav nav-treeview">
