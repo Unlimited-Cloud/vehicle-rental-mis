@@ -43,12 +43,6 @@ return [
         'permission' => '',
     ],
 
-    [
-        'title' => 'Vehicle Assignments',
-        'icon' => 'fas fa-truck',
-        'route' => 'admin.vehicle_assignments.index',
-        'permission' => '',
-    ],
 
 
     [
