@@ -246,9 +246,9 @@ class VehicleBookingController extends Controller
                 'extendedProps' => [
                     'vehicle_id' => $booking->vehicle_id,
                     'vehicle_name' => $booking->vehicle->vehicle_name,
-                    'customer_name' => $booking->customer->name ?? '',
-                    'customer_email' => $booking->customer->email ?? '',
-                    'customer_phone' => $booking->customer->phone ?? '',
+                    'customer_name' => isset($booking->customer) ? $booking->customer->name : '',
+                    'customer_email' => isset($booking->customer) ? $booking->customer->email : '',
+                    'customer_phone' => isset($booking->customer) ? $booking->customer->phone : '',
                     'from_destination' => $booking->from_destination,
                     'to_destination' => $booking->to_destination,
                     'status' => $booking->status,
