@@ -10,6 +10,11 @@ use App\Http\Controllers\Admin\CrewProfilesController;
 use App\Http\Controllers\Admin\VehicleAssignmentController;
 use App\Http\Controllers\Admin\VehicleBookingController;
 use App\Http\Controllers\Admin\GpsDashboardController;
+use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\PetrolPumpController;
+use App\Http\Controllers\Admin\PetrolPumpTransactionController;
+
+
 
 
 
@@ -38,15 +43,23 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle_details', VehicleDetailsController::class);
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
-    Route::resource('vehicle_bookings', VehicleBookingController::class)
-        ->except(['show'])
-        ->parameters([
-            'vehicle_bookings' => 'vehicle_booking'
-        ]);
+
+    Route::get('vehicle_bookings/export', [VehicleBookingController::class, 'export'])
+        ->name('vehicle_bookings.export');
+
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
 
+    Route::resource('vehicle_bookings', VehicleBookingController::class)
+        ->parameters([
+            'vehicle_bookings' => 'vehicle_booking'
+        ]);
 
+    Route::resource('customers', CustomerController::class);
+    Route::resource('petrol_pumps', PetrolPumpController::class);
+    Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
+    Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
+        ->name('petrol_pumps.balance');
 
 
     Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');

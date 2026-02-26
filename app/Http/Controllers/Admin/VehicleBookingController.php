@@ -6,23 +6,52 @@ use App\Http\Controllers\Controller;
 use App\Models\VehicleBooking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use App\Models\CrewProfile;
+use App\Models\Customer;
+use App\Models\User;
+
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\VehicleBookingExport;
 
 class VehicleBookingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = VehicleBooking::with('vehicle')
-            ->orderBy('start_date', 'desc')
-            ->get();
+        $query = VehicleBooking::with([
+            'vehicle',
+            'customer',
+            'driver.user'
+        ]);
 
-        $vehicles = Vehicle::orderBy('vehicle_name')->get();
+        // Filter by vehicle
+        if ($request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Filter by customer
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Filter by driver
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
+        }
+
+        $bookings = $query->orderBy('start_date', 'desc')->get();
+
+        $vehicles  = Vehicle::orderBy('vehicle_name')->get();
+        $customers = Customer::orderBy('name')->get();
+        $drivers   = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'driver');
+        })->with('user')->get();
 
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles')
+            compact('bookings', 'vehicles', 'customers', 'drivers')
         );
     }
     /**
@@ -31,16 +60,35 @@ class VehicleBookingController extends Controller
     public function create(Request $request)
     {
         $vehicles = Vehicle::all();
+        $drivers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'driver');
+        })->with('user')->get();
+
+        // Fetch helpers
+        $helpers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'helper');
+        })->with('user')->get();
+
+        // Customers dropdown
+        $customers = Customer::all();
         $start = $request->start;
         $end   = $request->end;
-        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end'));
+        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end', 'drivers', 'helpers', 'customers'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'vehicle_id' => 'required',
-            'customer_name' => 'required',
+            'customer_id' => 'required|exists:customers,id',
+            'driver_id' => 'nullable|exists:crew_profiles,id',
+            'helper_id' => 'nullable|exists:crew_profiles,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_km' => 'nullable|integer',
+            'end_km' => 'nullable|integer|gte:start_km',
+            'approx_fuel_litre' => 'nullable|numeric',
+            // 'customer_name' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'customer_email' => 'nullable|email',
@@ -60,12 +108,23 @@ class VehicleBookingController extends Controller
     public function edit(VehicleBooking $vehicleBooking)
     {
         $vehicles = Vehicle::all();
+        $drivers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'driver');
+        })->with('user')->get();
+
+        // Fetch helpers
+        $helpers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'helper');
+        })->with('user')->get();
+
+        // Customers dropdown
+        $customers = Customer::all();
 
         $booking = $vehicleBooking;
 
         return view(
             'layouts.admin.vehicles_booking.create',
-            compact('booking', 'vehicles')
+            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers')
         );
     }
 
@@ -79,8 +138,17 @@ class VehicleBookingController extends Controller
 
     public function show(VehicleBooking $vehicleBooking)
     {
-        $vehicles = Vehicle::all();
-        return view('layouts.admin.vehicles_booking.show', compact('vehicleBooking', 'vehicles'));
+        $vehicleBooking->load([
+            'vehicle',
+            'customer',
+            'driver.user',
+            'helper.user'
+        ]);
+        if (request()->ajax()) {
+            return response()->json($vehicleBooking);
+        }
+
+        return view('layouts.admin.vehicles_booking.show', compact('vehicleBooking'));
     }
 
     public function destroy(VehicleBooking $vehicleBooking)
@@ -109,12 +177,31 @@ class VehicleBookingController extends Controller
     }
 
 
+    public function export(Request $request)
+    {
+        $fileName = 'vehicle_bookings_' . date('Y-m-d_His') . '.xlsx';
+
+        return Excel::download(
+            new VehicleBookingExport($request),
+            $fileName
+        );
+    }
+
+
     public function fetchEvents(Request $request)
     {
-        $query = VehicleBooking::with('vehicle');
+        $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user']);
 
         if ($request->vehicle_id) {
             $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
         }
 
         $bookings = $query->get();
@@ -150,7 +237,7 @@ class VehicleBookingController extends Controller
 
             $events[] = [
                 'id' => $booking->id,
-                'title' => $booking->vehicle->vehicle_name . ' - ' . $booking->customer_name,
+                'title' => $booking->vehicle->vehicle_name . ' - ' . $booking->customer->name,
                 'start' => $booking->start_date,
                 'end' => \Carbon\Carbon::parse($booking->end_date)->addDay()->format('Y-m-d'),
                 'color' => $vehicleColor, // Use vehicle color
@@ -159,9 +246,9 @@ class VehicleBookingController extends Controller
                 'extendedProps' => [
                     'vehicle_id' => $booking->vehicle_id,
                     'vehicle_name' => $booking->vehicle->vehicle_name,
-                    'customer_name' => $booking->customer_name,
-                    'customer_email' => $booking->customer_email,
-                    'customer_phone' => $booking->customer_phone,
+                    'customer_name' => $booking->customer->name ?? '',
+                    'customer_email' => $booking->customer->email ?? '',
+                    'customer_phone' => $booking->customer->phone ?? '',
                     'from_destination' => $booking->from_destination,
                     'to_destination' => $booking->to_destination,
                     'status' => $booking->status,

@@ -49,36 +49,54 @@
         </select>
     </div>
 </div>
-
-{{-- CUSTOMER NAME --}}
 <div class="col-md-4">
     <div class="form-group">
-        <label>Customer Name *</label>
-        <input type="text" name="customer_name"
-               value="{{ old('customer_name', $booking->customer_name ?? '') }}"
-               class="form-control" required>
+        <label>Driver</label>
+        <select name="driver_id" class="form-control">
+            <option value="">Select Driver</option>
+            @foreach($drivers as $driver)
+                <option value="{{ $driver->id }}"
+                    {{ old('driver_id', $booking->driver_id ?? '') == $driver->id ? 'selected' : '' }}>
+                    {{ $driver->user->name }}
+                </option>
+            @endforeach
+        </select>
     </div>
 </div>
-
-{{-- PHONE --}}
 <div class="col-md-4">
     <div class="form-group">
-        <label>Customer Phone</label>
-        <input type="text" name="customer_phone"
-               value="{{ old('customer_phone', $booking->customer_phone ?? '') }}"
-               class="form-control">
+        <label>Helper</label>
+       <select name="helper_id" class="form-control">
+    <option value="">Select Helper</option>
+    @foreach($helpers as $helper)
+        <option value="{{ $helper->id }}"
+            {{ old('helper_id', $booking->helper_id ?? '') == $helper->id ? 'selected' : '' }}>
+            {{ $helper->user->name }}
+        </option>
+    @endforeach
+</select>
     </div>
+</div>
+<div class="col-md-4">
+<div class="form-group">
+      <label>Customer</label>
+<select name="customer_id" class="form-control">
+    <option value="">Select Customer</option>
+    @foreach($customers as $customer)
+        <option value="{{ $customer->id }}"
+            {{ old('customer_id', $booking->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
+            {{ $customer->name }}
+        </option>
+    @endforeach
+</select>
+</div>
 </div>
 
-{{-- EMAIL --}}
-<div class="col-md-4">
-    <div class="form-group">
-        <label>Email</label>
-        <input type="email" name="customer_email"
-               value="{{ old('customer_email', $booking->customer_email ?? '') }}"
-               class="form-control">
-    </div>
-</div>
+
+
+
+
+
 
 {{-- FROM --}}
 <div class="col-md-4">
@@ -99,6 +117,27 @@
                class="form-control">
     </div>
 </div>
+
+<div class="col-md-4">
+    <div class="form-group">
+        <label>Start K/M</label>
+        <input type="text" name="start_km"
+               value="{{ old('start_km', $booking->start_km ?? '') }}"
+               class="form-control">
+    </div>
+</div>
+
+{{-- TO --}}
+<div class="col-md-4">
+    <div class="form-group">
+        <label>End K/M</label>
+        <input type="text" name="end_km"
+               value="{{ old('end_km', $booking->end_km ?? '') }}"
+               class="form-control">
+    </div>
+</div>
+
+
 
 {{-- START DATE --}}
 <div class="col-md-4">
@@ -154,6 +193,15 @@
                 Cancelled
             </option>
         </select>
+    </div>
+</div>
+
+<div class="col-md-12">
+    <div class="form-group">
+        <label>Approx fuel Litre</label>
+        <input name="approx_fuel_litre" type="number"
+               value="{{ old('approx_fuel_litre', $booking->approx_fuel_litre ?? '') }}"
+               class="form-control">
     </div>
 </div>
 
