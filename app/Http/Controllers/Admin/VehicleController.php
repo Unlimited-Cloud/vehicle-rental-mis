@@ -37,7 +37,8 @@ class VehicleController extends Controller
             'fuel_type' => 'required',
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+            'status' => 'required',
+            'is_helper_needed' => 'nullable'
         ]);
 
         $data = $request->all();
@@ -75,7 +76,8 @@ class VehicleController extends Controller
             'fuel_type' => 'required',
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+            'status' => 'required',
+            'is_helper_needed' => 'nullable'
         ]);
 
         $data = $request->all();

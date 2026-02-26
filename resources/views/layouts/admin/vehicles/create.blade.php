@@ -85,6 +85,17 @@ value="{{ old('rent_price_per_day',$vehicle->rent_price_per_day ?? '') }}" requi
 </div>
 </div>
 
+
+<div class="col-md-6">
+<div class="form-group">
+<label>Is Helper Needed</label>
+<select name="is_helper_needed" class="form-control">
+<option value="1" {{ old('is_helper_needed',$vehicle->is_helper_needed ?? 1)==1?'selected':'' }}>Yes</option>
+<option value="0" {{ old('is_helper_needed',$vehicle->is_helper_needed ?? 1)==0?'selected':'' }}>No</option>
+</select>
+</div>
+</div>
+
 <div class="col-md-6">
 <div class="form-group">
 <label>Status</label>
