@@ -25,44 +25,54 @@
         <div class="card card-primary card-outline">
             <div class="card-body">
                 <!-- Filter Section -->
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <select id="vehicleFilter" class="form-control">
-                            <option value="">All Vehicles</option>
-                            @foreach($vehicles as $vehicle)
-                                @php
-                                    // Assign consistent colors based on vehicle ID
-                                    $colors = [
-                                        1 => '#3498db', // Blue
-                                        2 => '#e74c3c', // Red
-                                        3 => '#2ecc71', // Green
-                                        4 => '#f39c12', // Orange
-                                        5 => '#9b59b6', // Purple
-                                        6 => '#1abc9c', // Turquoise
-                                        7 => '#e67e22', // Carrot
-                                        8 => '#34495e', // Dark Blue
-                                        9 => '#16a085', // Green Sea
-                                        10 => '#27ae60', // Nephritis
-                                        11 => '#2980b9', // Belize Hole
-                                        12 => '#8e44ad', // Wisteria
-                                        13 => '#2c3e50', // Midnight Blue
-                                        14 => '#d35400', // Pumpkin
-                                        15 => '#c0392b', // Pomegranate
-                                    ];
-                                    $colorCode = $colors[$vehicle->id] ?? '#3498db';
-                                @endphp
-                                <option value="{{ $vehicle->id }}" style="background-color: {{ $colorCode }}20; border-left: 5px solid {{ $colorCode }};">
-                                    {{ $vehicle->vehicle_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button class="btn btn-primary btn-sm" onclick="applyFilter()">
-                            <i class="fa fa-filter"></i> Apply Filter
-                        </button>
-                    </div>
-                </div>
+               <div class="row mb-3">
+
+    {{-- Vehicle --}}
+    <div class="col-md-3">
+        <select id="vehicleFilter" class="form-control">
+            <option value="">All Vehicles</option>
+            @foreach($vehicles as $vehicle)
+                <option value="{{ $vehicle->id }}">
+                    {{ $vehicle->vehicle_name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- Customer --}}
+    <div class="col-md-3">
+        <select id="customerFilter" class="form-control">
+            <option value="">All Customers</option>
+            @foreach($customers as $customer)
+                <option value="{{ $customer->id }}">
+                    {{ $customer->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- Driver --}}
+    <div class="col-md-3">
+        <select id="driverFilter" class="form-control">
+            <option value="">All Drivers</option>
+            @foreach($drivers as $driver)
+                <option value="{{ $driver->id }}">
+                    {{ $driver->user->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <button class="btn btn-primary btn-sm" onclick="applyFilter()">
+            <i class="fa fa-filter"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="clearFilter()">
+            Reset
+        </button>
+    </div>
+
+</div>
 
                 <!-- Vehicle Legend with Consistent Colors -->
                 <div class="row mb-4">
@@ -244,6 +254,7 @@ $(document).ready(function() {
         $('#tableView').show();
         $('#calendarView').hide();
     };
+    
 
     window.showCalendar = function() {
         $('#tableView').hide();
@@ -257,22 +268,20 @@ $(document).ready(function() {
         }
     };
 
-    window.applyFilter = function() {
-        let vehicleId = $('#vehicleFilter').val();
-        
-        // Filter table
-        if(vehicleId == '') {
-            $('#bookingTableBody tr').show();
-        } else {
-            $('#bookingTableBody tr').hide();
-            $('#bookingTableBody tr[data-vehicle-id="'+vehicleId+'"]').show();
-        }
-        
-        // Filter calendar
-        if (calendarInitialized) {
-            calendar.refetchEvents();
-        }
-    };
+   window.applyFilter = function() {
+
+    let vehicle  = $('#vehicleFilter').val();
+    let customer = $('#customerFilter').val();
+    let driver   = $('#driverFilter').val();
+
+    let url = new URL(window.location.href);
+
+    url.searchParams.set('vehicle_id', vehicle);
+    url.searchParams.set('customer_id', customer);
+    url.searchParams.set('driver_id', driver);
+
+    window.location.href = url.toString();
+};
 
     function initCalendar() {
         let calendarEl = document.getElementById('calendar');
@@ -294,7 +303,9 @@ $(document).ready(function() {
                     url: "{{ route('admin.vehicle_bookings.events') }}",
                     type: "GET",
                     data: {
-                        vehicle_id: $('#vehicleFilter').val()
+                        vehicle_id: $('#vehicleFilter').val(),
+                         customer_id: $('#customerFilter').val(),
+                        driver_id: $('#driverFilter').val()
                     },
                     success: function(response) {
                         const events = response.map(event => {
@@ -538,6 +549,9 @@ window.closeBookingModal = function() {
     $('body').removeClass('modal-open');
     $('#bookingDetailsModal').remove();
 }
+window.clearFilter = function() {
+    window.location.href = "{{ route('admin.vehicle_bookings.index') }}";
+};
 
 // Delete function for modal
 window.deleteBookingFromModal = function(id) {

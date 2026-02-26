@@ -15,17 +15,40 @@ class VehicleBookingController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = VehicleBooking::with('vehicle', 'customer', 'driver.user', 'helper.user')
-            ->orderBy('start_date', 'desc')
-            ->get();
+        $query = VehicleBooking::with([
+            'vehicle',
+            'customer',
+            'driver.user'
+        ]);
 
-        $vehicles = Vehicle::orderBy('vehicle_name')->get();
+        // Filter by vehicle
+        if ($request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Filter by customer
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Filter by driver
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
+        }
+
+        $bookings = $query->orderBy('start_date', 'desc')->get();
+
+        $vehicles  = Vehicle::orderBy('vehicle_name')->get();
+        $customers = Customer::orderBy('name')->get();
+        $drivers   = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'driver');
+        })->with('user')->get();
 
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles')
+            compact('bookings', 'vehicles', 'customers', 'drivers')
         );
     }
     /**
@@ -150,10 +173,18 @@ class VehicleBookingController extends Controller
 
     public function fetchEvents(Request $request)
     {
-        $query = VehicleBooking::with('vehicle');
+        $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user']);
 
         if ($request->vehicle_id) {
             $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
         }
 
         $bookings = $query->get();
