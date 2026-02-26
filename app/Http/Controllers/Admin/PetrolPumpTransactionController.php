@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\PetrolPumpTransaction;
+use Maatwebsite\Excel\Facades\Excel;
+
+use App\Exports\PetrolPumpTransactionExport;
+
 use App\Models\PetrolPump;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -18,27 +22,37 @@ class PetrolPumpTransactionController extends Controller
     {
         $query = PetrolPumpTransaction::with(['petrolPump', 'vehicle', 'customer']);
 
-        // Filter by vehicle if requested
-        if ($request->has('vehicle_id')) {
-            $query->where('vehicle_id', $request->vehicle_id);
+        if ($request->filled('petrol_pump_id')) {
+            $query->where('petrol_pump_id', $request->petrol_pump_id);
         }
 
-        // Filter by customer if requested
-        if ($request->has('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
+        if ($request->filled('transaction_type')) {
+            $query->where('transaction_type', $request->transaction_type);
         }
 
-        // Filter by date range
-        if ($request->has('from_date')) {
+        if ($request->filled('invoice_number')) {
+            $query->where('invoice_number', 'like', '%' . $request->invoice_number . '%');
+        }
+
+        if ($request->filled('from_date')) {
             $query->whereDate('transaction_date', '>=', $request->from_date);
         }
-        if ($request->has('to_date')) {
+
+        if ($request->filled('to_date')) {
             $query->whereDate('transaction_date', '<=', $request->to_date);
         }
 
-        $transactions = $query->latest()->get();
+        if ($request->has('export')) {
+            return Excel::download(
+                new PetrolPumpTransactionExport($request),
+                'petrol_pump_transactions.xlsx'
+            );
+        }
 
-        return view('layouts.admin.petrol_pump_transactions.index', compact('transactions'));
+        $transactions = $query->latest()->get();
+        $petrolPumps = PetrolPump::active()->get();
+
+        return view('layouts.admin.petrol_pump_transactions.index', compact('transactions', 'petrolPumps'));
     }
 
     /**
@@ -88,24 +102,28 @@ class PetrolPumpTransactionController extends Controller
         ]);
 
         DB::transaction(function () use ($validated) {
-            // Set paid_amount to 0 if not provided
-            if (!isset($validated['paid_amount'])) {
-                $validated['paid_amount'] = 0;
-            }
 
-            // Calculate balance
-            $validated['balance'] = $validated['amount'] - $validated['paid_amount'];
+            $paidAmount = $validated['paid_amount'] ?? 0;
+            $validated['paid_amount'] = $paidAmount;
 
-            // Create transaction
+            // First create transaction without balance
             $transaction = PetrolPumpTransaction::create($validated);
 
-            // Update petrol pump balance if status is completed
-            if ($validated['status'] == 'completed') {
-                $petrolPump = PetrolPump::find($validated['petrol_pump_id']);
-                $petrolPump->updateBalance($validated['amount'], $validated['transaction_type']);
+            if ($validated['status'] === 'completed') {
+
+                $newBalance = $this->updatePumpBalance(
+                    $validated['petrol_pump_id'],
+                    $validated['amount'],
+                    $validated['transaction_type'],
+                    'apply'
+                );
+
+                // 🔥 Update transaction balance as running balance
+                $transaction->update([
+                    'balance' => $newBalance
+                ]);
             }
         });
-
         return redirect()->route('admin.petrol_pump_transactions.index')
             ->with('success', 'Transaction created successfully.');
     }
@@ -157,30 +175,31 @@ class PetrolPumpTransactionController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $petrolPumpTransaction) {
-            // Set paid_amount to 0 if not provided
-            if (!isset($validated['paid_amount'])) {
-                $validated['paid_amount'] = 0;
-            }
 
-            // Calculate balance
-            $validated['balance'] = $validated['amount'] - $validated['paid_amount'];
-
-            // Revert old balance if previous status was completed
-            if ($petrolPumpTransaction->status == 'completed') {
-                $petrolPump = PetrolPump::find($petrolPumpTransaction->petrol_pump_id);
-                $petrolPump->revertBalanceUpdate(
+            // Revert old balance if completed
+            if ($petrolPumpTransaction->status === 'completed') {
+                $this->updatePumpBalance(
+                    $petrolPumpTransaction->petrol_pump_id,
                     $petrolPumpTransaction->amount,
-                    $petrolPumpTransaction->transaction_type
+                    $petrolPumpTransaction->transaction_type,
+                    'revert'
                 );
             }
 
-            // Update transaction
             $petrolPumpTransaction->update($validated);
 
-            // Apply new balance if new status is completed
-            if ($validated['status'] == 'completed') {
-                $petrolPump = PetrolPump::find($validated['petrol_pump_id']);
-                $petrolPump->updateBalance($validated['amount'], $validated['transaction_type']);
+            if ($validated['status'] === 'completed') {
+
+                $newBalance = $this->updatePumpBalance(
+                    $validated['petrol_pump_id'],
+                    $validated['amount'],
+                    $validated['transaction_type'],
+                    'apply'
+                );
+
+                $petrolPumpTransaction->update([
+                    'balance' => $newBalance
+                ]);
             }
         });
 
@@ -194,12 +213,13 @@ class PetrolPumpTransactionController extends Controller
     public function destroy(PetrolPumpTransaction $petrolPumpTransaction)
     {
         DB::transaction(function () use ($petrolPumpTransaction) {
-            // Revert balance if transaction was completed
-            if ($petrolPumpTransaction->status == 'completed') {
-                $petrolPump = PetrolPump::find($petrolPumpTransaction->petrol_pump_id);
-                $petrolPump->revertBalanceUpdate(
+
+            if ($petrolPumpTransaction->status === 'completed') {
+                $this->updatePumpBalance(
+                    $petrolPumpTransaction->petrol_pump_id,
                     $petrolPumpTransaction->amount,
-                    $petrolPumpTransaction->transaction_type
+                    $petrolPumpTransaction->transaction_type,
+                    'revert'
                 );
             }
 
@@ -225,5 +245,28 @@ class PetrolPumpTransactionController extends Controller
             'credit_limit' => $pump->credit_limit,
             'is_limit_exceeded' => $pump->is_credit_limit_exceeded
         ]);
+    }
+
+    private function updatePumpBalance($petrolPumpId, $amount, $transactionType, $action = 'apply')
+    {
+        $pump = PetrolPump::lockForUpdate()->find($petrolPumpId);
+
+        if (!$pump) {
+            return 0;
+        }
+
+        $multiplier = ($action === 'revert') ? -1 : 1;
+
+        if (in_array($transactionType, ['credit', 'payable'])) {
+            $pump->current_balance += ($amount * $multiplier);
+        }
+
+        if (in_array($transactionType, ['debit', 'payment'])) {
+            $pump->current_balance -= ($amount * $multiplier);
+        }
+
+        $pump->save();
+
+        return $pump->current_balance; // 🔥 return updated balance
     }
 }

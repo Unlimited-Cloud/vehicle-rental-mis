@@ -26,7 +26,7 @@
     </a>
 </div>
 
-<table class="table table-bordered table-striped">
+ <table id="dataTable" class="table table-bordered table-striped show-search-bar">
 <thead>
 <tr>
     <th>SN</th>
@@ -78,3 +78,19 @@
 </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true
+    });
+});
+</script>
+@endpush

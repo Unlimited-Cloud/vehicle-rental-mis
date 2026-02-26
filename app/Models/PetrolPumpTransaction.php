@@ -69,15 +69,15 @@ class PetrolPumpTransaction extends Model
     public function getTransactionTypeBadgeAttribute()
     {
         $badges = [
-            'credit' => 'badge-warning',
-            'debit' => 'badge-info',
+            'credit' => 'badge-success',
+            'debit' => 'badge-danger',
             'payment' => 'badge-success',
-            'payable' => 'badge-danger'
+            'payable' => 'badge-warning'
         ];
 
         $labels = [
-            'credit' => 'Credit (We Owe)',
-            'debit' => 'Debit (They Owe)',
+            'credit' => 'Credit (Inbound)',
+            'debit' => 'Debit (Outbound)',
             'payment' => 'Payment',
             'payable' => 'Payable'
         ];
@@ -136,6 +136,11 @@ class PetrolPumpTransaction extends Model
     public function getFormattedPaidAmountAttribute()
     {
         return '₹ ' . number_format($this->paid_amount, 2);
+    }
+
+    public function getFormattedBalanceAmountAttribute()
+    {
+        return '₹ ' . number_format($this->balance, 2);
     }
 
     /**
