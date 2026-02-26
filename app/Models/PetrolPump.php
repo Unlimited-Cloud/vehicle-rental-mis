@@ -35,62 +35,6 @@ class PetrolPump extends Model
         return $this->hasMany(PetrolPumpTransaction::class);
     }
 
-    public function updateBalance($amount, $type)
-    {
-        switch ($type) {
-            case 'credit':
-            case 'payable':
-                // We owe money to pump (payable increases)
-                $this->current_balance -= $amount;
-                $this->balance_type = 'payable';
-                break;
-            case 'debit':
-                // Pump owes us money (receivable increases)
-                $this->current_balance += $amount;
-                $this->balance_type = 'receivable';
-                break;
-            case 'payment':
-                // We pay the pump (payable decreases)
-                $this->current_balance += $amount;
-                // Auto-determine balance type
-                if ($this->current_balance > 0) {
-                    $this->balance_type = 'receivable';
-                } elseif ($this->current_balance < 0) {
-                    $this->balance_type = 'payable';
-                }
-                break;
-        }
-
-        $this->save();
-    }
-
-    /**
-     * Revert balance update
-     */
-    public function revertBalanceUpdate($amount, $type)
-    {
-        switch ($type) {
-            case 'credit':
-            case 'payable':
-                $this->current_balance += $amount;
-                break;
-            case 'debit':
-                $this->current_balance -= $amount;
-                break;
-            case 'payment':
-                $this->current_balance -= $amount;
-                break;
-        }
-
-        // Re-determine balance type
-        if ($this->current_balance > 0) {
-            $this->balance_type = 'receivable';
-        } elseif ($this->current_balance < 0) {
-            $this->balance_type = 'payable';
-        }
-
-        $this->save();
-    }
 
     public function scopeActive($query)
     {
