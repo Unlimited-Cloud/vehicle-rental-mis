@@ -95,10 +95,10 @@
         <div class="form-group">
             <label>Transaction Type *</label>
             <select name="transaction_type" id="transaction_type" class="form-control" required>
-                <option value="credit" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'credit') ? 'selected' : '' }}>Credit (We owe them)</option>
-                <option value="debit" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'debit') ? 'selected' : '' }}>Debit (They owe us)</option>
-                <option value="payment" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'payment') ? 'selected' : '' }}>Payment (We pay them)</option>
-                <option value="payable" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'payable') ? 'selected' : '' }}>Payable (Outstanding)</option>
+                <option value="credit" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'credit') ? 'selected' : '' }}>Credit (Inbound)</option>
+                <option value="debit" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'debit') ? 'selected' : '' }}>Debit (Outbound)</option>
+                {{-- <option value="payment" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'payment') ? 'selected' : '' }}>Payment (We pay them)</option>
+                <option value="payable" {{ (old('transaction_type', $petrolPumpTransaction->transaction_type ?? '') == 'payable') ? 'selected' : '' }}>Payable (Outstanding)</option> --}}
             </select>
         </div>
     </div>
@@ -164,6 +164,7 @@
                 <option value="">Select Payment Method</option>
                 <option value="cash" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'cash') ? 'selected' : '' }}>Cash</option>
                 <option value="bank_transfer" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'bank_transfer') ? 'selected' : '' }}>Bank Transfer</option>
+                <option value="credit_transfer" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'credit_transfer') ? 'selected' : '' }}>Credit Transfer</option>
                 <option value="cheque" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'cheque') ? 'selected' : '' }}>Cheque</option>
                 <option value="card" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'card') ? 'selected' : '' }}>Card</option>
                 <option value="upi" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'upi') ? 'selected' : '' }}>UPI</option>
@@ -176,7 +177,7 @@
             <label>Reference Number</label>
             <input type="text" name="reference_number" class="form-control"
                    value="{{ old('reference_number', $petrolPumpTransaction->reference_number ?? '') }}">
-            <small class="text-muted">Cheque/Transaction/UPI reference</small>
+            {{-- <small class="text-muted">Cheque/Transaction/UPI reference</small> --}}
         </div>
     </div>
 
