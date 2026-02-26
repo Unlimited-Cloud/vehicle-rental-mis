@@ -10,6 +10,9 @@ use App\Models\CrewProfile;
 use App\Models\Customer;
 use App\Models\User;
 
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\VehicleBookingExport;
+
 class VehicleBookingController extends Controller
 {
     /**
@@ -141,6 +144,9 @@ class VehicleBookingController extends Controller
             'driver.user',
             'helper.user'
         ]);
+        if (request()->ajax()) {
+            return response()->json($vehicleBooking);
+        }
 
         return view('layouts.admin.vehicles_booking.show', compact('vehicleBooking'));
     }
@@ -168,6 +174,17 @@ class VehicleBookingController extends Controller
 
             return back()->with('error', 'Error deleting booking.');
         }
+    }
+
+
+    public function export(Request $request)
+    {
+        $fileName = 'vehicle_bookings_' . date('Y-m-d_His') . '.xlsx';
+
+        return Excel::download(
+            new VehicleBookingExport($request),
+            $fileName
+        );
     }
 
 
