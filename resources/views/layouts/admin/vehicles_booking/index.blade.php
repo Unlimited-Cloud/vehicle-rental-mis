@@ -593,25 +593,43 @@ function clearFilter() {
 
 // Update month navigation with Nepali date
 async function updateNepaliMonthDisplay() {
-
-    // ✅ Use 15th date instead of first day
-    let middleDate = currentMonth.clone().date(15).format('YYYY-MM-DD');
-
+    // Get first and last day of the current month
+    let firstDate = currentMonth.clone().startOf('month').format('YYYY-MM-DD');
+    let lastDate = currentMonth.clone().endOf('month').format('YYYY-MM-DD');
+    
     try {
-        let bsDate = await convertToNepaliDate(middleDate);
+        // Get Nepali dates
+        let bsFirstDate = await convertToNepaliDate(firstDate);
+        let bsLastDate = await convertToNepaliDate(lastDate);
 
-        if (bsDate && bsDate.display) {
-            let parts = bsDate.display.split(' ');
-
-            if (parts.length >= 2) {
-                let nepaliYear = parts[0];
-                let nepaliMonth = parts[1];
-                $('#currentNepaliMonth').text(`${nepaliMonth} ${nepaliYear}`);
+        if (bsFirstDate && bsLastDate) {
+            // Extract month and year from the full response
+            let firstMonth = bsFirstDate.month || '';
+            let lastMonth = bsLastDate.month || '';
+            let nepaliYear = bsFirstDate.year || '';
+            
+            if (firstMonth && lastMonth) {
+                if (firstMonth === lastMonth) {
+                    $('#currentNepaliMonth').text(`${firstMonth} ${nepaliYear}`);
+                } else {
+                    $('#currentNepaliMonth').text(`${firstMonth}/${lastMonth} ${nepaliYear}`);
+                }
             } else {
-                $('#currentNepaliMonth').text(bsDate.display);
+                // Fallback to display if month names not available
+                let firstParts = bsFirstDate.display.split(' ');
+                let lastParts = bsLastDate.display.split(' ');
+                let firstMonthName = firstParts.length >= 2 ? firstParts[1] : '';
+                let lastMonthName = lastParts.length >= 2 ? lastParts[1] : '';
+                let year = firstParts.length >= 1 ? firstParts[0] : '';
+                
+                if (firstMonthName && lastMonthName) {
+                    if (firstMonthName === lastMonthName) {
+                        $('#currentNepaliMonth').text(`${firstMonthName} ${year}`);
+                    } else {
+                        $('#currentNepaliMonth').text(`${firstMonthName}/${lastMonthName} ${year}`);
+                    }
+                }
             }
-        } else {
-            $('#currentNepaliMonth').text('');
         }
 
     } catch (e) {
