@@ -46,11 +46,20 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
+    Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
+        ->name('vehicle_bookings.convert_multiple_ad_to_bs');
+    Route::post('vehicle_bookings/convert-ad-to-bs', [VehicleBookingController::class, 'convertAdtoBs'])
+        ->name('vehicle_bookings.convert_ad_to_bs');
+
     Route::get('vehicle_bookings/export', [VehicleBookingController::class, 'export'])
         ->name('vehicle_bookings.export');
 
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
+
+
+
+
 
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([

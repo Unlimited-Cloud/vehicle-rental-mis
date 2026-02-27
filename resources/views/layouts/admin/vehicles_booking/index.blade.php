@@ -91,8 +91,6 @@
     </div>
 </div>
 
-
-
 <!-- ================= LIST VIEW ================= -->
 <div id="tableView">
     <div class="table-responsive">
@@ -104,19 +102,19 @@
                     <th>Customer</th>
                     <th>From</th>
                     <th>To</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
+                    <th>Start Date (AD/BS)</th>
+                    <th>End Date (AD/BS)</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="bookingTableBody">
                 @forelse($bookings as $i => $booking)
                     @php
                         $statusColor = $booking->status == 'confirmed' ? '#28a745' : 
                                       ($booking->status == 'pending' ? '#ffc107' : '#dc3545');
                     @endphp
-                    <tr data-booking-id="{{ $booking->id }}">
+                    <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
                         <td>{{ $i+1 }}</td>
                         <td>
                             <div style="display: flex; align-items: center;">
@@ -127,8 +125,16 @@
                         <td>{{ $booking->customer->name ?? '' }}</td>
                         <td>{{ $booking->from_destination ?? '-' }}</td>
                         <td>{{ $booking->to_destination ?? '-' }}</td>
-                        <td>{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
-                        <td>{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
+                        <td class="start-date-cell">
+                            <span class="ad-date">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</span>
+                            <br>
+                            <small class="bs-date text-muted">Loading...</small>
+                        </td>
+                        <td class="end-date-cell">
+                            <span class="ad-date">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</span>
+                            <br>
+                            <small class="bs-date text-muted">Loading...</small>
+                        </td>
                         <td>
                             <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
                                 {{ ucfirst($booking->status) }}
@@ -159,15 +165,16 @@
 <!-- ================= CALENDAR GRID ================= -->
 <div id="calendarView" style="display:none;">
     <!-- ================= MONTH NAVIGATION (Calendar View Only) ================= -->
-<div id="monthNav" class="mb-3 d-flex justify-content-between align-items-center" style="display: none;">
-    <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(-1)">
-        <i class="fa fa-chevron-left"></i> Previous Month
-    </button>
-    <h4 id="currentMonth" class="mb-0">{{ date('F Y') }}</h4>
-    <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(1)">
-        Next Month <i class="fa fa-chevron-right"></i>
-    </button>
-</div>
+    <div id="monthNav" class="mb-3 d-flex justify-content-between align-items-center" style="display: none;">
+        <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(-1)">
+            <i class="fa fa-chevron-left"></i> Previous Month
+        </button>
+        <h4 id="currentMonth" class="mb-0">{{ date('F Y') }}</h4>
+        <h5 id="currentNepaliMonth" class="mb-0 nepali-date" style="color:#198754; font-size:16px;">Loading...</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(1)">
+            Next Month <i class="fa fa-chevron-right"></i>
+        </button>
+    </div>
     <div class="mb-3">
         <small class="text-muted">Click on any empty cell to create a new booking. Click on booking block to view details.</small>
     </div>
@@ -224,6 +231,29 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
 <style>
+    /* Add to your styles */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+
+.nepali-date {
+    font-family: 'Hind Siliguri', 'Preeti', 'Arial Unicode MS', sans-serif;
+    font-size: 11px;
+    color: #198754;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* For the calendar header */
+.booking-grid th .nepali-date {
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+/* For table view */
+.bs-date {
+    font-family: 'Hind Siliguri', 'Preeti', sans-serif;
+    font-size: 11px;
+    color: #198754;
+}
     .booking-grid th, .booking-grid td {
         min-width: 80px;
         text-align: center;
@@ -325,12 +355,32 @@
         background: #f8f9fa;
         width: 140px;
     }
+    
+    .nepali-date {
+        font-family: 'Hind Siliguri', 'Preeti', 'Arial Unicode MS', sans-serif;
+        font-size: 12px;
+        color: #198754;
+        font-weight: 600;
+    }
+    
+    .bs-date {
+        font-size: 11px;
+        color: #198754;
+        font-family: 'Hind Siliguri', 'Preeti', sans-serif;
+    }
+    
+    .ad-date {
+        font-size: 12px;
+        font-weight: 500;
+    }
+
 </style>
 
 <script>
 let currentMonth = moment();
 let allVehicles = @json($vehicles);
 let vehicleColors = {};
+let dateCache = {}; // Cache for converted dates
 
 // Generate consistent colors for vehicles
 @foreach($vehicles as $vehicle)
@@ -363,7 +413,134 @@ $(document).ready(function() {
     if (urlParams.has('driver_id')) {
         $('#driverFilter').val(urlParams.get('driver_id'));
     }
+    
+    // Load Nepali dates for table view
+    loadNepaliDatesForTable();
 });
+
+
+// Update the convertToNepaliDate function to handle the response correctly
+// Function to convert date to Nepali using your route
+function convertToNepaliDate(adDate) {
+    return new Promise((resolve, reject) => {
+        // Check cache first
+        if (dateCache[adDate]) {
+            resolve(dateCache[adDate]);
+            return;
+        }
+        
+        $.ajax({
+            url: "{{ route('admin.vehicle_bookings.convert_ad_to_bs') }}",
+            type: 'POST',
+            data: {
+                date: adDate,
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Extract just the Nepali part from "February, 27 2026 | २०८२ फागुन १५"
+                    let nepaliOnly = '';
+                    if (response.display && response.display.includes('|')) {
+                        // Split by | and take the second part, then trim
+                        nepaliOnly = response.display.split('|')[1].trim();
+                    } else if (response.nepali) {
+                        nepaliOnly = response.nepali;
+                    } else {
+                        nepaliOnly = response.display || '';
+                    }
+                    
+                    // Also extract just the day number for calendar header
+                    let dayOnly = '';
+                    if (nepaliOnly) {
+                        let parts = nepaliOnly.split(' ');
+                        dayOnly = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : '');
+                    }
+                    
+                    // Cache the result
+                    dateCache[adDate] = {
+                        nepali: response.nepali || '',
+                        day: response.day || dayOnly,
+                        month: response.month || '',
+                        year: response.year || '',
+                        formatted: response.formatted || '',
+                        display: nepaliOnly, // Now just "२०८२ फागुन १५"
+                        day_only: dayOnly,    // Just "१५"
+                        full_response: response
+                    };
+                    resolve(dateCache[adDate]);
+                } else {
+                    reject('Conversion failed');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Date conversion error:', error);
+                // Fallback to approximate conversion
+                let date = new Date(adDate);
+                let nepYear = date.getFullYear() + 57;
+                let nepMonth = date.getMonth() + 9;
+                let nepDay = date.getDate();
+                
+                if (nepMonth > 12) {
+                    nepMonth -= 12;
+                    nepYear += 1;
+                }
+                
+                // Get Nepali month name
+                const monthNames = {
+                    1: 'बैशाख', 2: 'जेठ', 3: 'असार', 4: 'साउन',
+                    5: 'भदौ', 6: 'असोज', 7: 'कात्तिक', 8: 'मंसिर',
+                    9: 'पुस', 10: 'माघ', 11: 'फागुन', 12: 'चैत'
+                };
+                let nepaliMonthName = monthNames[nepMonth] || 'बैशाख';
+                
+                // Convert to Nepali numbers
+                const nepaliNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+                let nepaliYearStr = nepYear.toString().split('').map(d => nepaliNumbers[parseInt(d)]).join('');
+                let nepaliDayStr = nepDay.toString().split('').map(d => nepaliNumbers[parseInt(d)]).join('');
+                
+                let fallbackDate = {
+                    nepali: `${nepaliYearStr} ${nepaliMonthName} ${nepaliDayStr}`,
+                    day: nepaliDayStr,
+                    month: nepMonth.toString().padStart(2, '0'),
+                    year: nepYear.toString(),
+                    formatted: `${nepYear}/${nepMonth.toString().padStart(2, '0')}/${nepDay.toString().padStart(2, '0')}`,
+                    display: `${nepaliYearStr} ${nepaliMonthName} ${nepaliDayStr}`,
+                    day_only: nepaliDayStr
+                };
+                dateCache[adDate] = fallbackDate;
+                resolve(fallbackDate);
+            }
+        });
+    });
+}
+// Update the table view to show Nepali dates correctly
+async function loadNepaliDatesForTable() {
+    $('#bookingTableBody tr').each(async function() {
+        let $row = $(this);
+        let startDate = $row.data('start-date');
+        let endDate = $row.data('end-date');
+        
+        if (startDate) {
+            try {
+                let bsDate = await convertToNepaliDate(startDate);
+                // Show format: "२०८२ फागुन १५"
+                $row.find('.start-date-cell .bs-date').text(bsDate.display);
+            } catch (e) {
+                console.error('Error converting start date:', e);
+            }
+        }
+        
+        if (endDate) {
+            try {
+                let bsDate = await convertToNepaliDate(endDate);
+                // Show format: "२०८२ फागुन १५"
+                $row.find('.end-date-cell .bs-date').text(bsDate.display);
+            } catch (e) {
+                console.error('Error converting end date:', e);
+            }
+        }
+    });
+}
 
 // View Toggle Functions
 function showTable() {
@@ -386,7 +563,7 @@ function showCalendar() {
     let url = new URL(window.location.href);
     url.searchParams.set('view', 'calendar');
     window.history.replaceState({}, '', url);
-    
+      updateNepaliMonthDisplay();
     loadCalendarGrid();
 }
 
@@ -414,6 +591,35 @@ function clearFilter() {
     }
 }
 
+// Update month navigation with Nepali date
+async function updateNepaliMonthDisplay() {
+
+    // ✅ Use 15th date instead of first day
+    let middleDate = currentMonth.clone().date(15).format('YYYY-MM-DD');
+
+    try {
+        let bsDate = await convertToNepaliDate(middleDate);
+
+        if (bsDate && bsDate.display) {
+            let parts = bsDate.display.split(' ');
+
+            if (parts.length >= 2) {
+                let nepaliYear = parts[0];
+                let nepaliMonth = parts[1];
+                $('#currentNepaliMonth').text(`${nepaliMonth} ${nepaliYear}`);
+            } else {
+                $('#currentNepaliMonth').text(bsDate.display);
+            }
+        } else {
+            $('#currentNepaliMonth').text('');
+        }
+
+    } catch (e) {
+        console.error('Error loading Nepali month:', e);
+        $('#currentNepaliMonth').text('');
+    }
+}
+
 // Month Navigation
 function changeMonth(direction) {
     if (direction === -1) {
@@ -421,6 +627,9 @@ function changeMonth(direction) {
     } else if (direction === 1) {
         currentMonth.add(1, 'month');
     }
+
+     $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
+    updateNepaliMonthDisplay();
     loadCalendarGrid();
 }
 
@@ -450,23 +659,61 @@ function loadCalendarGrid() {
     });
 }
 
-// Build Calendar Header
-function buildCalendarHeader(startDate, endDate) {
-    let html = '<tr><th class="vehicle-column">Vehicle / Date</th>';
+async function buildCalendarHeader(startDate, endDate) {
+
+    let adRow = '<tr><th class="vehicle-column">Vehicle / Date</th>';
+    let bsRow = '<tr><th class="vehicle-column">वाहन / मिति</th>';
+
     let current = startDate.clone();
     let today = moment().format('YYYY-MM-DD');
-    
+    let dates = [];
+
     while (current <= endDate) {
-        let isToday = current.format('YYYY-MM-DD') === today;
-        let dayName = current.format('dd').charAt(0); // First letter of day name
-        html += `<th style="${isToday ? 'background-color: #cfe2ff;' : ''}">
-                    <div style="font-weight: 600;">${current.format('D')}</div>
-                    <small style="font-weight: normal; color: #6c757d;">${dayName}</small>
-                </th>`;
+        dates.push(current.format('YYYY-MM-DD'));
         current.add(1, 'day');
     }
-    html += '<th style="min-width: 100px;">Total Days</th></tr>';
-    $('#bookingGridHead').html(html);
+
+    // 🔥 ONE SINGLE REQUEST
+    let response = await $.ajax({
+        url: "{{ route('admin.vehicle_bookings.convert_multiple_ad_to_bs') }}",
+        type: "POST",
+        data: {
+            dates: dates,
+            _token: "{{ csrf_token() }}"
+        }
+    });
+
+    let nepaliMap = response.data || {};
+
+    current = startDate.clone();
+
+    while (current <= endDate) {
+
+        let dateStr = current.format('YYYY-MM-DD');
+        let isToday = dateStr === today;
+
+        let bsData = nepaliMap[dateStr] || {};
+        let nepaliDay = bsData.day || '';
+
+        adRow += `
+            <th style="${isToday ? 'background:#cfe2ff;' : ''}">
+                ${current.format('D')}
+            </th>
+        `;
+
+        bsRow += `
+            <th style="${isToday ? 'background:#cfe2ff;' : ''}">
+                ${nepaliDay}
+            </th>
+        `;
+
+        current.add(1, 'day');
+    }
+
+    adRow += '<th>Total Days</th></tr>';
+    bsRow += '<th>जम्मा दिन</th></tr>';
+
+    $('#bookingGridHead').html(adRow + bsRow);
 }
 
 // Build Calendar Body
@@ -548,7 +795,7 @@ function openCreateBooking(vehicleId, date) {
 }
 
 // Open booking details modal
-function openBookingModal(bookingId) {
+async function openBookingModal(bookingId) {
     // Show loading
     $('#bookingModalBody').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Loading booking details...</p></div>');
     $('#bookingDetailsModal').modal('show');
@@ -557,13 +804,17 @@ function openBookingModal(bookingId) {
     $.ajax({
         url: `/dashboard/vehicle_bookings/${bookingId}`,
         type: "GET",
-        success: function(booking) {
+        success: async function(booking) {
             let statusColor = statusColors[booking.status] || '#6c757d';
             let vehicleColor = vehicleColors[booking.vehicle_id] || '#3498db';
             
             let startDate = moment(booking.start_date).format('MMMM D, YYYY');
             let endDate = moment(booking.end_date).format('MMMM D, YYYY');
             let duration = moment(booking.end_date).diff(moment(booking.start_date), 'days') + 1;
+            
+            // Get Nepali dates
+            let bsStartDate = await convertToNepaliDate(booking.start_date);
+            let bsEndDate = await convertToNepaliDate(booking.end_date);
             
             let html = `
                 <div class="container-fluid">
@@ -657,11 +908,17 @@ function openBookingModal(bookingId) {
                                             <table class="table table-sm table-borderless">
                                                 <tr>
                                                     <td style="width: 100px;"><strong>Start Date:</strong></td>
-                                                    <td>${startDate}</td>
+                                                    <td>
+                                                        <div>${startDate}</div>
+                                                        <small class="nepali-date">${bsStartDate.display}</small>
+                                                    </td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>End Date:</strong></td>
-                                                    <td>${endDate}</td>
+                                                    <td>
+                                                        <div>${endDate}</div>
+                                                        <small class="nepali-date">${bsEndDate.display}</small>
+                                                    </td>
                                                 </tr>
                                             </table>
                                         </div>
@@ -745,9 +1002,7 @@ function updateExportLink() {
     let params = $.param({
         vehicle_id: $('#vehicleFilter').val(),
         customer_id: $('#customerFilter').val(),
-        driver_id: $('#driverFilter').val(),
-        from_date: $('#fromDate').val(),
-        to_date: $('#toDate').val()
+        driver_id: $('#driverFilter').val()
     });
     $('#exportBtn').attr('href', "{{ route('admin.vehicle_bookings.export') }}?" + params);
 }
