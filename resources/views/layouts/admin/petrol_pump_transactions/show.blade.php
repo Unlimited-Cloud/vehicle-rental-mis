@@ -35,6 +35,13 @@
                                     </a>
                                 </td>
                             </tr>
+
+                            <tr>
+                                <th>Vehicle </th>
+                                <td>
+                                        {{ $petrolPumpTransaction->vehicle->vehicle_name }}
+                                </td>
+                            </tr>
                             <tr>
                                 <th>Transaction Type</th>
                                 <td>{!! $petrolPumpTransaction->transaction_type_badge !!}</td>

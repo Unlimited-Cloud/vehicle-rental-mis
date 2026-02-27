@@ -103,13 +103,13 @@
         </div>
     </div>
 
-    <div class="col-md-4">
+    {{-- <div class="col-md-4">
         <div class="form-group">
             <label>Amount *</label>
             <input type="number" step="0.01" name="amount" id="amount" class="form-control" required
                    value="{{ old('amount', $petrolPumpTransaction->amount ?? '') }}">
         </div>
-    </div>
+    </div> --}}
 
     <div class="col-md-4">
         <div class="form-group">

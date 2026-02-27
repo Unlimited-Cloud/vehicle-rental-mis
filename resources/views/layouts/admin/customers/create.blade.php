@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    {{-- <div class="col-md-6">
         <div class="form-group">
             <label>License Number</label>
             <input type="text" name="license_number" class="form-control" 
@@ -101,7 +101,7 @@
             <input type="date" name="license_expiry" class="form-control" 
                    value="{{ old('license_expiry', isset($customer) && $customer->license_expiry ? $customer->license_expiry->format('Y-m-d') : '') }}">
         </div>
-    </div>
+    </div> --}}
 
     <div class="col-md-6">
         <div class="form-group">

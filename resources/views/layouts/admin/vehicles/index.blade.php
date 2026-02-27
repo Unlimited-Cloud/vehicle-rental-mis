@@ -80,19 +80,19 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
 
-                                        <!-- Add Vehicle Details -->
+                                        {{-- <!-- Add Vehicle Details -->
                                         <a href="{{ route('admin.vehicle_details.create', ['vehicle_id' => $vehicle->id]) }}"
                                         class="btn btn-info btn-sm" title="Add Vehicle Details">
                                             <i class="fas fa-plus-circle"></i>
-                                        </a>
+                                        </a> --}}
 
                                         <!-- Show Vehicle Details -->
-                                        @if($vehicle->vehicleDetail) {{-- Check if vehicle has details --}}
-                                            <a href="{{ route('admin.vehicle_details.show', $vehicle->vehicleDetail->id) }}"
+                                        {{-- @if($vehicle->vehicleDetail) --}}
+                                            <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
                                             class="btn btn-success btn-sm" title="View Vehicle Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                        @endif
+                                        {{-- @endif --}}
 
                                         <form action="{{ route('admin.vehicles.destroy', $vehicle->id) }}"
                                             method="POST"
