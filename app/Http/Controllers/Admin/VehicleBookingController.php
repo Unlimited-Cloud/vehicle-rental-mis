@@ -12,6 +12,8 @@ use App\Models\User;
 
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
+use App\Helpers\NepaliDateHelper;
+use Illuminate\Support\Facades\Cache;
 
 class VehicleBookingController extends Controller
 {
@@ -258,5 +260,51 @@ class VehicleBookingController extends Controller
         }
 
         return response()->json($events);
+    }
+
+    public function convertAdToBs(Request $request)
+    {
+        $date = $request->date;
+        $cacheKey = 'nepali_date_' . $date;
+
+        $converted = Cache::remember($cacheKey, now()->addDays(30), function () use ($date) {
+            return NepaliDateHelper::convertToNepali($date);
+        });
+
+        return response()->json([
+            'success' => true,
+            'nepali'  => $converted['nepali'],
+            'year'    => $converted['year'],
+            'month'   => $converted['month'],
+            'day'     => $converted['day'],
+        ]);
+    }
+
+    public function convertMultipleAdToBs(Request $request)
+    {
+        $results = [];
+
+        foreach ($request->dates as $date) {
+            $cacheKey = 'nepali_date_' . $date;
+
+            $converted = Cache::remember($cacheKey, now()->addDays(30), function () use ($date) {
+                return NepaliDateHelper::convertToNepali($date);
+            });
+
+            $results[$date] = [
+                'day'   => $converted['day'],
+                'month' => $converted['month'],
+                'year'  => $converted['year'],
+            ];
+
+            //cache
+
+
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $results
+        ]);
     }
 }
