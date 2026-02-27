@@ -89,7 +89,6 @@ class PetrolPumpTransactionController extends Controller
             'vehicle_id' => 'nullable|exists:vehicles,id',
             'transaction_date' => 'required|date',
             'transaction_type' => 'required|in:credit,debit,payment,payable',
-            'amount' => 'required|numeric|min:0',
             'paid_amount' => 'nullable|numeric|min:0',
             'fuel_quantity' => 'nullable|numeric|min:0',
             'fuel_type' => 'nullable|in:petrol,diesel,cng,other',
@@ -100,6 +99,12 @@ class PetrolPumpTransactionController extends Controller
             'odometer_reading' => 'nullable|string',
             'status' => 'required|in:pending,completed,cancelled'
         ]);
+
+        $amount = isset($validated['fuel_quantity']) && isset($validated['rate_per_liter'])
+            ? $validated['fuel_quantity'] * $validated['rate_per_liter']
+            : 0;
+
+        $validated['amount'] = $amount;
 
         DB::transaction(function () use ($validated) {
 
@@ -163,7 +168,7 @@ class PetrolPumpTransactionController extends Controller
             'vehicle_id' => 'nullable|exists:vehicles,id',
             'transaction_date' => 'required|date',
             'transaction_type' => 'required|in:credit,debit,payment,payable',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'nullable|numeric|min:0',
             'paid_amount' => 'nullable|numeric|min:0',
             'fuel_quantity' => 'nullable|numeric|min:0',
             'fuel_type' => 'nullable|in:petrol,diesel,cng,other',

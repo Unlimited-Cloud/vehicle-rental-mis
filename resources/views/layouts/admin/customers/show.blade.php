@@ -56,14 +56,14 @@
                                 <th>PAN Number</th>
                                 <td>{{ $customer->pan_number ?? 'N/A' }}</td>
                             </tr>
-                            <tr>
+                            {{-- <tr>
                                 <th>License Number</th>
                                 <td>{{ $customer->license_number ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <th>License Expiry</th>
                                 <td>{{ $customer->license_expiry ? $customer->license_expiry->format('d-m-Y') : 'N/A' }}</td>
-                            </tr>
+                            </tr> --}}
                             <tr>
                                 <th>Status</th>
                                 <td>{!! $customer->status_badge !!}</td>

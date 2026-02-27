@@ -13,8 +13,10 @@ use App\Http\Controllers\Admin\GpsDashboardController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\PetrolPumpController;
 use App\Http\Controllers\Admin\PetrolPumpTransactionController;
-
-
+use App\Http\Controllers\Admin\VehiclePermitController;
+use App\Http\Controllers\Admin\VehicleRepairController;
+use App\Http\Controllers\Admin\VehicleServiceController;
+use App\Http\Controllers\Admin\VehicleTyreChangeController;
 
 
 
@@ -54,6 +56,14 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
         ]);
+
+    Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
+        ->name('vehicles.set-active-tab');
+
+    Route::resource('vehicle-permits', VehiclePermitController::class);
+    Route::resource('vehicle-services', VehicleServiceController::class);
+    Route::resource('vehicle-repairs', VehicleRepairController::class);
+    Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
 
     Route::resource('customers', CustomerController::class);
     Route::resource('petrol_pumps', PetrolPumpController::class);

@@ -38,7 +38,23 @@ class VehicleController extends Controller
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
-            'is_helper_needed' => 'nullable'
+            'is_helper_needed' => 'nullable',
+
+            // Registration
+            'registration_number' => 'nullable|string|max:255',
+            'registered_at' => 'nullable|string|max:255',
+            'number_plate_color' => 'nullable|in:RED,BLACK,GREEN',
+            'registration_expiry' => 'nullable|date',
+            'bill_book_number' => 'nullable|string|max:255',
+            'bill_book_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            // Insurance
+            'insurance_policy_no' => 'nullable|string|max:255',
+            'insurance_company' => 'nullable|string|max:255',
+            'insurance_type' => 'nullable|string|max:255',
+            'insurance_till' => 'nullable|date',
+            'insurance_cost_per_annum' => 'nullable|numeric',
+            'insurance_policy_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
         ]);
 
         $data = $request->all();
@@ -54,6 +70,22 @@ class VehicleController extends Controller
             $data['image'] = 'uploads/vehicle/' . $imageName;
         }
 
+        // Bill Book Image
+        if ($request->hasFile('bill_book_image')) {
+            $file = $request->file('bill_book_image');
+            $fileName = time() . '_bill_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/vehicle'), $fileName);
+            $data['bill_book_image'] = 'uploads/vehicle/' . $fileName;
+        }
+
+        // Insurance Policy Document
+        if ($request->hasFile('insurance_policy_document')) {
+            $file = $request->file('insurance_policy_document');
+            $fileName = time() . '_insurance_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/vehicle'), $fileName);
+            $data['insurance_policy_document'] = 'uploads/vehicle/' . $fileName;
+        }
+
         Vehicle::create($data);
 
         return redirect()->route('admin.vehicles.index')
@@ -63,6 +95,13 @@ class VehicleController extends Controller
     public function edit(Vehicle $vehicle)
     {
         return view('layouts.admin.vehicles.create', compact('vehicle'));
+    }
+
+    public function show(Vehicle $vehicle)
+    {
+        $vehicle->load(['permits', 'services', 'repairs', 'tyreChanges']);
+
+        return view('layouts.admin.vehicles.show', compact('vehicle'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
@@ -77,7 +116,23 @@ class VehicleController extends Controller
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
-            'is_helper_needed' => 'nullable'
+            'is_helper_needed' => 'nullable',
+
+            // Registration
+            'registration_number' => 'nullable|string|max:255',
+            'registered_at' => 'nullable|string|max:255',
+            'number_plate_color' => 'nullable|in:RED,BLACK,GREEN',
+            'registration_expiry' => 'nullable|date',
+            'bill_book_number' => 'nullable|string|max:255',
+            'bill_book_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            // Insurance
+            'insurance_policy_no' => 'nullable|string|max:255',
+            'insurance_company' => 'nullable|string|max:255',
+            'insurance_type' => 'nullable|string|max:255',
+            'insurance_till' => 'nullable|date',
+            'insurance_cost_per_annum' => 'nullable|numeric',
+            'insurance_policy_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
         ]);
 
         $data = $request->all();
@@ -98,6 +153,22 @@ class VehicleController extends Controller
             $data['image'] = 'uploads/vehicle/' . $imageName;
         }
 
+        // Bill Book Image
+        if ($request->hasFile('bill_book_image')) {
+            $file = $request->file('bill_book_image');
+            $fileName = time() . '_bill_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/vehicle'), $fileName);
+            $data['bill_book_image'] = 'uploads/vehicle/' . $fileName;
+        }
+
+        // Insurance Policy Document
+        if ($request->hasFile('insurance_policy_document')) {
+            $file = $request->file('insurance_policy_document');
+            $fileName = time() . '_insurance_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/vehicle'), $fileName);
+            $data['insurance_policy_document'] = 'uploads/vehicle/' . $fileName;
+        }
+
         $vehicle->update($data);
 
         return redirect()->route('admin.vehicles.index')
@@ -112,5 +183,11 @@ class VehicleController extends Controller
 
         return redirect()->route('admin.vehicles.index')
             ->with('success', 'Vehicle Deleted Successfully');
+    }
+
+    public function setActiveTab(Request $request)
+    {
+        session(['active_tab' => $request->tab]);
+        return response()->json(['success' => true]);
     }
 }
