@@ -54,7 +54,12 @@ class CrewProfilesController extends Controller
         
         $userAddData['role_id'] = $roleId;
         $userAddData['name'] = $crewMemberName;
+       
         $userAddData['email'] = $crewMemberEmail;
+        if (empty($crewMemberEmail)) {
+            $formattedName = strtolower(str_replace(' ', '', $crewMemberName));
+            $userAddData['email'] = $formattedName . '@unlimitedremit.com';
+        }
         $userAddData['password'] = $crewMemberPassword;
         $userAddData['created_at'] = now();
         $userId = DB::table('users')->insertGetId($userAddData);
@@ -114,6 +119,10 @@ class CrewProfilesController extends Controller
         $userAddData['role_id'] = $roleId;
         $userAddData['name'] = $crewMemberName;
         $userAddData['email'] = $crewMemberEmail;
+        if (empty($crewMemberEmail)) {
+            $formattedName = strtolower(str_replace(' ', '', $crewMemberName));
+            $userAddData['email'] = $formattedName . '@unlimitedremit.com';
+        }
         $userAddData['created_at'] = now();
         $userId = $request->user_id;
         DB::table('users')->where('id',$userId)->update($userAddData);
