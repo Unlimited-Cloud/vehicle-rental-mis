@@ -20,19 +20,23 @@
 @include('layouts.admin_theme.alert')
 
 <div class="row">
+@if(isset($crew_profile))
+<input type="hidden" name="user_id" class="form-control"
+value="{{ $crew_profile->user_id }}">
+@endif
+<div class="col-md-6">
+<div class="form-group">
+<label>Name *</label>
+<input type="text" name="crew_member_name" class="form-control"
+value="{{ old('crew_member_name',$crew_profile->crew_member_name ?? '') }}">
+</div>
+</div>
 
 <div class="col-md-6">
 <div class="form-group">
-<label>User *</label>
-<select name="user_id" class="form-control" required>
-    <option value="">Select User</option>
-    @foreach($users as $user)
-        <option value="{{ $user->id }}"
-        {{ old('user_id',$crew_profile->user_id ?? '')==$user->id?'selected':'' }}>
-        {{ $user->name }}
-        </option>
-    @endforeach
-</select>
+<label>Email *</label>
+<input type="text" name="crew_member_email" class="form-control"
+value="{{ old('crew_member_email',$crew_profile->crew_member_email ?? '') }}">
 </div>
 </div>
 
