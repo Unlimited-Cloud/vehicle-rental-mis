@@ -39,8 +39,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified'])
         ->name('dashboard');
 });
 
-Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
+Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 'gatedefine.middleware'])->prefix('dashboard')->name('admin.')->group(function () {
     Route::resource('vehicles', VehicleController::class);
+});
+
+Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
     Route::resource('vehicle_details', VehicleDetailsController::class);
     Route::resource('crew_profiles', CrewProfilesController::class);
