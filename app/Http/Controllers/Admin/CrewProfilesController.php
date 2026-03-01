@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class CrewProfilesController extends Controller
 {
@@ -24,7 +26,6 @@ class CrewProfilesController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'role' => 'required|in:driver,helper',
             'license_number' => 'nullable|string',
             'license_expiry' => 'nullable|date',
@@ -41,6 +42,24 @@ class CrewProfilesController extends Controller
             $data['citizenship_doc'] = 'uploads/crew_docs/' . $fileName; // correct path saved in DB
         }
 
+        $crewMemberName = $request->crew_member_name;
+        $crewMemberEmail = $request->crew_member_email;
+        $crewMemberPassword = Hash::make("Nepal@123456");
+        $roleDetail = DB::table('roles')->where('name',$request->role)->first();
+        if($roleDetail){
+            $roleId = $roleDetail->id;
+        }else{
+            $roleId = 3;
+        }
+        
+        $userAddData['role_id'] = $roleId;
+        $userAddData['name'] = $crewMemberName;
+        $userAddData['email'] = $crewMemberEmail;
+        $userAddData['password'] = $crewMemberPassword;
+        $userAddData['created_at'] = now();
+        $userId = DB::table('users')->insertGetId($userAddData);
+
+        $data['user_id'] = $userId;
         CrewProfile::create($data);
 
         return redirect()->route('admin.crew_profiles.index')
@@ -49,14 +68,23 @@ class CrewProfilesController extends Controller
 
     public function edit(CrewProfile $crew_profile)
     {
-        $users = User::all();
+        $users = CrewProfile::select('users.name as crew_member_name','crew_profiles.*')
+        ->join('users','users.id','=','crew_profiles.user_id')
+        ->get();
+
+        $crew_profile = CrewProfile::select(
+            'users.name as crew_member_name',
+            'users.email as crew_member_email',
+            'crew_profiles.*'
+        )
+        ->join('users','users.id','=','crew_profiles.user_id')
+        ->where('crew_profiles.id',$crew_profile->id)->first();
         return view('layouts.admin.crew_profiles.create', compact('crew_profile', 'users'));
     }
 
     public function update(Request $request, CrewProfile $crew_profile)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
             'role' => 'required|in:driver,helper',
             'license_number' => 'nullable|string',
             'license_expiry' => 'nullable|date',
@@ -74,6 +102,22 @@ class CrewProfilesController extends Controller
             $data['citizenship_doc'] = 'uploads/crew_docs/' . $fileName;
         }
 
+        $crewMemberName = $request->crew_member_name;
+        $crewMemberEmail = $request->crew_member_email;
+        $roleDetail = DB::table('roles')->where('name',$request->role)->first();
+        if($roleDetail){
+            $roleId = $roleDetail->id;
+        }else{
+            $roleId = 3;
+        }
+        
+        $userAddData['role_id'] = $roleId;
+        $userAddData['name'] = $crewMemberName;
+        $userAddData['email'] = $crewMemberEmail;
+        $userAddData['created_at'] = now();
+        $userId = $request->user_id;
+        DB::table('users')->where('id',$userId)->update($userAddData);
+        
         $crew_profile->update($request->all());
 
         return redirect()->route('admin.crew_profiles.index')
