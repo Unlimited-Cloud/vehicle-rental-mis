@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class VehicleController extends Controller
 {
@@ -13,6 +14,7 @@ class VehicleController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_vehicles_Vehicles');
         $vehicles = Vehicle::latest()->get();
         return view('layouts.admin.vehicles.index', compact('vehicles'));
     }
