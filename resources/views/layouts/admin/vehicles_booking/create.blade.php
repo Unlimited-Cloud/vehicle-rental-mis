@@ -137,10 +137,18 @@
     </div>
 </div>
 
-
+{{-- PEOPLE --}}
+<div class="col-md-4">
+    <div class="form-group">
+        <label>No. of People</label>
+        <input type="number" name="no_of_people"
+               value="{{ old('no_of_people', $booking->no_of_people ?? '') }}"
+               class="form-control">
+    </div>
+</div>
 
 {{-- START DATE --}}
-<div class="col-md-4">
+<div class="col-md-3">
     <div class="form-group">
         <label>Start Date *</label>
         <input type="date"
@@ -149,11 +157,23 @@
                     $booking->start_date ?? $start ?? '') }}"
                class="form-control"
                required>
+        
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="form-group">
+        <label>Start Time *</label>
+        <input type="time"
+               name="start_time"
+               value="{{ old('start_time',
+                    $booking->start_time ?? $start ?? '') }}"
+               class="form-control"
+               required>
     </div>
 </div>
 
 {{-- END DATE --}}
-<div class="col-md-4">
+<div class="col-md-3">
     <div class="form-group">
         <label>End Date *</label>
         <input type="date"
@@ -164,13 +184,23 @@
                required>
     </div>
 </div>
-
-{{-- PEOPLE --}}
-<div class="col-md-4">
+<div class="col-md-2">
     <div class="form-group">
-        <label>No. of People</label>
-        <input type="number" name="no_of_people"
-               value="{{ old('no_of_people', $booking->no_of_people ?? '') }}"
+        <label>END Time *</label>
+        <input type="time"
+               name="end_time"
+               value="{{ old('end_time',
+                    $booking->end_time ?? $start ?? '') }}"
+               class="form-control"
+               required>
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="form-group">
+        <label>No. of Hours</label>
+        <input type="number" name="no_of_hours"
+               value="{{ old('no_of_hours', $booking->no_of_hours ?? '') }}"
                class="form-control">
     </div>
 </div>

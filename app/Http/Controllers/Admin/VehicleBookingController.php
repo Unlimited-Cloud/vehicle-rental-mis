@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\Customer;
 use App\Models\User;
-
+use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
 use App\Helpers\NepaliDateHelper;
@@ -101,7 +101,24 @@ class VehicleBookingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        VehicleBooking::create($request->all());
+        $addData = $request->all();
+        $addData['start_time'] = $request->start_time;
+        $addData['end_time'] = $request->end_time;
+        $no_of_hours = $request->no_of_hours;
+
+        if (empty($no_of_hours)) {
+            $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+            $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+            // Check if end is before start
+            if ($endDateTime->lessThan($startDateTime)) {
+                return redirect()->route('admin.vehicle_bookings.index')
+                    ->with('warning_message', 'To date and time should be greater than start date.');
+            }
+            $no_of_hours = $startDateTime->diffInHours($endDateTime);
+        }
+        $addData['no_of_hours'] = (int) $no_of_hours;
+        
+        VehicleBooking::create($addData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking created successfully.');
@@ -132,7 +149,19 @@ class VehicleBookingController extends Controller
 
     public function update(Request $request, VehicleBooking $vehicleBooking)
     {
-        $vehicleBooking->update($request->all());
+        $updateData = $request->all();
+        $updateData['start_time'] = $request->start_time;
+        $updateData['end_time'] = $request->end_time;
+        $no_of_hours = $request->no_of_hours;
+
+        if (empty($no_of_hours)) {
+            $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+            $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+
+            $no_of_hours = $startDateTime->diffInHours($endDateTime);
+        }
+        $updateData['no_of_hours'] = (int) $no_of_hours;
+        $vehicleBooking->update($updateData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
