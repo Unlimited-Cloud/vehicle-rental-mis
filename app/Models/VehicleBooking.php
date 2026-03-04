@@ -27,6 +27,9 @@ class VehicleBooking extends Model
         'start_km',
         'end_km',
         'approx_fuel_litre',
+        'start_time',
+        'end_time',
+        'no_of_hours'
     ];
 
     protected $dates = ['start_date', 'end_date'];

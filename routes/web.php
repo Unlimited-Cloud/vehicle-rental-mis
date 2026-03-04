@@ -57,10 +57,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
 
-
-
-
-
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
