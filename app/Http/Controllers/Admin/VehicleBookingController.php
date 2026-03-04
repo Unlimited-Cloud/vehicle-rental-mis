@@ -106,14 +106,16 @@ class VehicleBookingController extends Controller
         $addData['end_time'] = $request->end_time;
         $no_of_hours = $request->no_of_hours;
 
+        $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+        $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+        // Check if end is before start
+        if ($endDateTime->lessThan($startDateTime)) {
+            return redirect()->route('admin.vehicle_bookings.create')
+                ->with('warning_message', 'To date and time should be greater than start date.')
+                ->with('end_date', $request->end_date);
+        }
+
         if (empty($no_of_hours)) {
-            $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
-            $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
-            // Check if end is before start
-            if ($endDateTime->lessThan($startDateTime)) {
-                return redirect()->route('admin.vehicle_bookings.index')
-                    ->with('warning_message', 'To date and time should be greater than start date.');
-            }
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $addData['no_of_hours'] = (int) $no_of_hours;
@@ -121,7 +123,7 @@ class VehicleBookingController extends Controller
         VehicleBooking::create($addData);
 
         return redirect()->route('admin.vehicle_bookings.index')
-            ->with('success', 'Booking created successfully.');
+            ->with('success_message', 'Booking created successfully.');
     }
 
     public function edit(VehicleBooking $vehicleBooking)
@@ -154,10 +156,16 @@ class VehicleBookingController extends Controller
         $updateData['end_time'] = $request->end_time;
         $no_of_hours = $request->no_of_hours;
 
-        if (empty($no_of_hours)) {
-            $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
-            $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+        $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+        $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+        // Check if end is before start
+        if ($endDateTime->lessThan($startDateTime)) {
+            return redirect()->route('admin.vehicle_bookings.edit',$vehicleBooking)
+                ->with('warning_message', 'To date and time should be greater than start date.')
+                ->with('end_date', $request->end_date);
+        }
 
+        if (empty($no_of_hours)) {
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $updateData['no_of_hours'] = (int) $no_of_hours;
