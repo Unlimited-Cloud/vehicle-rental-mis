@@ -29,7 +29,14 @@ class VehicleBooking extends Model
         'approx_fuel_litre',
         'start_time',
         'end_time',
-        'no_of_hours'
+        'no_of_hours',
+        'rate_per_day',
+        'sub_total',
+        'tax_amount_type',
+        'tax',
+        'discount_amount_type',
+        'discount',
+        'payment_status'
     ];
 
     protected $dates = ['start_date', 'end_date'];
