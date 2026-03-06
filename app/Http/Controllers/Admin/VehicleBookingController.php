@@ -3,20 +3,30 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\VehicleBooking;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\Customer;
 use App\Models\User;
+use App\Models\Payment;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
 use App\Helpers\NepaliDateHelper;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class VehicleBookingController extends Controller
 {
+
+    public function __construct()
+    {
+
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -119,8 +129,24 @@ class VehicleBookingController extends Controller
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $addData['no_of_hours'] = (int) $no_of_hours;
+        $addData['rate_per_day'] = $request->rate_per_day;
+        $addData['sub_total'] = $request->sub_total;
+        $addData['tax_amount_type'] = $request->tax_amount_type;
+        $addData['tax'] = $request->tax;
+        $addData['discount_amount_type'] = $request->discount_amount_type;
+        $addData['discount'] = $request->discount;
+        $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
         
-        VehicleBooking::create($addData);
+        $vehicleBooking = VehicleBooking::create($addData);
+        $vehicleBookingId = $vehicleBooking->id;
+
+        $paymentData['vehicle_booking_id'] = $vehicleBookingId;
+        $paymentData['amount'] = $request->paid_amount;
+        $paymentData['payment_method'] = $request->payment_method;
+        $paymentData['transaction_reference'] = (string) Str::uuid();
+        $paymentData['payment_date'] = $request->payment_date.' '.$request->payment_time;
+        $paymentData['notes'] = $request->payment_note;
+        Payment::create($paymentData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success_message', 'Booking created successfully.');
@@ -141,7 +167,18 @@ class VehicleBookingController extends Controller
         // Customers dropdown
         $customers = Customer::all();
 
-        $booking = $vehicleBooking;
+        $booking = VehicleBooking::select(
+            'vehicle_bookings.*',
+            'payments.amount as paid_amount',
+            'payments.payment_method as payment_method',
+            'payments.transaction_reference',
+            'payments.payment_date',
+            'payments.notes as payment_note',
+            'payments.deleted_by'
+        )
+        ->leftJoin('payments','payments.vehicle_booking_id','=','vehicle_bookings.id')
+        ->where('vehicle_bookings.id',$vehicleBooking->id)
+        ->first();
 
         return view(
             'layouts.admin.vehicles_booking.create',
@@ -169,7 +206,23 @@ class VehicleBookingController extends Controller
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $updateData['no_of_hours'] = (int) $no_of_hours;
+        $updateData['rate_per_day'] = $request->rate_per_day;
+        $updateData['sub_total'] = $request->sub_total;
+        $updateData['tax_amount_type'] = $request->tax_amount_type;
+        $updateData['tax'] = $request->tax;
+        $updateData['discount_amount_type'] = $request->discount_amount_type;
+        $updateData['discount'] = $request->discount;
+        $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
         $vehicleBooking->update($updateData);
+
+        $vehicleBookingId = $vehicleBooking->id;
+
+        $paymentData['vehicle_booking_id'] = $vehicleBookingId;
+        $paymentData['amount'] = $request->paid_amount;
+        $paymentData['payment_method'] = $request->payment_method;
+        $paymentData['payment_date'] = $request->payment_date.' '.$request->payment_time;
+        $paymentData['notes'] = $request->payment_note;
+        Payment::where('vehicle_booking_id',$vehicleBookingId)->update($paymentData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
