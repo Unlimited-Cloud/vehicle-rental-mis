@@ -360,7 +360,7 @@
                     </div>
                     <div class="col-md-3">
                         <div class="form-group">
-                            <label>Payment Method {{ $booking->payment_method }}</label>
+                            <label>Payment Method</label>
                             <select name="payment_method" class="form-control">
                                 <option value="">--Select Payment Method</option>
                                 <option value="cash"
