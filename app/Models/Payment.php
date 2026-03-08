@@ -17,4 +17,9 @@ class Payment extends Model
         'deleted_by',
         'deleted_at'
     ];
+
+    public function vehiclepayment()
+    {
+        return $this->belongsTo(VehicleBooking::class);
+    }
 }

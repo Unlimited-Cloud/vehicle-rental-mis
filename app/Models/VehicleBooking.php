@@ -59,4 +59,9 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
+    }
 }
