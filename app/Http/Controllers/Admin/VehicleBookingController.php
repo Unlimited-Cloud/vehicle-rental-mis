@@ -22,10 +22,7 @@ use Illuminate\Support\Str;
 class VehicleBookingController extends Controller
 {
 
-    public function __construct()
-    {
-
-    }
+    public function __construct() {}
 
     /**
      * Display a listing of the resource.
@@ -35,6 +32,7 @@ class VehicleBookingController extends Controller
         $query = VehicleBooking::with([
             'vehicle',
             'customer',
+            'payment',
             'driver.user'
         ]);
 
@@ -136,7 +134,7 @@ class VehicleBookingController extends Controller
         $addData['discount_amount_type'] = $request->discount_amount_type;
         $addData['discount'] = $request->discount;
         $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
-        
+
         $vehicleBooking = VehicleBooking::create($addData);
         $vehicleBookingId = $vehicleBooking->id;
 
@@ -144,7 +142,7 @@ class VehicleBookingController extends Controller
         $paymentData['amount'] = $request->paid_amount;
         $paymentData['payment_method'] = $request->payment_method;
         $paymentData['transaction_reference'] = (string) Str::uuid();
-        $paymentData['payment_date'] = $request->payment_date.' '.$request->payment_time;
+        $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
         Payment::create($paymentData);
 
@@ -176,9 +174,9 @@ class VehicleBookingController extends Controller
             'payments.notes as payment_note',
             'payments.deleted_by'
         )
-        ->leftJoin('payments','payments.vehicle_booking_id','=','vehicle_bookings.id')
-        ->where('vehicle_bookings.id',$vehicleBooking->id)
-        ->first();
+            ->leftJoin('payments', 'payments.vehicle_booking_id', '=', 'vehicle_bookings.id')
+            ->where('vehicle_bookings.id', $vehicleBooking->id)
+            ->first();
 
         return view(
             'layouts.admin.vehicles_booking.create',
@@ -197,7 +195,7 @@ class VehicleBookingController extends Controller
         $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
         // Check if end is before start
         if ($endDateTime->lessThan($startDateTime)) {
-            return redirect()->route('admin.vehicle_bookings.edit',$vehicleBooking)
+            return redirect()->route('admin.vehicle_bookings.edit', $vehicleBooking)
                 ->with('warning_message', 'To date and time should be greater than start date.')
                 ->with('end_date', $request->end_date);
         }
@@ -220,9 +218,9 @@ class VehicleBookingController extends Controller
         $paymentData['vehicle_booking_id'] = $vehicleBookingId;
         $paymentData['amount'] = $request->paid_amount;
         $paymentData['payment_method'] = $request->payment_method;
-        $paymentData['payment_date'] = $request->payment_date.' '.$request->payment_time;
+        $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
-        Payment::where('vehicle_booking_id',$vehicleBookingId)->update($paymentData);
+        Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
