@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | {!! env('APP_NAME') !!}</title>
-  <!-- <title>{{ config('app.name', 'Laravel') }}</title> -->
+  <title>{!! env('APP_NAME') !!}</title>
+  <!-- <title>{{ config('app.name', 'Rental') }}</title> -->
   @if(!empty($setting->img_fav))
   <link rel="icon" type="image/x-icon" href="{{ asset('uploads/settings/'.$setting->img_fav) }}">
   @endif
