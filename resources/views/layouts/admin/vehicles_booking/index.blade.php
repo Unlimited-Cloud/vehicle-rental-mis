@@ -94,7 +94,7 @@
 <!-- ================= LIST VIEW ================= -->
 <div id="tableView">
     <div class="table-responsive">
-        <table class="table table-bordered table-striped">
+        <table id="dataTable" class="table table-bordered table-striped show-search-bar">
             <thead>
                 <tr>
                     <th>#</th>
@@ -1051,3 +1051,19 @@ function deleteBooking(id) {
 }
 </script>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "paging": true,
+        "lengthChange": true,
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true
+    });
+});
+</script>
+@endpush
