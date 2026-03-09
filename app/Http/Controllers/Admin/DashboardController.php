@@ -46,8 +46,8 @@ class DashboardController extends Controller
 
         // Recent bookings for dashboard display
         $recentBookings = VehicleBooking::with(['vehicle', 'customer'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->orderBy('start_date', 'desc')
+            ->limit(6)
             ->get();
 
         return view('layouts.admin.dashboard', compact(
