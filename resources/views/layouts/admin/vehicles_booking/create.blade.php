@@ -388,14 +388,17 @@
                     </div>
                 </div>
                 @php
+                $payment_date_date = date('Y-m-d');
+                $payment_date_time = date('H:i');
                 if(isset($booking)){
                     $payment_date = $booking->payment_date;
                     $payment_date_implode = explode(' ',$payment_date);
-                    $payment_date_date = $payment_date_implode[0];
-                    $payment_date_time = $payment_date_implode[1];
-                }else{
-                    $payment_date_date = date('Y-m-d');
-                    $payment_date_time = date('H:i');
+
+                    if(!empty($payment_date_implode)){
+                        $payment_date_date = $payment_date_implode[0];
+                        $payment_date_time = isset($payment_date_implode[1]) ? $payment_date_implode[1]:$payment_date_time ;
+                    }
+                  
                 }
                 @endphp 
                 <div class="row">
