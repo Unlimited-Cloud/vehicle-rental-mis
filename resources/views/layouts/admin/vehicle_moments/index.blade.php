@@ -22,11 +22,7 @@
     <h3 class="card-title">
         <i class="fas fa-history"></i> All Vehicle Moments
     </h3>
-    <div class="card-tools">
-        <a href="{{ route('admin.vehicle_moments.create') }}" class="btn btn-sm btn-primary">
-            <i class="fa fa-plus"></i> Add New Moment
-        </a>
-    </div>
+   
 </div>
 
 <div class="card-body">

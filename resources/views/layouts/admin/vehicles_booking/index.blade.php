@@ -141,19 +141,31 @@
                             </span>
                         </td>
                         <td>
-                            <a href="{{ route('admin.vehicle_bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <a href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}" 
-                                class="btn btn-sm btn-success">
-                                <i class="fas fa-road"></i> Moments
-                            </a>
-                            <button class="btn btn-sm btn-danger" onclick="deleteBooking({{ $booking->id }})">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                                    Actions
+                                </button>
+
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ route('admin.vehicle_bookings.show', $booking->id) }}">
+                                        <i class="fas fa-eye text-info mr-2"></i> View
+                                    </a>
+
+                                    <a class="dropdown-item" href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}">
+                                        <i class="fas fa-edit text-primary mr-2"></i> Edit
+                                    </a>
+
+                                    <a class="dropdown-item" href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}">
+                                        <i class="fas fa-road text-success mr-2"></i> Add Moment
+                                    </a>
+
+                                    <div class="dropdown-divider"></div>
+
+                                    <button class="dropdown-item text-danger" onclick="deleteBooking({{ $booking->id }})">
+                                        <i class="fas fa-trash mr-2"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @empty

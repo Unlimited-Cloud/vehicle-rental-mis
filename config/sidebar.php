@@ -23,18 +23,33 @@ return [
         'permission' => '',
     ],
 
+
     [
         'title' => 'Vehicles',
         'icon' => 'fas fa-car',
-        'route' => 'admin.vehicles.index',
-        'permission' => '',
+        'permission' => null, // parent menu; show if any child visible
+        'children' => [
+            [
+                'title' => 'Vehicles',
+                'icon' => 'fas fa-car',
+                'route' => 'admin.vehicles.index',
+                'permission' => '',
+            ],
+            [
+                'title' => 'Vehicle Bookings',
+                'icon' => 'fas fa-calendar-alt',
+                'route' => 'admin.vehicle_bookings.index',
+                'permission' => '',
+            ],
+            [
+                'title' => 'Vehicle Moments',
+                'icon' => 'fas fa-camera',
+                'route' => 'admin.vehicle_moments.index',
+                'permission' => '',
+            ],
+        ],
     ],
-    // [
-    //     'title' => 'Vehicle Details',
-    //     'icon' => 'fas fa-info-circle',
-    //     'route' => 'admin.vehicle_details.index',
-    //     'permission' => '',
-    // ],
+
 
     [
         'title' => 'Crew Profiles',
@@ -44,13 +59,6 @@ return [
     ],
 
 
-
-    [
-        'title' => 'Vehicle Bookings',
-        'icon' => 'fas fa-calendar-alt',
-        'route' => 'admin.vehicle_bookings.index',
-        'permission' => '',
-    ],
 
     [
         'title' => 'GPS',
@@ -86,12 +94,7 @@ return [
         'permission' => '',
     ],
 
-    [
-        'title' => 'Vehicle Moments',
-        'icon' => 'fas fa-car',
-        'route' => 'admin.vehicle_moments.index',
-        'permission' => '',
-    ],
+
 
 
 
