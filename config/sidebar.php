@@ -79,6 +79,20 @@ return [
         ],
     ],
 
+    [
+        'title' => 'Questionnaires',
+        'icon' => 'fas fa-question-circle',
+        'route' => 'admin.questionnaires.index',
+        'permission' => '',
+    ],
+
+    [
+        'title' => 'Vehicle Moments',
+        'icon' => 'fas fa-car',
+        'route' => 'admin.vehicle_moments.index',
+        'permission' => '',
+    ],
+
 
 
 ];
