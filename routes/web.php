@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\VehiclePermitController;
 use App\Http\Controllers\Admin\VehicleRepairController;
 use App\Http\Controllers\Admin\VehicleServiceController;
 use App\Http\Controllers\Admin\VehicleTyreChangeController;
+use App\Http\Controllers\Admin\QuestionnaireController;
+use App\Http\Controllers\Admin\VehicleMomentController;
 
 
 
@@ -75,6 +77,10 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
+
+
+    Route::resource('questionnaires', QuestionnaireController::class);
+    Route::resource('vehicle_moments', VehicleMomentController::class);
 
 
     Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');

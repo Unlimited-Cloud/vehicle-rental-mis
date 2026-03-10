@@ -45,6 +45,7 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
     public function driver()
     {
         return $this->belongsTo(CrewProfile::class, 'driver_id');
@@ -59,7 +60,6 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
-
     public function payment()
     {
         return $this->hasOne(Payment::class);

@@ -147,6 +147,10 @@
                             <a href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <a href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}" 
+                                class="btn btn-sm btn-success">
+                                <i class="fas fa-road"></i> Moments
+                            </a>
                             <button class="btn btn-sm btn-danger" onclick="deleteBooking({{ $booking->id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
