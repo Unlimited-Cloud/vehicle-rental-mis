@@ -30,7 +30,7 @@ class VehicleBookingController extends Controller
      */
     public function index(Request $request)
     {
-        Gate::authorize('index_vehicles_vehicle_bookings');
+        Gate::authorize('index_vehicle_bookings');
         $query = VehicleBooking::with([
             'vehicle',
             'customer',
@@ -71,7 +71,7 @@ class VehicleBookingController extends Controller
      */
     public function create(Request $request)
     {
-        Gate::authorize('create_vehicles_vehicle_bookings');
+        Gate::authorize('create_vehicle_bookings');
         $vehicles = Vehicle::all();
         $drivers = CrewProfile::whereHas('user', function ($q) {
             $q->where('role', 'driver');
@@ -91,7 +91,7 @@ class VehicleBookingController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('create_vehicles_vehicle_bookings');
+        Gate::authorize('create_vehicle_bookings');
         $request->validate([
             'vehicle_id' => 'required',
             'customer_id' => 'required|exists:customers,id',
@@ -156,7 +156,7 @@ class VehicleBookingController extends Controller
 
     public function edit(VehicleBooking $vehicleBooking)
     {
-        Gate::authorize('update_vehicles_vehicle_bookings');
+        Gate::authorize('update_vehicle_bookings');
         $vehicles = Vehicle::all();
         $drivers = CrewProfile::whereHas('user', function ($q) {
             $q->where('role', 'driver');
@@ -191,7 +191,7 @@ class VehicleBookingController extends Controller
 
     public function update(Request $request, VehicleBooking $vehicleBooking)
     {
-        Gate::authorize('update_vehicles_vehicle_bookings');
+        Gate::authorize('update_vehicle_bookings');
         
         $updateData = $request->all();
         $updateData['start_time'] = $request->start_time;
@@ -235,7 +235,7 @@ class VehicleBookingController extends Controller
 
     public function show(VehicleBooking $vehicleBooking)
     {
-        Gate::authorize('view_vehicles_vehicle_bookings');
+        Gate::authorize('view_vehicle_bookings');
         $vehicleBooking->load([
             'vehicle',
             'customer',
@@ -251,7 +251,7 @@ class VehicleBookingController extends Controller
 
     public function destroy(VehicleBooking $vehicleBooking)
     {
-        Gate::authorize('delete_vehicles_vehicle_bookings');
+        Gate::authorize('delete_vehicle_bookings');
         try {
             $vehicleBooking->delete();
 

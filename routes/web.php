@@ -57,15 +57,24 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
             Route::delete('/delete/{id}', 'delete')->name('user_roles.delete');
         });
     });
+    Route::resource('vehicles', VehicleController::class);
+    Route::resource('users', UserController::class);
+    Route::resource('crew_profiles', CrewProfilesController::class);
+    Route::resource('vehicle_bookings', VehicleBookingController::class)
+        ->parameters([
+            'vehicle_bookings' => 'vehicle_booking'
+        ]);
+        Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
+        Route::resource('petrol_pumps', PetrolPumpController::class);
+        Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
     //Roles Route is here
     
-    Route::resource('vehicles', VehicleController::class);
-    Route::resource('users', UserController::class);
+    
     Route::resource('vehicle_details', VehicleDetailsController::class);
-    Route::resource('crew_profiles', CrewProfilesController::class);
+    
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
     Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
@@ -79,11 +88,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
 
-    Route::resource('vehicle_bookings', VehicleBookingController::class)
-        ->parameters([
-            'vehicle_bookings' => 'vehicle_booking'
-        ]);
-
     Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
         ->name('vehicles.set-active-tab');
 
@@ -91,19 +95,14 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle-services', VehicleServiceController::class);
     Route::resource('vehicle-repairs', VehicleRepairController::class);
     Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
-
     
-    Route::resource('petrol_pumps', PetrolPumpController::class);
-    Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
-
 
     Route::resource('questionnaires', QuestionnaireController::class);
     Route::resource('vehicle_moments', VehicleMomentController::class);
 
-
-    Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
+    
     Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');
     Route::get('/gpsdashboard/vehicle/{imei}', [GpsDashboardController::class, 'getVehicleDetails'])->name('gpsdashboard.vehicle.details');
     Route::get('/gpsdashboard/vehicle/{imei}/history', [GpsDashboardController::class, 'getVehicleHistory'])->name('gpsdashboard.vehicle.history');

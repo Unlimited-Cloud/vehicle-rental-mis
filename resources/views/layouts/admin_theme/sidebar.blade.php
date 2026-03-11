@@ -34,34 +34,45 @@
 
      <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-
+            
            @foreach ($menuItems as $item)
            {{-- @if(MenuHelper::hasPermission($item)) --}}
            @if(true)
            @if(isset($item['children']))
-           <li class="nav-item has-treeview {{ MenuHelper::isActive($item) ? 'menu-open' : '' }}">
-              <a href="#" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
-                 <i class="nav-icon {{ $item['icon'] }}"></i>
-                 <p>
-                    {{ $item['title'] }}
-                    <i class="right fas fa-angle-right"></i>
-                 </p>
-              </a>
-              <ul class="nav nav-treeview">
-                 @foreach($item['children'] as $child)
-                 @if(auth()->user()->can($child['permission']))
-                 {{-- @can($child['permission']) --}}
-                 <li class="nav-item" style="padding-left: 7px;">
-                    <a href="{{ route($child['route']) }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
-                       <i class="nav-icon {{ $child['icon'] }}"></i>
-                       <p>{{ $child['title'] }}</p>
-                    </a>
-                 </li>
-                 @endif
-                 {{-- @endcan --}}
-                 @endforeach
-              </ul>
-           </li>
+           
+           @php
+           $show_sub_module_count = '0';
+            foreach($item['children'] as $child){
+               if(auth()->user()->can($child['permission'])){
+                  $show_sub_module_count = $show_sub_module_count + 1;
+               }
+            }
+           @endphp
+           @if($show_sub_module_count > 0)
+            <li class="nav-item has-treeview {{ MenuHelper::isActive($item) ? 'menu-open' : '' }}">
+               <a href="#" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
+                  <i class="nav-icon {{ $item['icon'] }}"></i>
+                  <p>
+                     {{ $item['title'] }}
+                     <i class="right fas fa-angle-right"></i>
+                  </p>
+               </a>
+               <ul class="nav nav-treeview">
+                  @foreach($item['children'] as $child)
+                  @if(auth()->user()->can($child['permission']))
+                  {{-- @can($child['permission']) --}}
+                  <li class="nav-item" style="padding-left: 7px;">
+                     <a href="{{ route($child['route']) }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
+                        <i class="nav-icon {{ $child['icon'] }}"></i>
+                        <p>{{ $child['title'] }}</p>
+                     </a>
+                  </li>
+                  @endif
+                  {{-- @endcan --}}
+                  @endforeach
+               </ul>
+            </li>
+            @endif
            @else
            @if(auth()->user()->can($item['permission']))
            <li class="nav-item">

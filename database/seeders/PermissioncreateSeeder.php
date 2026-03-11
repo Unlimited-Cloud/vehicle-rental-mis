@@ -15,9 +15,9 @@ class PermissioncreateSeeder extends Seeder
     {
         try{
             $permissions = ["index","create","read","update","delete"];
-            $module_name = 'customers';
-            $submodule_name = 'customers';
-            $module_id = 21;
+            $module_name = 'vehicles_vehicle_movement';
+            $submodule_name = 'vehicle_movement';
+            $module_id = 22;
             foreach($permissions as $permission){
                 $addData = [
                     'name' => $permission.'_'.$module_name,

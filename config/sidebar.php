@@ -41,19 +41,19 @@ return [
                 'title' => 'Vehicles',
                 'icon' => 'fas fa-car',
                 'route' => 'admin.vehicles.index',
-                'permission' => '',
+                'permission' => 'index_vehicles',
             ],
             [
                 'title' => 'Vehicle Bookings',
                 'icon' => 'fas fa-calendar-alt',
                 'route' => 'admin.vehicle_bookings.index',
-                'permission' => '',
+                'permission' => 'index_vehicle_bookings',
             ],
             [
                 'title' => 'Vehicle Moments',
                 'icon' => 'fas fa-camera',
                 'route' => 'admin.vehicle_moments.index',
-                'permission' => '',
+                'permission' => 'index_vehicles_vehicle_movement',
             ],
         ],
     ],
@@ -64,13 +64,6 @@ return [
         'icon' => 'fas fa-user-tie',
         'route' => 'admin.crew_profiles.index',
         'permission' => 'index_crew_profiles',
-    ],
-
-    [
-        'title' => 'Vehicle Bookings',
-        'icon' => 'fas fa-calendar-alt',
-        'route' => 'admin.vehicle_bookings.index',
-        'permission' => 'index_vehicle_bookings',
     ],
 
     [
