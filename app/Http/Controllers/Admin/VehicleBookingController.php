@@ -3,18 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\VehicleBooking;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Payment;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
+use App\Helpers\NepaliDateHelper;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class VehicleBookingController extends Controller
 {
+
+    public function __construct() {}
+
     /**
      * Display a listing of the resource.
      */
@@ -24,6 +34,7 @@ class VehicleBookingController extends Controller
         $query = VehicleBooking::with([
             'vehicle',
             'customer',
+            'payment',
             'driver.user'
         ]);
 
@@ -102,10 +113,45 @@ class VehicleBookingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        VehicleBooking::create($request->all());
+        $addData = $request->all();
+        $addData['start_time'] = $request->start_time;
+        $addData['end_time'] = $request->end_time;
+        $no_of_hours = $request->no_of_hours;
+
+        $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+        $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+        // Check if end is before start
+        if ($endDateTime->lessThan($startDateTime)) {
+            return redirect()->route('admin.vehicle_bookings.create')
+                ->with('warning_message', 'To date and time should be greater than start date.')
+                ->with('end_date', $request->end_date);
+        }
+
+        if (empty($no_of_hours)) {
+            $no_of_hours = $startDateTime->diffInHours($endDateTime);
+        }
+        $addData['no_of_hours'] = (int) $no_of_hours;
+        $addData['rate_per_day'] = $request->rate_per_day;
+        $addData['sub_total'] = $request->sub_total;
+        $addData['tax_amount_type'] = $request->tax_amount_type;
+        $addData['tax'] = $request->tax;
+        $addData['discount_amount_type'] = $request->discount_amount_type;
+        $addData['discount'] = $request->discount;
+        $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
+
+        $vehicleBooking = VehicleBooking::create($addData);
+        $vehicleBookingId = $vehicleBooking->id;
+
+        $paymentData['vehicle_booking_id'] = $vehicleBookingId;
+        $paymentData['amount'] = $request->paid_amount;
+        $paymentData['payment_method'] = $request->payment_method;
+        $paymentData['transaction_reference'] = (string) Str::uuid();
+        $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
+        $paymentData['notes'] = $request->payment_note;
+        Payment::create($paymentData);
 
         return redirect()->route('admin.vehicle_bookings.index')
-            ->with('success', 'Booking created successfully.');
+            ->with('success_message', 'Booking created successfully.');
     }
 
     public function edit(VehicleBooking $vehicleBooking)
@@ -124,7 +170,18 @@ class VehicleBookingController extends Controller
         // Customers dropdown
         $customers = Customer::all();
 
-        $booking = $vehicleBooking;
+        $booking = VehicleBooking::select(
+            'vehicle_bookings.*',
+            'payments.amount as paid_amount',
+            'payments.payment_method as payment_method',
+            'payments.transaction_reference',
+            'payments.payment_date',
+            'payments.notes as payment_note',
+            'payments.deleted_by'
+        )
+            ->leftJoin('payments', 'payments.vehicle_booking_id', '=', 'vehicle_bookings.id')
+            ->where('vehicle_bookings.id', $vehicleBooking->id)
+            ->first();
 
         return view(
             'layouts.admin.vehicles_booking.create',
@@ -135,7 +192,42 @@ class VehicleBookingController extends Controller
     public function update(Request $request, VehicleBooking $vehicleBooking)
     {
         Gate::authorize('update_vehicles_vehicle_bookings');
-        $vehicleBooking->update($request->all());
+        
+        $updateData = $request->all();
+        $updateData['start_time'] = $request->start_time;
+        $updateData['end_time'] = $request->end_time;
+        $no_of_hours = $request->no_of_hours;
+
+        $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+        $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
+        // Check if end is before start
+        if ($endDateTime->lessThan($startDateTime)) {
+            return redirect()->route('admin.vehicle_bookings.edit', $vehicleBooking)
+                ->with('warning_message', 'To date and time should be greater than start date.')
+                ->with('end_date', $request->end_date);
+        }
+
+        if (empty($no_of_hours)) {
+            $no_of_hours = $startDateTime->diffInHours($endDateTime);
+        }
+        $updateData['no_of_hours'] = (int) $no_of_hours;
+        $updateData['rate_per_day'] = $request->rate_per_day;
+        $updateData['sub_total'] = $request->sub_total;
+        $updateData['tax_amount_type'] = $request->tax_amount_type;
+        $updateData['tax'] = $request->tax;
+        $updateData['discount_amount_type'] = $request->discount_amount_type;
+        $updateData['discount'] = $request->discount;
+        $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
+        $vehicleBooking->update($updateData);
+
+        $vehicleBookingId = $vehicleBooking->id;
+
+        $paymentData['vehicle_booking_id'] = $vehicleBookingId;
+        $paymentData['amount'] = $request->paid_amount;
+        $paymentData['payment_method'] = $request->payment_method;
+        $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
+        $paymentData['notes'] = $request->payment_note;
+        Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
@@ -265,5 +357,51 @@ class VehicleBookingController extends Controller
         }
 
         return response()->json($events);
+    }
+
+    public function convertAdToBs(Request $request)
+    {
+        $date = $request->date;
+        $cacheKey = 'nepali_date_' . $date;
+
+        $converted = Cache::remember($cacheKey, now()->addDays(30), function () use ($date) {
+            return NepaliDateHelper::convertToNepali($date);
+        });
+
+        return response()->json([
+            'success' => true,
+            'nepali'  => $converted['nepali'],
+            'year'    => $converted['year'],
+            'month'   => $converted['month'],
+            'day'     => $converted['day'],
+        ]);
+    }
+
+    public function convertMultipleAdToBs(Request $request)
+    {
+        $results = [];
+
+        foreach ($request->dates as $date) {
+            $cacheKey = 'nepali_date_' . $date;
+
+            $converted = Cache::remember($cacheKey, now()->addDays(30), function () use ($date) {
+                return NepaliDateHelper::convertToNepali($date);
+            });
+
+            $results[$date] = [
+                'day'   => $converted['day'],
+                'month' => $converted['month'],
+                'year'  => $converted['year'],
+            ];
+
+            //cache
+
+
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $results
+        ]);
     }
 }

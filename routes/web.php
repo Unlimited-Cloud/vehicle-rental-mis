@@ -18,6 +18,9 @@ use App\Http\Controllers\Admin\VehicleRepairController;
 use App\Http\Controllers\Admin\VehicleServiceController;
 use App\Http\Controllers\Admin\VehicleTyreChangeController;
 use App\Http\Controllers\Admin\RolesController;
+use App\Http\Controllers\Admin\QuestionnaireController;
+use App\Http\Controllers\Admin\VehicleMomentController;
+
 
 
 // Route::get('/', function () {
@@ -65,6 +68,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
+    Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
+        ->name('vehicle_bookings.convert_multiple_ad_to_bs');
+    Route::post('vehicle_bookings/convert-ad-to-bs', [VehicleBookingController::class, 'convertAdtoBs'])
+        ->name('vehicle_bookings.convert_ad_to_bs');
+
     Route::get('vehicle_bookings/export', [VehicleBookingController::class, 'export'])
         ->name('vehicle_bookings.export');
 
@@ -89,6 +97,10 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
+
+
+    Route::resource('questionnaires', QuestionnaireController::class);
+    Route::resource('vehicle_moments', VehicleMomentController::class);
 
 
     Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');

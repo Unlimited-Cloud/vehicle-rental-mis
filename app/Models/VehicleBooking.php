@@ -27,6 +27,16 @@ class VehicleBooking extends Model
         'start_km',
         'end_km',
         'approx_fuel_litre',
+        'start_time',
+        'end_time',
+        'no_of_hours',
+        'rate_per_day',
+        'sub_total',
+        'tax_amount_type',
+        'tax',
+        'discount_amount_type',
+        'discount',
+        'payment_status'
     ];
 
     protected $dates = ['start_date', 'end_date'];
@@ -35,6 +45,7 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
     public function driver()
     {
         return $this->belongsTo(CrewProfile::class, 'driver_id');
@@ -48,5 +59,9 @@ class VehicleBooking extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
+    }
+    public function payment()
+    {
+        return $this->hasOne(Payment::class);
     }
 }

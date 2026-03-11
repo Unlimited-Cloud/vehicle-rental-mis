@@ -4,8 +4,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard | {!! env('APP_NAME') !!}</title>
-  <!-- <title>{{ config('app.name', 'Laravel') }}</title> -->
+  <title>{!! env('APP_NAME') !!}</title>
+  <!-- <title>{{ config('app.name', 'Rental') }}</title> -->
   @if(!empty($setting->img_fav))
   <link rel="icon" type="image/x-icon" href="{{ asset('uploads/settings/'.$setting->img_fav) }}">
   @endif
@@ -31,6 +31,7 @@
   <!-- Swal -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.css">
 
+  <!-- @vite(['resources/js/app.js']) -->
 
 </head>
 
@@ -93,6 +94,7 @@
   <script src="{{ asset('adminlte/plugins/summernote/summernote-bs4.min.js') }}"></script>
   <!-- Swal -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/1.1.3/sweetalert.min.js"></script>
+  
 
   @yield('footer_js')
 

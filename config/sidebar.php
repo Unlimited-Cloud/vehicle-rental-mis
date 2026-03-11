@@ -30,18 +30,34 @@ return [
         'permission' => 'index_customers',
     ],
 
+
     [
         'title' => 'Vehicles',
         'icon' => 'fas fa-car',
         'route' => 'admin.vehicles.index',
-        'permission' => 'index_vehicles',
+        'permission' => '',
+        'children' => [
+            [
+                'title' => 'Vehicles',
+                'icon' => 'fas fa-car',
+                'route' => 'admin.vehicles.index',
+                'permission' => '',
+            ],
+            [
+                'title' => 'Vehicle Bookings',
+                'icon' => 'fas fa-calendar-alt',
+                'route' => 'admin.vehicle_bookings.index',
+                'permission' => '',
+            ],
+            [
+                'title' => 'Vehicle Moments',
+                'icon' => 'fas fa-camera',
+                'route' => 'admin.vehicle_moments.index',
+                'permission' => '',
+            ],
+        ],
     ],
-    // [
-    //     'title' => 'Vehicle Details',
-    //     'icon' => 'fas fa-info-circle',
-    //     'route' => 'admin.vehicle_details.index',
-    //     'permission' => '',
-    // ],
+
 
     [
         'title' => 'Crew Profiles',
@@ -49,8 +65,6 @@ return [
         'route' => 'admin.crew_profiles.index',
         'permission' => 'index_crew_profiles',
     ],
-
-
 
     [
         'title' => 'Vehicle Bookings',
@@ -85,6 +99,15 @@ return [
             ],
         ],
     ],
+
+    [
+        'title' => 'Questionnaires',
+        'icon' => 'fas fa-question-circle',
+        'route' => 'admin.questionnaires.index',
+        'permission' => '',
+    ],
+
+
 
 
 
