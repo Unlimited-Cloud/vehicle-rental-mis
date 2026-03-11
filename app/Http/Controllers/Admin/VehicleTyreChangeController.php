@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\VehicleTyreChange;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class VehicleTyreChangeController extends Controller
 {

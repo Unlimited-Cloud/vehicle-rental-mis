@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use App\Models\VehicleService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class VehicleServiceController extends Controller
 {

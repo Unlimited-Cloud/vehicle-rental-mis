@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Vehicle;
 use App\Models\User;
 use App\Models\VehicleAssignment;
+use Illuminate\Support\Facades\Gate;
 
 class VehicleAssignmentController extends Controller
 {

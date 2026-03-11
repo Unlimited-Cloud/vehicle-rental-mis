@@ -10,11 +10,13 @@ use App\Models\CrewProfile;
 use App\Models\User;
 use App\Models\PetrolPump;
 use App\Models\VehicleBooking;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        Gate::authorize('index_dashboard');
         // Vehicle counts
         $totalVehicles = Vehicle::count();
         $availableVehicles = Vehicle::where('status', 1)->count();

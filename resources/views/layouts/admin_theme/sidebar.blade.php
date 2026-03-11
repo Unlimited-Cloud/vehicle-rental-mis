@@ -49,6 +49,7 @@
               </a>
               <ul class="nav nav-treeview">
                  @foreach($item['children'] as $child)
+                 @if(auth()->user()->can($child['permission']))
                  {{-- @can($child['permission']) --}}
                  <li class="nav-item" style="padding-left: 7px;">
                     <a href="{{ route($child['route']) }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
@@ -56,17 +57,20 @@
                        <p>{{ $child['title'] }}</p>
                     </a>
                  </li>
+                 @endif
                  {{-- @endcan --}}
                  @endforeach
               </ul>
            </li>
            @else
+           @if(auth()->user()->can($item['permission']))
            <li class="nav-item">
               <a href="{{ route($item['route']) }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                  <i class="nav-icon {{ $item['icon'] }}"></i>
                  <p>{{ $item['title'] }}</p>
               </a>
            </li>
+           @endif
            @endif
            @endif
            @endforeach

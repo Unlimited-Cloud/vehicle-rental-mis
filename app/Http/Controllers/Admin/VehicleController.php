@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class VehicleController extends Controller
 {
@@ -13,6 +14,7 @@ class VehicleController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_vehicles_vehicles');
         $vehicles = Vehicle::latest()->get();
         return view('layouts.admin.vehicles.index', compact('vehicles'));
     }
@@ -23,11 +25,13 @@ class VehicleController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_vehicles_vehicles');
         return view('layouts.admin.vehicles.create');
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create_vehicles_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
             'brand' => 'required',
@@ -92,20 +96,23 @@ class VehicleController extends Controller
             ->with('success', 'Vehicle Created Successfully');
     }
 
-    public function edit(Vehicle $vehicle)
-    {
-        return view('layouts.admin.vehicles.create', compact('vehicle'));
-    }
-
     public function show(Vehicle $vehicle)
     {
+        Gate::authorize('view_vehicles_vehicles');
         $vehicle->load(['permits', 'services', 'repairs', 'tyreChanges']);
 
         return view('layouts.admin.vehicles.show', compact('vehicle'));
     }
 
+    public function edit(Vehicle $vehicle)
+    {
+        Gate::authorize('update_vehicles_vehicles');
+        return view('layouts.admin.vehicles.create', compact('vehicle'));
+    }
+
     public function update(Request $request, Vehicle $vehicle)
     {
+        Gate::authorize('update_vehicles_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
             'brand' => 'required',
@@ -179,6 +186,7 @@ class VehicleController extends Controller
      */
     public function destroy(Vehicle $vehicle)
     {
+        Gate::authorize('delete_vehicles_vehicles');
         $vehicle->delete();
 
         return redirect()->route('admin.vehicles.index')
