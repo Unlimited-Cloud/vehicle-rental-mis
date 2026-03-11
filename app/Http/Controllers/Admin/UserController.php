@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Gate;
 
 class UserController extends Controller
 {
@@ -14,6 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_users');
         $users = User::latest()->get();
         return view('layouts.admin.users.index', compact('users'));
     }
@@ -23,6 +25,7 @@ class UserController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_users');
         return view('layouts.admin.users.create');
     }
 
@@ -31,6 +34,7 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_users');
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -54,6 +58,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
+        Gate::authorize('update_users');
         return view('layouts.admin.users.create', compact('user'));
     }
 
@@ -62,6 +67,7 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        Gate::authorize('update_users');
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
@@ -90,6 +96,7 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        Gate::authorize('delete_users');
         $user->delete();
 
         return redirect()->route('admin.users.index')

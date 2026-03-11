@@ -13,11 +13,12 @@
             <button class="btn btn-outline-success btn-sm" onclick="showCalendar()">
                 <i class="fa fa-calendar"></i> Calendar View
             </button>
-
+            @if(auth()->user()->can('create_vehicles_vehicle_bookings'))
             <a href="{{ route('admin.vehicle_bookings.create') }}"
                class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> Add Booking
             </a>
+            @endif
 
             <a id="exportBtn"
                 href="{{ route('admin.vehicle_bookings.export') }}"

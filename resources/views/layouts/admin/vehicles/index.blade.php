@@ -19,12 +19,14 @@
                     <div class="card-body">
 
                         @include('layouts.admin_theme.alert')
+                        @if(auth()->user()->can('create_vehicles'))
                          <div class="d-flex justify-content-between align-items-center mb-3">
                             <a href="{{ route('admin.vehicles.create') }}" class="btn btn-sm btn-primary">
                                 <i class="fa fa-plus"></i> Add New Vehicle
                             </a>
                             
                         </div>
+                        @endif
 
                         <table id="dataTable" class="table table-bordered table-striped show-search-bar">
                             <thead>
@@ -75,10 +77,12 @@
                                     </td>
 
                                     <td>
+                                        @if(auth()->user()->can('update_vehicles'))
                                         <a href="{{ route('admin.vehicles.edit', $vehicle->id) }}"
                                            class="btn btn-primary btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        @endif
 
                                         {{-- <!-- Add Vehicle Details -->
                                         <a href="{{ route('admin.vehicle_details.create', ['vehicle_id' => $vehicle->id]) }}"
@@ -87,13 +91,14 @@
                                         </a> --}}
 
                                         <!-- Show Vehicle Details -->
-                                        {{-- @if($vehicle->vehicleDetail) --}}
+                                        @if(auth()->user()->can('read_vehicles'))
                                             <a href="{{ route('admin.vehicles.show', $vehicle->id) }}"
                                             class="btn btn-success btn-sm" title="View Vehicle Details">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                         @endif
                                         {{-- @endif --}}
-
+                                         @if(auth()->user()->can('delete_vehicles'))       
                                         <form action="{{ route('admin.vehicles.destroy', $vehicle->id) }}"
                                             method="POST"
                                             style="display:inline-block;"
@@ -105,6 +110,7 @@
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
+                                        @endif
                                     </td>
 
                                 </tr>
