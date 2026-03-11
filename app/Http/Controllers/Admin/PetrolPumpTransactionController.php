@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PetrolPumpTransaction;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Gate;
 
 use App\Exports\PetrolPumpTransactionExport;
 
@@ -20,6 +21,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('index_petrol_pumps_transactions');
         $query = PetrolPumpTransaction::with(['petrolPump', 'vehicle', 'customer']);
 
         if ($request->filled('petrol_pump_id')) {
@@ -60,6 +62,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function create(Request $request)
     {
+        Gate::authorize('create_petrol_pumps_transactions');
         $petrolPumps = PetrolPump::active()->get();
         $vehicles    = Vehicle::where('status', '1')->get();
         $petrol_pump_id = $request->input('petrol_pump_id');
@@ -84,6 +87,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_petrol_pumps_transactions');
         $validated = $request->validate([
             'petrol_pump_id' => 'required|exists:petrol_pumps,id',
             'vehicle_id' => 'nullable|exists:vehicles,id',
@@ -138,6 +142,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function show(PetrolPumpTransaction $petrolPumpTransaction)
     {
+        Gate::authorize('view_petrol_pumps_transactions');
         $petrolPumpTransaction->load('petrolPump');
         return view(
             'layouts.admin.petrol_pump_transactions.show',
@@ -150,6 +155,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function edit(PetrolPumpTransaction $petrolPumpTransaction)
     {
+        Gate::authorize('update_petrol_pumps_transactions');
         $petrolPumps = PetrolPump::active()->get();
         $vehicles    = Vehicle::where('status', '1')->get();
         return view(
@@ -163,6 +169,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function update(Request $request, PetrolPumpTransaction $petrolPumpTransaction)
     {
+        Gate::authorize('update_petrol_pumps_transactions');
         $validated = $request->validate([
             'petrol_pump_id' => 'required|exists:petrol_pumps,id',
             'vehicle_id' => 'nullable|exists:vehicles,id',
@@ -217,6 +224,7 @@ class PetrolPumpTransactionController extends Controller
      */
     public function destroy(PetrolPumpTransaction $petrolPumpTransaction)
     {
+        Gate::authorize('delete_petrol_pumps_transactions');
         DB::transaction(function () use ($petrolPumpTransaction) {
 
             if ($petrolPumpTransaction->status === 'completed') {

@@ -26,6 +26,7 @@ class CustomerController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_customers');
         return view('layouts.admin.customers.create');
     }
 
@@ -34,6 +35,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_customers');
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'first_name' => 'nullable|string|max:255',
@@ -88,6 +90,7 @@ class CustomerController extends Controller
      */
     public function show(Customer $customer)
     {
+        Gate::authorize('read_customers');
         return view('layouts.admin.customers.show', compact('customer'));
     }
 
@@ -96,6 +99,7 @@ class CustomerController extends Controller
      */
     public function edit(Customer $customer)
     {
+        Gate::authorize('update_customers');
         return view('layouts.admin.customers.create', compact('customer'));
     }
 
@@ -104,6 +108,7 @@ class CustomerController extends Controller
      */
     public function update(Request $request, Customer $customer)
     {
+        Gate::authorize('update_customers');
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'first_name' => 'nullable|string|max:255',
@@ -158,6 +163,7 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
+        Gate::authorize('delete_customers');
         $customer->delete();
 
         return redirect()->route('admin.customers.index')

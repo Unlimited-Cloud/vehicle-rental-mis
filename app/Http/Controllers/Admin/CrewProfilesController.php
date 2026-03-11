@@ -6,23 +6,27 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 
 class CrewProfilesController extends Controller
 {
     public function index()
     {
+        Gate::authorize('index_crew_profiles');
         $crew = CrewProfile::with('user')->latest()->get();
         return view('layouts.admin.crew_profiles.index', compact('crew'));
     }
 
     public function create()
     {
+        Gate::authorize('create_crew_profiles');
         $users = User::all();
         return view('layouts.admin.crew_profiles.create', compact('users'));
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create_crew_profiles');
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'role' => 'required|in:driver,helper',
@@ -49,12 +53,14 @@ class CrewProfilesController extends Controller
 
     public function edit(CrewProfile $crew_profile)
     {
+        Gate::authorize('update_crew_profiles');
         $users = User::all();
         return view('layouts.admin.crew_profiles.create', compact('crew_profile', 'users'));
     }
 
     public function update(Request $request, CrewProfile $crew_profile)
     {
+        Gate::authorize('update_crew_profiles');
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'role' => 'required|in:driver,helper',
@@ -82,12 +88,14 @@ class CrewProfilesController extends Controller
 
     public function show(CrewProfile $crew_profile)
     {
+        Gate::authorize('read_crew_profiles');
         $crew_profile->load('user');
         return view('layouts.admin.crew_profiles.show', compact('crew_profile'));
     }
 
     public function destroy(CrewProfile $crew_profile)
     {
+        Gate::authorize('delete_crew_profiles');
         $crew_profile->delete();
 
         return redirect()->route('admin.crew_profiles.index')

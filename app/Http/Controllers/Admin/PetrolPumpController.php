@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PetrolPump;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class PetrolPumpController extends Controller
 {
@@ -13,6 +14,7 @@ class PetrolPumpController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_petrol_pumps_petrol_pumps');
         $petrolPumps = PetrolPump::latest()->get();
         return view('layouts.admin.petrol_pumps.index', compact('petrolPumps'));
     }
@@ -22,6 +24,7 @@ class PetrolPumpController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_petrol_pumps_petrol_pumps');
         return view('layouts.admin.petrol_pumps.create');
     }
 
@@ -30,6 +33,7 @@ class PetrolPumpController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_petrol_pumps_petrol_pumps');
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'owner_name' => 'nullable|string|max:255',
@@ -63,6 +67,7 @@ class PetrolPumpController extends Controller
      */
     public function show(PetrolPump $petrolPump)
     {
+        Gate::authorize('read_petrol_pumps_petrol_pumps');
         $transactions = $petrolPump->transactions()->latest()->get();
         return view('layouts.admin.petrol_pumps.show', compact('petrolPump', 'transactions'));
     }
@@ -72,6 +77,7 @@ class PetrolPumpController extends Controller
      */
     public function edit(PetrolPump $petrolPump)
     {
+        Gate::authorize('update_petrol_pumps_petrol_pumps');
         return view('layouts.admin.petrol_pumps.create', compact('petrolPump'));
     }
 
@@ -80,6 +86,7 @@ class PetrolPumpController extends Controller
      */
     public function update(Request $request, PetrolPump $petrolPump)
     {
+        Gate::authorize('update_petrol_pumps_petrol_pumps');
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'owner_name' => 'nullable|string|max:255',
@@ -114,6 +121,7 @@ class PetrolPumpController extends Controller
      */
     public function destroy(PetrolPump $petrolPump)
     {
+        Gate::authorize('delete_petrol_pumps_petrol_pumps');
         // Check if there are any transactions
         if ($petrolPump->transactions()->count() > 0) {
             return redirect()->route('admin.petrol_pumps.index')

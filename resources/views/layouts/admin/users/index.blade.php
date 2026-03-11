@@ -20,11 +20,13 @@
 
 @include('layouts.admin_theme.alert')
 
+@if(auth()->user()->can('create_users'))
 <div class="d-flex justify-content-between align-items-center mb-3">
     <a href="{{ route('admin.users.create') }}" class="btn btn-sm btn-primary">
         <i class="fa fa-plus"></i> Add New User
     </a>
 </div>
+@endif
 
  <table id="dataTable" class="table table-bordered table-striped show-search-bar">
 <thead>
@@ -48,11 +50,13 @@
     <td>{{ $user->created_at->format('d M Y') }}</td>
 
     <td>
+        @if(auth()->user()->can('edit_users'))
         <a href="{{ route('admin.users.edit', $user->id) }}"
            class="btn btn-primary btn-sm">
             <i class="fas fa-edit"></i>
         </a>
-
+        @endif
+        @if(auth()->user()->can('delete_users'))
         <form action="{{ route('admin.users.destroy', $user->id) }}"
               method="POST"
               style="display:inline-block;"
@@ -64,6 +68,7 @@
                 <i class="fa fa-trash"></i>
             </button>
         </form>
+        @endif
     </td>
 </tr>
 @endforeach

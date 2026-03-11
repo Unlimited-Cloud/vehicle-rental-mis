@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Support\Facades\Gate;
 
 class RolesController extends Controller
 {
@@ -22,6 +22,7 @@ class RolesController extends Controller
 
     public function index()
     {
+        Gate::authorize('index_roles');
         return view('layouts.admin.roles.index', [
             'roles' => $this->userRepository->getAllRoles()
         ]);
@@ -30,7 +31,7 @@ class RolesController extends Controller
 
     public function add()
     {
-
+        Gate::authorize('create_roles');
        $allPer  =  $this->userRepository->getAllPermissions();
  
         return view('layouts.admin.roles.form', [
@@ -40,7 +41,7 @@ class RolesController extends Controller
 
     public function edit($id)
     {
-
+        Gate::authorize('update_roles');
         $roleswithPermissions = $this->userRepository->getRolesWithPermissions($id);
         
         return view('layouts.admin.roles.form', [
@@ -53,7 +54,7 @@ class RolesController extends Controller
 
     public function store(Request $request)
     {
-
+        Gate::authorize('create_roles');
 
         $code = 200;
         $message = "Roles created Successfully";
@@ -104,6 +105,7 @@ class RolesController extends Controller
 
     public function update(Request $request, $id)
     {
+        Gate::authorize('update_roles');
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'permissions' => 'nullable'
@@ -140,6 +142,7 @@ class RolesController extends Controller
 
     public function delete($id)
     {
+        Gate::authorize('delete_roles');
         dd($id);
     }
 }

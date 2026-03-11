@@ -42,13 +42,14 @@
             </div>
 
             <!-- Submit Button -->
+            
             <div class="mt-4">
+                
             <button type="submit" class="btn btn-primary">
         {{ isset($role) ? 'Update Role' : 'Add Role' }}
     </button>
 
             </div>
-
             @php
             // Group permissions by module_id
             $groupedPermissions = $permissions->groupBy('module_name');

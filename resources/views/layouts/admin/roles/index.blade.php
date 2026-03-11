@@ -43,12 +43,13 @@
                             </td>
 
                             <td class="px-2 text-center text-xs py-2">
-
+                                @if(auth()->user()->can('update_roles'))
                                 <div class="flex">
                                     <a href="{{ route('admin.user_roles.edit', $role->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                 </div>
+                                @endif
                             </td>
                         </tr>
                         @empty

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\GpsDService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 
 class GpsDashboardController extends Controller
 {
@@ -21,6 +22,7 @@ class GpsDashboardController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_gps');
         try {
             $vehicles = $this->gpsService->getAllVehicles();
 

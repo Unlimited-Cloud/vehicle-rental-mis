@@ -13,11 +13,12 @@
             <button class="btn btn-outline-success btn-sm" onclick="showCalendar()">
                 <i class="fa fa-calendar"></i> Calendar View
             </button>
-
+            @if(auth()->user()->can('create_vehicles_vehicle_bookings'))
             <a href="{{ route('admin.vehicle_bookings.create') }}"
                class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> Add Booking
             </a>
+            @endif
 
             <a id="exportBtn"
                 href="{{ route('admin.vehicle_bookings.export') }}"
@@ -135,15 +136,21 @@
                             </span>
                         </td>
                         <td>
+                            @if(auth()->user()->can('read_vehicles_vehicle_bookings'))
                             <a href="{{ route('admin.vehicle_bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            @endif
+                            @if(auth()->user()->can('update_vehicles_vehicle_bookings'))
                             <a href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            @endif
+                            @if(auth()->user()->can('delete_vehicles_vehicle_bookings'))
                             <button class="btn btn-sm btn-danger" onclick="deleteBooking({{ $booking->id }})">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            @endif
                         </td>
                     </tr>
                 @empty
