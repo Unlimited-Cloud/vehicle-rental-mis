@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class CustomerController extends Controller
 {
@@ -13,6 +15,7 @@ class CustomerController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_customers');
         $customers = Customer::latest()->get();
         return view('layouts.admin.customers.index', compact('customers'));
     }

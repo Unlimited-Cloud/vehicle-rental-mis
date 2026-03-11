@@ -6,28 +6,35 @@ return [
         'title' => 'Dashboard',
         'icon' => 'fas fa-tachometer-alt fa-spin',
         'route' => 'dashboard',
-        'permission' => '',
+        'permission' => 'index_dashboard',
     ],
 
     [
         'title' => 'Users',
         'icon' => 'fas fa-users',
         'route' => 'admin.users.index',
-        'permission' => '',
+        'permission' => 'index_users',
+    ],
+
+    [
+        'title' => 'Roles',
+        'icon' => 'fas fa-users',
+        'route' => 'admin.user_roles.index',
+        'permission' => 'index_roles',
     ],
 
     [
         'title' => 'Customers',
         'icon' => 'fas fa-user-tie',
         'route' => 'admin.customers.index',
-        'permission' => '',
+        'permission' => 'index_customers',
     ],
 
     [
         'title' => 'Vehicles',
         'icon' => 'fas fa-car',
         'route' => 'admin.vehicles.index',
-        'permission' => '',
+        'permission' => 'index_vehicles',
     ],
     // [
     //     'title' => 'Vehicle Details',
@@ -40,7 +47,7 @@ return [
         'title' => 'Crew Profiles',
         'icon' => 'fas fa-user-tie',
         'route' => 'admin.crew_profiles.index',
-        'permission' => '',
+        'permission' => 'index_crew_profiles',
     ],
 
 
@@ -49,14 +56,14 @@ return [
         'title' => 'Vehicle Bookings',
         'icon' => 'fas fa-calendar-alt',
         'route' => 'admin.vehicle_bookings.index',
-        'permission' => '',
+        'permission' => 'index_vehicle_bookings',
     ],
 
     [
         'title' => 'GPS',
         'icon' => 'fas fa-map-marker-alt',
         'route' => 'admin.gpsdashboard',
-        'permission' => '',
+        'permission' => 'index_gps',
     ],
 
     [
@@ -68,13 +75,13 @@ return [
                 'title' => 'Petrol Pumps',
                 'icon' => 'fas fa-gas-pump',
                 'route' => 'admin.petrol_pumps.index',
-                'permission' => '',
+                'permission' => 'index_petrol_pumps_petrol_pumps',
             ],
             [
                 'title' => 'Transactions',
                 'icon' => 'fas fa-exchange-alt',
                 'route' => 'admin.petrol_pump_transactions.index',
-                'permission' => '',
+                'permission' => 'index_petrol_pumps_transactions',
             ],
         ],
     ],
