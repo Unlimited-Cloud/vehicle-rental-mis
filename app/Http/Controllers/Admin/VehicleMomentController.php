@@ -97,6 +97,70 @@ class VehicleMomentController extends Controller
         }
     }
 
+    public function edit($id)
+    {
+        $moment = VehicleMoment::findOrFail($id);
+
+        $booking = DB::table('vehicle_bookings as vb')
+            ->select(
+                'vb.*',
+                'v.vehicle_name',
+                'd.name as driver_name',
+                'h.name as helper_name',
+                'c.name as customer_name'
+            )
+            ->leftJoin('vehicles as v', 'v.id', '=', 'vb.vehicle_id')
+            ->leftJoin('crew_profiles as cp_driver', 'cp_driver.id', '=', 'vb.driver_id')
+            ->leftJoin('users as d', 'd.id', '=', 'cp_driver.user_id')
+            ->leftJoin('crew_profiles as cp_helper', 'cp_helper.id', '=', 'vb.helper_id')
+            ->leftJoin('users as h', 'h.id', '=', 'cp_helper.user_id')
+            ->leftJoin('customers as c', 'c.id', '=', 'vb.customer_id')
+            ->where('vb.id', $moment->booking_id)
+            ->first();
+
+        // Vehicles
+        $vehicles = DB::table('vehicles')
+            ->select('id', 'vehicle_name')
+            ->where('status', 1)
+            ->get();
+
+        // Drivers
+        $drivers = DB::table('users as u')
+            ->select('u.id', 'u.name', 'cp.role')
+            ->join('crew_profiles as cp', 'cp.user_id', '=', 'u.id')
+            ->where('cp.role', 'driver')
+            ->get();
+
+        // Helpers
+        $helpers = DB::table('users as u')
+            ->select('u.id as user_id', 'u.name', 'cp.id as crew_id', 'cp.role')
+            ->join('crew_profiles as cp', 'cp.user_id', '=', 'u.id')
+            ->where('cp.role', 'helper')
+            ->get();
+
+        // Questionnaires
+        $questionnaires = DB::table('questionnaires')
+            ->select('id', 'question', 'type', 'is_required', 'sort_order')
+            ->where('is_active', 1)
+            ->orderBy('sort_order')
+            ->get();
+
+        // Existing answers
+        $answers = DB::table('vehicle_questionnaire_answers')
+            ->where('vehicle_moment_id', $id)
+            ->pluck('answer', 'questionnaire_id');
+
+        return view('layouts.admin.vehicle_moments.create', compact(
+            'moment',
+            'booking',
+            'vehicles',
+            'drivers',
+            'helpers',
+            'questionnaires',
+            'answers'
+        ));
+    }
+
     public function update(Request $request, $id)
     {
         try {

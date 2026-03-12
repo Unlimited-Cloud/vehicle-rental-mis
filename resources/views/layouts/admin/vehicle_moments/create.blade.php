@@ -4,7 +4,7 @@
 
 <div class="content-header">
 <div class="container-fluid">
-<h1>Add Vehicle Moment</h1>
+<h1>Add Vehicle Movement</h1>
 </div>
 </div>
 
@@ -13,11 +13,15 @@
 
 <div class="card card-primary card-outline">
 <div class="card-header">
-    <h3 class="card-title">Vehicle Moment Details</h3>
+    <h3 class="card-title">Vehicle Movement Details</h3>
 </div>
 
-<form action="{{ route('admin.vehicle_moments.store') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ isset($moment) ? route('admin.vehicle_moments.update', $moment->id) : route('admin.vehicle_moments.store') }}" method="POST" enctype="multipart/form-data">
+
 @csrf
+@if(isset($moment))
+@method('PUT')
+@endif
 
 <div class="card-body">
 
@@ -95,7 +99,7 @@
             <input type="number" 
                    name="start_km" 
                    class="form-control" 
-                   value="{{ $booking->start_km ?? '' }}" 
+                   value="{{ old('start_km', $moment->start_km ?? $booking->start_km ?? '') }}" 
                    step="0.01" 
                    min="0"
                    placeholder="Enter starting kilometer"
@@ -110,8 +114,8 @@
                 <input type="file" name="start_image" class="custom-file-input" id="startImage">
                 <label class="custom-file-label" for="startImage">Choose file</label>
             </div>
-            @if(isset($booking->start_image) && $booking->start_image)
-                <small class="text-muted d-block">Current: {{ $booking->start_image }}</small>
+           @if(isset($moment) && $moment->start_image)
+            <img src="{{ asset($moment->start_image) }}" width="120" class="mt-2">
             @endif
         </div>
     </div>
@@ -122,93 +126,96 @@
             <textarea name="start_comments" 
                       class="form-control" 
                       rows="2"
-                      placeholder="Any notes about the start of journey">{{ $booking->start_comments ?? '' }}</textarea>
+                      placeholder="Any notes about the start of journey">{{ old('start_comments', $moment->start_comments ?? $booking->start_comments ?? '') }}</textarea>
         </div>
     </div>
 </div>
 
 
-<!-- Questionnaire Section -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h4 class="mb-3">Vehicle Inspection Questionnaire</h4>
-        <p class="text-muted">Please answer all the following questions</p>
-    </div>
-    
+@forelse($questionnaires as $index => $question)
+
+@php
+$selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? null);
+@endphp
+
+<div class="row mb-3 questionnaire-item" data-question-id="{{ $question->id }}">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-body" style="background-color: #f9f9f9;">
-                @forelse($questionnaires as $index => $question)
-                <div class="row mb-3 questionnaire-item" data-question-id="{{ $question->id }}">
-                    <div class="col-md-12">
-                        <div class="form-group">
-                            <label>
-                                <strong>{{ $index + 1 }}. {{ $question->question }}</strong>
-                                @if($question->is_required)
-                                    <span class="text-danger">*</span>
-                                @endif
-                            </label>
-                            
-                            <input type="hidden" name="questionnaire_ids[]" value="{{ $question->id }}">
-                            
-                            @if($question->type == 'yes_no')
-                                <div class="mt-2">
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="answers[{{ $question->id }}]" 
-                                               id="yes_{{ $question->id }}" 
-                                               value="yes"
-                                               {{ $question->is_required ? 'required' : '' }}>
-                                        <label class="form-check-label" for="yes_{{ $question->id }}">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="answers[{{ $question->id }}]" 
-                                               id="no_{{ $question->id }}" 
-                                               value="no"
-                                               {{ $question->is_required ? 'required' : '' }}>
-                                        <label class="form-check-label" for="no_{{ $question->id }}">No</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" 
-                                               type="radio" 
-                                               name="answers[{{ $question->id }}]" 
-                                               id="na_{{ $question->id }}" 
-                                               value="na">
-                                        <label class="form-check-label" for="na_{{ $question->id }}">N/A</label>
-                                    </div>
-                                </div>
-                            @else
-                                <!-- Default to textarea for any other type (text, textarea, etc) -->
-                                <textarea class="form-control mt-2" 
-                                          name="answers[{{ $question->id }}]" 
-                                          rows="2" 
-                                          placeholder="Enter your answer here..."
-                                          {{ $question->is_required ? 'required' : '' }}>{{ old('answers.' . $question->id) }}</textarea>
-                            @endif
-                            
-                            @if($question->type == 'yes_no')
-                                <small class="text-muted">Select one option</small>
-                            @else
-                                <small class="text-muted">Please provide detailed information</small>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-                @if(!$loop->last)
-                <hr>
+        <div class="form-group">
+
+            <label>
+                <strong>{{ $index + 1 }}. {{ $question->question }}</strong>
+                @if($question->is_required)
+                    <span class="text-danger">*</span>
                 @endif
-                @empty
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle"></i> No questionnaires available.
+            </label>
+
+            <input type="hidden" name="questionnaire_ids[]" value="{{ $question->id }}">
+
+            @if($question->type == 'yes_no')
+            <div class="mt-2">
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="answers[{{ $question->id }}]"
+                           id="yes_{{ $question->id }}"
+                           value="yes"
+                           {{ $selectedAnswer == 'yes' ? 'checked' : '' }}
+                           {{ $question->is_required ? 'required' : '' }}>
+                    <label class="form-check-label" for="yes_{{ $question->id }}">Yes</label>
                 </div>
-                @endforelse
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="answers[{{ $question->id }}]"
+                           id="no_{{ $question->id }}"
+                           value="no"
+                           {{ $selectedAnswer == 'no' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="no_{{ $question->id }}">No</label>
+                </div>
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="answers[{{ $question->id }}]"
+                           id="na_{{ $question->id }}"
+                           value="na"
+                           {{ $selectedAnswer == 'na' ? 'checked' : '' }}>
+                    <label class="form-check-label" for="na_{{ $question->id }}">N/A</label>
+                </div>
+
             </div>
+
+            @else
+
+            <textarea class="form-control mt-2"
+                      name="answers[{{ $question->id }}]"
+                      rows="2"
+                      placeholder="Enter your answer here..."
+                      {{ $question->is_required ? 'required' : '' }}>{{ $selectedAnswer }}</textarea>
+
+            @endif
+
+            @if($question->type == 'yes_no')
+                <small class="text-muted">Select one option</small>
+            @else
+                <small class="text-muted">Please provide detailed information</small>
+            @endif
+
         </div>
     </div>
 </div>
+
+@if(!$loop->last)
+<hr>
+@endif
+
+@empty
+<div class="alert alert-info mb-0">
+    <i class="fas fa-info-circle"></i> No questionnaires available.
+</div>
+@endforelse
 
 <!-- End Journey Details -->
 <div class="row mt-4">
@@ -218,7 +225,7 @@
     
     <div class="col-md-4">
         <div class="form-group">
-            <label>End Date & Time <span class="text-danger">*</span></label>
+            <label>End Date & Time </label>
             <input type="datetime-local"
                    name="end_datetime"
                    class="form-control"
@@ -229,7 +236,7 @@
 
     <div class="col-md-4">
         <div class="form-group">
-            <label>End KM <span class="text-danger">*</span></label>
+            <label>End KM </label>
             <input type="number" 
                    name="end_km" 
                    class="form-control"
@@ -248,8 +255,8 @@
                 <input type="file" name="end_image" class="custom-file-input" id="endImage">
                 <label class="custom-file-label" for="endImage">Choose file</label>
             </div>
-            @if(isset($booking->end_image) && $booking->end_image)
-                <small class="text-muted d-block">Current: {{ $booking->end_image }}</small>
+           @if(isset($moment) && $moment->end_image)
+            <img src="{{ asset($moment->end_image) }}" width="120" class="mt-2">
             @endif
         </div>
     </div>
@@ -260,7 +267,7 @@
             <textarea name="end_comments" 
                       class="form-control" 
                       rows="2"
-                      placeholder="Any notes about the end of journey">{{ $booking->end_comments ?? '' }}</textarea>
+                      placeholder="Any notes about the end of journey">{{ old('end_comments', $moment->end_comments ?? $booking->end_comments ?? '') }}</textarea>
         </div>
     </div>
 </div>
@@ -285,39 +292,13 @@
     </div>
 </div> --}}
 
-<div class="row mt-4">
-    <div class="col-12">
-        <h4 class="mb-3">Signage Information</h4>
-    </div>
 
- <div class="col-md-12" id="incidentReportField">
-        <div class="form-group">
-            <label>Information on the signage<span class="text-danger"></span></label>
-            <textarea name="signage_information" 
-                      id="signageInformation"
-                      class="form-control" 
-                      rows="4"
-                      placeholder="Please describe the signage in detail">{{ $booking->signage_information ?? '' }}</textarea>
-        </div>
-    </div>
-</div>
 
 <!-- Incident Information -->
 <div class="row mt-4">
     <div class="col-12">
         <h4 class="mb-3">Incident Information</h4>
     </div>
-    
-    {{-- <div class="col-md-6">
-        <div class="form-group">
-            <label>Any Incident?</label>
-            <select name="has_incident" class="form-control" id="hasIncident">
-                <option value="0" {{ ($booking->has_incident ?? 0) == 0 ? 'selected' : '' }}>No</option>
-                <option value="1" {{ ($booking->has_incident ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
-            </select>
-        </div>
-    </div> --}}
-    
 
     <div class="col-md-12" id="incidentReportField">
         <div class="form-group">
@@ -326,7 +307,20 @@
                       id="incidentReport"
                       class="form-control" 
                       rows="4"
-                      placeholder="Please describe the incident in detail">{{ $booking->incident_report ?? '' }}</textarea>
+                      placeholder="Please describe the incident in detail">{{ old('incident_report', $moment->incident_report ?? $booking->incident_report ?? '') }}</textarea>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Incident Image</label>
+            <div class="custom-file">
+                <input type="file" name="incident_image" class="custom-file-input" id="incident_image">
+                <label class="custom-file-label" for="incident_image">Choose file</label>
+            </div>
+           @if(isset($moment) && $moment->incident_image)
+            <img src="{{ asset($moment->incident_image) }}" width="120" class="mt-2">
+            @endif
         </div>
     </div>
 
@@ -338,9 +332,13 @@
 </div>
 
 <div class="card-footer text-right">
-    <button type="reset" class="btn btn-secondary">Reset</button>
+    <a href="{{ route('admin.vehicle_moments.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+
     <button type="submit" class="btn btn-primary">
-        <i class="fas fa-save"></i> Add Vehicle Moment
+        <i class="fas fa-save"></i>
+        {{ isset($moment) ? 'Update Movement' : 'Add Movement' }}
     </button>
 </div>
 

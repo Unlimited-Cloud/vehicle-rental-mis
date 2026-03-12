@@ -40,4 +40,9 @@ class PetrolPump extends Model
     {
         return $query->where('status', 'active');
     }
+
+    public function fuelPurchases()
+    {
+        return $this->hasMany(FuelPurchase::class);
+    }
 }

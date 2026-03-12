@@ -21,8 +21,11 @@ class VehicleMoment extends Model
         'end_image',
         'end_comments',
         'has_incident',
-        'incident_report'
+        'incident_report',
+        'incident_image'
     ];
+    protected $appends = ['start_image_url', 'end_image_url', 'incident_image'];
+
 
     public function booking()
     {
@@ -42,5 +45,21 @@ class VehicleMoment extends Model
     public function questionnaireAnswers()
     {
         return $this->hasMany(VehicleQuestionnaireAnswer::class);
+    }
+
+
+    public function getStartImageUrlAttribute()
+    {
+        return $this->start_image ? asset($this->start_image) : null;
+    }
+
+    public function getEndImageUrlAttribute()
+    {
+        return $this->end_image ? asset($this->end_image) : null;
+    }
+
+    public function getIncidentImageUrlAttribute()
+    {
+        return $this->incident_image ? asset($this->incident_image) : null;
     }
 }

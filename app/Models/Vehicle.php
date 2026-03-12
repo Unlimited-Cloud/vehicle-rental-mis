@@ -35,11 +35,17 @@ class Vehicle extends Model
         'insurance_policy_document',
     ];
 
+    protected $appends = ['vehicle_image_url'];
+
     public function vehicleDetail()
     {
         return $this->hasOne(VehicleDetail::class);
     }
 
+    public function fuelPurchases()
+    {
+        return $this->hasMany(FuelPurchase::class);
+    }
     public function permits()
     {
         return $this->hasMany(VehiclePermit::class);
@@ -58,5 +64,10 @@ class Vehicle extends Model
     public function tyreChanges()
     {
         return $this->hasMany(VehicleTyreChange::class);
+    }
+
+    public function getVehicleImageUrlAttribute()
+    {
+        return $this->image ? asset($this->image) : null;
     }
 }
