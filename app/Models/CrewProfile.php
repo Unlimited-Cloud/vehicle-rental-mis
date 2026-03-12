@@ -19,4 +19,8 @@ class CrewProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function fuelPurchases()
+    {
+        return $this->hasMany(FuelPurchase::class);
+    }
 }

@@ -252,6 +252,21 @@
                 </div>
             </div>
 
+                    <div class="col-md-12">
+                        <h4 class="mb-3">Signage Information</h4>
+                    </div>
+
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Information on the signage<span class="text-danger"></span></label>
+                            <textarea name="signage_information" 
+                                    id="signageInformation"
+                                    class="form-control" 
+                                    rows="4"
+                                    placeholder="Please describe the signage in detail">{{ $booking->signage_information ?? '' }}</textarea>
+                        </div>
+                    </div>
+
             {{-- NOTES --}}
             <div class="col-md-12">
                 <div class="form-group">

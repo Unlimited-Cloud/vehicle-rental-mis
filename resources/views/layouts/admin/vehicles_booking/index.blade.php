@@ -156,7 +156,7 @@
                                     </a>
 
                                     <a class="dropdown-item" href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}">
-                                        <i class="fas fa-road text-success mr-2"></i> Add Moment
+                                        <i class="fas fa-road text-success mr-2"></i> Add Movement
                                     </a>
 
                                     <div class="dropdown-divider"></div>

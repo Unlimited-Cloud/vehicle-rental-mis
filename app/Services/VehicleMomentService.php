@@ -53,6 +53,10 @@ class VehicleMomentService
                 $data['end_image'] = $this->uploadImage($data['end_image'], 'end');
             }
 
+            if (isset($data['incident_image']) && $data['incident_image'] instanceof \Illuminate\Http\UploadedFile) {
+                $data['incident_image'] = $this->uploadImage($data['incident_image'], 'incident');
+            }
+
             // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
 
@@ -96,6 +100,15 @@ class VehicleMomentService
                     $this->deleteImage($vehicleMoment->end_image);
                 }
                 $data['end_image'] = $this->uploadImage($data['end_image'], 'end');
+            }
+
+            if (isset($data['incident_image']) && $data['incident_image'] instanceof \Illuminate\Http\UploadedFile) {
+
+                if ($vehicleMoment->incident_image) {
+                    $this->deleteImage($vehicleMoment->incident_image);
+                }
+
+                $data['incident_image'] = $this->uploadImage($data['incident_image'], 'incident');
             }
 
             // Update vehicle moment

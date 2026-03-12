@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\VehicleAssignmentController;
 use App\Http\Controllers\Admin\VehicleBookingController;
 use App\Http\Controllers\Admin\GpsDashboardController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\FuelPurchaseController;
 use App\Http\Controllers\Admin\PetrolPumpController;
 use App\Http\Controllers\Admin\PetrolPumpTransactionController;
 use App\Http\Controllers\Admin\VehiclePermitController;
@@ -81,6 +82,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
 
     Route::resource('questionnaires', QuestionnaireController::class);
     Route::resource('vehicle_moments', VehicleMomentController::class);
+    Route::resource('fuel_purchased', FuelPurchaseController::class);
 
 
     Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');

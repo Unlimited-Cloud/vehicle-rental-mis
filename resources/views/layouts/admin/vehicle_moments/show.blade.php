@@ -6,11 +6,11 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center">
             <h1 class="m-0">
-                <i class="fas fa-history"></i> Vehicle Moment Details
+                <i class="fas fa-history"></i> Vehicle Movement Details
                 <small class="text-muted">#{{ $moment->id }}</small>
             </h1>
             <ol class="breadcrumb float-sm-right">
-                <li class="breadcrumb-item"><a href="{{ route('admin.vehicle_moments.index') }}">Vehicle Moments</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.vehicle_moments.index') }}">Vehicle Movements</a></li>
                 <li class="breadcrumb-item active">Details</li>
             </ol>
         </div>
@@ -63,7 +63,7 @@
         <div class="row mb-4">
             <div class="col-12 text-right">
                 <a href="{{ route('admin.vehicle_moments.edit', $moment->id) }}" class="btn btn-primary">
-                    <i class="fas fa-edit"></i> Edit Moment
+                    <i class="fas fa-edit"></i> Edit Movement
                 </a>
                 <a href="{{ route('admin.vehicle_moments.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to List
@@ -343,7 +343,7 @@
                 <h3 class="card-title"><i class="fas fa-exclamation-triangle"></i> Incident Report</h3>
             </div>
             <div class="card-body">
-                @if($moment->has_incident)
+                @if($moment->incident_report)
                     <div class="callout callout-danger">
                         <h5><i class="fas fa-exclamation-circle"></i> Incident Details:</h5>
                         <p>{{ $moment->incident_report ?? 'No details provided' }}</p>
@@ -353,6 +353,23 @@
                         <i class="fas fa-check-circle"></i> No incidents reported for this journey.
                     </div>
                 @endif
+            </div>
+             <div class="card-body text-center">
+                        @if($moment->incident_image)
+                            <a href="{{ asset($moment->incident_image) }}" target="_blank">
+                                <img src="{{ asset($moment->incident_image) }}" alt="incident Image" class="img-fluid img-thumbnail" style="max-height: 400px;">
+                            </a>
+                            <p class="mt-2">
+                                <a href="{{ asset($moment->incident_image) }}" download class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </p>
+                        @else
+                            <div class="bg-light p-5 rounded">
+                                <i class="fas fa-camera fa-5x text-muted"></i>
+                                <p class="mt-3">No incident image available</p>
+                            </div>
+                        @endif
             </div>
         </div>
     </div>

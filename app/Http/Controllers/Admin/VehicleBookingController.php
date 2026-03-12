@@ -112,6 +112,8 @@ class VehicleBookingController extends Controller
         $addData = $request->all();
         $addData['start_time'] = $request->start_time;
         $addData['end_time'] = $request->end_time;
+        $addData['signage_information'] = $request->signage_information;
+
         $no_of_hours = $request->no_of_hours;
 
         $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
@@ -204,6 +206,7 @@ class VehicleBookingController extends Controller
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $updateData['no_of_hours'] = (int) $no_of_hours;
+        $updateData['signage_information'] = $request->signage_information;
         $updateData['rate_per_day'] = $request->rate_per_day;
         $updateData['sub_total'] = $request->sub_total;
         $updateData['tax_amount_type'] = $request->tax_amount_type;

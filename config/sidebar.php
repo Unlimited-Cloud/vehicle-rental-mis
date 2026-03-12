@@ -42,7 +42,7 @@ return [
                 'permission' => '',
             ],
             [
-                'title' => 'Vehicle Moments',
+                'title' => 'Vehicle Movements',
                 'icon' => 'fas fa-camera',
                 'route' => 'admin.vehicle_moments.index',
                 'permission' => '',
@@ -91,6 +91,13 @@ return [
         'title' => 'Questionnaires',
         'icon' => 'fas fa-question-circle',
         'route' => 'admin.questionnaires.index',
+        'permission' => '',
+    ],
+
+    [
+        'title' => 'Fuel Purchased',
+        'icon' => 'fas fa-gas-pump',
+        'route' => 'admin.fuel_purchased.index',
         'permission' => '',
     ],
 
