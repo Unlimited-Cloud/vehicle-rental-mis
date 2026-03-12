@@ -107,6 +107,21 @@ return [
         'permission' => 'index_fuel_purchased',
     ],
 
+    [
+        'title' => 'Bills',
+        'icon' => 'fas fa-file-invoice-dollar', // parent icon for Bills
+        'permission' => null,
+        'children' => [
+            [
+                'title' => 'Proforma Invoice',
+                'icon' => 'fas fa-file-invoice', // child icon for Proforma Invoice
+                'route' => 'admin.proforma.index',
+                'permission' => 'index_bills_proforma_invoice',
+            ],
+        ],
+    ],
+
+
 
 
 

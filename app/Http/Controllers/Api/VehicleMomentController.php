@@ -10,14 +10,18 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Models\CrewProfile;
 use App\Models\VehicleBooking;
+use App\Services\ProformaService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class VehicleMomentController extends Controller
 {
     protected $service;
+    protected $pservice;
 
-    public function __construct(VehicleMomentService $service)
+    public function __construct(VehicleMomentService $service, ProformaService $pservice)
     {
         $this->service = $service;
+        $this->pservice = $pservice;
     }
 
     /**
@@ -127,7 +131,7 @@ class VehicleMomentController extends Controller
         }
     }
 
- 
+
 
     /**
      * PUT /api/vehicle-moments/{id}
@@ -257,5 +261,28 @@ class VehicleMomentController extends Controller
             'success' => true,
             'data' => $questionnaire
         ]);
+    }
+
+
+
+    public function generateFromBooking(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:vehicle_bookings,id'
+        ]);
+
+        $booking = VehicleBooking::with([
+            'vehicle',
+            'customer'
+        ])->findOrFail($request->booking_id);
+
+        $invoice = $this->pservice->createProforma($booking);
+
+        $pdf = Pdf::loadView(
+            'layouts.admin.invoices.proforma_pdf',
+            compact('invoice')
+        );
+
+        return $pdf->download($invoice->invoice_number . '.pdf');
     }
 }

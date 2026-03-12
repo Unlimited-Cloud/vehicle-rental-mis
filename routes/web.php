@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\VehicleTyreChangeController;
 use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\VehicleMomentController;
+use App\Http\Controllers\Admin\ProformaInvoiceController;
 
 
 
@@ -65,21 +66,24 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
         ]);
-        Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
-        Route::resource('petrol_pumps', PetrolPumpController::class);
-        Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
+    Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
+    Route::resource('petrol_pumps', PetrolPumpController::class);
+    Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
 
     Route::resource('questionnaires', QuestionnaireController::class);
     Route::resource('vehicle_moments', VehicleMomentController::class);
     Route::resource('fuel_purchased', FuelPurchaseController::class);
+
+    Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
+        ->name('proforma.index');
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
     //Roles Route is here
-    
-    
+
+
     Route::resource('vehicle_details', VehicleDetailsController::class);
-    
+
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
     Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
@@ -100,13 +104,18 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle-services', VehicleServiceController::class);
     Route::resource('vehicle-repairs', VehicleRepairController::class);
     Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
-    
+
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
 
-    
+    // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
+    //     ->name('proforma.index');
 
-    
+    Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
+        ->name('proforma.download');
+
+
+
     Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');
     Route::get('/gpsdashboard/vehicle/{imei}', [GpsDashboardController::class, 'getVehicleDetails'])->name('gpsdashboard.vehicle.details');
     Route::get('/gpsdashboard/vehicle/{imei}/history', [GpsDashboardController::class, 'getVehicleHistory'])->name('gpsdashboard.vehicle.history');
