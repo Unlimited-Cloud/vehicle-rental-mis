@@ -15,9 +15,9 @@ class PermissioncreateSeeder extends Seeder
     {
         try {
             $permissions = ["index", "create", "read", "update", "delete"];
-            $module_name = 'bills_proforma_invoice';
-            $submodule_name = 'proforma_invoice';
-            $module_id = 30;
+            $module_name = 'emails_emaillogs';
+            $submodule_name = 'emaillogs';
+            $module_id = 34;
             foreach ($permissions as $permission) {
                 $addData = [
                     'name' => $permission . '_' . $module_name,

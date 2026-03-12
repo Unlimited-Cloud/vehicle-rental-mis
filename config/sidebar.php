@@ -121,6 +121,32 @@ return [
         ],
     ],
 
+    [
+        'title' => 'Emails',
+        'icon' => 'fas fa-envelope', // parent icon for Emails
+        'permission' => null,
+        'children' => [
+            [
+                'title' => 'Email Template Activities',
+                'icon' => 'fas fa-tasks',
+                'route' => 'admin.emailtemplate_activities.index',
+                'permission' => 'index_emails_emailtemplate_activities',
+            ],
+            [
+                'title' => 'Email Template',
+                'icon' => 'fas fa-envelope-open-text',
+                'route' => 'admin.email-templates.index',
+                'permission' => 'index_emails_emailtemplate',
+            ],
+            [
+                'title' => 'Email Logs',
+                'icon' => 'fas fa-history',
+                'route' => 'admin.email-logs.index',
+                'permission' => 'index_emails_emaillogs',
+            ],
+        ],
+    ],
+
 
 
 
