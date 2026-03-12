@@ -74,8 +74,17 @@
             </li>
             @endif
            @else
+           @if(!@empty($item['permission']))
            @if(auth()->user()->can($item['permission']))
            <li class="nav-item">
+              <a href="{{ route($item['route']) }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
+                 <i class="nav-icon {{ $item['icon'] }}"></i>
+                 <p>{{ $item['title'] }}</p>
+              </a>
+           </li>
+           @endif
+           @else 
+            <li class="nav-item">
               <a href="{{ route($item['route']) }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                  <i class="nav-icon {{ $item['icon'] }}"></i>
                  <p>{{ $item['title'] }}</p>

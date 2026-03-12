@@ -65,4 +65,9 @@ class VehicleBooking extends Model
     {
         return $this->hasOne(Payment::class);
     }
+
+    public function proformaInvoices()
+    {
+        return $this->hasMany(ProformaInvoice::class, 'vehicle_booking_id');
+    }
 }
