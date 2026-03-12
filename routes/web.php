@@ -68,6 +68,10 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
         Route::resource('petrol_pumps', PetrolPumpController::class);
         Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
+
+    Route::resource('questionnaires', QuestionnaireController::class);
+    Route::resource('vehicle_moments', VehicleMomentController::class);
+    Route::resource('fuel_purchased', FuelPurchaseController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
@@ -100,9 +104,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
 
-    Route::resource('questionnaires', QuestionnaireController::class);
-    Route::resource('vehicle_moments', VehicleMomentController::class);
-    Route::resource('fuel_purchased', FuelPurchaseController::class);
+    
 
     
     Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');

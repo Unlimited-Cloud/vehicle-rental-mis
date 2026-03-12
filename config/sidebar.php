@@ -97,14 +97,14 @@ return [
         'title' => 'Questionnaires',
         'icon' => 'fas fa-question-circle',
         'route' => 'admin.questionnaires.index',
-        'permission' => '',
+        'permission' => 'index_questionnaires',
     ],
 
     [
         'title' => 'Fuel Purchased',
         'icon' => 'fas fa-gas-pump',
         'route' => 'admin.fuel_purchased.index',
-        'permission' => '',
+        'permission' => 'index_fuel_purchased',
     ],
 
 
