@@ -15,6 +15,7 @@ use Illuminate\View\View;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Events\EmailEvent;
 
 class LoginController extends Controller
 {
@@ -102,7 +103,8 @@ class LoginController extends Controller
         ]);
 
         // Send OTP email
-        Mail::to($user->email)->send(new LoginOtpMail($otp, $user->name));
+        // Mail::to($user->email)->send(new LoginOtpMail($otp, $user->name));
+        event(new EmailEvent($user->email,'passcode','success','User'));
 
         // Store email in session and redirect back to login page
         session(['otp_email' => $user->email]);

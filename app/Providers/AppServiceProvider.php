@@ -3,8 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\UserRepository;
+use App\Events\EmailEvent;
+use App\Listeners\EmailListeners;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Event::listen(
+            EmailEvent::class,
+            EmailListeners::class
+        );
     }
 }
