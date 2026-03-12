@@ -29,3 +29,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('questionnaires/{id}', [VehicleMomentController::class, 'getQuestionnaire']);
     });
 });
+
+Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);

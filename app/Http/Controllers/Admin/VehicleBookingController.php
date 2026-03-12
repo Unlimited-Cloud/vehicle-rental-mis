@@ -19,11 +19,17 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\Services\ProformaService;
 
 class VehicleBookingController extends Controller
 {
 
-    public function __construct() {}
+    protected $service;
+
+    public function __construct(ProformaService $service)
+    {
+        $this->service = $service;
+    }
 
     /**
      * Display a listing of the resource.
@@ -142,6 +148,7 @@ class VehicleBookingController extends Controller
         $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
 
         $vehicleBooking = VehicleBooking::create($addData);
+        $this->service->createProforma($vehicleBooking);
         $vehicleBookingId = $vehicleBooking->id;
 
         $paymentData['vehicle_booking_id'] = $vehicleBookingId;
@@ -194,7 +201,7 @@ class VehicleBookingController extends Controller
     public function update(Request $request, VehicleBooking $vehicleBooking)
     {
         Gate::authorize('update_vehicle_bookings');
-        
+
         $updateData = $request->all();
         $updateData['start_time'] = $request->start_time;
         $updateData['end_time'] = $request->end_time;
@@ -221,7 +228,16 @@ class VehicleBookingController extends Controller
         $updateData['discount_amount_type'] = $request->discount_amount_type;
         $updateData['discount'] = $request->discount;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
+
+        $oldRate = $vehicleBooking->rate_per_day;
+        $oldTotal = $vehicleBooking->sub_total;
         $vehicleBooking->update($updateData);
+        if (
+            $oldRate != $vehicleBooking->rate_per_day ||
+            $oldTotal != $vehicleBooking->sub_total
+        ) {
+            $this->service->createProforma($vehicleBooking);
+        }
 
         $vehicleBookingId = $vehicleBooking->id;
 

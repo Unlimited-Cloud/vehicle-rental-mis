@@ -14,7 +14,7 @@ class VehicleController extends Controller
      */
     public function index()
     {
-        Gate::authorize('index_vehicles_vehicles');
+        Gate::authorize('index_vehicles');
         $vehicles = Vehicle::latest()->get();
         return view('layouts.admin.vehicles.index', compact('vehicles'));
     }
@@ -25,13 +25,13 @@ class VehicleController extends Controller
      */
     public function create()
     {
-        Gate::authorize('create_vehicles_vehicles');
+        Gate::authorize('create_vehicles');
         return view('layouts.admin.vehicles.create');
     }
 
     public function store(Request $request)
     {
-        Gate::authorize('create_vehicles_vehicles');
+        Gate::authorize('create_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
             'brand' => 'required',
@@ -98,7 +98,7 @@ class VehicleController extends Controller
 
     public function show(Vehicle $vehicle)
     {
-        Gate::authorize('view_vehicles_vehicles');
+        Gate::authorize('read_vehicles');
         $vehicle->load(['permits', 'services', 'repairs', 'tyreChanges']);
 
         return view('layouts.admin.vehicles.show', compact('vehicle'));
@@ -106,13 +106,13 @@ class VehicleController extends Controller
 
     public function edit(Vehicle $vehicle)
     {
-        Gate::authorize('update_vehicles_vehicles');
+        Gate::authorize('update_vehicles');
         return view('layouts.admin.vehicles.create', compact('vehicle'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
     {
-        Gate::authorize('update_vehicles_vehicles');
+        Gate::authorize('update_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
             'brand' => 'required',
@@ -186,7 +186,7 @@ class VehicleController extends Controller
      */
     public function destroy(Vehicle $vehicle)
     {
-        Gate::authorize('delete_vehicles_vehicles');
+        Gate::authorize('delete_vehicles');
         $vehicle->delete();
 
         return redirect()->route('admin.vehicles.index')

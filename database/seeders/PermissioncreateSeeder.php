@@ -13,14 +13,14 @@ class PermissioncreateSeeder extends Seeder
      */
     public function run(): void
     {
-        try{
-            $permissions = ["index","create","read","update","delete"];
-            $module_name = 'fuel_purchased';
-            $submodule_name = 'fuel_purchased';
-            $module_id = 22;
-            foreach($permissions as $permission){
+        try {
+            $permissions = ["index", "create", "read", "update", "delete"];
+            $module_name = 'bills_proforma_invoice';
+            $submodule_name = 'proforma_invoice';
+            $module_id = 30;
+            foreach ($permissions as $permission) {
                 $addData = [
-                    'name' => $permission.'_'.$module_name,
+                    'name' => $permission . '_' . $module_name,
                     'module_id' => $module_id,
                     'guard_name' => 'web',
                     'created_at' => now(),
@@ -30,7 +30,7 @@ class PermissioncreateSeeder extends Seeder
                 DB::table('permissions')->insert($addData);
             }
             dd("success");
-        }catch ( \Exception $e){
+        } catch (\Exception $e) {
             dd($e->getMessage());
         }
     }
