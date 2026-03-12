@@ -32,6 +32,6 @@ class EmailTemplate extends Model
 
     public function emailActivities()
     {
-        return $this->belongsTo(EmailtemplateActivities::class, 'activity_UUID', 'template_UUID');
+        return $this->belongsTo(EmailtemplateActivities::class, 'activity_UUID', 'Uuid');
     }
 }
