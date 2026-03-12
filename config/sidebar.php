@@ -50,7 +50,7 @@ return [
                 'permission' => 'index_vehicle_bookings',
             ],
             [
-                'title' => 'Vehicle Moments',
+                'title' => 'Vehicle Movements',
                 'icon' => 'fas fa-camera',
                 'route' => 'admin.vehicle_moments.index',
                 'permission' => 'index_vehicles_vehicle_movement',
@@ -97,6 +97,13 @@ return [
         'title' => 'Questionnaires',
         'icon' => 'fas fa-question-circle',
         'route' => 'admin.questionnaires.index',
+        'permission' => '',
+    ],
+
+    [
+        'title' => 'Fuel Purchased',
+        'icon' => 'fas fa-gas-pump',
+        'route' => 'admin.fuel_purchased.index',
         'permission' => '',
     ],
 

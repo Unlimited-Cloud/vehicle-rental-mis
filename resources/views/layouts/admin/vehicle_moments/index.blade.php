@@ -5,10 +5,10 @@
 <div class="content-header">
 <div class="container-fluid">
 <div class="d-flex justify-content-between align-items-center">
-    <h1 class="m-0">Vehicle Moments</h1>
+    <h1 class="m-0">Vehicle Movements</h1>
     <ol class="breadcrumb float-sm-right">
         <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item active">Vehicle Moments</li>
+        <li class="breadcrumb-item active">Vehicle Movements</li>
     </ol>
 </div>
 </div>
@@ -20,7 +20,7 @@
 <div class="card card-primary card-outline">
 <div class="card-header">
     <h3 class="card-title">
-        <i class="fas fa-history"></i> All Vehicle Moments
+        <i class="fas fa-history"></i> All Vehicle Movements
     </h3>
    
 </div>
