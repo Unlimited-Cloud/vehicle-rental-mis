@@ -9,6 +9,7 @@ use App\Models\FuelPurchase;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use App\Models\PetrolPump;
+use Illuminate\Support\Facades\Gate;
 
 class FuelPurchaseController extends Controller
 {
@@ -17,6 +18,7 @@ class FuelPurchaseController extends Controller
      */
     public function index()
     {
+        Gate::authorize('index_fuel_purchased');
         $fuels = FuelPurchase::with(['vehicle', 'driver', 'petrolPump'])
             ->latest()
             ->paginate(10);
@@ -29,6 +31,7 @@ class FuelPurchaseController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_fuel_purchased');
         $vehicles = Vehicle::where('status', '1')->get();
 
         $drivers = CrewProfile::where('role', 'driver')
@@ -45,6 +48,7 @@ class FuelPurchaseController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_fuel_purchased');
         $data = $request->validate([
             'date_time' => 'required',
             'vehicle_id' => 'required',
@@ -86,6 +90,7 @@ class FuelPurchaseController extends Controller
 
     public function edit(FuelPurchase $fuel_purchased)
     {
+        Gate::authorize('update_fuel_purchased');
         $vehicles = Vehicle::where('status', '1')->get();
         $drivers = CrewProfile::where('role', 'driver')
             ->with('user')
@@ -103,6 +108,7 @@ class FuelPurchaseController extends Controller
 
     public function update(Request $request, FuelPurchase $fuel_purchased)
     {
+        Gate::authorize('update_fuel_purchased');
         $data = $request->validate([
             'date_time' => 'required',
             'vehicle_id' => 'required',
@@ -138,6 +144,7 @@ class FuelPurchaseController extends Controller
 
     public function show($id)
     {
+        Gate::authorize('read_fuel_purchased');
         $fuel = FuelPurchase::findOrFail($id);
 
         return view('layouts.admin.fuel_purchased.show', compact('fuel'));
@@ -145,6 +152,7 @@ class FuelPurchaseController extends Controller
 
     public function destroy(FuelPurchase $fuel_purchased)
     {
+        Gate::authorize('delete_fuel_purchased');
         $fuel_purchased->delete();
 
         return redirect()->route('admin.fuel_purchased.index')->with('success', 'Fuel Purchased deleted successfully.');

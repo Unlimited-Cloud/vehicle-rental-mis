@@ -50,7 +50,7 @@
     <td>{{ $user->created_at->format('d M Y') }}</td>
 
     <td>
-        @if(auth()->user()->can('edit_users'))
+        @if(auth()->user()->can('update_users'))
         <a href="{{ route('admin.users.edit', $user->id) }}"
            class="btn btn-primary btn-sm">
             <i class="fas fa-edit"></i>

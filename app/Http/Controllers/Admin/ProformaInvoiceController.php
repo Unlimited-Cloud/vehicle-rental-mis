@@ -9,12 +9,14 @@ use App\Models\VehicleReceipt;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Gate;
 
 class ProformaInvoiceController extends Controller
 {
 
     public function index()
     {
+        Gate::authorize('index_bills_proforma_invoice');
         $invoices = ProformaInvoice::with(['vehicle', 'booking'])
             ->latest()
             ->get();
@@ -24,6 +26,7 @@ class ProformaInvoiceController extends Controller
 
     public function indexReceipt()
     {
+        Gate::authorize('index_bills_receipt');
         $receipts = VehicleReceipt::with(['vehicle', 'customer', 'booking'])
             ->orderBy('created_at', 'desc')
             ->get();
