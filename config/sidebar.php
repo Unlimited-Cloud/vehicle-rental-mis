@@ -118,6 +118,13 @@ return [
                 'route' => 'admin.proforma.index',
                 'permission' => 'index_bills_proforma_invoice',
             ],
+
+            [
+                'title' => 'Receipts',
+                'icon' => 'fas fa-file-invoice', // child icon for Proforma Invoice
+                'route' => 'admin.receipt.index',
+                'permission' => 'index_bills_receipt',
+            ],
         ],
     ],
 
