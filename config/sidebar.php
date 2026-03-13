@@ -17,10 +17,24 @@ return [
     ],
 
     [
-        'title' => 'Roles',
-        'icon' => 'fas fa-users',
-        'route' => 'admin.user_roles.index',
-        'permission' => 'index_roles',
+        'title' => 'Configuration',
+        'icon' => 'fas fa-car',
+        'route' => 'admin.configuration.index',
+        'permission' => '',
+        'children' => [
+            [
+                'title' => 'Modules',
+                'icon' => 'fas fa-car',
+                'route' => 'admin.modules.index',
+                'permission' => 'index_configuration_modules',
+            ],
+            [
+                'title' => 'Roles',
+                'icon' => 'fas fa-users',
+                'route' => 'admin.user_roles.index',
+                'permission' => 'index_roles',
+            ],
+        ],
     ],
 
     [

@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Repositories\UserRepository;
+use App\Repositories\Interfaces\MasterRepositoryInterface;
+use App\Repositories\MasterRepository;
 use App\Events\EmailEvent;
 use App\Listeners\EmailListeners;
 
@@ -17,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(MasterRepositoryInterface::class, MasterRepository::class);
     }
 
     /**

@@ -22,7 +22,7 @@ use App\Http\Controllers\Admin\RolesController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\VehicleMomentController;
 use App\Http\Controllers\Admin\ProformaInvoiceController;
-
+use App\Http\Controllers\Admin\ModulesController;
 
 
 // Route::get('/', function () {
@@ -61,6 +61,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
     });
     Route::resource('vehicles', VehicleController::class);
     Route::resource('users', UserController::class);
+    Route::resource('modules', ModulesController::class);
     Route::resource('crew_profiles', CrewProfilesController::class);
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([
