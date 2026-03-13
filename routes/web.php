@@ -63,11 +63,23 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
             Route::delete('/delete/{id}', 'delete')->name('user_roles.delete');
         });
     });
+    Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
+        ->name('vehicles.set-active-tab');
     Route::resource('vehicles', VehicleController::class);
     Route::resource('users', UserController::class);
     Route::resource('modules', ModulesController::class);
     Route::resource('permissions', PermissionsController::class);
     Route::resource('crew_profiles', CrewProfilesController::class);
+    Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
+        ->name('vehicle_bookings.convert_multiple_ad_to_bs');
+    Route::post('vehicle_bookings/convert-ad-to-bs', [VehicleBookingController::class, 'convertAdtoBs'])
+        ->name('vehicle_bookings.convert_ad_to_bs');
+
+    Route::get('vehicle_bookings/export', [VehicleBookingController::class, 'export'])
+        ->name('vehicle_bookings.export');
+
+    Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
+        ->name('vehicle_bookings.events');
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
@@ -100,20 +112,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle_details', VehicleDetailsController::class);
 
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
-
-    Route::post('convert-multiple-ad-to-bs', [VehicleBookingController::class, 'convertMultipleAdToBs'])
-        ->name('vehicle_bookings.convert_multiple_ad_to_bs');
-    Route::post('vehicle_bookings/convert-ad-to-bs', [VehicleBookingController::class, 'convertAdtoBs'])
-        ->name('vehicle_bookings.convert_ad_to_bs');
-
-    Route::get('vehicle_bookings/export', [VehicleBookingController::class, 'export'])
-        ->name('vehicle_bookings.export');
-
-    Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
-        ->name('vehicle_bookings.events');
-
-    Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
-        ->name('vehicles.set-active-tab');
 
     Route::resource('vehicle-permits', VehiclePermitController::class);
     Route::resource('vehicle-services', VehicleServiceController::class);

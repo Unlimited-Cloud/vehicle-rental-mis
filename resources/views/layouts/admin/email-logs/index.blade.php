@@ -30,12 +30,12 @@
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Template ID</th>
+                                    {{-- <th>Template ID</th> --}}
                                     <th>Email From</th>
                                     <th>Email To</th>
                                     <th>Subject</th>
                                     <th>Status</th>
-                                    <th>Failure Reason</th>
+                                    {{-- <th>Failure Reason</th> --}}
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -43,12 +43,12 @@
                                 @foreach($emailLogs as $log)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $log->emailtemplate_id ?? 'N/A' }}</td>
+                                    {{-- <td>{{ $log->emailtemplate_id ?? 'N/A' }}</td> --}}
                                     <td>{{ $log->email_from }}</td>
                                     <td>{{ $log->email_to }}</td>
                                     <td>{{ Str::limit($log->email_subject, 30) }}</td>
                                     <td>
-                                        @if($log->status == 'sent')
+                                        @if($log->status == 'success')
                                             <span class="badge badge-success">Sent</span>
                                         @elseif($log->status == 'pending')
                                             <span class="badge badge-warning">Pending</span>
@@ -56,7 +56,7 @@
                                             <span class="badge badge-danger">Failed</span>
                                         @endif
                                     </td>
-                                    <td>{{ Str::limit($log->failure_reason, 30) ?? 'N/A' }}</td>
+                                    {{-- <td>{{ Str::limit($log->failure_reason, 30) ?? 'N/A' }}</td> --}}
                                     <td>
                                         <a href="{{ route('admin.email-logs.edit', $log->id) }}"
                                            class="btn btn-primary btn-sm">
