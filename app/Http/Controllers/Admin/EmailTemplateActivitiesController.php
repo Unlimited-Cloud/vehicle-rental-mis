@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\EmailtemplateActivities;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Gate;
 
 class EmailTemplateActivitiesController extends Controller
 {
     public function index()
     {
+        Gate::authorize('index_emails_email_template_activities');
         $activities = EmailtemplateActivities::with('emailTemplate')
             ->orderBy('id', 'desc')
             ->get();
@@ -23,6 +25,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_emails_email_template_activities');
         // $partners = Partners::where('status', 1)->get();
         return view('layouts.admin.emailtemplate_activities.create');
     }
@@ -32,6 +35,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_emails_email_template_activities');
         $request->validate([
             'activity_for' => 'required|string|max:255',
             'partner_Uuid' => 'nullable|exists:partners,Uuid',
@@ -56,6 +60,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function show(string $id)
     {
+        Gate::authorize('read_emails_email_template_activities');
         $activity = EmailtemplateActivities::with('emailTemplate')
             ->findOrFail($id);
 
@@ -67,6 +72,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function edit(string $id)
     {
+        Gate::authorize('update_emails_email_template_activities');
         $activity = EmailtemplateActivities::findOrFail($id);
         // $partners = Partners::where('status', 1)->get();
 
@@ -78,6 +84,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update_emails_email_template_activities');
         $request->validate([
             'activity_for' => 'required|string|max:255',
             'partner_Uuid' => 'nullable|exists:partners,Uuid',
@@ -103,6 +110,7 @@ class EmailTemplateActivitiesController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete_emails_email_template_activities');
         $activity = EmailtemplateActivities::findOrFail($id);
         $activity->deleted_by = auth()->id();
         $activity->save();
