@@ -150,14 +150,14 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Success Email Content</label>
-                    <textarea name="success_email_content" class="form-control" rows="5">{{ old('success_email_content') }}</textarea>
+                    <textarea name="success_email_content" class="form-control ckeditor" rows="5">{{ old('success_email_content') }}</textarea>
                 </div>
             </div>
 
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Error Email Content</label>
-                    <textarea name="error_email_content" class="form-control" rows="5">{{ old('error_email_content') }}</textarea>
+                    <textarea name="error_email_content" class="form-control ckeditor" rows="5">{{ old('error_email_content') }}</textarea>
                 </div>
             </div>
         </div>
@@ -177,14 +177,14 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Success SMS Content</label>
-                    <textarea name="success_sms_content" class="form-control" rows="3">{{ old('success_sms_content') }}</textarea>
+                    <textarea name="success_sms_content" class="form-control ckeditor" rows="3">{{ old('success_sms_content') }}</textarea>
                 </div>
             </div>
 
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Error SMS Content</label>
-                    <textarea name="error_sms_content" class="form-control" rows="3">{{ old('error_sms_content') }}</textarea>
+                    <textarea name="error_sms_content" class="form-control ckeditor" rows="3">{{ old('error_sms_content') }}</textarea>
                 </div>
             </div>
         </div>
@@ -204,14 +204,14 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Success Customer Notification</label>
-                    <textarea name="success_customer_notification_content" class="form-control" rows="3">{{ old('success_customer_notification_content') }}</textarea>
+                    <textarea name="success_customer_notification_content" class="form-control ckeditor" rows="3">{{ old('success_customer_notification_content') }}</textarea>
                 </div>
             </div>
 
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Success Admin Notification</label>
-                    <textarea name="success_admin_notification_content" class="form-control" rows="3">{{ old('success_admin_notification_content') }}</textarea>
+                    <textarea name="success_admin_notification_content" class="form-control ckeditor" rows="3">{{ old('success_admin_notification_content') }}</textarea>
                 </div>
             </div>
         </div>
@@ -278,5 +278,27 @@
 
 </div>
 </section>
+
+@endsection
+
+@section('scripts')
+
+<script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll('.ckeditor').forEach(function (textarea) {
+
+        ClassicEditor
+            .create(textarea)
+            .catch(error => {
+                console.error(error);
+            });
+
+    });
+
+});
+</script>
 
 @endsection
