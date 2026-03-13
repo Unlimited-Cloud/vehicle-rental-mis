@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\EmailLog;
 use App\Models\EmailTemplate;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\Gate;
 
 class EmailLogController extends Controller
 {
     public function index()
     {
+        Gate::authorize('index_emails_email_logs');
         $emailLogs = EmailLog::with('emailTemplate')
             ->orderBy('id', 'desc')
             ->get();
@@ -24,6 +25,7 @@ class EmailLogController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_emails_email_logs');
         $emailTemplates = EmailTemplate::all();
         return view('layouts.admin.email-logs.create', compact('emailTemplates'));
     }
@@ -33,6 +35,7 @@ class EmailLogController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_emails_email_logs');
         $request->validate([
             'emailtemplate_id' => 'nullable|exists:email_templates,id',
             'email_from' => 'required|email|max:255',
@@ -55,6 +58,7 @@ class EmailLogController extends Controller
      */
     public function show(string $id)
     {
+        Gate::authorize('read_emails_email_logs');
         $emailLog = EmailLog::with('emailTemplate')
             ->findOrFail($id);
 
@@ -66,6 +70,7 @@ class EmailLogController extends Controller
      */
     public function edit(string $id)
     {
+        Gate::authorize('update_emails_email_logs');
         $emailLog = EmailLog::findOrFail($id);
         $emailTemplates = EmailTemplate::all();
 
@@ -77,6 +82,7 @@ class EmailLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update_emails_email_logs');
         $request->validate([
             'emailtemplate_id' => 'nullable|exists:email_templates,id',
             'email_from' => 'required|email|max:255',
@@ -100,6 +106,7 @@ class EmailLogController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete_emails_email_logs');
         $emailLog = EmailLog::findOrFail($id);
         $emailLog->delete();
 

@@ -7,12 +7,14 @@ use App\Models\EmailTemplate;
 use App\Models\EmailtemplateActivities;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Gate;
 
 class EmailTemplateController extends Controller
 {
 
     public function index()
     {
+        Gate::authorize('index_emails_email_templates');
         $emailTemplates = EmailTemplate::with('emailActivities')
             ->orderBy('id', 'desc')
             ->get();
@@ -25,6 +27,7 @@ class EmailTemplateController extends Controller
      */
     public function create()
     {
+        Gate::authorize('create_emails_email_templates');
         $activities = EmailtemplateActivities::all();
 
         return view('layouts.admin.email-templates.create', compact('activities'));
@@ -35,6 +38,7 @@ class EmailTemplateController extends Controller
      */
     public function store(Request $request)
     {
+        Gate::authorize('create_emails_email_templates');
         $request->validate([
             'title' => 'required|string|max:255',
             'activity' => 'required|string',
@@ -71,6 +75,7 @@ class EmailTemplateController extends Controller
      */
     public function show(string $id)
     {
+        Gate::authorize('read_emails_email_templates');
         $emailTemplate = EmailTemplate::with('emailActivities')
             ->findOrFail($id);
 
@@ -82,6 +87,7 @@ class EmailTemplateController extends Controller
      */
     public function edit(string $id)
     {
+        Gate::authorize('update_emails_email_templates');
         $emailTemplate = EmailTemplate::findOrFail($id);
         $activities = EmailtemplateActivities::all();
 
@@ -93,6 +99,7 @@ class EmailTemplateController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        Gate::authorize('update_emails_email_templates');
         $request->validate([
             'title' => 'required|string|max:255',
             'activity' => 'required|string',
@@ -127,6 +134,7 @@ class EmailTemplateController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('delete_emails_email_templates');
         $emailTemplate = EmailTemplate::findOrFail($id);
         $emailTemplate->delete();
 
