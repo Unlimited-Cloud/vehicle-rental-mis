@@ -29,20 +29,22 @@
      <!-- Sidebar Menu -->
      @php
      use App\Helpers\MenuHelper;
-     $menuItems = config('sidebar');
+     $menuItems = MenuHelper::getParentModules();
      @endphp
-
      <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             
            @foreach ($menuItems as $item)
            {{-- @if(MenuHelper::hasPermission($item)) --}}
            @if(true)
-           @if(isset($item['children']))
+           @php
+           $childModules = MenuHelper::getSubModulesByParentId($item['id']);
+           @endphp
+           @if(!empty($childModules))
            
            @php
            $show_sub_module_count = '0';
-            foreach($item['children'] as $child){
+            foreach($childModules as $child){
                if(auth()->user()->can($child['permission'])){
                   $show_sub_module_count = $show_sub_module_count + 1;
                }
@@ -53,18 +55,18 @@
                <a href="#" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                   <i class="nav-icon {{ $item['icon'] }}"></i>
                   <p>
-                     {{ $item['title'] }}
+                     {{ $item['name'] }}
                      <i class="right fas fa-angle-right"></i>
                   </p>
                </a>
                <ul class="nav nav-treeview">
-                  @foreach($item['children'] as $child)
+                  @foreach($childModules as $child)
                   @if(auth()->user()->can($child['permission']))
                   {{-- @can($child['permission']) --}}
                   <li class="nav-item" style="padding-left: 7px;">
-                     <a href="{{ route($child['route']) }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
+                     <a href="{{ route(!empty($child['route']) ? $child['route'] : 'dashboard') }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
                         <i class="nav-icon {{ $child['icon'] }}"></i>
-                        <p>{{ $child['title'] }}</p>
+                        <p>{{ $child['name'] }}</p>
                      </a>
                   </li>
                   @endif
@@ -77,17 +79,17 @@
            @if(!@empty($item['permission']))
            @if(auth()->user()->can($item['permission']))
            <li class="nav-item">
-              <a href="{{ route($item['route']) }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
+              <a href="{{ route(!empty($item['route']) ? $item['route'] : 'dashboard') }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                  <i class="nav-icon {{ $item['icon'] }}"></i>
-                 <p>{{ $item['title'] }}</p>
+                 <p>{{ $item['name'] }}</p>
               </a>
            </li>
            @endif
            @else 
             <li class="nav-item">
-              <a href="{{ route($item['route']) }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
+              <a href="{{ route(!empty($item['route']) ? $item['route'] : 'dashboard') }}" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                  <i class="nav-icon {{ $item['icon'] }}"></i>
-                 <p>{{ $item['title'] }}</p>
+                 <p>{{ $item['name'] }}</p>
               </a>
            </li>
            @endif

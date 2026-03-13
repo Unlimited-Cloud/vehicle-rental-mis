@@ -35,7 +35,14 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $receipt->receipt_number }}</td>
-                <td>#{{ $receipt->vehicle_booking_id }}</td>
+                <td>
+                    <a href="{{ route('admin.vehicle_bookings.show', $receipt->vehicle_booking_id) }}" 
+                    class="text-primary" 
+                    title="View Booking Details">
+                        #{{ $receipt->vehicle_booking_id }}
+                    </a>
+                </td>
+                {{-- <td>#{{ $receipt->vehicle_booking_id }}</td> --}}
                 <td>
                     @if($receipt->vehicle)
                         {{ $receipt->vehicle->vehicle_name ?? $receipt->vehicle->name ?? 'N/A' }}

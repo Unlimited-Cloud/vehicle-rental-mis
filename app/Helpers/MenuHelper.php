@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Module;
 
 class MenuHelper
 {
@@ -54,5 +55,16 @@ class MenuHelper
         }
 
         return false;
+    }
+
+    public static function getParentModules(){
+        return Module::whereNull('parent_id')
+        ->orderBy('order_by')
+        ->get()
+        ->toArray();
+    }
+
+    public static function getSubModulesByParentId($parentId){
+        return Module::where('parent_id',$parentId)->orderBy('order_by')->get()->toArray();
     }
 }

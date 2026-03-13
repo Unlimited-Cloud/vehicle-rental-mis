@@ -254,7 +254,7 @@ class VehicleBookingController extends Controller
 
     public function show(VehicleBooking $vehicleBooking)
     {
-        Gate::authorize('view_vehicle_bookings');
+        Gate::authorize('read_vehicle_bookings');
         $vehicleBooking->load([
             'vehicle',
             'customer',
