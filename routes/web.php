@@ -63,6 +63,8 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
             Route::delete('/delete/{id}', 'delete')->name('user_roles.delete');
         });
     });
+    Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
+        ->name('vehicles.set-active-tab');
     Route::resource('vehicles', VehicleController::class);
     Route::resource('users', UserController::class);
     Route::resource('modules', ModulesController::class);
@@ -110,11 +112,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle_details', VehicleDetailsController::class);
 
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
-
-
-
-    Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
-        ->name('vehicles.set-active-tab');
 
     Route::resource('vehicle-permits', VehiclePermitController::class);
     Route::resource('vehicle-services', VehicleServiceController::class);
