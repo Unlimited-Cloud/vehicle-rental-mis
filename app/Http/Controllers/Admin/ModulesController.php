@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Module;
+use App\Services\ConfigurationService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
 use App\Repositories\Interfaces\MasterRepositoryInterface;
@@ -13,11 +14,14 @@ use App\Repositories\Interfaces\MasterRepositoryInterface;
 class ModulesController extends Controller
 {
     protected $masterRepository;
+    protected $configurationService;
 
     public function __construct(
-        MasterRepositoryInterface $masterRepository
+        MasterRepositoryInterface $masterRepository,
+        ConfigurationService $configurationService
     ) {
         $this->masterRepository = $masterRepository;
+        $this->configurationService = $configurationService;
     }
 
     /**
@@ -36,7 +40,7 @@ class ModulesController extends Controller
     public function create()
     {
         Gate::authorize('create_configuration_modules');
-        $modules = $this->masterRepository->getAllModules();
+        $modules = $this->masterRepository->getParentModules();
         return view('layouts.admin.modules.create', compact('modules'));
     }
 
@@ -50,16 +54,7 @@ class ModulesController extends Controller
             'name' => 'required|string|max:255',
             'icon' => 'required|string|max:255',
         ]);
-
-        Module::create([
-            'name'     => $request->name,
-            'parent_id'    => $request->parent_id,
-            'icon' => $request->icon,
-            'route'  => $request->route,
-            'permission'  => $request->permission,
-            'order_by'  => $request->order_by,
-        ]);
-
+        $this->configurationService->storeModules($request);
         return redirect()->route('admin.modules.index')
             ->with('success', 'Modules Created Successfully');
     }

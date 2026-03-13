@@ -9,4 +9,5 @@ interface MasterRepositoryInterface
     public function getAllPermissions();
     public function getModuleById($id);
     public function getPermissionByName($name);
+    public function getParentModules();
 }

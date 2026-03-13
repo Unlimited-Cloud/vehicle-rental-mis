@@ -24,4 +24,8 @@ class MasterRepository implements MasterRepositoryInterface
     public function getPermissionByName($name){
         return Permission::where('name',$name)->first();
     }
+
+    public function getParentModules(){
+        return Module::whereNull('parent_id')->orderBy('name')->get();
+    }
 }

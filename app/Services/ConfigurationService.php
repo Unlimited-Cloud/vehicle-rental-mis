@@ -79,4 +79,16 @@ class ConfigurationService
             }
         }
     }
+
+    public function storeModules($request){
+        $order_by = !empty($request->parent_id) ? $request->parent_id.$request->order_by : $request->order_by;
+        Module::create([
+            'name'     => $request->name,
+            'parent_id'    => $request->parent_id,
+            'icon' => $request->icon,
+            'route'  => $request->route,
+            'permission'  => $request->permission,
+            'order_by'  => $order_by,
+        ]);
+    }
 }

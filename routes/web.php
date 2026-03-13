@@ -11,6 +11,9 @@ use App\Http\Controllers\Admin\VehicleAssignmentController;
 use App\Http\Controllers\Admin\VehicleBookingController;
 use App\Http\Controllers\Admin\GpsDashboardController;
 use App\Http\Controllers\Admin\CustomerController;
+use App\Http\Controllers\Admin\EmailLogController;
+use App\Http\Controllers\Admin\EmailTemplateActivitiesController;
+use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\FuelPurchaseController;
 use App\Http\Controllers\Admin\PetrolPumpController;
 use App\Http\Controllers\Admin\PetrolPumpTransactionController;
@@ -79,6 +82,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
     Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
         ->name('proforma.index');
+    Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
+        ->name('receipt.index');
+    Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
+    Route::resource('email-templates', EmailTemplateController::class);
+    Route::resource('email-logs', EmailLogController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
