@@ -47,6 +47,10 @@ class VehicleMoment extends Model
         return $this->hasMany(VehicleQuestionnaireAnswer::class);
     }
 
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
 
     public function getStartImageUrlAttribute()
     {
