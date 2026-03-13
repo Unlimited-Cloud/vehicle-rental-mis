@@ -55,7 +55,7 @@
                     <tr>
                         <th>Status</th>
                         <td>
-                            @if($emailLog->status == 'sent')
+                            @if($emailLog->status == 'success')
                                 <span class="badge badge-success">Sent</span>
                             @elseif($emailLog->status == 'pending')
                                 <span class="badge badge-warning">Pending</span>
@@ -81,7 +81,7 @@
                 <h5 class="bg-info p-2 text-white">Email Body</h5>
                 <div class="card">
                     <div class="card-body">
-                        {{ $emailLog->email_body }}
+                        {!! $emailLog->email_body !!}
                     </div>
                 </div>
             </div>
