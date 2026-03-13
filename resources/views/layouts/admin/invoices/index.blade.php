@@ -34,7 +34,13 @@
            @foreach($invoices as $invoice)
             <tr>
             <td>{{ $invoice->invoice_number }}</td>
-            <td>#{{ $invoice->vehicle_booking_id }}</td>
+            <td>
+                <a href="{{ route('admin.vehicle_bookings.show', $invoice->vehicle_booking_id) }}" 
+                class="text-primary" 
+                title="View Booking Details">
+                    #{{ $invoice->vehicle_booking_id }}
+                </a>
+            </td>
             <td>{{ $invoice->vehicle->vehicle_name }}</td>
             <td>{{ $invoice->days }}</td>
             <td>{{ $invoice->total_amount }}</td>
