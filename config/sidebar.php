@@ -34,6 +34,12 @@ return [
                 'route' => 'admin.user_roles.index',
                 'permission' => 'index_roles',
             ],
+            [
+                'title' => 'Permissions',
+                'icon' => 'fas fa-users',
+                'route' => 'admin.permissions.index',
+                'permission' => 'index_configuration_permissions',
+            ],
         ],
     ],
 
