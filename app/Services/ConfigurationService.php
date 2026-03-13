@@ -81,13 +81,28 @@ class ConfigurationService
     }
 
     public function storeModules($request){
+
+        $moduleName = $request->name;
         $order_by = !empty($request->parent_id) ? $request->parent_id.$request->order_by : $request->order_by;
+
+        if(!empty($request->parent_id)){
+            $parentModuleId = $request->parent_id;
+            $parentModuleDetail = $this->masterRepository->getModuleById($parentModuleId);
+            
+            $parentModuleName = Str::slug($parentModuleDetail->name, '_');
+            $moduleSlug = Str::slug($moduleName, '_');
+
+            $permissionName = 'index_' . $parentModuleName . '_' . $moduleSlug;
+        }else{
+            $permissionName = 'index_' . Str::slug($moduleName, '_');
+        }
+        
         Module::create([
-            'name'     => $request->name,
+            'name'     => $moduleName,
             'parent_id'    => $request->parent_id,
             'icon' => $request->icon,
             'route'  => $request->route,
-            'permission'  => $request->permission,
+            'permission'  => $permissionName,
             'order_by'  => $order_by,
         ]);
     }

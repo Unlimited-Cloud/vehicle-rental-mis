@@ -62,14 +62,6 @@ value="{{ old('route',$module->route ?? '') }}">
 
 <div class="col-md-6">
 <div class="form-group">
-<label>Permission *</label>
-<input type="text" name="permission" class="form-control"
-value="{{ old('permission',$module->permission ?? '') }}">
-</div>
-</div>
-
-<div class="col-md-6">
-<div class="form-group">
 <label>Order By *</label>
 <input type="text" name="order_by" class="form-control"
 value="{{ old('order_by',$module->order_by ?? '') }}">
