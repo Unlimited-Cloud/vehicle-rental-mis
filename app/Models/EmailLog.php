@@ -16,4 +16,9 @@ class EmailLog extends Model
         'status',
         'failure_reason'
     ];
+
+    public function emailTemplate()
+    {
+        return $this->belongsTo(EmailTemplate::class, 'emailtemplate_id');
+    }
 }

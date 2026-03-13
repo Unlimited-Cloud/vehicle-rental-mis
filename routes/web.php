@@ -82,8 +82,12 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
     Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
         ->name('proforma.index');
+
     Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
         ->name('receipt.index');
+
+
+
     Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
     Route::resource('email-templates', EmailTemplateController::class);
     Route::resource('email-logs', EmailLogController::class);
@@ -125,6 +129,16 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
         ->name('proforma.download');
 
+
+    Route::get('vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
+        ->name('vehicle_receipt.download');
+
+
+
+    Route::get(
+        'vehicle-receipt/{moment}/{type}',
+        [ProformaInvoiceController::class, 'generateInvoice']
+    )->name('vehicle_receipt.generate');
 
 
     Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');

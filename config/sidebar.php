@@ -138,6 +138,39 @@ return [
                 'route' => 'admin.proforma.index',
                 'permission' => 'index_bills_proforma_invoice',
             ],
+
+            [
+                'title' => 'Receipts',
+                'icon' => 'fas fa-file-invoice', // child icon for Proforma Invoice
+                'route' => 'admin.receipt.index',
+                'permission' => 'index_bills_receipt',
+            ],
+        ],
+    ],
+
+    [
+        'title' => 'Emails',
+        'icon' => 'fas fa-envelope', // parent icon for Emails
+        'permission' => null,
+        'children' => [
+            [
+                'title' => 'Email Template Activities',
+                'icon' => 'fas fa-tasks',
+                'route' => 'admin.emailtemplate_activities.index',
+                'permission' => 'index_emails_emailtemplate_activities',
+            ],
+            [
+                'title' => 'Email Template',
+                'icon' => 'fas fa-envelope-open-text',
+                'route' => 'admin.email-templates.index',
+                'permission' => 'index_emails_emailtemplate',
+            ],
+            [
+                'title' => 'Email Logs',
+                'icon' => 'fas fa-history',
+                'route' => 'admin.email-logs.index',
+                'permission' => 'index_emails_emaillogs',
+            ],
         ],
     ],
 
