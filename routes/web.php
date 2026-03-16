@@ -82,6 +82,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
+
+    Route::get(
+        'get-trip-routes/{category}',
+        [VehicleBookingController::class, 'getRoutes']
+    )->name('get_trip_routes');
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
@@ -111,6 +116,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         [TripRouteController::class, 'export']
     )->name('trip-routes.export');
     Route::get('/trip-routes/category/view', [TripRouteController::class, 'categoryView'])->name('trip-routes.category.view');
+
 
     Route::get('trip-routes-upload', [TripRouteController::class, 'upload'])->name('trip-routes.upload');
     Route::post('trip-routes-import', [TripRouteController::class, 'import'])->name('trip-routes.import');

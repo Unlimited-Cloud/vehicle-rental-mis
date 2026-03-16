@@ -35,22 +35,20 @@
 
             {{-- VEHICLE --}}
             <div class="col-md-4">
-                <div class="form-group">
-                    <label>Vehicle *</label>
-                    <select name="vehicle_id" class="form-control" required>
-                        <option value="">Select Vehicle</option>
-                        @foreach($vehicles as $vehicle)
-                            <option value="{{ $vehicle->id }}"
-                                {{ old(
-            'vehicle_id',
-            $booking->vehicle_id ?? ''
-        ) == $vehicle->id ? 'selected' : '' }}>
-                                {{ $vehicle->vehicle_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+    <div class="form-group">
+        <label>Vehicle *</label>
+        <select name="vehicle_id" id="vehicle_id" class="form-control" required>
+            <option value="">Select Vehicle</option>
+            @foreach($vehicles as $vehicle)
+                <option value="{{ $vehicle->id }}"
+                    data-type="{{ $vehicle->vehicle_type }}"
+                    {{ old('vehicle_id', $booking->vehicle_id ?? '') == $vehicle->id ? 'selected' : '' }}>
+                    {{ $vehicle->vehicle_name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+</div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label>Driver</label>
@@ -283,6 +281,33 @@
                     </div>
                     </div>
                 <div class="row">
+                    <div class="row">
+
+<div class="col-md-4">
+<div class="form-group">
+<label>Trip Category</label>
+<select name="trip_category_id" id="trip_category_id" class="form-control">
+<option value="">Select Category</option>
+@foreach($tripCategories as $category)
+<option value="{{ $category->id }}"
+{{ old('trip_category_id', $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
+{{ $category->name }}
+</option>
+@endforeach
+</select>
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="form-group">
+<label>Trip Route</label>
+<select name="trip_route_id" id="trip_route_id" class="form-control">
+<option value="">Select Route</option>
+</select>
+</div>
+</div>
+
+</div>
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Rate Per Day</label>
@@ -297,28 +322,7 @@
                                 class="form-control">
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Tax Amount Type</label>
-                            <select id="tax_amount_type" name="tax_amount_type" class="form-control">
-                                <option value="amount"
-                                    {{ old('tax_amount_type', $booking->tax_amount_type ?? '') == 'amount' ? 'selected' : '' }}>
-                                    Amount
-                                </option>
-                                <option value="percentage"
-                                    {{ old('tax_amount_type', $booking->tax_amount_type ?? '') == 'percentage' ? 'selected' : '' }}>
-                                    Percentage
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Tax</label>
-                            <input id="tax" name="tax" type="text" value="{{ old('tax', $booking->tax ?? '0') }}"
-                                class="form-control">
-                        </div>
-                    </div>
+                  
                 </div>
                 <div class="row">
                     <div class="col-md-4">
@@ -465,59 +469,178 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript">
     $(document).ready(function() {
-        $("#rate_per_day").on("change", function () {
+        
+        // Function to calculate number of days
+        function calculateDays() {
             var start_date = $("#start_date").val();
             var end_date = $("#end_date").val();
             var no_of_hours = $("#no_of_hours").val();
-            var no_of_people = parseFloat($("#no_of_people").val()) || 0;
-
             var days = 0;
 
-            if (no_of_hours !== '') {
+            if (no_of_hours !== '' && no_of_hours > 0) {
                 days = parseFloat(no_of_hours) / 24;
             } else if (start_date && end_date) {
                 var start = new Date(start_date);
                 var end = new Date(end_date);
-
+                
                 var diffTime = end - start;
                 days = diffTime / (1000 * 60 * 60 * 24);
-            }
-
-            var rate_per_day = parseFloat($(this).val()) || 0;
-
-            var sub_total = rate_per_day * days * no_of_people;
-
-            $("#sub_total").val(sub_total.toFixed(2));
-        });
-
-        $("#tax").change(function() {
-            var tax = $(this).val();
-            console.log("tax",tax);
-            var tax_amount_type = $('#tax_amount_type').val();
-            console.log("tax_amount_type",tax_amount_type);
-            var sub_total = $("#sub_total").val();
-            console.log("sub_total",sub_total);
-            if(tax_amount_type === 'percentage'){
-                var sub_total_tax = sub_total * (tax/100);
-                var total_amount = parseFloat(sub_total) + parseFloat(sub_total_tax);
-            }else{
-                var total_amount = parseFloat(sub_total) + parseFloat(tax);
-            }
-            $('#total_amount').val(parseFloat(total_amount).toFixed(2));
-        });
-
-        $("#discount").change(function() {
-            var discount = $(this).val();
-            var discount_amount_type = $('#discount_amount_type').val();
-            var current_total = $('#total_amount').val();
-            if(discount_amount_type == 'percentage'){
-                var sub_total_discount = current_total * (discount/100);
-                var total_amount = parseFloat(current_total) - parseFloat(sub_total_discount);
-            }else{
-                var total_amount = parseFloat(current_total) - parseFloat(discount);
+                if (days < 0) days = 0;
+                // If same day, at least 1 day
+                if (days === 0 && start_date === end_date) {
+                    days = 1;
+                }
             }
             
-            $('#total_amount').val(parseFloat(total_amount).toFixed(2));
+            return days;
+        }
+
+        function calculateAndSetSubTotal() {
+            var days = calculateDays();
+            var rate_per_day = parseFloat($("#rate_per_day").val()) || 0;
+            
+            console.log("Calculating subtotal - Days:", days, "Rate:", rate_per_day); // For debugging
+            
+            var sub_total = rate_per_day * days;
+            
+            $("#sub_total").val(sub_total.toFixed(2));
+            
+            calculateAndSetTotalAmount();
+            
+            return sub_total;
+        }
+
+        // Function to calculate and set total amount with discount
+        function calculateAndSetTotalAmount() {
+            var sub_total = parseFloat($("#sub_total").val()) || 0;
+            var discount = parseFloat($("#discount").val()) || 0;
+            var discount_amount_type = $("#discount_amount_type").val();
+            
+            var total_amount = sub_total;
+            
+            if (discount > 0) {
+                if (discount_amount_type === 'percentage') {
+                    var discount_amount = sub_total * (discount / 100);
+                    total_amount = sub_total - discount_amount;
+                } else {
+                    total_amount = sub_total - discount;
+                }
+            }
+            
+            if (total_amount < 0) total_amount = 0;
+            
+            $("#total_amount").val(total_amount.toFixed(2));
+            
+            console.log("Total calculated:", total_amount); 
+        }
+
+        $("#rate_per_day").on("keyup change", function() {
+            console.log("Rate per day changed to:", $(this).val());
+            calculateAndSetSubTotal();
         });
+
+        $("#start_date, #end_date, #no_of_hours").on("change keyup", function() {
+            console.log("Date/hour changed");
+            calculateAndSetSubTotal();
+        });
+
+        $("#discount, #discount_amount_type").on("change keyup", function() {
+            console.log("Discount changed");
+            calculateAndSetTotalAmount();
+        });
+
+        // $("#no_of_people").on("change keyup", function() {
+        // });
+
+        $('#trip_category_id').change(function() {
+            var category_id = $(this).val();
+            $('#trip_route_id').html('<option value="">Loading...</option>');
+
+            $.get('/dashboard/get-trip-routes/' + category_id, function(routes) {
+                var options = '<option value="">Select Route</option>';
+                
+                routes.forEach(function(route) {
+                    options += '<option value="' + route.id + '" ' +
+                        'data-car="' + (route.car_price || 0) + '" ' +
+                        'data-hiace="' + (route.hiace_price || 0) + '" ' +
+                        'data-coaster="' + (route.coaster_price || 0) + '" ' +
+                        'data-bus="' + (route.bus_price || 0) + '">' +
+                        route.title +
+                        '</option>';
+                });
+
+                $('#trip_route_id').html(options);
+                
+                @if(isset($booking) && $booking->trip_route_id)
+                    setTimeout(function() {
+                        $('#trip_route_id').val('{{ $booking->trip_route_id }}');
+                        $('#trip_route_id').trigger('change');
+                    }, 100);
+                @endif
+            });
+        });
+
+        $('#trip_route_id').change(function() {
+            var vehicleType = $('#vehicle_id option:selected').data('type');
+            var selected = $(this).find(':selected');
+            var rate = 0;
+
+            if (vehicleType) {
+                vehicleType = vehicleType.toLowerCase();
+                if (vehicleType == 'car') {
+                    rate = selected.data('car');
+                } else if (vehicleType == 'hiace') {
+                    rate = selected.data('hiace');
+                } else if (vehicleType == 'coaster') {
+                    rate = selected.data('coaster');
+                } else if (vehicleType == 'bus') {
+                    rate = selected.data('bus');
+                }
+            }
+
+            console.log("Route selected - Vehicle type:", vehicleType, "Rate:", rate);
+            
+            if (rate > 0) {
+                $('#rate_per_day').val(rate);
+                $('#rate_per_day').trigger('change');
+            } else {
+                $('#rate_per_day').val('');
+                $('#sub_total').val('0');
+                $('#total_amount').val('0');
+            }
+        });
+
+        @if(isset($booking) && $booking->trip_category_id)
+            $(document).ready(function() {
+                $('#trip_category_id').val('{{ $booking->trip_category_id }}');
+                $('#trip_category_id').trigger('change');
+            });
+        @endif
+
+        $('#vehicle_id').change(function() {
+            if ($('#trip_route_id').val()) {
+                $('#trip_route_id').trigger('change');
+            }
+        });
+
+        @if(isset($booking))
+            $(document).ready(function() {
+                setTimeout(function() {
+                    console.log("Initial calculation for edit mode");
+                    if ($("#rate_per_day").val() > 0) {
+                        calculateAndSetSubTotal();
+                    }
+                }, 500);
+            });
+        @endif
+
+        $(window).on('load', function() {
+            setTimeout(function() {
+                if ($("#rate_per_day").val() > 0 && ($("#start_date").val() || $("#no_of_hours").val())) {
+                    calculateAndSetSubTotal();
+                }
+            }, 300);
+        });
+
     });
 </script>

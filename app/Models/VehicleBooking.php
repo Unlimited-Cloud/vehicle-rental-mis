@@ -37,7 +37,9 @@ class VehicleBooking extends Model
         'discount_amount_type',
         'discount',
         'payment_status',
-        'signage_information'
+        'signage_information',
+        'trip_category_id',
+        'trip_route_id'
     ];
 
     protected $dates = ['start_date', 'end_date'];

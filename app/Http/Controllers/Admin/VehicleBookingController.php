@@ -15,6 +15,8 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
 use App\Helpers\NepaliDateHelper;
+use App\Models\TripCategory;
+use App\Models\TripRoute;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -88,11 +90,12 @@ class VehicleBookingController extends Controller
             $q->where('role', 'helper');
         })->with('user')->get();
 
+        $tripCategories = TripCategory::where('status', 1)->get();
         // Customers dropdown
         $customers = Customer::all();
         $start = $request->start;
         $end   = $request->end;
-        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end', 'drivers', 'helpers', 'customers'));
+        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end', 'drivers', 'helpers', 'customers', 'tripCategories'));
     }
 
     public function store(Request $request)
@@ -117,6 +120,8 @@ class VehicleBookingController extends Controller
             'to_destination' => 'nullable',
             'no_of_people' => 'nullable|integer',
             'notes' => 'nullable|string',
+            'trip_category_id' => 'nullable',
+            'trip_route_id' => 'nullable'
         ]);
 
         $addData = $request->all();
@@ -142,7 +147,7 @@ class VehicleBookingController extends Controller
         $addData['rate_per_day'] = $request->rate_per_day;
         $addData['sub_total'] = $request->sub_total;
         $addData['tax_amount_type'] = $request->tax_amount_type;
-        $addData['tax'] = $request->tax;
+        $addData['tax'] = $request->tax ?? '0';
         $addData['discount_amount_type'] = $request->discount_amount_type;
         $addData['discount'] = $request->discount;
         $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
@@ -176,6 +181,7 @@ class VehicleBookingController extends Controller
             $q->where('role', 'helper');
         })->with('user')->get();
 
+        $tripCategories = TripCategory::where('status', 1)->get();
         // Customers dropdown
         $customers = Customer::all();
 
@@ -194,7 +200,7 @@ class VehicleBookingController extends Controller
 
         return view(
             'layouts.admin.vehicles_booking.create',
-            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers')
+            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers', 'tripCategories')
         );
     }
 
@@ -227,6 +233,8 @@ class VehicleBookingController extends Controller
         $updateData['tax'] = $request->tax;
         $updateData['discount_amount_type'] = $request->discount_amount_type;
         $updateData['discount'] = $request->discount;
+        $updateData['trip_category_id'] = $request->trip_category_id;
+        $updateData['trip_route_id'] = $request->trip_route_id;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
 
         $oldRate = $vehicleBooking->rate_per_day;
@@ -303,6 +311,15 @@ class VehicleBookingController extends Controller
             new VehicleBookingExport($request),
             $fileName
         );
+    }
+
+    public function getRoutes($category_id)
+    {
+        $routes = TripRoute::where('trip_category_id', $category_id)
+            ->where('status', 1)
+            ->get();
+
+        return response()->json($routes);
     }
 
 

@@ -243,13 +243,13 @@ PROFORMA INVOICE
 
 </tr>
 
-<tr>
+{{-- <tr>
 
 <td>Tax</td>
 
 <td align="right">{{ number_format($invoice->tax,2) }}</td>
 
-</tr>
+</tr> --}}
 
 <tr>
 
@@ -261,7 +261,7 @@ PROFORMA INVOICE
 
 <tr>
 
-<td><strong>Grand Total</strong></td>
+<td><strong>Grand Total (Without Tax)</strong></td>
 
 <td align="right"><strong>{{ number_format($invoice->total_amount,2) }}</strong></td>
 
