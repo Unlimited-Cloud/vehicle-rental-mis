@@ -29,7 +29,7 @@ use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\TripCategoryController;
 use App\Http\Controllers\Admin\TripRouteController;
-
+use App\Http\Controllers\Admin\VendorController;
 
 // Route::get('/', function () {
 //     return view('welcome');
@@ -121,6 +121,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
     Route::get('trip-routes-upload', [TripRouteController::class, 'upload'])->name('trip-routes.upload');
     Route::post('trip-routes-import', [TripRouteController::class, 'import'])->name('trip-routes.import');
     Route::resource('trip-routes', TripRouteController::class);
+    Route::resource('vehicle-permits', VehiclePermitController::class);
+    Route::resource('vehicle-services', VehicleServiceController::class);
+    Route::resource('vehicle-repairs', VehicleRepairController::class);
+    Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
+    Route::resource('vendors', VendorController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
@@ -130,11 +135,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('da
     Route::resource('vehicle_details', VehicleDetailsController::class);
 
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
-
-    Route::resource('vehicle-permits', VehiclePermitController::class);
-    Route::resource('vehicle-services', VehicleServiceController::class);
-    Route::resource('vehicle-repairs', VehicleRepairController::class);
-    Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
 
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');

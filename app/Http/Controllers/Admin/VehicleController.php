@@ -100,7 +100,7 @@ class VehicleController extends Controller
     public function show(Vehicle $vehicle)
     {
         Gate::authorize('read_vehicles');
-        $vehicle->load(['permits', 'services', 'repairs', 'tyreChanges']);
+        $vehicle->load(['permits', 'services', 'repairs', 'repairs.vendor', 'repairs.driver', 'tyreChanges']);
 
         return view('layouts.admin.vehicles.show', compact('vehicle'));
     }

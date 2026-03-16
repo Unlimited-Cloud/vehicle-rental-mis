@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\BookingController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -43,6 +45,14 @@ Route::prefix('customer')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [CustomerController::class, 'logout']);
+        Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
+        Route::get('/get-drivers', [BookingController::class, 'getDrivers']);
+        Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
+        Route::get('/get-customerbooking/{customerId}', [BookingController::class, 'getCustomerBookings']);
+
+        Route::get('/get-category', [BookingController::class, 'tripcategory']);
+        Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
+        Route::post('/bookings', [BookingController::class, 'createBooking']);
     });
 });
 
