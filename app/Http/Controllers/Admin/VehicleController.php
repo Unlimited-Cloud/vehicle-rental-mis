@@ -34,6 +34,7 @@ class VehicleController extends Controller
         Gate::authorize('create_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
+            'vehicle_type' => 'nullable',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required|digits:4',
@@ -99,7 +100,7 @@ class VehicleController extends Controller
     public function show(Vehicle $vehicle)
     {
         Gate::authorize('read_vehicles');
-        $vehicle->load(['permits', 'services', 'repairs', 'tyreChanges']);
+        $vehicle->load(['permits', 'services', 'repairs', 'repairs.vendor', 'repairs.driver', 'tyreChanges']);
 
         return view('layouts.admin.vehicles.show', compact('vehicle'));
     }
@@ -115,6 +116,7 @@ class VehicleController extends Controller
         Gate::authorize('update_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
+            'vehicle_type' => 'nullable',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required|digits:4',

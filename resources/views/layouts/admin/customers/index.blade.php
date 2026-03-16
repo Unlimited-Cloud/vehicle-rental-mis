@@ -4,7 +4,7 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Customers (Vendors/Agents)</h1>
+        <h1>Customers</h1>
     </div>
 </div>
 

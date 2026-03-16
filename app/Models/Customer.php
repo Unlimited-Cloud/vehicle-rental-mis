@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Sanctum\HasApiTokens;
 
 class Customer extends Model
 {
+    use  HasApiTokens;
     protected $fillable = [
         'first_name',
         'middle_name',
@@ -20,6 +22,7 @@ class Customer extends Model
         'license_number',
         'license_expiry',
         'status',
+        'password'
     ];
 
     protected $casts = [

@@ -4,6 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\BookingController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -12,6 +15,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [LoginController::class, 'login']);
 
+//Driver API
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
 
@@ -29,5 +33,28 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('questionnaires/{id}', [VehicleMomentController::class, 'getQuestionnaire']);
     });
 });
+
+
+
+//Customer API
+
+Route::prefix('customer')->group(function () {
+
+    Route::post('/login', [CustomerController::class, 'login']);
+    Route::post('/register', [CustomerController::class, 'register']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [CustomerController::class, 'logout']);
+        Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
+        Route::get('/get-drivers', [BookingController::class, 'getDrivers']);
+        Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
+        Route::get('/get-customerbooking/{customerId}', [BookingController::class, 'getCustomerBookings']);
+
+        Route::get('/get-category', [BookingController::class, 'tripcategory']);
+        Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
+        Route::post('/bookings', [BookingController::class, 'createBooking']);
+    });
+});
+
 
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);

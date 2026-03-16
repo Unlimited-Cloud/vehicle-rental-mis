@@ -32,8 +32,9 @@
                             <thead>
                                 <tr>
                                     <th>SN</th>
-                                    <th>Image</th>
+                                    {{-- <th>Image</th> --}}
                                     <th>Vehicle Name</th>
+                                    <th>Type</th>
                                     <th>Brand</th>
                                     <th>Model</th>
                                     <th>Year</th>
@@ -49,7 +50,7 @@
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
 
-                                    <td>
+                                    {{-- <td>
                                         @if($vehicle->image)
                                             <img src="{{ asset($vehicle->image) }}"
                                                  width="60"
@@ -58,9 +59,10 @@
                                         @else
                                             N/A
                                         @endif
-                                    </td>
+                                    </td> --}}
 
                                     <td>{{ $vehicle->vehicle_name }}</td>
+                                   <td>{{ ucfirst($vehicle->vehicle_type) }}</td>
                                     <td>{{ $vehicle->brand }}</td>
                                     <td>{{ $vehicle->model }}</td>
                                     <td>{{ $vehicle->year }}</td>

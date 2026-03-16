@@ -448,11 +448,9 @@
                 <tr>
                     <th>SN</th>
                     <th>Date</th>
-                    <th>Vendor Name</th>
-                    {{-- <th>Driver Name</th> --}}
+                    <th>Vendor</th>
                     <th>Amount</th>
-                    <th>Bill</th>
-                    <th>Insurance Claim</th>
+                    <th>Valid Till</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -461,17 +459,9 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $repair->repair_date }}</td>
-                    <td>{{ $repair->vendor ? $repair->vendor->name : 'N/A' }}</td>
-                    {{-- <td>{{ $repair->driver ? $repair->driver->name : 'N/A' }}</td>  --}}
+                    <td>{{ $repair->repair_vendor }}</td>
                     <td>Rs {{ number_format($repair->repair_amount,2) }}</td>
-                    <td>
-                    @if($repair->bill)
-                        <a href="{{ asset($repair->bill) }}" target="_blank" class="btn btn-info btn-sm">View Bill</a>
-                    @else
-                        No Bill
-                    @endif
-                </td>
-                <td>{{ $repair->claim_insurance == 'Y' ? 'Yes' : 'No' }}</td>
+                    <td>{{ $repair->repair_valid_till }}</td>
                     <td>
                         <a href="{{ route('admin.vehicle-repairs.edit',$repair->id) }}"
                            class="btn btn-primary btn-sm">
