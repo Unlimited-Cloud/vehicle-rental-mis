@@ -630,4 +630,12 @@ class UserRepository implements UserRepositoryInterface
         $detail = User::where('user_uuid', $uuid)->first();
         return $detail;
     }
+
+    public function getUsers(){
+        return User::latest()->get();
+    }
+
+    public function getUsersByCustomerId($customerId){
+        return User::where('customer_id',$customerId)->latest()->get();
+    }
 }

@@ -22,15 +22,29 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Services\ProformaService;
+use App\Repositories\Interfaces\VehicleRepositoryInterface;
 
 class VehicleBookingController extends Controller
 {
 
     protected $service;
+    protected $vehicleRepository;
 
-    public function __construct(ProformaService $service)
+    private $currentUserId;
+    private $currentUserCustomerId;
+
+    private $currentUserIsCustomer;
+
+    public function __construct(ProformaService $service,VehicleRepositoryInterface $vehicleRepository)
     {
         $this->service = $service;
+        $this->vehicleRepository = $vehicleRepository;
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            return $next($request);
+        });
     }
 
     /**
@@ -39,39 +53,22 @@ class VehicleBookingController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('index_vehicle_bookings');
-        $query = VehicleBooking::with([
-            'vehicle',
-            'customer',
-            'payment',
-            'driver.user'
-        ]);
 
-        // Filter by vehicle
-        if ($request->vehicle_id) {
-            $query->where('vehicle_id', $request->vehicle_id);
+        if($this->currentUserIsCustomer == 'Y'){
+            $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request,$this->currentUserCustomerId);
+        }else{
+            $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
         }
-
-        // Filter by customer
-        if ($request->customer_id) {
-            $query->where('customer_id', $request->customer_id);
-        }
-
-        // Filter by driver
-        if ($request->driver_id) {
-            $query->where('driver_id', $request->driver_id);
-        }
-
-        $bookings = $query->orderBy('start_date', 'desc')->get();
-
+        
         $vehicles  = Vehicle::orderBy('vehicle_name')->get();
         $customers = Customer::orderBy('name')->get();
         $drivers   = CrewProfile::whereHas('user', function ($q) {
             $q->where('role', 'driver');
         })->with('user')->get();
-
+        $currentUserIsCustomer = $this->currentUserIsCustomer;
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles', 'customers', 'drivers')
+            compact('bookings', 'vehicles', 'customers', 'drivers','currentUserIsCustomer')
         );
     }
     /**
@@ -95,7 +92,8 @@ class VehicleBookingController extends Controller
         $customers = Customer::all();
         $start = $request->start;
         $end   = $request->end;
-        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end', 'drivers', 'helpers', 'customers', 'tripCategories'));
+        $currentUserIsCustomer = $this->currentUserIsCustomer;
+        return view('layouts.admin.vehicles_booking.create',  compact('vehicles', 'start', 'end', 'drivers', 'helpers', 'customers', 'currentUserIsCustomer', 'tripCategories'));
     }
 
     public function store(Request $request)
@@ -103,7 +101,6 @@ class VehicleBookingController extends Controller
         Gate::authorize('create_vehicle_bookings');
         $request->validate([
             'vehicle_id' => 'required',
-            'customer_id' => 'required|exists:customers,id',
             'driver_id' => 'nullable|exists:crew_profiles,id',
             'helper_id' => 'nullable|exists:crew_profiles,id',
             'start_date' => 'required|date',
@@ -151,7 +148,7 @@ class VehicleBookingController extends Controller
         $addData['discount_amount_type'] = $request->discount_amount_type;
         $addData['discount'] = $request->discount;
         $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
-
+        $addData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         $vehicleBooking = VehicleBooking::create($addData);
         $this->service->createProforma($vehicleBooking);
         $vehicleBookingId = $vehicleBooking->id;
@@ -197,10 +194,10 @@ class VehicleBookingController extends Controller
             ->leftJoin('payments', 'payments.vehicle_booking_id', '=', 'vehicle_bookings.id')
             ->where('vehicle_bookings.id', $vehicleBooking->id)
             ->first();
-
+        $currentUserIsCustomer = $this->currentUserIsCustomer;
         return view(
             'layouts.admin.vehicles_booking.create',
-            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers', 'tripCategories')
+            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers','currentUserIsCustomer','tripCategories')
         );
     }
 
@@ -236,7 +233,7 @@ class VehicleBookingController extends Controller
         $updateData['trip_category_id'] = $request->trip_category_id;
         $updateData['trip_route_id'] = $request->trip_route_id;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
-
+        $updateData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         $oldRate = $vehicleBooking->rate_per_day;
         $oldTotal = $vehicleBooking->sub_total;
         $vehicleBooking->update($updateData);

@@ -57,4 +57,6 @@ interface UserRepositoryInterface
     public function getRoleById($id);
     public function getUserByUuid($uuid);
     public function getCustomerUserByEmail($email);
+    public function getUsers();
+    public function getUsersByCustomerId($customerId);
 }

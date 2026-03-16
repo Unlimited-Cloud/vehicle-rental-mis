@@ -10,10 +10,35 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\MasterRepositoryInterface;
 
 class ProformaInvoiceController extends Controller
 {
+    protected $vehicleRepository;
+    protected $masterRepository;
 
+    private $currentUserId;
+
+    private $currentUserCustomerId;
+
+    private $currentUserIsCustomer;
+
+    public function __construct(
+        VehicleRepositoryInterface $vehicleRepository,
+        MasterRepositoryInterface $masterRepository
+    ) {
+        $this->vehicleRepository = $vehicleRepository;
+        $this->masterRepository = $masterRepository;
+        
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            return $next($request);
+        });
+    }
     public function index()
     {
         Gate::authorize('index_bills_proforma_invoice');
@@ -27,9 +52,7 @@ class ProformaInvoiceController extends Controller
     public function indexReceipt()
     {
         Gate::authorize('index_bills_receipt');
-        $receipts = VehicleReceipt::with(['vehicle', 'customer', 'booking'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $receipts = $this->currentUserIsCustomer == 'Y' ? $this->vehicleRepository->getVehicleReceiptsByCustomerId($this->currentUserCustomerId) : $this->vehicleRepository->getAllVehicleReceipts();
 
         return view('layouts.admin.invoices.index-receipt', compact('receipts'));
     }

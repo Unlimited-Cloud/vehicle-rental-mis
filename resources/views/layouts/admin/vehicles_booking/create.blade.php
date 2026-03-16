@@ -77,6 +77,7 @@
             </select>
                 </div>
             </div>
+            @if($currentUserIsCustomer == 'N')
             <div class="col-md-4">
             <div class="form-group">
                   <label>Customer</label>
@@ -91,6 +92,7 @@
             </select>
             </div>
             </div>
+            @endif
 
 
 
