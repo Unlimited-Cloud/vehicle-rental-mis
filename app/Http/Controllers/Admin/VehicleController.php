@@ -34,6 +34,7 @@ class VehicleController extends Controller
         Gate::authorize('create_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
+            'vehicle_type' => 'nullable',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required|digits:4',
@@ -115,6 +116,7 @@ class VehicleController extends Controller
         Gate::authorize('update_vehicles');
         $request->validate([
             'vehicle_name' => 'required',
+            'vehicle_type' => 'nullable',
             'brand' => 'required',
             'model' => 'required',
             'year' => 'required|digits:4',

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
 use App\Http\Controllers\Api\LoginController;
+use App\Http\Controllers\Api\CustomerController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -12,6 +13,7 @@ Route::get('/user', function (Request $request) {
 
 Route::post('/login', [LoginController::class, 'login']);
 
+//Driver API
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
 
@@ -29,5 +31,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('questionnaires/{id}', [VehicleMomentController::class, 'getQuestionnaire']);
     });
 });
+
+
+
+//Customer API
+
+Route::prefix('customer')->group(function () {
+
+    Route::post('/login', [CustomerController::class, 'login']);
+    Route::post('/register', [CustomerController::class, 'register']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/logout', [CustomerController::class, 'logout']);
+    });
+});
+
 
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);

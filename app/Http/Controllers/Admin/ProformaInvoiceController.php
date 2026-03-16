@@ -18,7 +18,7 @@ class ProformaInvoiceController extends Controller
     {
         Gate::authorize('index_bills_proforma_invoice');
         $invoices = ProformaInvoice::with(['vehicle', 'booking'])
-            ->latest()
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('layouts.admin.invoices.index', compact('invoices'));
