@@ -10,6 +10,8 @@ use App\Repositories\Interfaces\MasterRepositoryInterface;
 use App\Repositories\MasterRepository;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Repositories\CustomerRepository;
+use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\VehicleRepository;
 use App\Events\EmailEvent;
 use App\Listeners\EmailListeners;
 
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
         $this->app->bind(MasterRepositoryInterface::class, MasterRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
+        $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
     }
 
     /**

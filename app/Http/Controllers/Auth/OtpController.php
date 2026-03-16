@@ -9,6 +9,7 @@ use App\Models\PasscodeSetup;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\LoginOtpMail;
+use App\Models\User;
 
 class OtpController extends Controller
 {
@@ -113,6 +114,8 @@ class OtpController extends Controller
         }
 
         Auth::loginUsingId($passcode->user_id);
+        $userDetail = User::where('id',$passcode->user_id)->first();
+        session(['user' => $userDetail]);
 
         $passcode->update([
             'request_count' => 0,

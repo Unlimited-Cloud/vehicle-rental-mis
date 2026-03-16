@@ -12,4 +12,5 @@ interface MasterRepositoryInterface
     public function getModuleById($id);
     public function getPermissionByName($name);
     public function getParentModules();
+    public function getAllProformaInvoices();
 }

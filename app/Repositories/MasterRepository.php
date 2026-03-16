@@ -6,6 +6,7 @@ use App\Repositories\Interfaces\MasterRepositoryInterface;
 use App\Models\Module;
 use App\Models\Role;
 use App\Models\Permission;
+use App\Models\ProformaInvoice;
 
 class MasterRepository implements MasterRepositoryInterface
 {
@@ -32,5 +33,11 @@ class MasterRepository implements MasterRepositoryInterface
 
     public function getParentModules(){
         return Module::whereNull('parent_id')->orderBy('name')->get();
+    }
+
+    public function getAllProformaInvoices(){
+        ProformaInvoice::with(['vehicle', 'booking'])
+            ->latest()
+            ->get();
     }
 }

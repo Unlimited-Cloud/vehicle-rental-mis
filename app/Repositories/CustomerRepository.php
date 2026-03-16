@@ -12,4 +12,8 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function getAllCustomers(){
         return Customer::orderBy('name')->get();
     }
+
+    public function getCustomerById($id){
+        return Customer::where('id',$id)->first();
+    }
 }

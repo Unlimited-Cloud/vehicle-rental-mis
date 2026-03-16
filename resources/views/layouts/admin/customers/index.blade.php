@@ -37,6 +37,7 @@
             </tr>
         </thead>
         <tbody>
+            @if($currentUserIsCustomer == 'N')
             @foreach($customers as $customer)
             <tr>
                 <td>{{ $loop->iteration }}</td>
@@ -69,6 +70,41 @@
                 </td>
             </tr>
             @endforeach
+            @else
+            @php
+                $customer = $customers;
+            @endphp 
+                <tr>
+                    <td>{{ 1 }}</td>
+                    <td>{{ $customer->name }}</td>
+                    <td>{{ $customer->phone }}</td>
+                    <td>{{ $customer->email ?? 'N/A' }}</td>
+                    <td>{{ $customer->city ?? 'N/A' }}</td>
+                    <td>{{ $customer->license_number ?? 'N/A' }}</td>
+                    <td>{{ $customer->license_expiry ? $customer->license_expiry->format('d-m-Y') : 'N/A' }}</td>
+                    <td>{!! $customer->status_badge !!}</td>
+                    <td>
+                        <a href="{{ route('admin.customers.edit', $customer->id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+
+                        <a href="{{ route('admin.customers.show', $customer->id) }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+
+                        <form action="{{ route('admin.customers.destroy', $customer->id) }}"
+                            method="POST"
+                            style="display:inline-block;"
+                            onsubmit="return confirm('Are you sure you want to delete this customer?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm bg-red">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            @endif
         </tbody>
     </table>
 </div>

@@ -4,29 +4,41 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Repositories\Interfaces\MasterRepositoryInterface;
-use Illuminate\Support\Facades\Auth;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Models\User;
 
 class UserController extends Controller
 {
     protected $customerRepository;
     protected $masterRepository;
+    protected $userRepository;
 
-    protected $isCustomerUser;
-    protected $userCustomerId;
+    private $currentUserId;
+
+    private $currentUserCustomerId;
+
+    private $currentUserIsCustomer;
 
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
-        MasterRepositoryInterface $masterRepository
+        MasterRepositoryInterface $masterRepository,
+        UserRepositoryInterface $userRepository
     ) {
         $this->customerRepository = $customerRepository;
         $this->masterRepository = $masterRepository;
-        $this->isCustomerUser = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
-        $this->userCustomerId = !empty(Auth::user()) ? Auth::user()->customer_id : NULL;
+        $this->userRepository = $userRepository;
+        
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            return $next($request);
+        });
     }
 
     /**
@@ -35,8 +47,7 @@ class UserController extends Controller
     public function index()
     {
         Gate::authorize('index_users');
-        
-        $users = User::latest()->get();
+        $users = $this->currentUserIsCustomer == 'Y' ? $this->userRepository->getUsersByCustomerId(Auth::user()->customer_id) : $this->userRepository->getUsers();
         return view('layouts.admin.users.index', compact('users'));
     }
 
@@ -48,7 +59,7 @@ class UserController extends Controller
         Gate::authorize('create_users');
         $customers = $this->customerRepository->getAllCustomers();
         $roles = $this->masterRepository->getAllRoles();
-        $isCustomerUser = $this->isCustomerUser;
+        $isCustomerUser = $this->currentUserIsCustomer;
         return view('layouts.admin.users.create', compact('customers','roles','isCustomerUser'));
     }
 
@@ -72,7 +83,7 @@ class UserController extends Controller
             'role_id'  => $request->role_id,
         ];
 
-        $addData['customer_id'] = $this->isCustomerUser == 'N' ? $request->customer_id : $this->userCustomerId;
+        $addData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         if(!empty($addData['customer_id'])){
             $addData['user_type'] = 'customer_dashboard';
         }
@@ -117,7 +128,7 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
-        $data['customer_id'] = $request->customer_id;
+        $data['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         if(!empty($data['customer_id'])){
             $data['user_type'] = 'customer_dashboard';
         }
