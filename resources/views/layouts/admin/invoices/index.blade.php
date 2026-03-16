@@ -21,6 +21,7 @@
     <table id="dataTable" class="table table-bordered table-striped show-search-bar">
         <thead>
             <tr>
+                <th>Date</th>
                 <th>Invoice No</th>
                 <th>Booking</th>
                 <th>Vehicle</th>
@@ -33,6 +34,7 @@
         <tbody>
            @foreach($invoices as $invoice)
             <tr>
+            <td>{{ $invoice->created_at }}</td>
             <td>{{ $invoice->invoice_number }}</td>
             <td>
                 <a href="{{ route('admin.vehicle_bookings.show', $invoice->vehicle_booking_id) }}" 

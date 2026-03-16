@@ -25,16 +25,6 @@ class ProformaService
 
         $subTotal = $booking->rate_per_day * $days;
 
-        /*
-    |----------------------------------------
-    | Calculate Tax
-    |----------------------------------------
-    */
-        if ($booking->tax_amount_type == 'percentage') {
-            $taxAmount = ($subTotal * $booking->tax) / 100;
-        } else {
-            $taxAmount = $booking->tax;
-        }
 
         /*
     |----------------------------------------
@@ -52,7 +42,7 @@ class ProformaService
     | Final Total
     |----------------------------------------
     */
-        $total = $subTotal + $taxAmount - $discountAmount;
+        $total = $subTotal - $discountAmount;
 
         $invoice = ProformaInvoice::create([
             'vehicle_booking_id' => $booking->id,
@@ -63,7 +53,6 @@ class ProformaService
             'days' => $days,
             'rate_per_day' => $booking->rate_per_day,
             'sub_total' => $subTotal,
-            'tax' => $taxAmount,
             'discount' => $discountAmount,
             'total_amount' => $total,
             'version' => $version

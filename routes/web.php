@@ -27,6 +27,8 @@ use App\Http\Controllers\Admin\VehicleMomentController;
 use App\Http\Controllers\Admin\ProformaInvoiceController;
 use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\PermissionsController;
+use App\Http\Controllers\Admin\TripCategoryController;
+use App\Http\Controllers\Admin\TripRouteController;
 
 
 // Route::get('/', function () {
@@ -80,6 +82,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
     Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
         ->name('vehicle_bookings.events');
+
+    Route::get(
+        'get-trip-routes/{category}',
+        [VehicleBookingController::class, 'getRoutes']
+    )->name('get_trip_routes');
     Route::resource('vehicle_bookings', VehicleBookingController::class)
         ->parameters([
             'vehicle_bookings' => 'vehicle_booking'
@@ -103,6 +110,17 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
     Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
     Route::resource('email-templates', EmailTemplateController::class);
     Route::resource('email-logs', EmailLogController::class);
+    Route::resource('trip-categories', TripCategoryController::class);
+    Route::get(
+        'trip-routes-export',
+        [TripRouteController::class, 'export']
+    )->name('trip-routes.export');
+    Route::get('/trip-routes/category/view', [TripRouteController::class, 'categoryView'])->name('trip-routes.category.view');
+
+
+    Route::get('trip-routes-upload', [TripRouteController::class, 'upload'])->name('trip-routes.upload');
+    Route::post('trip-routes-import', [TripRouteController::class, 'import'])->name('trip-routes.import');
+    Route::resource('trip-routes', TripRouteController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
