@@ -4,12 +4,17 @@ namespace App\Repositories;
 
 use App\Repositories\Interfaces\MasterRepositoryInterface;
 use App\Models\Module;
+use App\Models\Role;
 use App\Models\Permission;
 
 class MasterRepository implements MasterRepositoryInterface
 {
     public function getAllModules(){
         return Module::orderBy('order_by')->get();
+    }
+
+    public function getAllRoles(){
+        return Role::orderBy('name')->get();
     }
 
     public function getAllPermissions(){

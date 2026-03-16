@@ -7,15 +7,35 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
+use App\Repositories\Interfaces\CustomerRepositoryInterface;
+use App\Repositories\Interfaces\MasterRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
+    protected $customerRepository;
+    protected $masterRepository;
+
+    protected $isCustomerUser;
+    protected $userCustomerId;
+
+    public function __construct(
+        CustomerRepositoryInterface $customerRepository,
+        MasterRepositoryInterface $masterRepository
+    ) {
+        $this->customerRepository = $customerRepository;
+        $this->masterRepository = $masterRepository;
+        $this->isCustomerUser = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+        $this->userCustomerId = !empty(Auth::user()) ? Auth::user()->customer_id : NULL;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         Gate::authorize('index_users');
+        
         $users = User::latest()->get();
         return view('layouts.admin.users.index', compact('users'));
     }
@@ -26,7 +46,10 @@ class UserController extends Controller
     public function create()
     {
         Gate::authorize('create_users');
-        return view('layouts.admin.users.create');
+        $customers = $this->customerRepository->getAllCustomers();
+        $roles = $this->masterRepository->getAllRoles();
+        $isCustomerUser = $this->isCustomerUser;
+        return view('layouts.admin.users.create', compact('customers','roles','isCustomerUser'));
     }
 
     /**
@@ -42,12 +65,19 @@ class UserController extends Controller
             'role_id' => 'nullable|exists:roles,id',
         ]);
 
-        User::create([
+        $addData = [
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
             'role_id'  => $request->role_id,
-        ]);
+        ];
+
+        $addData['customer_id'] = $this->isCustomerUser == 'N' ? $request->customer_id : $this->userCustomerId;
+        if(!empty($addData['customer_id'])){
+            $addData['user_type'] = 'customer_dashboard';
+        }
+
+        User::create($addData);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User Created Successfully');
@@ -59,7 +89,9 @@ class UserController extends Controller
     public function edit(User $user)
     {
         Gate::authorize('update_users');
-        return view('layouts.admin.users.create', compact('user'));
+        $customers = $this->customerRepository->getAllCustomers();
+        $roles = $this->masterRepository->getAllRoles();
+        return view('layouts.admin.users.create', compact('user','customers','roles'));
     }
 
     /**
@@ -83,6 +115,11 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+        }
+
+        $data['customer_id'] = $request->customer_id;
+        if(!empty($data['customer_id'])){
+            $data['user_type'] = 'customer_dashboard';
         }
 
         $user->update($data);
