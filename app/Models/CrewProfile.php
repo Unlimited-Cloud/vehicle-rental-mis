@@ -23,4 +23,8 @@ class CrewProfile extends Model
     {
         return $this->hasMany(FuelPurchase::class);
     }
+    public function repairs()
+    {
+        return $this->hasMany(VehicleRepair::class);
+    }
 }
