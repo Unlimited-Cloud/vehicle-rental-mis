@@ -38,6 +38,7 @@
         <!-- First Row - Vehicles & Customers -->
         <div class="row">
             <!-- Total Vehicles -->
+            @if($currentUserIsCustomer == 'N')
             <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.vehicles.index') }}" style="text-decoration: none;">
                     <div class="small-box bg-info" style="border-radius: 8px; min-height: 100px;">
@@ -55,7 +56,9 @@
                     </div>
                 </a>
             </div>
+            @endif
 
+            @if($currentUserIsCustomer == 'N')
             <!-- Total Customers -->
             <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.customers.index') }}" style="text-decoration: none;">
@@ -71,6 +74,7 @@
                     </div>
                 </a>
             </div>
+            @endif
 
             <!-- Total Bookings -->
             <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
@@ -91,6 +95,7 @@
                 </a>
             </div>
 
+            @if($currentUserIsCustomer == 'N')
             <!-- Total Petrol Pumps -->
             <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.petrol_pumps.index') }}" style="text-decoration: none;">
@@ -106,8 +111,10 @@
                     </div>
                 </a>
             </div>
+            @endif
         </div>
 
+        @if($currentUserIsCustomer == 'N')
         <!-- Second Row - Crew Members -->
         <div class="row mt-2">
             <div class="col-12">
@@ -164,6 +171,7 @@
                 </a>
             </div>
         </div>
+        @endif
 
         <!-- Recent Bookings Section -->
         <div class="row mt-3">
@@ -174,7 +182,7 @@
                             <i class="fas fa-clock mr-1" style="font-size: 0.9rem;"></i>Recent Bookings
                         </h6>
                         <div class="card-tools">
-                            <span class="badge badge-primary">{{ $recentBookings->count() }} Recent</span>
+                            <span class="badge badge-primary">{{ $recentBookings ? $recentBookings->count() : 0 }} Recent</span>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -193,7 +201,8 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($recentBookings as $index => $booking)
+                                    @if(!empty($recentBookings))
+                                    @foreach($recentBookings as $index => $booking)
                                         @php
                                             $statusColor = $booking->status == 'confirmed' ? 'success' : 
                                                           ($booking->status == 'pending' ? 'warning' : 'danger');
@@ -212,13 +221,14 @@
                                                 </span>
                                             </td>
                                         </tr>
-                                    @empty
+                                    @endforeach
+                                    @else
                                         <tr>
                                             <td colspan="8" class="text-center py-2" style="font-size: 0.75rem;">
                                                 <i class="fas fa-info-circle mr-1"></i>No recent bookings found
                                             </td>
                                         </tr>
-                                    @endforelse
+                                    @endif
                                 </tbody>
                             </table>
                         </div>
@@ -243,21 +253,27 @@
                     </div>
                     <div class="card-body p-2">
                         <div class="row">
+                            @if($currentUserIsCustomer == 'N')
                             <div class="col-md-3 col-sm-6 mb-1">
                                 <a href="{{ route('admin.vehicles.create') }}" class="btn btn-outline-primary btn-block btn-sm" style="font-size: 0.7rem; padding: 4px;">
                                     <i class="fas fa-plus-circle mr-1" style="font-size: 0.7rem;"></i>Add Vehicle
                                 </a>
                             </div>
+                            @endif
+                            @if($currentUserIsCustomer == 'N')
                             <div class="col-md-3 col-sm-6 mb-1">
                                 <a href="{{ route('admin.customers.create') }}" class="btn btn-outline-success btn-block btn-sm" style="font-size: 0.7rem; padding: 4px;">
                                     <i class="fas fa-user-plus mr-1" style="font-size: 0.7rem;"></i>Add Customer
                                 </a>
                             </div>
+                            @endif
+                            @if($currentUserIsCustomer == 'N')
                             <div class="col-md-3 col-sm-6 mb-1">
                                 <a href="{{ route('admin.crew_profiles.create') }}" class="btn btn-outline-info btn-block btn-sm" style="font-size: 0.7rem; padding: 4px;">
                                     <i class="fas fa-user-plus mr-1" style="font-size: 0.7rem;"></i>Add Crew
                                 </a>
                             </div>
+                            @endif
                             <div class="col-md-3 col-sm-6 mb-1">
                                 <a href="{{ route('admin.vehicle_bookings.create') }}" class="btn btn-outline-warning btn-block btn-sm" style="font-size: 0.7rem; padding: 4px;">
                                     <i class="fas fa-calendar-plus mr-1" style="font-size: 0.7rem;"></i>New Booking

@@ -2,17 +2,23 @@
 
 @section('dynamicdata')
 
+@if(auth()->user()->can('create_vehicle_bookings') || auth()->user()->can('list_view_vehicles_vehicle_bookings') || auth()->user()->can('calendar_view_vehicles_vehicle_bookings') || auth()->user()->can('export_vehicles_vehicle_bookings'))
 <div class="content-header">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <h1>Vehicle Bookings</h1>
         <div>
+            @if(auth()->user()->can('list_view_vehicles_vehicle_bookings'))
             <button class="btn btn-outline-secondary btn-sm" onclick="showTable()">
                 <i class="fa fa-list"></i> List View
             </button>
+            @endif
 
+            @if(auth()->user()->can('calendar_view_vehicles_vehicle_bookings'))
             <button class="btn btn-outline-success btn-sm" onclick="showCalendar()">
                 <i class="fa fa-calendar"></i> Calendar View
             </button>
+            @endif
+
             @if(auth()->user()->can('create_vehicle_bookings'))
             <a href="{{ route('admin.vehicle_bookings.create') }}"
                class="btn btn-primary btn-sm">
@@ -20,14 +26,17 @@
             </a>
             @endif
 
+            @if(auth()->user()->can('export_vehicles_vehicle_bookings'))
             <a id="exportBtn"
                 href="{{ route('admin.vehicle_bookings.export') }}"
                 class="btn btn-success btn-sm">
                 <i class="fa fa-file-excel"></i> Export Excel
             </a>
+            @endif
         </div>
     </div>
 </div>
+@endif
 
 <section class="content">
 <div class="container-fluid">
@@ -38,6 +47,7 @@
 <div class="card-body">
 
 <!-- ================= FILTERS ================= -->
+@if($currentUserIsCustomer == 'N')
 <div class="row mb-3">
     <div class="col-md-3">
         <select id="vehicleFilter" class="form-control">
@@ -75,8 +85,10 @@
         </button>
     </div>
 </div>
+@endif
 
 <!-- ================= VEHICLE LEGEND ================= -->
+@if($currentUserIsCustomer == 'N')
 <div id="vehicleLegend" class="mb-4">
     <strong>Vehicle Legend:</strong>
     <div class="d-flex flex-wrap mt-2">
@@ -91,6 +103,7 @@
         @endforeach
     </div>
 </div>
+@endif
 
 <!-- ================= LIST VIEW ================= -->
 <div id="tableView">

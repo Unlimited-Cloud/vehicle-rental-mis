@@ -7,17 +7,38 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use App\Repositories\Interfaces\CustomerRepositoryInterface;
 
 class CustomerController extends Controller
 {
+    protected $customerRepository;
+    private $currentUserId;
+
+    private $currentUserCustomerId;
+
+    private $currentUserIsCustomer;
+
+    public function __construct(
+        CustomerRepositoryInterface $customerRepository
+    ) {
+        $this->customerRepository = $customerRepository;
+        
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            return $next($request);
+        });
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         Gate::authorize('index_customers');
-        $customers = Customer::latest()->get();
-        return view('layouts.admin.customers.index', compact('customers'));
+        $currentUserIsCustomer = $this->currentUserIsCustomer;
+        $customers = $this->currentUserIsCustomer == 'Y' ? $this->customerRepository->getCustomerById($this->currentUserCustomerId): $this->customerRepository->getAllCustomers();
+        return view('layouts.admin.customers.index', compact('customers','currentUserIsCustomer'));
     }
 
 

@@ -77,6 +77,7 @@
             </select>
                 </div>
             </div>
+            @if($currentUserIsCustomer == 'N')
             <div class="col-md-4">
             <div class="form-group">
                   <label>Customer</label>
@@ -91,6 +92,7 @@
             </select>
             </div>
             </div>
+            @endif
 
 
 
@@ -165,7 +167,7 @@
             </div>
             <div class="col-md-2">
                 <div class="form-group">
-                    <label>Start Time *</label>
+                    <label>Start Time</label>
                     <input type="time"
                         id="start_time"
                            name="start_time"
@@ -199,7 +201,7 @@
             </div>
             <div class="col-md-2">
                 <div class="form-group">
-                    <label>END Time *</label>
+                    <label>END Time</label>
                     <input type="time"
                            name="end_time"
                            value="{{ old(

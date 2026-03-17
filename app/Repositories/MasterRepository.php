@@ -4,12 +4,18 @@ namespace App\Repositories;
 
 use App\Repositories\Interfaces\MasterRepositoryInterface;
 use App\Models\Module;
+use App\Models\Role;
 use App\Models\Permission;
+use App\Models\ProformaInvoice;
 
 class MasterRepository implements MasterRepositoryInterface
 {
     public function getAllModules(){
         return Module::orderBy('order_by')->get();
+    }
+
+    public function getAllRoles(){
+        return Role::orderBy('name')->get();
     }
 
     public function getAllPermissions(){
@@ -27,5 +33,11 @@ class MasterRepository implements MasterRepositoryInterface
 
     public function getParentModules(){
         return Module::whereNull('parent_id')->orderBy('name')->get();
+    }
+
+    public function getAllProformaInvoices(){
+        ProformaInvoice::with(['vehicle', 'booking'])
+            ->latest()
+            ->get();
     }
 }
