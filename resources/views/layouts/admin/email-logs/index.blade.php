@@ -31,6 +31,7 @@
                                 <tr>
                                     <th>SN</th>
                                     {{-- <th>Template ID</th> --}}
+                                    <th>Date</th>
                                     <th>Email From</th>
                                     <th>Email To</th>
                                     <th>Subject</th>
@@ -43,6 +44,7 @@
                                 @foreach($emailLogs as $log)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $log->created_at }}</td>
                                     {{-- <td>{{ $log->emailtemplate_id ?? 'N/A' }}</td> --}}
                                     <td>{{ $log->email_from }}</td>
                                     <td>{{ $log->email_to }}</td>
