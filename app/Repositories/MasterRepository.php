@@ -40,4 +40,8 @@ class MasterRepository implements MasterRepositoryInterface
             ->latest()
             ->get();
     }
+
+    public function getSubModules($parentId){
+        return Module::where('parent_id',$parentId)->orderBy('order_by')->get()->toArray();
+    }
 }
