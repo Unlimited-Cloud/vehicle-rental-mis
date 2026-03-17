@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Module;
+use App\Repositories\MasterRepository;
 
 class MenuHelper
 {
@@ -22,9 +23,14 @@ class MenuHelper
             return true;
         }
 
+        $menuId = $item['id'];
+
+        $masterRepo = app(MasterRepository::class);
+        $subMenus = $masterRepo->getSubModules($menuId);
+
         // Treeview menu
-        if (isset($item['children']) && is_array($item['children'])) {
-            foreach ($item['children'] as $child) {
+        if (!empty($subMenus)) {
+            foreach ($subMenus as $child) {
                 if (self::isActive($child)) {
                     return true;
                 }
