@@ -51,7 +51,7 @@
             }
            @endphp
            @if($show_sub_module_count > 0)
-            <li class="nav-item has-treeview {{ MenuHelper::isActive($item) ? 'menu-open' : '' }}">
+            <li class="nav-item has-treeview {{ MenuHelper::isActive($item) ? 'menu-is-opening menu-open' : '' }}">
                <a href="#" class="nav-link {{ MenuHelper::isActive($item) ? 'active' : '' }}">
                   <i class="nav-icon {{ $item['icon'] }}"></i>
                   <p>
@@ -59,18 +59,18 @@
                      <i class="right fas fa-angle-right"></i>
                   </p>
                </a>
-               <ul class="nav nav-treeview">
+
+               <ul class="nav nav-treeview" style="display: {{ MenuHelper::isActive($item) ? 'block' : 'none' }};">
                   @foreach($childModules as $child)
-                  @if(auth()->user()->can($child['permission']))
-                  {{-- @can($child['permission']) --}}
-                  <li class="nav-item" style="padding-left: 7px;">
-                     <a href="{{ route(!empty($child['route']) ? $child['route'] : 'dashboard') }}" class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
-                        <i class="nav-icon {{ $child['icon'] }}"></i>
-                        <p>{{ $child['name'] }}</p>
-                     </a>
-                  </li>
-                  @endif
-                  {{-- @endcan --}}
+                     @if(auth()->user()->can($child['permission']))
+                     <li class="nav-item" style="padding-left: 7px;">
+                        <a href="{{ route(!empty($child['route']) ? $child['route'] : 'dashboard') }}" 
+                           class="nav-link {{ MenuHelper::isActive($child) ? 'active' : '' }}">
+                           <i class="nav-icon {{ $child['icon'] }}"></i>
+                           <p>{{ $child['name'] }}</p>
+                        </a>
+                     </li>
+                     @endif
                   @endforeach
                </ul>
             </li>
