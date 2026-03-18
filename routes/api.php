@@ -14,6 +14,7 @@ Route::get('/user', function (Request $request) {
 
 
 Route::post('/login', [LoginController::class, 'login']);
+Route::post('/get-token', [LoginController::class, 'getToken']);
 
 //Driver API
 Route::middleware('auth:sanctum')->group(function () {
@@ -37,23 +38,24 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 //Customer API
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('customer')->group(function () {
 
-Route::prefix('customer')->group(function () {
-
-    Route::post('/login', [CustomerController::class, 'login']);
-    Route::post('/register', [CustomerController::class, 'register']);
-
-    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/login', [CustomerController::class, 'login']);
+        Route::post('/register', [CustomerController::class, 'register']);
         Route::post('/logout', [CustomerController::class, 'logout']);
-        Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
-        Route::get('/get-drivers', [BookingController::class, 'getDrivers']);
-        Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
+        Route::get('/profile/{customerUuid}', [CustomerController::class, 'getProfileByUuid']);
+        
         Route::get('/get-customerbooking/{customerId}', [BookingController::class, 'getCustomerBookings']);
 
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
         Route::post('/bookings', [BookingController::class, 'createBooking']);
+        Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
+    Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
+    Route::get('/get-drivers', [BookingController::class, 'getDrivers']);
+    Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
 });
 
 

@@ -22,8 +22,6 @@ class VehicleBooking extends Model
         'customer_id',
         'driver_id',
         'helper_id',
-        'start_date',
-        'end_date',
         'start_km',
         'end_km',
         'approx_fuel_litre',
@@ -39,7 +37,11 @@ class VehicleBooking extends Model
         'payment_status',
         'signage_information',
         'trip_category_id',
-        'trip_route_id'
+        'trip_route_id',
+        'vat',
+        'passenger',
+        'file_no',
+        'remaining_balance'
     ];
 
     protected $dates = ['start_date', 'end_date'];

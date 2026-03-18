@@ -9,6 +9,8 @@ class Customer extends Model
 {
     use  HasApiTokens;
     protected $fillable = [
+        'customer_type',
+        'customer_uuid',
         'first_name',
         'middle_name',
         'last_name',
@@ -22,7 +24,9 @@ class Customer extends Model
         'license_number',
         'license_expiry',
         'status',
-        'password'
+        'password',
+        'author_type',
+        'author_id'
     ];
 
     protected $casts = [

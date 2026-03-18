@@ -4,52 +4,31 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Services\CustomerService;
+use App\Utilities\VehicleRentalUtilities;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
+    protected $customerService;
+
+    public function __construct(
+        CustomerService $customerService
+    ) {
+        $this->customerService = $customerService;
+    }
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'email' => 'required|email|unique:customers',
-            'phone' => 'required',
-            'password' => 'required|min:6'
-        ]);
+        $data = $this->customerService->saveCustomer($request);
+        return VehicleRentalUtilities::jsonResponse($data);
+    }
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $customer = Customer::create([
-            'first_name' => $request->first_name,
-            'middle_name' => $request->middle_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'pan_number' => $request->pan_number,
-            'status' => 1,
-            'password' => Hash::make($request->password)
-        ]);
-
-        $token = $customer->createToken('customer-token')->plainTextToken;
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Customer Registered Successfully',
-            'token' => $token,
-            'customer' => $customer
-        ]);
+    public function getProfileByUuid($uuid)
+    {
+        $data = $this->customerService->getProfileByUuid($uuid);
+        return VehicleRentalUtilities::jsonResponse($data);
     }
 
 

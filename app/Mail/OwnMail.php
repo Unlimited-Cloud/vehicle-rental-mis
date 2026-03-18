@@ -8,7 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use App\Utilities\VehiclerentalUtilities;
+use App\Utilities\VehicleRentalUtilities;
 use App\Models\Passcode;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +53,7 @@ class OwnMail extends Mailable
 
         if ($response == 'success') {
 
-            $this->emailContent =  VehiclerentalUtilities::searchForEmailVar($emailTemplates->success_email_content, $personalDetails, $this->passcode);
+            $this->emailContent =  VehicleRentalUtilities::searchForEmailVar($emailTemplates->success_email_content, $personalDetails, $this->passcode);
         } else {
             $this->emailContent = $emailTemplates->emailTemplate->error_email_content;
         }
