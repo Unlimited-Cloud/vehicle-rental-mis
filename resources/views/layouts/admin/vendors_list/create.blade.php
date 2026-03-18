@@ -3,7 +3,7 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>{{ isset($vendor) ? 'Edit Vendor' : 'Add Vendor' }}</h1>
+        <h1>{{ isset($vendor) ? 'Edit Repair Shop' : 'Add Repair Shop' }}</h1>
     </div>
 </div>
 

@@ -14,6 +14,8 @@ use App\Repositories\Interfaces\VehicleRepositoryInterface;
 use App\Repositories\VehicleRepository;
 use App\Events\EmailEvent;
 use App\Listeners\EmailListeners;
+use App\Repositories\Interfaces\VehicleOwnerRepositoryInterface;
+use App\Repositories\VehicleOwnerRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MasterRepositoryInterface::class, MasterRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
+        $this->app->bind(VehicleOwnerRepositoryInterface::class, VehicleOwnerRepository::class);
     }
 
     /**

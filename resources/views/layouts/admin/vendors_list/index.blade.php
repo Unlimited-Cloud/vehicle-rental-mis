@@ -3,7 +3,7 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Vendors</h1>
+        <h1>Repair Shop</h1>
     </div>
 </div>
 
@@ -16,7 +16,7 @@
 
 <div class="d-flex justify-content-between mb-3">
     <a href="{{ route('admin.vendors.create') }}" class="btn btn-sm btn-primary">
-        <i class="fa fa-plus"></i> Add Vendor
+        <i class="fa fa-plus"></i> Add Repair Shop
     </a>
 </div>
 

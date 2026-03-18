@@ -3,7 +3,7 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Vendor Details</h1>
+        <h1>Repair Shop Details</h1>
     </div>
 </div>
 
