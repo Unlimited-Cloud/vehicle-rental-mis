@@ -29,6 +29,7 @@ use App\Http\Controllers\Admin\ModulesController;
 use App\Http\Controllers\Admin\PermissionsController;
 use App\Http\Controllers\Admin\TripCategoryController;
 use App\Http\Controllers\Admin\TripRouteController;
+use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 
 // Route::get('/', function () {
@@ -52,6 +53,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 'gatedefine.middleware'])->prefix('dashboard')->name('admin.')->group(function () {
     Route::resource('customers', CustomerController::class);
+    Route::resource('vehicleowner', VehicleOwnerController::class);
 });
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 'gatedefine.middleware'])->prefix('dashboard')->name('admin.')->group(function () {
