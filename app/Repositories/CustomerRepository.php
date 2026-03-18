@@ -16,4 +16,8 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function getCustomerById($id){
         return Customer::where('id',$id)->first();
     }
+
+    public function getCustomerByUuid($uuid){
+        return Customer::where('customer_uuid',$uuid)->first();
+    }
 }
