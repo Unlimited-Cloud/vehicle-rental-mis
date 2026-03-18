@@ -35,7 +35,7 @@ class VehicleBookingController extends Controller
 
     private $currentUserIsCustomer;
 
-    public function __construct(ProformaService $service,VehicleRepositoryInterface $vehicleRepository)
+    public function __construct(ProformaService $service, VehicleRepositoryInterface $vehicleRepository)
     {
         $this->service = $service;
         $this->vehicleRepository = $vehicleRepository;
@@ -54,12 +54,12 @@ class VehicleBookingController extends Controller
     {
         Gate::authorize('index_vehicle_bookings');
 
-        if($this->currentUserIsCustomer == 'Y'){
-            $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request,$this->currentUserCustomerId);
-        }else{
+        if ($this->currentUserIsCustomer == 'Y') {
+            $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request, $this->currentUserCustomerId);
+        } else {
             $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
         }
-        
+
         $vehicles  = Vehicle::orderBy('vehicle_name')->get();
         $customers = Customer::orderBy('name')->get();
         $drivers   = CrewProfile::whereHas('user', function ($q) {
@@ -68,7 +68,7 @@ class VehicleBookingController extends Controller
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles', 'customers', 'drivers','currentUserIsCustomer')
+            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer')
         );
     }
     /**
@@ -122,6 +122,11 @@ class VehicleBookingController extends Controller
         ]);
 
         $addData = $request->all();
+        $addData['vat'] = $request->vat;
+        $addData['passenger'] = $request->passenger;
+        $addData['file_no'] = $request->file_no;
+
+
         $addData['start_time'] = $request->start_time;
         $addData['end_time'] = $request->end_time;
         $addData['signage_information'] = $request->signage_information;
@@ -131,11 +136,11 @@ class VehicleBookingController extends Controller
         $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
         $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
         // Check if end is before start
-        if ($endDateTime->lessThan($startDateTime)) {
-            return redirect()->route('admin.vehicle_bookings.create')
-                ->with('warning_message', 'To date and time should be greater than start date.')
-                ->with('end_date', $request->end_date);
-        }
+        // if ($endDateTime->lessThan($startDateTime)) {
+        //     return redirect()->route('admin.vehicle_bookings.create')
+        //         ->with('warning_message', 'To date and time should be greater than start date.')
+        //         ->with('end_date', $request->end_date);
+        // }
 
         if (empty($no_of_hours)) {
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
@@ -143,7 +148,10 @@ class VehicleBookingController extends Controller
         $addData['no_of_hours'] = (int) $no_of_hours;
         $addData['rate_per_day'] = $request->rate_per_day;
         $addData['sub_total'] = $request->sub_total;
-        $addData['tax_amount_type'] = $request->tax_amount_type;
+        $addData['remaining_balance'] = $request->remaining_balance;
+
+
+        $addData['tax_amount_type'] = $request->tax_amount_type ?? 'percentage';
         $addData['tax'] = $request->tax ?? '0';
         $addData['discount_amount_type'] = $request->discount_amount_type;
         $addData['discount'] = $request->discount;
@@ -197,7 +205,7 @@ class VehicleBookingController extends Controller
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         return view(
             'layouts.admin.vehicles_booking.create',
-            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers','currentUserIsCustomer','tripCategories')
+            compact('booking', 'vehicles', 'drivers', 'helpers', 'customers', 'currentUserIsCustomer', 'tripCategories')
         );
     }
 
@@ -226,10 +234,14 @@ class VehicleBookingController extends Controller
         $updateData['signage_information'] = $request->signage_information;
         $updateData['rate_per_day'] = $request->rate_per_day;
         $updateData['sub_total'] = $request->sub_total;
-        $updateData['tax_amount_type'] = $request->tax_amount_type;
+        $updateData['vat'] = $request->vat;
+        $updateData['passenger'] = $request->passenger;
+        $updateData['file_no'] = $request->file_no;
+        $updateData['tax_amount_type'] = $request->tax_amount_type ?? 'percentage';
         $updateData['tax'] = $request->tax;
         $updateData['discount_amount_type'] = $request->discount_amount_type;
         $updateData['discount'] = $request->discount;
+        $updateData['remaining_balance'] = $request->remaining_balance;
         $updateData['trip_category_id'] = $request->trip_category_id;
         $updateData['trip_route_id'] = $request->trip_route_id;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
@@ -336,6 +348,15 @@ class VehicleBookingController extends Controller
             $query->where('driver_id', $request->driver_id);
         }
 
+        if ($request->file_no) {
+            $query->where('file_no', 'LIKE', '%' . $request->file_no . '%');
+        }
+
+        // NEW: Filter by passenger name
+        if ($request->passenger) {
+            $query->where('passenger_name', 'LIKE', '%' . $request->passenger . '%');
+        }
+
         $bookings = $query->get();
 
         $events = [];
@@ -369,7 +390,7 @@ class VehicleBookingController extends Controller
 
             $events[] = [
                 'id' => $booking->id,
-                'title' => $booking->vehicle->vehicle_name . ' - ' . $booking->customer->name,
+                'title' => $booking->vehicle?->vehicle_name . ' - ' . $booking->customer?->name,
                 'start' => $booking->start_date,
                 'end' => \Carbon\Carbon::parse($booking->end_date)->addDay()->format('Y-m-d'),
                 'color' => $vehicleColor, // Use vehicle color
@@ -377,10 +398,10 @@ class VehicleBookingController extends Controller
                 'borderColor' => $statusColor, // Border shows status
                 'extendedProps' => [
                     'vehicle_id' => $booking->vehicle_id,
-                    'vehicle_name' => $booking->vehicle->vehicle_name,
-                    'customer_name' => isset($booking->customer) ? $booking->customer->name : '',
-                    'customer_email' => isset($booking->customer) ? $booking->customer->email : '',
-                    'customer_phone' => isset($booking->customer) ? $booking->customer->phone : '',
+                    'vehicle_name' => $booking->vehicle?->vehicle_name,
+                    'customer_name' => $booking->customer?->name,
+                    'customer_email' => $booking->customer?->email,
+                    'customer_phone' => $booking->customer?->phone,
                     'from_destination' => $booking->from_destination,
                     'to_destination' => $booking->to_destination,
                     'status' => $booking->status,
