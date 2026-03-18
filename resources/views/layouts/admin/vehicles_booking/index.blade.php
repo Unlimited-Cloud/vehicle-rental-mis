@@ -33,6 +33,11 @@
                 <i class="fa fa-file-excel"></i> Export Excel
             </a>
             @endif
+
+            {{-- <!-- Filter Modal Trigger -->
+            <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#filterModal">
+                <i class="fa fa-filter"></i> Advanced Filters
+            </button> --}}
         </div>
     </div>
 </div>
@@ -46,46 +51,112 @@
 <div class="card card-primary card-outline">
 <div class="card-body">
 
-<!-- ================= FILTERS ================= -->
-@if($currentUserIsCustomer == 'N')
-<div class="row mb-3">
-    <div class="col-md-3">
-        <select id="vehicleFilter" class="form-control">
-            <option value="">All Vehicles</option>
-            @foreach($vehicles as $vehicle)
-                <option value="{{ $vehicle->id }}" {{ request('vehicle_id') == $vehicle->id ? 'selected' : '' }}>{{ $vehicle->vehicle_name }}</option>
-            @endforeach
-        </select>
-    </div>
+<!-- ================= FILTER MODAL ================= -->
+<div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="filterModalLabel">
+                    <i class="fa fa-filter"></i> Advanced Filters
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="filterForm" onsubmit="applyFilter(); return false;">
+                <div class="modal-body">
+                    @if($currentUserIsCustomer == 'N')
+                    <div class="form-group">
+                        <label>Vehicle</label>
+                        <select id="vehicleFilter" class="form-control">
+                            <option value="">All Vehicles</option>
+                            @foreach($vehicles as $vehicle)
+                                <option value="{{ $vehicle->id }}" {{ request('vehicle_id') == $vehicle->id ? 'selected' : '' }}>{{ $vehicle->vehicle_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-    <div class="col-md-3">
-        <select id="customerFilter" class="form-control">
-            <option value="">All Customers</option>
-            @foreach($customers as $customer)
-                <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
-            @endforeach
-        </select>
-    </div>
+                    <div class="form-group">
+                        <label>Customer</label>
+                        <select id="customerFilter" class="form-control">
+                            <option value="">All Customers</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-    <div class="col-md-3">
-        <select id="driverFilter" class="form-control">
-            <option value="">All Drivers</option>
-            @foreach($drivers as $driver)
-                <option value="{{ $driver->id }}" {{ request('driver_id') == $driver->id ? 'selected' : '' }}>{{ $driver->user->name }}</option>
-            @endforeach
-        </select>
-    </div>
+                    <div class="form-group">
+                        <label>Driver</label>
+                        <select id="driverFilter" class="form-control">
+                            <option value="">All Drivers</option>
+                            @foreach($drivers as $driver)
+                                <option value="{{ $driver->id }}" {{ request('driver_id') == $driver->id ? 'selected' : '' }}>{{ $driver->user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-    <div class="col-md-3">
-        <button class="btn btn-primary btn-sm" onclick="applyFilter()">
-            <i class="fa fa-filter"></i> Apply
-        </button>
-        <button class="btn btn-secondary btn-sm" onclick="clearFilter()">
-            <i class="fa fa-refresh"></i> Reset
-        </button>
+                    <hr>
+                    <h6>Search Fields</h6>
+
+                    <div class="form-group">
+                        <label>File No.</label>
+                        <input type="text" id="fileNoFilter" class="form-control" placeholder="Enter file number..." value="{{ request('file_no') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Passenger Name</label>
+                        <input type="text" id="passengerFilter" class="form-control" placeholder="Enter passenger name..." value="{{ request('passenger') }}">
+                    </div>
+                    @endif
+
+                    <div class="form-group">
+                        <label>Date Range</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <input type="date" id="startDateFilter" class="form-control" placeholder="From" value="{{ request('start_date') }}">
+                            </div>
+                            <div class="col-6">
+                                <input type="date" id="endDateFilter" class="form-control" placeholder="To" value="{{ request('end_date') }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="statusFilter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="clearFilter()">
+                        <i class="fa fa-refresh"></i> Reset
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<!-- ================= SIMPLE FILTER BAR (Optional - can be removed if you want only modal) -->
+@if($currentUserIsCustomer == 'N')
+<div class="row mb-3 d-none">
+    <!-- Hidden - we're using modal now -->
+</div>
 @endif
+
+<div class="mb-3">
+ <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#filterModal">
+    <i class="fa fa-filter"></i> Advanced Filters
+</button>
+</div>
 
 <!-- ================= VEHICLE LEGEND ================= -->
 @if($currentUserIsCustomer == 'N')
@@ -95,12 +166,25 @@
         @foreach($vehicles as $vehicle)
             @php
                 $color = '#'.substr(md5($vehicle->id),0,6);
+                $isActive = request('vehicle_id') == $vehicle->id;
             @endphp
-            <div style="display:flex;align-items:center;margin-right:20px;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;margin-right:20px;margin-bottom:5px; cursor: pointer;" 
+                 onclick="filterByVehicle({{ $vehicle->id }})"
+                 class="vehicle-legend-item {{ $isActive ? 'active-legend' : '' }}"
+                 data-vehicle-id="{{ $vehicle->id }}">
                 <div style="width:15px;height:15px; background:{{ $color }}; margin-right:6px;border-radius:3px;"></div>
                 <span>{{ $vehicle->vehicle_name }}</span>
+                @if($isActive)
+                    <i class="fa fa-check-circle text-success ml-1" style="font-size: 12px;"></i>
+                @endif
             </div>
         @endforeach
+        <div style="display:flex;align-items:center;margin-right:20px;margin-bottom:5px; cursor: pointer;" 
+             onclick="clearVehicleFilter()"
+             class="vehicle-legend-item">
+            <div style="width:15px;height:15px; background:#6c757d; margin-right:6px;border-radius:3px;"></div>
+            <span>Clear Filter</span>
+        </div>
     </div>
 </div>
 @endif
@@ -112,6 +196,7 @@
             <thead>
                 <tr>
                     <th>#</th>
+                    <th>File No.</th>
                     <th>Vehicle</th>
                     <th>Customer</th>
                     <th>From</th>
@@ -127,16 +212,19 @@
                     @php
                         $statusColor = $booking->status == 'confirmed' ? '#28a745' : 
                                       ($booking->status == 'pending' ? '#ffc107' : '#dc3545');
+                        $fileNo = $booking->file_no ?? 'N/A';
+                        $passengerName = $booking->passenger_name ?? ($booking->customer->name ?? 'N/A');
                     @endphp
                     <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
                         <td>{{ $i+1 }}</td>
+                        <td><span class="badge badge-secondary">{{ $fileNo }}</span></td>
                         <td>
                             <div style="display: flex; align-items: center;">
                                 <div style="width:12px;height:12px; background:#{{ substr(md5($booking->vehicle_id),0,6) }}; border-radius:3px; margin-right:6px;"></div>
                                 {{ $booking->vehicle->vehicle_name ?? '' }}
                             </div>
                         </td>
-                        <td>{{ $booking->customer->name ?? '' }}</td>
+                        <td>{{ $passengerName }}</td>
                         <td>{{ $booking->from_destination ?? '-' }}</td>
                         <td>{{ $booking->to_destination ?? '-' }}</td>
                         <td class="start-date-cell">
@@ -184,7 +272,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center">No bookings found</td>
+                        <td colspan="10" class="text-center">No bookings found</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -403,6 +491,25 @@
         font-size: 12px;
         font-weight: 500;
     }
+    
+    /* Vehicle Legend Styles */
+    .vehicle-legend-item {
+        padding: 3px 8px;
+        border-radius: 15px;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+    
+    .vehicle-legend-item:hover {
+        background-color: #f0f0f0;
+        border-color: #ddd;
+    }
+    
+    .vehicle-legend-item.active-legend {
+        background-color: #e3f2fd;
+        border-color: #2196F3;
+        font-weight: 500;
+    }
 
 </style>
 
@@ -434,6 +541,16 @@ $(document).ready(function() {
     }
     
     // Set filter values from URL
+    setFilterValuesFromUrl();
+    
+    // Load Nepali dates for table view
+    loadNepaliDatesForTable();
+});
+
+// Set filter values from URL parameters
+function setFilterValuesFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
     if (urlParams.has('vehicle_id')) {
         $('#vehicleFilter').val(urlParams.get('vehicle_id'));
     }
@@ -443,11 +560,55 @@ $(document).ready(function() {
     if (urlParams.has('driver_id')) {
         $('#driverFilter').val(urlParams.get('driver_id'));
     }
-    
-    // Load Nepali dates for table view
-    loadNepaliDatesForTable();
-});
+    if (urlParams.has('file_no')) {
+        $('#fileNoFilter').val(urlParams.get('file_no'));
+    }
+    if (urlParams.has('passenger')) {
+        $('#passengerFilter').val(urlParams.get('passenger'));
+    }
+    if (urlParams.has('start_date')) {
+        $('#startDateFilter').val(urlParams.get('start_date'));
+    }
+    if (urlParams.has('end_date')) {
+        $('#endDateFilter').val(urlParams.get('end_date'));
+    }
+    if (urlParams.has('status')) {
+        $('#statusFilter').val(urlParams.get('status'));
+    }
+}
 
+// Filter by vehicle from legend
+function filterByVehicle(vehicleId) {
+    $('#vehicleFilter').val(vehicleId);
+    applyFilter();
+}
+
+// Clear vehicle filter
+function clearVehicleFilter() {
+    $('#vehicleFilter').val('');
+    
+    // Update URL to remove vehicle_id parameter
+    let url = new URL(window.location.href);
+    url.searchParams.delete('vehicle_id');
+    
+    if ($('#calendarView').is(':visible')) {
+        // For calendar view, reload the grid with updated filters
+        loadCalendarGrid();
+        window.history.replaceState({}, '', url);
+        
+        // Update active legend styling
+        $('.vehicle-legend-item').removeClass('active-legend');
+        $('.vehicle-legend-item .fa-check-circle').remove();
+        
+        toastr.success('Vehicle filter cleared');
+    } else {
+        // For list view, reload page with updated filters
+        window.location.href = url.toString();
+    }
+    
+    // Update export link
+    updateExportLink();
+}
 
 // Update the convertToNepaliDate function to handle the response correctly
 // Function to convert date to Nepali using your route
@@ -543,6 +704,7 @@ function convertToNepaliDate(adDate) {
         });
     });
 }
+
 // Update the table view to show Nepali dates correctly
 async function loadNepaliDatesForTable() {
     $('#bookingTableBody tr').each(async function() {
@@ -593,32 +755,74 @@ function showCalendar() {
     let url = new URL(window.location.href);
     url.searchParams.set('view', 'calendar');
     window.history.replaceState({}, '', url);
-      updateNepaliMonthDisplay();
+    updateNepaliMonthDisplay();
     loadCalendarGrid();
 }
 
 // Filter Functions
 function applyFilter() {
+    // Close modal if open
+    $('#filterModal').modal('hide');
+    
+    // Get all filter values
+    let params = {
+        vehicle_id: $('#vehicleFilter').val(),
+        customer_id: $('#customerFilter').val(),
+        driver_id: $('#driverFilter').val(),
+        file_no: $('#fileNoFilter').val(),
+        passenger: $('#passengerFilter').val(),
+        start_date: $('#startDateFilter').val(),
+        end_date: $('#endDateFilter').val(),
+        status: $('#statusFilter').val()
+    };
+    
+    // Remove empty values
+    Object.keys(params).forEach(key => {
+        if (!params[key]) {
+            delete params[key];
+        }
+    });
+    
     if ($('#calendarView').is(':visible')) {
+        // For calendar view, just reload the grid with filters
         loadCalendarGrid();
-    } else {
-        // Reload page with filters for list view
+        // Update URL without reloading
         let url = new URL(window.location.href);
-        url.searchParams.set('vehicle_id', $('#vehicleFilter').val());
-        url.searchParams.set('customer_id', $('#customerFilter').val());
-        url.searchParams.set('driver_id', $('#driverFilter').val());
+        Object.keys(params).forEach(key => {
+            url.searchParams.set(key, params[key]);
+        });
+        url.searchParams.set('view', 'calendar');
+        window.history.replaceState({}, '', url);
+    } else {
+        // For list view, reload page with filters
+        let url = new URL(window.location.href);
+        Object.keys(params).forEach(key => {
+            url.searchParams.set(key, params[key]);
+        });
         url.searchParams.set('view', 'list');
         window.location.href = url.toString();
     }
+    
+    // Update export link
+    updateExportLink();
 }
 
 function clearFilter() {
-    $('#vehicleFilter, #customerFilter, #driverFilter').val('');
+    $('#vehicleFilter, #customerFilter, #driverFilter, #fileNoFilter, #passengerFilter, #statusFilter').val('');
+    $('#startDateFilter, #endDateFilter').val('');
+    
     if ($('#calendarView').is(':visible')) {
         loadCalendarGrid();
+        // Clear URL parameters except view
+        let url = new URL(window.location.href);
+        url.search = '?view=calendar';
+        window.history.replaceState({}, '', url);
     } else {
         window.location.href = "{{ route('admin.vehicle_bookings.index') }}?view=list";
     }
+    
+    // Update export link
+    updateExportLink();
 }
 
 // Update month navigation with Nepali date
@@ -676,7 +880,7 @@ function changeMonth(direction) {
         currentMonth.add(1, 'month');
     }
 
-     $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
+    $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
     updateNepaliMonthDisplay();
     loadCalendarGrid();
 }
@@ -685,15 +889,23 @@ function changeMonth(direction) {
 function loadCalendarGrid() {
     $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
     
+    // Get all filter values
+    let filterData = {
+        vehicle_id: $('#vehicleFilter').val(),
+        customer_id: $('#customerFilter').val(),
+        driver_id: $('#driverFilter').val(),
+        file_no: $('#fileNoFilter').val(),
+        passenger: $('#passengerFilter').val(),
+        start_date: $('#startDateFilter').val(),
+        end_date: $('#endDateFilter').val(),
+        status: $('#statusFilter').val(),
+        month: currentMonth.format('YYYY-MM')
+    };
+    
     $.ajax({
         url: "{{ route('admin.vehicle_bookings.events') }}",
         type: "GET",
-        data: {
-            vehicle_id: $('#vehicleFilter').val(),
-            customer_id: $('#customerFilter').val(),
-            driver_id: $('#driverFilter').val(),
-            month: currentMonth.format('YYYY-MM')
-        },
+        data: filterData,
         success: function(bookings) {
             let startDate = currentMonth.clone().startOf('month');
             let endDate = currentMonth.clone().endOf('month');
@@ -769,7 +981,14 @@ function buildCalendarBody(bookings, startDate, endDate) {
     let html = '';
     let today = moment().format('YYYY-MM-DD');
     
-    allVehicles.forEach(vehicle => {
+    // Filter vehicles based on selected vehicle filter
+    let vehiclesToShow = allVehicles;
+    let selectedVehicleId = $('#vehicleFilter').val();
+    if (selectedVehicleId) {
+        vehiclesToShow = allVehicles.filter(v => v.id == selectedVehicleId);
+    }
+    
+    vehiclesToShow.forEach(vehicle => {
         let totalDays = 0;
         html += `<tr data-vehicle-id="${vehicle.id}">`;
         html += `<td class="vehicle-column">
@@ -803,14 +1022,15 @@ function buildCalendarBody(bookings, startDate, endDate) {
                 
                 dayBookings.forEach((booking, index) => {
                     let statusColor = statusColors[booking.extendedProps.status] || '#6c757d';
-                    let customerName = booking.extendedProps.customer_name || 'N/A';
+                    let customerName = booking.extendedProps.customer_name || booking.extendedProps.passenger_name || 'N/A';
+                    let fileNo = booking.extendedProps.file_no ? `#${booking.extendedProps.file_no} ` : '';
                     let displayName = customerName.length > 8 ? customerName.substring(0, 6) + '..' : customerName;
                     
                     html += `
                         <div class="booking-block" 
                             style="background: ${vehicleColors[vehicle.id]}; border-left: 4px solid ${statusColor};"
                             onclick="event.stopPropagation(); openBookingModal(${booking.id})"
-                            title="${booking.title} - ${booking.extendedProps.status}">
+                            title="${fileNo}${booking.title} - ${booking.extendedProps.status}">
                             <i class="fa fa-user"></i> ${displayName}
                         </div>`;
                 });
@@ -877,6 +1097,13 @@ async function openBookingModal(bookingId) {
                     </div>
                     
                     <div class="row">
+                        <!-- File Info -->
+                        <div class="col-md-12 mb-2">
+                            <div class="alert alert-info py-2">
+                                <strong>File No:</strong> ${booking.file_no || 'N/A'} 
+                            </div>
+                        </div>
+                        
                         <!-- Vehicle Info -->
                         <div class="col-md-6 mb-3">
                             <div class="card h-100">
@@ -889,7 +1116,7 @@ async function openBookingModal(bookingId) {
                                             <td style="width: 100px;"><strong>Vehicle:</strong></td>
                                             <td>
                                                 <span style="display: inline-block; width: 12px; height: 12px; background: ${vehicleColor}; border-radius: 3px; margin-right: 5px;"></span>
-                                                ${booking.vehicle.vehicle_name}
+                                                ${booking.vehicle?.vehicle_name || 'N/A'}
                                             </td>
                                         </tr>
                                         <tr>
@@ -915,7 +1142,7 @@ async function openBookingModal(bookingId) {
                                     <table class="table table-sm table-borderless">
                                         <tr>
                                             <td style="width: 100px;"><strong>Name:</strong></td>
-                                            <td>${booking.customer ? booking.customer.name : 'N/A'}</td>
+                                            <td>${booking.customer ? booking.customer.name : (booking.passenger_name || 'N/A')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Email:</strong></td>
@@ -942,6 +1169,10 @@ async function openBookingModal(bookingId) {
                                     <div class="row">
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td style="width: 100px;"><strong>Passenger:</strong></td>
+                                                    <td>${booking.passenger || 'N/A'}</td>
+                                                </tr>
                                                 <tr>
                                                     <td style="width: 100px;"><strong>From:</strong></td>
                                                     <td>${booking.from_destination || 'N/A'}</td>
@@ -1047,12 +1278,25 @@ async function openBookingModal(bookingId) {
 }
 
 function updateExportLink() {
-    let params = $.param({
+    let params = {
         vehicle_id: $('#vehicleFilter').val(),
         customer_id: $('#customerFilter').val(),
-        driver_id: $('#driverFilter').val()
+        driver_id: $('#driverFilter').val(),
+        file_no: $('#fileNoFilter').val(),
+        passenger: $('#passengerFilter').val(),
+        start_date: $('#startDateFilter').val(),
+        end_date: $('#endDateFilter').val(),
+        status: $('#statusFilter').val()
+    };
+    
+    // Remove empty values
+    Object.keys(params).forEach(key => {
+        if (!params[key]) {
+            delete params[key];
+        }
     });
-    $('#exportBtn').attr('href', "{{ route('admin.vehicle_bookings.export') }}?" + params);
+    
+    $('#exportBtn').attr('href', "{{ route('admin.vehicle_bookings.export') }}?" + $.param(params));
 }
 
 // Delete booking function

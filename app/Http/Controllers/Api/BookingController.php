@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ProformaService;
+use App\Imports\VehicleBookingImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 
 class BookingController extends Controller
@@ -203,5 +205,18 @@ class BookingController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function importBooking(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,csv'
+        ]);
+
+        Excel::import(new VehicleBookingImport, $request->file('file'));
+
+        return response()->json([
+            'message' => 'Data imported successfully'
+        ]);
     }
 }

@@ -53,6 +53,7 @@ Route::prefix('customer')->group(function () {
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
         Route::post('/bookings', [BookingController::class, 'createBooking']);
+        Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
 });
 
