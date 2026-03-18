@@ -102,7 +102,8 @@ class UserController extends Controller
         Gate::authorize('update_users');
         $customers = $this->customerRepository->getAllCustomers();
         $roles = $this->masterRepository->getAllRoles();
-        return view('layouts.admin.users.create', compact('user','customers','roles'));
+        $isCustomerUser = $this->currentUserIsCustomer;
+        return view('layouts.admin.users.create', compact('user','customers','roles','isCustomerUser'));
     }
 
     /**

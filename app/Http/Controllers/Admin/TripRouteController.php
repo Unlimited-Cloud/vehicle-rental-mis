@@ -18,7 +18,7 @@ class TripRouteController extends Controller
      */
     public function index()
     {
-        Gate::authorize('index_vehicles_vehicle_route');
+        Gate::authorize('index_vehicles_trip_routes');
         $routes = TripRoute::with('category')->latest()->get();
 
         return view('layouts.admin.trip_routes.index', compact('routes'));
@@ -27,7 +27,7 @@ class TripRouteController extends Controller
 
     public function create()
     {
-        Gate::authorize('create_vehicles_vehicle_route');
+        Gate::authorize('create_vehicles_trip_routes');
         $categories = TripCategory::pluck('name', 'id');
 
         return view('layouts.admin.trip_routes.create', compact('categories'));
@@ -36,7 +36,7 @@ class TripRouteController extends Controller
 
     public function store(Request $request)
     {
-        Gate::authorize('create_vehicles_vehicle_route');
+        Gate::authorize('create_vehicles_trip_routes');
         TripRoute::create($request->all());
 
         return redirect()->route('admin.trip-routes.index')
@@ -45,7 +45,7 @@ class TripRouteController extends Controller
 
     public function show()
     {
-        Gate::authorize('read_vehicles_vehicle_route');
+        Gate::authorize('read_vehicles_trip_routes');
         $categories = TripCategory::with('routes')->get();
 
         return view('layouts.admin.trip_routes.show', compact('categories'));
@@ -53,13 +53,13 @@ class TripRouteController extends Controller
 
     public function categoryView()
     {
-        Gate::authorize('read_vehicles_vehicle_route');
+        Gate::authorize('read_vehicles_trip_routes');
         $categories = TripCategory::with('routes')->get();
         return view('layouts.admin.trip_routes.show', compact('categories'));
     }
     public function edit($id)
     {
-        Gate::authorize('update_vehicles_vehicle_route');
+        Gate::authorize('update_vehicles_trip_routes');
         $route = TripRoute::findOrFail($id);
 
         $categories = TripCategory::pluck('name', 'id');
@@ -73,7 +73,7 @@ class TripRouteController extends Controller
 
     public function update(Request $request, $id)
     {
-        Gate::authorize('update_vehicles_vehicle_route');
+        Gate::authorize('update_vehicles_trip_routes');
         $route = TripRoute::findOrFail($id);
 
         $route->update($request->all());
@@ -85,7 +85,7 @@ class TripRouteController extends Controller
 
     public function destroy($id)
     {
-        Gate::authorize('delete_vehicles_vehicle_route');
+        Gate::authorize('delete_vehicles_trip_routes');
         TripRoute::destroy($id);
 
         return back()->with('success', 'Deleted successfully');
