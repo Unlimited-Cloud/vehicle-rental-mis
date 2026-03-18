@@ -23,7 +23,7 @@ use App\Models\EmailTemplate;
 use App\Models\EmailLog;
 use App\Models\Passcode;
 use App\Mail\OwnMail;
-use App\Utilities\VehiclerentalUtilities;
+use App\Utilities\VehicleRentalUtilities;
 
 class EmailEvent
 {
@@ -89,7 +89,7 @@ class EmailEvent
 
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }
-                $emailBody = VehiclerentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
+                $emailBody = VehicleRentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
                 $emailCc = $this->emailTemplates->email_cc;
             } else {
                 $emailTemplateId = $emailSubject = $emailBody = $emailCc = NULL;
@@ -118,7 +118,7 @@ class EmailEvent
 
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }
-                $emailBody = VehiclerentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
+                $emailBody = VehicleRentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
                 $emailCc = $this->emailTemplates->email_cc;
             } else {
                 $emailTemplateId = $emailSubject = $emailBody = $emailCc = NULL;
