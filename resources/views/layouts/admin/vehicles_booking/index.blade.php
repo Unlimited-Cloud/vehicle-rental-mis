@@ -152,10 +152,13 @@
 </div>
 @endif
 
-<div class="mb-3">
- <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#filterModal">
+<div class="mb-3 d-flex gap-2">
+  <button class="btn btn-info btn-sm mr-2" data-toggle="modal" data-target="#filterModal">
     <i class="fa fa-filter"></i> Advanced Filters
-</button>
+  </button>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="clearFilter()">
+    <i class="fa fa-refresh"></i> Reset
+  </button>
 </div>
 
 <!-- ================= VEHICLE LEGEND ================= -->
@@ -183,7 +186,7 @@
              onclick="clearVehicleFilter()"
              class="vehicle-legend-item">
             <div style="width:15px;height:15px; background:#6c757d; margin-right:6px;border-radius:3px;"></div>
-            <span>Clear Filter</span>
+            <span>Clear Vehicle Filter</span>
         </div>
     </div>
 </div>

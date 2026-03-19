@@ -161,13 +161,17 @@ class VehicleBookingController extends Controller
         $this->service->createProforma($vehicleBooking);
         $vehicleBookingId = $vehicleBooking->id;
 
-        $paymentData['vehicle_booking_id'] = $vehicleBookingId;
-        $paymentData['amount'] = $request->paid_amount;
-        $paymentData['payment_method'] = $request->payment_method;
-        $paymentData['transaction_reference'] = (string) Str::uuid();
-        $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
-        $paymentData['notes'] = $request->payment_note;
-        Payment::create($paymentData);
+        if (!empty($request->paid_amount) && $request->paid_amount > 0) {
+
+            $paymentData['vehicle_booking_id'] = $vehicleBookingId;
+            $paymentData['amount'] = $request->paid_amount;
+            $paymentData['payment_method'] = $request->payment_method;
+            $paymentData['transaction_reference'] = (string) Str::uuid();
+            $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
+            $paymentData['notes'] = $request->payment_note;
+
+            Payment::create($paymentData);
+        }
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success_message', 'Booking created successfully.');

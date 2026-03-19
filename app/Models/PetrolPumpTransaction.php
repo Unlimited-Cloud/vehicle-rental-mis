@@ -22,7 +22,12 @@ class PetrolPumpTransaction extends Model
         'remarks',
         'status',
         'vehicle_id',
-        'odometer_reading'
+        'odometer_reading',
+        'pump_before',
+        'pump_after',
+        'tank_before',
+        'tank_after',
+        'driver_id'
     ];
 
     protected $casts = [
