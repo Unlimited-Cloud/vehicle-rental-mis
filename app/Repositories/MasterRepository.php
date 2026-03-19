@@ -54,4 +54,8 @@ class MasterRepository implements MasterRepositoryInterface
     public function getOtpByMobileNumberByUserId($mobileNumber,$userId){
         return Otp::where('mobile_number',$mobileNumber)->where('user_id',$userId)->orderBy('id','desc')->first();
     }
+
+    public function getAllOtps(){
+        return Otp::get();
+    }
 }

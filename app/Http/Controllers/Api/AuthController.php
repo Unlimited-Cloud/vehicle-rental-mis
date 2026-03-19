@@ -24,6 +24,12 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
+    public function getOtpPasscodeAppLogin(Request $request)
+    {
+        $data = $this->authService->getOtpPasscodeAppLogin($request);
+        return VehicleRentalUtilities::jsonResponse($data);
+    }
+
     public function login(Request $request)
     {
         $data = $this->authService->appLogin($request);

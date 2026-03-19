@@ -8,7 +8,7 @@ use App\Models\EmailtemplateActivities;
 use App\Models\Otp;
 use App\Models\OtpSetup;
 use App\Models\User;
-use App\Utilities\ZapwareUtilities;
+use App\Utilities\VehicleRentalUtilities;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -29,12 +29,19 @@ class SmsEvent
     {
         // dd($this->fullMobileNumber, $this->activity, $this->userType, $this->userId, $this->partnerUuid);
         try {
+            
             $mobileNumber = $this->fullMobileNumber;
+            $mobileNumberExplode = explode(' ',$mobileNumber);
+            if(!empty($mobileNumberExplode)){
+                $customerMobileNumber = $mobileNumberExplode[1];
+            }else{
+                $customerMobileNumber = $mobileNumber;
+            }
 
             // Find customer
-            $customer = Customer::where('full_mobile_number', $mobileNumber)->first();
+            $customer = Customer::where('phone', $customerMobileNumber)->first();
             if (!$customer) {
-                Log::warning('Customer not found', ['mobile' => $mobileNumber]);
+                Log::warning('Customer not found', ['mobile' => $customerMobileNumber]);
                 return ['status' => 'error', 'message' => 'Customer not found.'];
             }
 
@@ -52,14 +59,7 @@ class SmsEvent
             // Fetch SMS template
             $templateQuery = EmailTemplate::where('activity_UUID', $activityRow->Uuid)
                 ->where('activity', $activityRow->activity)
-                ->where('sms_template_triggered', '1')
-                ->whereIn('template_for', ['Both', 'Ourzap', 'Zapware']);
-
-            if (!empty($partnerUuid)) {
-                $templateQuery->where('partner_Uuid', $partnerUuid);
-            } else {
-                $templateQuery->whereNull('partner_Uuid');
-            }
+                ->where('sms_template_triggered', '1');
 
             $template = $templateQuery->first();
 
@@ -86,29 +86,14 @@ class SmsEvent
 
             $extraVars = [];
 
-            if ($this->activity === 'Beneficiary Create' && $this->beneficiaryId) {
-                $beneficiary = DB::table('beneficiaries')
-                    ->join('benef_banks', 'beneficiaries.id', '=', 'benef_banks.benef_id')
-                    ->where('beneficiaries.id', $this->beneficiaryId)
-                    ->select('beneficiaries.name', 'benef_banks.bank_acc_no')
-                    ->first();
-
-                if ($beneficiary) {
-                    $extraVars = [
-                        'name'        => $beneficiary->name ?? '',
-                        'bank_acc_no' => $beneficiary->bank_acc_no ?? '',
-                    ];
-                }
-            }
-
             // Build personal details
-            $personalDetails = ZapwareUtilities::buildPersonalDetailsSms($customer, $extraVars);
+            $personalDetails = VehicleRentalUtilities::buildPersonalDetailsSms($customer, $extraVars);
 
             // Replace SMS template variables
-            $message = ZapwareUtilities::searchForSmsVar($template->success_sms_content, $personalDetails, $otp);
+            $message = VehicleRentalUtilities::searchForSmsVar($template->success_sms_content, $personalDetails, $otp);
 
             $cleanMobileNumber = str_replace(' ', '', $mobileNumber);
-
+            
             // Send SMS
             $response = Http::get('http://unlimitedsms.net/playsms/index.php', [
                 'app' => 'ws',

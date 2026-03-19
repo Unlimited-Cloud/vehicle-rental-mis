@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
         
         Route::controller(AuthController::class)->group(function () {
+            Route::post('/request-otp-login', 'getOtpPasscodeAppLogin');
             Route::post('/login', 'login');
         });
         

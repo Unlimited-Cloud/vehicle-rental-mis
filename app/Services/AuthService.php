@@ -8,6 +8,8 @@ use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Models\Permission;
 use App\Models\Module;
 use App\Models\Customer;
+use App\Models\Otp;
+use App\Models\OtpSetup;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -33,63 +35,83 @@ class AuthService
     }
 
     public function getOtpPasscodeAppLogin($request){
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string',
-            'password' => 'required|string',
-        ]);
-        
-        $username = $request->username;
+        try{
+            $validator = Validator::make($request->all(), [
+                'username' => 'required|string',
+                'password' => 'required|string',
+            ]);
+            
+            $username = $request->username;
 
-        $emailLogin = 0;
-        $mobileLogin = 0;
+            $emailLogin = 0;
+            $mobileLogin = 0;
 
-        $customer = $this->customerRepository->getCustomerByEmail($username);
-
-        if ($customer) {
-            $emailLogin = 1;
-        } else {
-            $customer = $this->customerRepository->getCustomerByMobileNumber($username);
+            $customer = $this->customerRepository->getCustomerByEmail($username);
 
             if ($customer) {
-                $mobileLogin = 1;
+                $emailLogin = 1;
+            } else {
+                $customer = $this->customerRepository->getCustomerByMobileNumber($username);
+
+                if ($customer) {
+                    $mobileLogin = 1;
+                }
             }
-        }
 
-        if (!$customer) {
-            return [
-                'status' => 'error',
-                'message' => 'Invalid Credentials!',
-                'data' => '',
-                'statusCode' => 422
-            ];
-        }
+            if (!$customer) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid Credentials!',
+                    'data' => '',
+                    'statusCode' => 422
+                ];
+            }
 
-        if (!$customer || !Hash::check($request->password, $customer->password)) {
+            if (!$customer || !Hash::check($request->password, $customer->password)) {
+                return array(
+                    'status' => 'error',
+                    'message' => 'Invalid Credentials!',
+                    'data' => '', 
+                    'statusCode' => 422
+                );
+            }
+            
+            $email = $customer->email;
+            $user = $this->userRepository->getUserByEmail($email);
+            $userId = $user->id;
+            if($emailLogin == 1){
+                
+                $message = 'Login Passcode sent to email '.$email;
+            }else{
+                $mobileNumberCountryCode = $customer->mobile_number_country_code;
+                $mobileNumber = $customer->phone;
+                $fullMobileNumber = $mobileNumberCountryCode.' '.$mobileNumber;
+                $message = 'Login OTP sent to mobile number '.$fullMobileNumber;
+                
+                $smsService = new SmsEvent($fullMobileNumber, 'login_otp', 'customer', $userId);
+                $otpResponse = $smsService->handle();
+            }
+            
+
+            return array(
+                'status' => 'success',
+                'message' => $message,
+                'data' => '', 
+                'statusCode' => 200
+            );
+        }catch ( \Exception $e){
+            Log::error("customer registration error",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
+            ]);
             return array(
                 'status' => 'error',
-                'message' => 'Invalid Credentials!',
+                'message' => 'Internal Server Error',
                 'data' => '', 
-                'statusCode' => 422
+                'statusCode' => 500
             );
         }
-        
-        $email = $customer->email;
-        $user = $this->userRepository->getUserByEmail($email);
-        $userId = $user->id;
-        if($emailLogin == 1){
-            $otp_passcode = $this->masterRepository->getPasscodeByEmailByUserId($email,$userId);
-        }else{
-            $mobileNumber = $customer->phone;
-            $smsService = new SmsEvent($mobileNumber, 'At_Login', 'customer', $userId);
-            $otp_passcode = $this->masterRepository->getOtpByMobileNumberByUserId($mobileNumber,$userId);
-        }
-
-        return array(
-            'status' => 'success',
-            'message' => 'Please Verify OTP/Passcode!',
-            'data' => ['otp_passcode' => $otp_passcode], 
-            'statusCode' => 200
-        );
     }
 
     public function appLogin($request){
@@ -149,22 +171,32 @@ class AuthService
                 );
             }
         }else{
+            $mobileNumberCountryCode = $customer->mobile_number_country_code;
             $mobileNumber = $customer->phone;
-            $currentOtp = $this->masterRepository->getOtpByMobileNumberByUserId($mobileNumber,$userId);
+            $fullMobileNumber = $mobileNumberCountryCode.' '.$mobileNumber;
+            $currentOtp = $this->masterRepository->getOtpByMobileNumberByUserId($fullMobileNumber,$userId);
             if($currentOtp->otp != $otp_passcode){
                 return array(
                     'status' => 'error',
-                    'message' => 'Invalid Passcode/OTP!',
+                    'message' => 'Invalid OTP!',
                     'data' => '', 
                     'statusCode' => 422
                 );
             }
         }
 
+        $details = [
+            'id' => $customer->customer_uuid,
+            'customer_type' => $customer->customer_type,
+            'name' => $customer->name,
+            'email' => $customer->email,
+            'phone' => $customer->phone
+        ];
+
         return array(
             'status' => 'success',
             'message' => 'Customer login Successful!',
-            'data' => ['profile' => $customer], 
+            'data' => ['profile' => $details], 
             'statusCode' => 200
         );
     }
