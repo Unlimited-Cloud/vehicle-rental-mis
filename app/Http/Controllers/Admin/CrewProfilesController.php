@@ -35,6 +35,8 @@ class CrewProfilesController extends Controller
             'license_expiry' => 'nullable|date',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
+            'experience' => 'nullable|integer',
+
         ]);
 
         $data = $request->all();
@@ -49,16 +51,16 @@ class CrewProfilesController extends Controller
         $crewMemberName = $request->crew_member_name;
         $crewMemberEmail = $request->crew_member_email;
         $crewMemberPassword = Hash::make("Nepal@123456");
-        $roleDetail = DB::table('roles')->where('name',$request->role)->first();
-        if($roleDetail){
+        $roleDetail = DB::table('roles')->where('name', $request->role)->first();
+        if ($roleDetail) {
             $roleId = $roleDetail->id;
-        }else{
+        } else {
             $roleId = 3;
         }
-        
+
         $userAddData['role_id'] = $roleId;
         $userAddData['name'] = $crewMemberName;
-       
+
         $userAddData['email'] = $crewMemberEmail;
         if (empty($crewMemberEmail)) {
             $formattedName = strtolower(str_replace(' ', '', $crewMemberName));
@@ -78,18 +80,18 @@ class CrewProfilesController extends Controller
     public function edit(CrewProfile $crew_profile)
     {
         Gate::authorize('update_crew_profiles');
-        
-        $users = CrewProfile::select('users.name as crew_member_name','crew_profiles.*')
-        ->join('users','users.id','=','crew_profiles.user_id')
-        ->get();
+
+        $users = CrewProfile::select('users.name as crew_member_name', 'crew_profiles.*')
+            ->join('users', 'users.id', '=', 'crew_profiles.user_id')
+            ->get();
 
         $crew_profile = CrewProfile::select(
             'users.name as crew_member_name',
             'users.email as crew_member_email',
             'crew_profiles.*'
         )
-        ->join('users','users.id','=','crew_profiles.user_id')
-        ->where('crew_profiles.id',$crew_profile->id)->first();
+            ->join('users', 'users.id', '=', 'crew_profiles.user_id')
+            ->where('crew_profiles.id', $crew_profile->id)->first();
         return view('layouts.admin.crew_profiles.create', compact('crew_profile', 'users'));
     }
 
@@ -102,6 +104,7 @@ class CrewProfilesController extends Controller
             'license_expiry' => 'nullable|date',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
+            'experience' => 'nullable|integer',
         ]);
 
         if ($request->hasFile('citizenship_doc')) {
@@ -116,13 +119,13 @@ class CrewProfilesController extends Controller
 
         $crewMemberName = $request->crew_member_name;
         $crewMemberEmail = $request->crew_member_email;
-        $roleDetail = DB::table('roles')->where('name',$request->role)->first();
-        if($roleDetail){
+        $roleDetail = DB::table('roles')->where('name', $request->role)->first();
+        if ($roleDetail) {
             $roleId = $roleDetail->id;
-        }else{
+        } else {
             $roleId = 3;
         }
-        
+
         $userAddData['role_id'] = $roleId;
         $userAddData['name'] = $crewMemberName;
         $userAddData['email'] = $crewMemberEmail;
@@ -132,8 +135,8 @@ class CrewProfilesController extends Controller
         }
         $userAddData['created_at'] = now();
         $userId = $request->user_id;
-        DB::table('users')->where('id',$userId)->update($userAddData);
-        
+        DB::table('users')->where('id', $userId)->update($userAddData);
+
         $crew_profile->update($request->all());
 
         return redirect()->route('admin.crew_profiles.index')

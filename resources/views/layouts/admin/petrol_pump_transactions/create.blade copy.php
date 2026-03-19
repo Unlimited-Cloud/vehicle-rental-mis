@@ -395,36 +395,9 @@
         </div>
     </div>
 </section>
+@endsection
+@push('styles')
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function () {
-
-    function calculateAmount() {
-        let liters = parseFloat($('#fuel_quantity').val()) || 0;
-        let rate   = parseFloat($('#rate_per_liter').val()) || 0;
-        let type   = $('#transaction_type').val();
-
-        let amount = 0;
-
-        if (type === 'credit' && liters > 0 && rate > 0) {
-            amount = liters * rate;
-            $('#amount').prop('readonly', true);
-        } else {
-            $('#amount').prop('readonly', false);
-        }
-
-        $('#amount').val(amount.toFixed(2));
-    }
-
-    // 🔥 IMPORTANT: use event delegation (works always)
-    $(document).on('input', '#fuel_quantity, #rate_per_liter', calculateAmount);
-    $(document).on('change', '#transaction_type', calculateAmount);
-
-    // Run once
-    calculateAmount();
-});
-</script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .required:after {
@@ -454,5 +427,35 @@ $(document).ready(function () {
     }
 
 </style>
+@endpush
 
-@endsection
+@push('scripts')
+<script>
+$(document).ready(function () {
+
+    function calculateAmount() {
+        let liters = parseFloat($('#fuel_quantity').val()) || 0;
+        let rate   = parseFloat($('#rate_per_liter').val()) || 0;
+        let type   = $('#transaction_type').val();
+
+        let amount = 0;
+
+        if (type === 'credit' && liters > 0 && rate > 0) {
+            amount = liters * rate;
+            $('#amount').prop('readonly', true);
+        } else {
+            $('#amount').prop('readonly', false);
+        }
+
+        $('#amount').val(amount.toFixed(2));
+    }
+
+    // 🔥 IMPORTANT: use event delegation (works always)
+    $(document).on('input', '#fuel_quantity, #rate_per_liter', calculateAmount);
+    $(document).on('change', '#transaction_type', calculateAmount);
+
+    // Run once
+    calculateAmount();
+});
+</script>
+@endpush

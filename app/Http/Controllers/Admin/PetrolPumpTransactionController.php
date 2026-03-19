@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Gate;
 
 use App\Exports\PetrolPumpTransactionExport;
-
+use App\Models\CrewProfile;
 use App\Models\PetrolPump;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -68,6 +68,9 @@ class PetrolPumpTransactionController extends Controller
         $petrol_pump_id = $request->input('petrol_pump_id');
         $vehicle_id     = $request->input('vehicle_id');
         $customer_id    = $request->input('customer_id');
+        $drivers = CrewProfile::where('role', 'driver')
+            ->with('user')
+            ->get();
 
         return view(
             'layouts.admin.petrol_pump_transactions.create',
@@ -76,7 +79,8 @@ class PetrolPumpTransactionController extends Controller
                 'vehicles',
                 'petrol_pump_id',
                 'vehicle_id',
-                'customer_id'
+                'customer_id',
+                'drivers'
             )
         );
     }
@@ -88,6 +92,8 @@ class PetrolPumpTransactionController extends Controller
     public function store(Request $request)
     {
         Gate::authorize('create_petrol_pumps_transactions');
+
+        // Validate request
         $validated = $request->validate([
             'petrol_pump_id' => 'required|exists:petrol_pumps,id',
             'vehicle_id' => 'nullable|exists:vehicles,id',
@@ -101,25 +107,42 @@ class PetrolPumpTransactionController extends Controller
             'reference_number' => 'nullable|string',
             'remarks' => 'nullable|string',
             'odometer_reading' => 'nullable|string',
-            'status' => 'required|in:pending,completed,cancelled'
+            'status' => 'required|in:pending,completed,cancelled',
+            'pump_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'pump_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'tank_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'tank_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'driver_id' => 'nullable|exists:users,id',
         ]);
 
-        $amount = isset($validated['fuel_quantity']) && isset($validated['rate_per_liter'])
-            ? $validated['fuel_quantity'] * $validated['rate_per_liter']
-            : 0;
-
+        // Calculate amount
+        $amount = ($validated['fuel_quantity'] ?? 0) * ($validated['rate_per_liter'] ?? 0);
         $validated['amount'] = $amount;
 
-        DB::transaction(function () use ($validated) {
+        DB::transaction(function () use ($request, &$validated) {
 
-            $paidAmount = $validated['paid_amount'] ?? 0;
-            $validated['paid_amount'] = $paidAmount;
+            $validated['paid_amount'] = $validated['paid_amount'] ?? 0;
 
-            // First create transaction without balance
+            $uploadPath = public_path('uploads/fuel_purchased');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            // Handle image uploads
+            foreach (['pump_before', 'pump_after', 'tank_before', 'tank_after'] as $imageField) {
+                if ($request->hasFile($imageField)) {
+                    $file = $request->file($imageField);
+                    $filename = uniqid() . '_' . $imageField . '.' . $file->getClientOriginalExtension();
+                    $file->move($uploadPath, $filename);
+                    $validated[$imageField] = 'uploads/fuel_purchased/' . $filename;
+                }
+            }
+
+            // Create transaction
             $transaction = PetrolPumpTransaction::create($validated);
 
+            // Update pump balance if transaction is completed
             if ($validated['status'] === 'completed') {
-
                 $newBalance = $this->updatePumpBalance(
                     $validated['petrol_pump_id'],
                     $validated['amount'],
@@ -127,12 +150,12 @@ class PetrolPumpTransactionController extends Controller
                     'apply'
                 );
 
-                // 🔥 Update transaction balance as running balance
                 $transaction->update([
                     'balance' => $newBalance
                 ]);
             }
         });
+
         return redirect()->route('admin.petrol_pump_transactions.index')
             ->with('success', 'Transaction created successfully.');
     }
@@ -158,9 +181,12 @@ class PetrolPumpTransactionController extends Controller
         Gate::authorize('update_petrol_pumps_transactions');
         $petrolPumps = PetrolPump::active()->get();
         $vehicles    = Vehicle::where('status', '1')->get();
+        $drivers = CrewProfile::where('role', 'driver')
+            ->with('user')
+            ->get();
         return view(
             'layouts.admin.petrol_pump_transactions.create',
-            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction')
+            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction', 'drivers')
         );
     }
 
@@ -170,6 +196,8 @@ class PetrolPumpTransactionController extends Controller
     public function update(Request $request, PetrolPumpTransaction $petrolPumpTransaction)
     {
         Gate::authorize('update_petrol_pumps_transactions');
+
+        // Validate request
         $validated = $request->validate([
             'petrol_pump_id' => 'required|exists:petrol_pumps,id',
             'vehicle_id' => 'nullable|exists:vehicles,id',
@@ -183,12 +211,17 @@ class PetrolPumpTransactionController extends Controller
             'payment_method' => 'nullable|string',
             'reference_number' => 'nullable|string',
             'remarks' => 'nullable|string',
-            'status' => 'required|in:pending,completed,cancelled'
+            'status' => 'required|in:pending,completed,cancelled',
+            'pump_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'pump_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'tank_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'tank_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'driver_id' => 'nullable|exists:users,id',
         ]);
 
-        DB::transaction(function () use ($validated, $petrolPumpTransaction) {
+        DB::transaction(function () use ($request, &$validated, $petrolPumpTransaction) {
 
-            // Revert old balance if completed
+            // Revert old balance if previously completed
             if ($petrolPumpTransaction->status === 'completed') {
                 $this->updatePumpBalance(
                     $petrolPumpTransaction->petrol_pump_id,
@@ -198,10 +231,34 @@ class PetrolPumpTransactionController extends Controller
                 );
             }
 
+            $uploadPath = public_path('uploads/fuel_purchased');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            // Handle image uploads
+            foreach (['pump_before', 'pump_after', 'tank_before', 'tank_after'] as $imageField) {
+                if ($request->hasFile($imageField)) {
+                    $file = $request->file($imageField);
+                    $filename = uniqid() . '_' . $imageField . '.' . $file->getClientOriginalExtension();
+                    $file->move($uploadPath, $filename);
+
+                    // Update the field in validated data
+                    $validated[$imageField] = 'uploads/fuel_purchased/' . $filename;
+
+                    // Optionally delete old image
+                    $oldImage = $petrolPumpTransaction->{$imageField};
+                    if ($oldImage && file_exists(public_path($oldImage))) {
+                        @unlink(public_path($oldImage));
+                    }
+                }
+            }
+
+            // Update transaction
             $petrolPumpTransaction->update($validated);
 
+            // Recalculate and update balance if completed
             if ($validated['status'] === 'completed') {
-
                 $newBalance = $this->updatePumpBalance(
                     $validated['petrol_pump_id'],
                     $validated['amount'],
@@ -218,7 +275,6 @@ class PetrolPumpTransactionController extends Controller
         return redirect()->route('admin.petrol_pump_transactions.index')
             ->with('success', 'Transaction updated successfully.');
     }
-
     /**
      * Remove the specified transaction.
      */

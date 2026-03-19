@@ -13,6 +13,7 @@ class CrewProfile extends Model
         'license_expiry',
         'citizenship_doc',
         'contact_number',
+        'experience'
     ];
 
     public function user()
