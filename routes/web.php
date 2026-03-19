@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\VehicleBookingController;
 use App\Http\Controllers\Admin\GpsDashboardController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\EmailLogController;
+use App\Http\Controllers\Admin\SmsLogController;
 use App\Http\Controllers\Admin\EmailTemplateActivitiesController;
 use App\Http\Controllers\Admin\EmailTemplateController;
 use App\Http\Controllers\Admin\FuelPurchaseController;
@@ -112,6 +113,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
     Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
     Route::resource('email-templates', EmailTemplateController::class);
     Route::resource('email-logs', EmailLogController::class);
+    Route::resource('sms-logs', SmsLogController::class);
     Route::resource('trip-categories', TripCategoryController::class);
     Route::get(
         'trip-routes-export',
