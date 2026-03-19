@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 
 
@@ -12,8 +13,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
-Route::post('/login', [LoginController::class, 'login']);
 Route::post('/get-token', [LoginController::class, 'getToken']);
 
 //Driver API
@@ -40,11 +39,15 @@ Route::middleware('auth:sanctum')->group(function () {
 //Customer API
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('customer')->group(function () {
-
-        Route::post('/login', [CustomerController::class, 'login']);
-        Route::post('/register', [CustomerController::class, 'register']);
-        Route::post('/logout', [CustomerController::class, 'logout']);
-        Route::get('/profile/{customerUuid}', [CustomerController::class, 'getProfileByUuid']);
+        Route::controller(CustomerController::class)->group(function () {
+            Route::post('/register', 'register');
+            Route::post('/logout', 'logout');
+            Route::get('/profile/{customerUuid}', 'getProfileByUuid');
+        });
+        
+        Route::controller(AuthController::class)->group(function () {
+            Route::post('/login', 'login');
+        });
         
         Route::get('/get-customerbooking/{customerId}', [BookingController::class, 'getCustomerBookings']);
 

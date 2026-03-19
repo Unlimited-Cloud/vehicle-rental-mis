@@ -13,6 +13,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
 use App\Repositories\VehicleRepository;
 use App\Events\EmailEvent;
+use App\Events\SmsEvent;
 use App\Listeners\EmailListeners;
 
 class AppServiceProvider extends ServiceProvider

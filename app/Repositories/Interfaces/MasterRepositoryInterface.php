@@ -14,4 +14,6 @@ interface MasterRepositoryInterface
     public function getParentModules();
     public function getAllProformaInvoices();
     public function getSubModules($parentId);
+    public function getPasscodeByEmailByUserId($email,$userId);
+    public function getOtpByMobileNumberByUserId($mobileNumber,$userId);
 }
