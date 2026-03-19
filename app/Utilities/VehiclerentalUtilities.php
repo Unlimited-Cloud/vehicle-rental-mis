@@ -142,4 +142,42 @@ class VehicleRentalUtilities
             );
         }
     }
+
+    public static function buildPersonalDetailsSms(Customer $customer, array $extra = []): array
+    {
+        return array_merge([
+            'first_name'     => $customer->first_name ?? '',
+            'middle_name'    => $customer->middle_name ?? '',
+            'last_name'      => $customer->last_name ?? '',
+            'email'          => $customer->email ?? '',
+            'mobile_number'  => $customer->mobile_number ?? '',
+            'country_code'   => $customer->mobile_number_country_code ?? '',
+            'country'        => $customer->country ?? '',
+            'state'          => $customer->state ?? '',
+            'city'           => $customer->city ?? '',
+            'zip_code'       => $customer->zip_code ?? '',
+            'street_address' => $customer->street_address ?? '',
+            'designation'    => 'Customer',
+            'ip_address'     => request()->ip(),
+        ], $extra);
+    }
+
+    public static function searchForSmsVar(string $smsContent, array|object $personalDetails = [], ?string $otp = null): string
+    {
+        return preg_replace_callback('/#(\w+)#/', function ($matches) use ($personalDetails, $otp) {
+            $varName = strtolower($matches[1]);
+
+            // System variables
+            if ($varName === 'now') return now()->format('Y-m-d H:i:s');
+            if ($varName === 'timestamp') return now()->timestamp;
+            if ($varName === 'otp') return $otp ?? '';
+
+            // Fetch from personalDetails
+            $value = is_array($personalDetails)
+                ? ($personalDetails[$varName] ?? null)
+                : ($personalDetails->$varName ?? null);
+
+            return $value !== null && is_scalar($value) ? trim((string)$value) : '';
+        }, $smsContent);
+    }
 }

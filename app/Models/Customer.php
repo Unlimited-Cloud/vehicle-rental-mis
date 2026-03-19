@@ -16,6 +16,7 @@ class Customer extends Model
         'last_name',
         'name',
         'email',
+        'mobile_number_country_code',
         'phone',
         'address',
         'city',

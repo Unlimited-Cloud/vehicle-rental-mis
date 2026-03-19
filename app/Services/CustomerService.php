@@ -33,7 +33,14 @@ class CustomerService
                 'last_name'  => 'required_if:customerType,individual|string',
                 'email' => 'required|email|unique:customers',
                 'mobileNumber' => 'required|unique:customers,phone',
-                'password' => 'required|min:6'
+                'password' => [
+                    'required',
+                    'string',
+                    'min:12', // at least 12 characters
+                    'regex:/[A-Z]/', // at least 1 capital letter
+                    'regex:/[!@#$%^&*(),.?":{}|<>]/', // at least 1 special character
+                    'max:255',
+                ],
             ]);
 
             if ($validator->fails()) {

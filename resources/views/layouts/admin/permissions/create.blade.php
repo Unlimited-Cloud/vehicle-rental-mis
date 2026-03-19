@@ -71,7 +71,7 @@
                 </a>
 
                 <button type="submit" class="btn btn-primary">
-                    {{ isset($module) ? 'Update Module' : 'Create Module' }}
+                    {{ isset($module) ? 'Update Permission' : 'Create Permission' }}
                 </button>
             </div>
 

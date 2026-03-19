@@ -7,6 +7,8 @@ use App\Models\Module;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\ProformaInvoice;
+use App\Models\Passcode;
+use App\Models\Otp;
 
 class MasterRepository implements MasterRepositoryInterface
 {
@@ -43,5 +45,17 @@ class MasterRepository implements MasterRepositoryInterface
 
     public function getSubModules($parentId){
         return Module::where('parent_id',$parentId)->orderBy('order_by')->get()->toArray();
+    }
+
+    public function getPasscodeByEmailByUserId($email,$userId){
+        return Passcode::where('email',$email)->where('user_id',$userId)->orderBy('id','desc')->first();
+    }
+
+    public function getOtpByMobileNumberByUserId($mobileNumber,$userId){
+        return Otp::where('mobile_number',$mobileNumber)->where('user_id',$userId)->orderBy('id','desc')->first();
+    }
+
+    public function getAllOtps(){
+        return Otp::get();
     }
 }
