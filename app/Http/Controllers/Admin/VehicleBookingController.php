@@ -221,11 +221,11 @@ class VehicleBookingController extends Controller
         $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
         $endDateTime   = Carbon::parse($request->end_date . ' ' . $request->end_time);
         // Check if end is before start
-        if ($endDateTime->lessThan($startDateTime)) {
-            return redirect()->route('admin.vehicle_bookings.edit', $vehicleBooking)
-                ->with('warning_message', 'To date and time should be greater than start date.')
-                ->with('end_date', $request->end_date);
-        }
+        // if ($endDateTime->lessThan($startDateTime)) {
+        //     return redirect()->route('admin.vehicle_bookings.edit', $vehicleBooking)
+        //         ->with('warning_message', 'To date and time should be greater than start date.')
+        //         ->with('end_date', $request->end_date);
+        // }
 
         if (empty($no_of_hours)) {
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
