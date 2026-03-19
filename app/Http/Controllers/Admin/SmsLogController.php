@@ -21,7 +21,7 @@ class SmsLogController extends Controller
 
     public function index()
     {
-        Gate::authorize('index_sms');
+        Gate::authorize('index_communication_sms_logs');
         $smsLogs = $this->masterRepository->getAllOtps();
 
         return view('layouts.admin.sms-logs.index', compact('smsLogs'));
@@ -32,7 +32,7 @@ class SmsLogController extends Controller
      */
     public function create()
     {
-        Gate::authorize('create_sms');
+        Gate::authorize('create_communication_sms_logs');
         $emailTemplates = EmailTemplate::all();
         return view('layouts.admin.sms-logs.create', compact('emailTemplates'));
     }
@@ -42,7 +42,7 @@ class SmsLogController extends Controller
      */
     public function store(Request $request)
     {
-        Gate::authorize('create_sms');
+        Gate::authorize('create_communication_sms_logs');
         $request->validate([
             'emailtemplate_id' => 'nullable|exists:email_templates,id',
             'email_from' => 'required|email|max:255',
@@ -65,7 +65,7 @@ class SmsLogController extends Controller
      */
     public function show(string $id)
     {
-        Gate::authorize('read_sms');
+        Gate::authorize('read_communication_sms_logs');
         $emailLog = EmailLog::with('emailTemplate')
             ->findOrFail($id);
 
@@ -77,7 +77,7 @@ class SmsLogController extends Controller
      */
     public function edit(string $id)
     {
-        Gate::authorize('update_sms');
+        Gate::authorize('update_communication_sms_logs');
         $emailLog = EmailLog::findOrFail($id);
         $emailTemplates = EmailTemplate::all();
 
@@ -89,7 +89,7 @@ class SmsLogController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        Gate::authorize('update_sms');
+        Gate::authorize('update_communication_sms_logs');
         $request->validate([
             'emailtemplate_id' => 'nullable|exists:email_templates,id',
             'email_from' => 'required|email|max:255',
@@ -113,7 +113,7 @@ class SmsLogController extends Controller
      */
     public function destroy(string $id)
     {
-        Gate::authorize('delete_sms');
+        Gate::authorize('delete_communication_sms_logs');
         $emailLog = EmailLog::findOrFail($id);
         $emailLog->delete();
 
