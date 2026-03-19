@@ -40,6 +40,10 @@
                         <th>Contact Number:</th>
                         <td>{{ $crew_profile->contact_number ?? 'N/A' }}</td>
                     </tr>
+                    <tr>
+                        <th>Experience Years:</th>
+                        <td>{{ $crew_profile->experience ?? 'N/A' }}</td>
+                    </tr>
                 </table>
             </div>
         </div>
