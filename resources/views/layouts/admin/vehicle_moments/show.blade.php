@@ -31,6 +31,11 @@
             </a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" data-toggle="pill" href="#booking" role="tab">
+                <i class="fas fa-book"></i> Booking Details
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" data-toggle="pill" href="#journey" role="tab">
                 <i class="fas fa-route"></i> Journey Details
             </a>
@@ -121,25 +126,78 @@
 
         <!-- Main Information Grid -->
         <div class="row mt-4">
-            <!-- Booking Information -->
+            <!-- File & Customer Information -->
             <div class="col-md-6">
                 <div class="card card-outline card-primary">
                     <div class="card-header bg-primary text-white">
-                        <h3 class="card-title"><i class="fas fa-book"></i> Booking Information</h3>
+                        <h3 class="card-title"><i class="fas fa-file-alt"></i> File & Customer Information</h3>
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless">
-                           <tr>
-                                <th width="150">Booking ID:</th>
+                            <tr>
+                                <th width="150">File No.:</th>
                                 <td>
-                                    <a href="{{ route('admin.vehicle_bookings.show', $moment->booking_id) }}" title="View Details">
-                                        <span class="badge badge-primary p-2">#{{ $moment->booking_id }}</span>
-                                    </a>
+                                    <span class="badge badge-info p-2">#{{ $moment->file_no ?? 'N/A' }}</span>
                                 </td>
                             </tr>
                             <tr>
-                                <th>Customer:</th>
-                                <td>{{ $moment->customer_name ?? 'N/A' }}</td>
+                                <th>Customer Name:</th>
+                                <td>
+                                    <i class="fas fa-user text-primary"></i> 
+                                    {{ $moment->customer_name ?? 'N/A' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Passenger Name:</th>
+                                <td>
+                                    <i class="fas fa-user-tie text-info"></i> 
+                                    {{ $moment->passenger ?? 'N/A' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>No. of People:</th>
+                                <td>
+                                    <span class="badge badge-info">{{ $moment->no_of_people ?? '0' }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trip Information -->
+            <div class="col-md-6">
+                <div class="card card-outline card-success">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="card-title"><i class="fas fa-route"></i> Trip Information</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="150">Trip Category:</th>
+                                <td>
+                                    {{ $moment->trip_category_name ?? 'N/A' }}
+                                </td>
+                            </tr>
+                             <tr>
+                                <th width="150">Trip Route:</th>
+                                <td>
+                                    {{ $moment->trip_route_name ?? 'N/A' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="150">Pickup Point:</th>
+                                <td>
+                                    <i class="fas fa-map-marker-alt text-danger"></i> 
+                                    {{ $moment->from_destination ?? 'N/A' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Drop Location:</th>
+                                <td>
+                                    <i class="fas fa-flag-checkered text-success"></i> 
+                                    {{ $moment->to_destination ?? 'N/A' }}
+                                </td>
                             </tr>
                             <tr>
                                 <th>Start Date:</th>
@@ -153,11 +211,13 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <div class="row mt-3">
             <!-- Vehicle & Crew Information -->
             <div class="col-md-6">
-                <div class="card card-outline card-success">
-                    <div class="card-header bg-success text-white">
+                <div class="card card-outline card-warning">
+                    <div class="card-header bg-warning text-white">
                         <h3 class="card-title"><i class="fas fa-truck"></i> Vehicle & Crew</h3>
                     </div>
                     <div class="card-body">
@@ -166,7 +226,6 @@
                                 <th width="150">Vehicle:</th>
                                 <td>
                                     <strong>{{ $moment->vehicle_name ?? 'N/A' }}</strong>
-                                    <small class="text-muted">({{ $moment->vehicle_no ?? 'N/A' }})</small>
                                 </td>
                             </tr>
                             <tr>
@@ -184,6 +243,157 @@
                                 </td>
                             </tr>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Reference -->
+            <div class="col-md-6">
+                <div class="card card-outline card-info">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="card-title"><i class="fas fa-hashtag"></i> Booking Reference</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="150">Booking ID:</th>
+                                <td>
+                                    <a href="{{ route('admin.vehicle_bookings.show', $moment->booking_id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> #{{ $moment->booking_id }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Booking Date:</th>
+                                <td>{{ \Carbon\Carbon::parse($moment->booking_date)->format('d M, Y') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= BOOKING DETAILS TAB ================= -->
+    <div class="tab-pane fade" id="booking" role="tabpanel">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card card-outline card-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title"><i class="fas fa-receipt"></i> Complete Booking Details</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="text-primary border-bottom pb-2">
+                                    <i class="fas fa-user-circle"></i> Customer & File Information
+                                </h5>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="150">File No.:</th>
+                                        <td><span class="badge badge-info p-2">#{{ $moment->file_no ?? 'N/A' }}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Customer:</th>
+                                        <td>{{ $moment->customer_name ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Passenger:</th>
+                                        <td>{{ $moment->passenger ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>No. of People:</th>
+                                        <td>{{ $moment->no_of_people ?? '0' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="text-success border-bottom pb-2">
+                                    <i class="fas fa-calendar-alt"></i> Trip Information
+                                </h5>
+                                <table class="table table-sm">
+                                    <tr>
+                                <th width="150">Trip Category:</th>
+                                <td>
+                                    {{ $moment->trip_category_name ?? 'N/A' }}
+                                </td>
+                            </tr>
+                             <tr>
+                                <th width="150">Trip Route:</th>
+                                <td>
+                                    {{ $moment->trip_route_name ?? 'N/A' }}
+                                </td>
+                            </tr>
+                                    <tr>
+                                        <th width="150">Pickup:</th>
+                                        <td>{{ $moment->from_destination ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Drop:</th>
+                                        <td>{{ $moment->to_destination ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Start Date:</th>
+                                        <td>{{ \Carbon\Carbon::parse($moment->start_date)->format('d M, Y h:i A') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>End Date:</th>
+                                        <td>{{ \Carbon\Carbon::parse($moment->end_date)->format('d M, Y h:i A') }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5 class="text-warning border-bottom pb-2">
+                                    <i class="fas fa-tag"></i> Pricing Information
+                                </h5>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="150">Rate Per Day:</th>
+                                        <td>Rs. {{ number_format($moment->rate_per_day ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Sub Total:</th>
+                                        <td>Rs. {{ number_format($moment->sub_total ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Tax ({{ $moment->tax_amount_type ?? 'N/A' }}):</th>
+                                        <td>Rs. {{ number_format($moment->tax ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Discount ({{ $moment->discount_amount_type ?? 'N/A' }}):</th>
+                                        <td>Rs. {{ number_format($moment->discount ?? 0, 2) }}</td>
+                                    </tr>
+                                    <tr class="bg-light">
+                                        <th>Total Amount:</th>
+                                        <td class="font-weight-bold text-danger">Rs. {{ number_format($moment->total_amount ?? 0, 2) }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="col-md-6">
+                                <h5 class="text-info border-bottom pb-2">
+                                    <i class="fas fa-clock"></i> Booking Timeline
+                                </h5>
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="150">Booking ID:</th>
+                                        <td>#{{ $moment->booking_id ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Booking Date:</th>
+                                        <td>{{ \Carbon\Carbon::parse($moment->booking_date)->format('d M, Y h:i A') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Movement Created:</th>
+                                        <td>{{ \Carbon\Carbon::parse($moment->created_at)->format('d M, Y h:i A') }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -267,28 +477,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- <!-- Fuel Information -->
-        @if($moment->approx_fuel_litre)
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <div class="card card-outline card-secondary">
-                    <div class="card-header bg-secondary text-white">
-                        <h3 class="card-title"><i class="fas fa-gas-pump"></i> Fuel Information</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="info-box bg-light">
-                            <span class="info-box-icon bg-secondary"><i class="fas fa-gas-pump"></i></span>
-                            <div class="info-box-content">
-                                <span class="info-box-text">Approx Fuel Used</span>
-                                <span class="info-box-number">{{ $moment->approx_fuel_litre }} Litres</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif --}}
     </div>
 
     <!-- ================= QUESTIONNAIRE TAB ================= -->
@@ -464,6 +652,18 @@
     }
     .nav-tabs .nav-link.active {
         border-bottom: 3px solid #007bff;
+    }
+    .table th {
+        font-weight: 600;
+        color: #495057;
+    }
+    .border-bottom {
+        border-bottom: 2px solid #dee2e6 !important;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+    }
+    .badge {
+        font-size: 90%;
     }
 </style>
 @endpush

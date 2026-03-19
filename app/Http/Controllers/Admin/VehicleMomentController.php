@@ -82,21 +82,23 @@ class VehicleMomentController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'start_km' => 'required|numeric|min:0',
+            'end_km' => 'required|numeric|gt:start_km',
+        ], [
+            'end_km.gt' => 'End KM must be greater than Start KM.',
+        ]);
+
         try {
             $data = $request->all();
-
-            // Use service to store with all logic
             $this->service->store($data);
 
             return redirect()->route('admin.vehicle_moments.index')
                 ->with('success', 'Vehicle moment created successfully');
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Failed to create vehicle moment: ' . $e->getMessage())
-                ->withInput();
+            return back()->with('error', $e->getMessage())->withInput();
         }
     }
-
     public function edit($id)
     {
         $moment = VehicleMoment::findOrFail($id);
@@ -163,6 +165,12 @@ class VehicleMomentController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'start_km' => 'required|numeric|min:0',
+            'end_km' => 'required|numeric|gt:start_km',
+        ], [
+            'end_km.gt' => 'End KM must be greater than Start KM.',
+        ]);
         try {
             $data = $request->all();
 
@@ -189,9 +197,27 @@ class VehicleMomentController extends Controller
                     'h.name as helper_name',
                     'c.name as customer_name',
                     'vb.start_date',
-                    'vb.end_date'
+                    'vb.end_date',
+                    'vb.file_no',
+                    'vb.passenger',
+                    'vb.from_destination',
+                    'vb.to_destination',
+                    'vb.no_of_people',
+                    'vb.rate_per_day',
+                    'vb.sub_total',
+                    'vb.tax',
+                    'vb.tax_amount_type',
+                    'vb.discount',
+                    'vb.discount_amount_type',
+                    'vb.total_amount',
+                    'vb.created_at as booking_date',
+                    'tc.name as trip_category_name',
+                    'tr.title as trip_route_name',
+
                 )
                 ->leftJoin('vehicle_bookings as vb', 'vb.id', '=', 'vm.booking_id')
+                ->leftJoin('trip_categories as tc', 'tc.id', '=', 'vb.trip_category_id')
+                ->leftJoin('trip_routes as tr', 'tr.id', '=', 'vb.trip_route_id')
                 ->leftJoin('vehicles as v', 'v.id', '=', 'vb.vehicle_id')
 
                 ->leftJoin('crew_profiles as cp_driver', 'cp_driver.id', '=', 'vb.driver_id')
