@@ -242,6 +242,113 @@
             </div>
         </div>
 
+
+       <!-- ================= FILTER BAR ================= -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body p-2">
+        <div class="row g-2 align-items-center">
+
+            <div class="col-md-3">
+                <select id="range" class="form-control form-control-sm">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                    <option value="365">Last 1 Year</option> {{-- NEW --}}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select id="vehicle" class="form-control form-control-sm">
+                    <option value="">All Vehicles</option>
+                    @foreach($vehicles as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select id="customer" class="form-control form-control-sm">
+                    <option value="">All Customers</option>
+                    @foreach($customers as $id => $name)
+                        <option value="{{ $id }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3 text-right mt-3">
+                    <button onclick="fetchDashboard()" class="btn btn-primary btn-sm">
+                        <i class="fas fa-sync-alt mr-1"></i> Refresh
+                    </button>
+                </div>
+
+        </div>
+    </div>
+</div>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="mb-0 font-weight-bold">Analytics</h6>
+    <small class="text-muted">Live Filters Applied</small>
+</div>
+
+<!-- ================= CHARTS ================= -->
+<!-- ================= CHARTS ================= -->
+<div class="row">
+    <!-- Booking Trends -->
+    <div class="col-md-8 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-2">
+                <small class="font-weight-bold text-muted">
+                    <i class="fas fa-chart-line mr-1 text-primary"></i>Booking Trends
+                </small>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="bookingTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Pie -->
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-2">
+                <small class="font-weight-bold text-muted">
+                    <i class="fas fa-chart-pie mr-1 text-success"></i>Status
+                </small>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="bookingStatusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Customers - Minimal & Colorful -->
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
+                <i class="fas fa-crown mr-2 text-warning" style="font-size: 0.9rem;"></i>
+                <small class="font-weight-bold text-muted">Top Customers</small>
+                <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Bookings</span>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="topCustomerChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Vehicles - Minimal & Colorful -->
+    <div class="col-md-6 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
+                <i class="fas fa-truck mr-2 text-info" style="font-size: 0.9rem;"></i>
+                <small class="font-weight-bold text-muted">Top Vehicles</small>
+                <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Usage</span>
+            </div>
+            <div class="card-body p-2">
+                <canvas id="topVehicleChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
         <!-- Quick Actions -->
         <div class="row mt-2">
             <div class="col-12">
@@ -378,5 +485,216 @@
     .btn-sm {
         font-size: 0.7rem;
     }
+
 </style>
+@endsection
+@section('footer_js')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let trendChart, statusChart, customerChart, vehicleChart, utilizationChart;
+
+function fetchDashboard() {
+    const range = document.getElementById('range').value;
+    const vehicle = document.getElementById('vehicle').value;
+    const customer = document.getElementById('customer').value;
+
+    fetch(`{{ route('admin.dashboard.data') }}?range=${range}&vehicle_id=${vehicle}&customer_id=${customer}`)
+        .then(res => res.json())
+        .then(data => {
+            // 📈 Trends
+            const trendLabels = data.trends.length ? data.trends.map(i => i.date) : ['No Data'];
+            const trendData = data.trends.length ? data.trends.map(i => i.total) : [0];
+
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(document.getElementById('bookingTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Bookings',
+                        data: trendData,
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#4361ee',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { display: false },
+                            ticks: { stepSize: 1, font: { size: 8 } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { maxRotation: 0, font: { size: 7 } }
+                        }
+                    },
+                    layout: { padding: { top: 5, bottom: 5 } }
+                }
+            });
+
+            // 🥧 Status
+            if (statusChart) statusChart.destroy();
+            const statusColors = {
+                'confirmed': '#10b981',
+                'pending': '#f59e0b',
+                'cancelled': '#ef4444',
+                'completed': '#3b82f6'
+            };
+            
+            statusChart = new Chart(document.getElementById('bookingStatusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.status.length ? data.status.map(i => i.status) : ['No Data'],
+                    datasets: [{
+                        data: data.status.length ? data.status.map(i => i.total) : [1],
+                        backgroundColor: data.status.length ? 
+                            data.status.map(i => statusColors[i.status] || '#9ca3af') : ['#e5e7eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { boxWidth: 8, font: { size: 7 } }
+                        },
+                        tooltip: { enabled: true }
+                    },
+                    layout: { padding: { top: 5, bottom: 5 } }
+                }
+            });
+
+            // 📊 Customers - Colorful Bar Chart - REDUCED HEIGHT
+            if (customerChart) customerChart.destroy();
+            const customerColors = ['#f97316', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+            
+            customerChart = new Chart(document.getElementById('topCustomerChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.customers.map(i => i.customer?.name?.split(' ')[0] ?? 'N/A'),
+                    datasets: [{
+                        label: 'Bookings',
+                        data: data.customers.map(i => i.total),
+                        backgroundColor: data.customers.map((_, index) => customerColors[index % customerColors.length]),
+                        borderRadius: 4,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { 
+                            callbacks: { label: (ctx) => `${ctx.raw} bookings` },
+                            bodyFont: { size: 10 }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { display: false, drawBorder: false },
+                            ticks: { 
+                                stepSize: 1, 
+                                font: { size: 7 },
+                                maxTicksLimit: 3
+                            },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { size: 7 } },
+                            border: { display: false }
+                        }
+                    },
+                    layout: { padding: { top: 5, bottom: 0, left: 0, right: 0 } }
+                }
+            });
+
+            // 🚗 Vehicles - Colorful Bar Chart - REDUCED HEIGHT
+            if (vehicleChart) vehicleChart.destroy();
+            const vehicleColors = ['#0ea5e9', '#8b5cf6', '#d946ef', '#f59e0b', '#10b981'];
+            
+            vehicleChart = new Chart(document.getElementById('topVehicleChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.vehicles.map(i => {
+                        const name = i.vehicle?.vehicle_name ?? 'N/A';
+                        return name.length > 6 ? name.substr(0, 5) + '..' : name;
+                    }),
+                    datasets: [{
+                        label: 'Trips',
+                        data: data.vehicles.map(i => i.total),
+                        backgroundColor: data.vehicles.map((_, index) => vehicleColors[index % vehicleColors.length]),
+                        borderRadius: 4,
+                        barPercentage: 0.5,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { 
+                            callbacks: { 
+                                label: (ctx) => {
+                                    const vehicle = data.vehicles[ctx.dataIndex];
+                                    return `${ctx.raw} trips - ${vehicle.vehicle?.vehicle_name || ''}`;
+                                }
+                            },
+                            bodyFont: { size: 10 }
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { display: false, drawBorder: false },
+                            ticks: { 
+                                stepSize: 1, 
+                                font: { size: 7 },
+                                maxTicksLimit: 3
+                            },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { size: 7 } },
+                            border: { display: false }
+                        }
+                    },
+                    layout: { padding: { top: 5, bottom: 0, left: 0, right: 0 } }
+                }
+            });
+
+           
+        });
+}
+
+
+// Auto trigger
+document.querySelectorAll('#range, #vehicle, #customer')
+    .forEach(el => el.addEventListener('change', fetchDashboard));
+
+// Initial load
+fetchDashboard();
+</script>
 @endsection

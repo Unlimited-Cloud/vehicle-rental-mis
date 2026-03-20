@@ -91,6 +91,7 @@ class SmsEvent
 
             // Replace SMS template variables
             $message = VehicleRentalUtilities::searchForSmsVar($template->success_sms_content, $personalDetails, $otp);
+            $cleanMessage = strip_tags($message);
 
             $cleanMobileNumber = str_replace(' ', '', $mobileNumber);
             
@@ -101,7 +102,7 @@ class SmsEvent
                 'h'   => '9e9e5b1984cae182f35f296f82b7d5b8',
                 'op'  => 'pv',
                 'to'  => $cleanMobileNumber,
-                'msg' => $message,
+                'msg' => $cleanMessage,
             ]);
 
             // Save OTP
