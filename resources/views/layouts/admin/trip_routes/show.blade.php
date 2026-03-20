@@ -21,27 +21,42 @@
     </div>
 </div>
 
-<!-- Main content -->
 <section class="content">
     <div class="container-fluid">
         @include('layouts.admin_theme.alert')
 
-        <!-- Main Card -->
         <div class="card card-primary card-outline">
-            <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-table mr-2"></i>
-                    Nepal Tourist Vehicle Association - Official Price List
-                </h3>
-               <div class="card-tools" style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <a href="{{ route('admin.trip-routes.export') }}" class="btn btn-success btn-sm">
-                        <i class="fas fa-file-excel mr-1"></i> Export to Excel
-                    </a>
-                    <a href="{{ route('admin.trip-routes.create') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus mr-1"></i> Add New Route
-                    </a>
-                </div>
-            </div>
+           <div class="card-header d-flex flex-column">
+
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-table mr-2"></i>
+            Nepal Tourist Vehicle Association - Official Price List
+        </h3>
+
+        
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <div>
+           <a href="{{ route('admin.trip-routes.index') }}" class="btn btn-info btn-sm">
+            <i class="fas fa-th-large mr-1"></i> Table View
+        </a>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{{ route('admin.trip-routes.export') }}" class="btn btn-success btn-sm mr-2">
+                <i class="fas fa-file-excel mr-1"></i> Export to Excel
+            </a>
+
+            <a href="{{ route('admin.trip-routes.create') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus mr-1"></i> Add New Route
+            </a>
+        </div>
+
+    </div>
+
+</div>
 
             <div class="card-body">
 
