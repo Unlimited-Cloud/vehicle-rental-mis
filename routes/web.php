@@ -52,6 +52,8 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         ->name('dashboard');
 
     Route::prefix('dashboard')->name('admin.')->group(function () {
+        Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])
+            ->name('dashboard.data');
         Route::resource('customers', CustomerController::class);
         Route::resource('vehicleowner', VehicleOwnerController::class);
         Route::prefix('user_roles')->group(function () {
@@ -128,7 +130,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         Route::resource('vendors', VendorController::class);
     });
 });
-    
+
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
     //Roles Route is here
