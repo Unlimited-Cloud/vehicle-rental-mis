@@ -80,7 +80,8 @@ Route::namespace('App\Http\Controllers\Admin')->prefix('dashboard')->name('admin
     Route::middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
-
+        Route::get('/data', [DashboardController::class, 'getDashboardData'])
+            ->name('dashboard.data');
         Route::resource('customers', CustomerController::class);
         Route::resource('vehicleowner', VehicleOwnerController::class);
         Route::prefix('user_roles')->group(function () {

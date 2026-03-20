@@ -23,7 +23,8 @@ class DashboardController extends Controller
     private $currentUserIsCustomer;
     protected $vehicleRepository;
 
-    public function __construct(VehicleRepositoryInterface $vehicleRepository) {
+    public function __construct(VehicleRepositoryInterface $vehicleRepository)
+    {
         $this->vehicleRepository = $vehicleRepository;
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
@@ -52,6 +53,9 @@ class DashboardController extends Controller
             $q->where('role', 'helper');
         })->count();
 
+        $vehicles = Vehicle::pluck('vehicle_name', 'id');
+        $customers = Customer::pluck('name', 'id');
+
         $totalCrew = CrewProfile::count();
 
         // Petrol pump count
@@ -59,28 +63,28 @@ class DashboardController extends Controller
 
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         // Booking counts
-        if($this->currentUserIsCustomer == 'Y'){
+        if ($this->currentUserIsCustomer == 'Y') {
             $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
-        }else{
+        } else {
             $totalBookings = $this->vehicleRepository->getAllVehicleBookingsCount();
         }
 
-        if($this->currentUserIsCustomer == 'Y'){
+        if ($this->currentUserIsCustomer == 'Y') {
             $activeBookings = $this->vehicleRepository->getActiveVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
-        }else{
+        } else {
             $activeBookings = $this->vehicleRepository->getAllActiveVehicleBookingsCount();
         }
 
-        if($this->currentUserIsCustomer == 'Y'){
+        if ($this->currentUserIsCustomer == 'Y') {
             $pendingBookings = $this->vehicleRepository->getPendingVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
-        }else{
+        } else {
             $pendingBookings = $this->vehicleRepository->getAllPendingVehicleBookingsCount();
         }
 
-        if($this->currentUserIsCustomer == 'Y'){
-            $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc',6,$this->currentUserCustomerId);
-        }else{
-            $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc',6);
+        if ($this->currentUserIsCustomer == 'Y') {
+            $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', 6, $this->currentUserCustomerId);
+        } else {
+            $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc', 6);
         }
 
         return view('layouts.admin.dashboard', compact(
@@ -96,7 +100,84 @@ class DashboardController extends Controller
             'activeBookings',
             'pendingBookings',
             'recentBookings',
-            'currentUserIsCustomer'
+            'currentUserIsCustomer',
+            'vehicles',
+            'customers'
         ));
+    }
+    public function getDashboardData(Request $request)
+    {
+        $range     = $request->range ?? 7;
+        $vehicleId = $request->vehicle_id;
+        $customerId = $request->customer_id;
+
+        $fromDate = now()->subDays($range)->startOfDay();
+        $toDate   = now()->endOfDay();
+
+        $query = VehicleBooking::query()
+            ->whereBetween('start_date', [$fromDate, $toDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        // 📈 Trends
+        $trends = (clone $query)
+            ->selectRaw('DATE(start_date) as date, COUNT(*) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        // 🥧 Status
+        $status = (clone $query)
+            ->selectRaw('status, COUNT(*) as total')
+            ->groupBy('status')
+            ->get();
+
+        // 📊 Top Customers
+        $customers = (clone $query)
+            ->selectRaw('customer_id, COUNT(*) as total')
+            ->with('customer')
+            ->groupBy('customer_id')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        // 📊 Top Customers
+        $vehicles = (clone $query)
+            ->selectRaw('vehicle_id, COUNT(*) as total')
+            ->with('vehicle')
+            ->groupBy('vehicle_id')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        // 🚗 Vehicle Utilization
+        $totalVehicles = Vehicle::count();
+        $usedVehicles = (clone $query)->distinct('vehicle_id')->count('vehicle_id');
+
+        // 📅 Heatmap
+        $heatmap = (clone $query)
+            ->selectRaw('DATE(start_date) as date, COUNT(*) as total')
+            ->groupBy('date')
+            ->get();
+
+        return response()->json([
+            'trends' => $trends,
+            'status' => $status,
+            'customers' => $customers,
+            'vehicles' => $vehicles,
+
+            // 'revenue' => $revenue,
+            'utilization' => [
+                'used' => $usedVehicles,
+                'total' => $totalVehicles
+            ],
+            'heatmap' => $heatmap
+        ]);
     }
 }
