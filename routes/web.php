@@ -117,7 +117,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         )->name('trip-routes.export');
         Route::get('/trip-routes/category/view', [TripRouteController::class, 'categoryView'])->name('trip-routes.category.view');
 
-
         Route::get('trip-routes-upload', [TripRouteController::class, 'upload'])->name('trip-routes.upload');
         Route::post('trip-routes-import', [TripRouteController::class, 'import'])->name('trip-routes.import');
         Route::resource('trip-routes', TripRouteController::class);
@@ -131,18 +130,12 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
     
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
-    //Roles Route is here
-
-
     Route::resource('vehicle_details', VehicleDetailsController::class);
 
     Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
     Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
         ->name('petrol_pumps.balance');
-
-    // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
-    //     ->name('proforma.index');
 
     Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
         ->name('proforma.download');
