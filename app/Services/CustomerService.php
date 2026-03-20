@@ -60,6 +60,7 @@ class CustomerService
                 'customer_uuid' => $customerUuid,
                 'customer_type' => $customerType,
                 'email' => $request->email,
+                'mobile_number_country_code' => $request->mobileNumberCountryCode,
                 'phone' => $request->mobileNumber,
                 'address' => $request->address,
                 'city' => $request->city,
