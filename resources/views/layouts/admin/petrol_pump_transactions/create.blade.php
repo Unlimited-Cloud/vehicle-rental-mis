@@ -261,7 +261,7 @@
                                     <option value="credit_transfer" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'credit_transfer') ? 'selected' : '' }}>Credit Transfer</option>
                                     <option value="cheque" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'cheque') ? 'selected' : '' }}>Cheque</option>
                                     <option value="card" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'card') ? 'selected' : '' }}>Card</option>
-                                    <option value="upi" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'upi') ? 'selected' : '' }}>UPI</option>
+                                    {{-- <option value="upi" {{ (old('payment_method', $petrolPumpTransaction->payment_method ?? '') == 'upi') ? 'selected' : '' }}>UPI</option> --}}
                                 </select>
                             </div>
                         </div>
@@ -270,7 +270,7 @@
                                 <label>Reference Number</label>
                                 <input type="text" name="reference_number" class="form-control"
                                        value="{{ old('reference_number', $petrolPumpTransaction->reference_number ?? '') }}"
-                                       placeholder="Cheque/Transaction/UPI reference">
+                                       placeholder="Coupon Number">
                             </div>
                         </div>
                     </div>
