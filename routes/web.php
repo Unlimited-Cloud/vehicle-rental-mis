@@ -48,10 +48,11 @@ require __DIR__ . '/auth.php';
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
-    Route::prefix('dashboard')->name('admin.')->group(function () {
+Route::prefix('dashboard')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
         Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])
             ->name('dashboard.data');
         Route::resource('customers', CustomerController::class);
@@ -92,6 +93,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
             ]);
+        
         Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
         Route::resource('petrol_pumps', PetrolPumpController::class);
         Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
@@ -105,8 +107,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
         Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
             ->name('receipt.index');
-
-
 
         Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
         Route::resource('email-templates', EmailTemplateController::class);
@@ -129,41 +129,44 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
         Route::resource('vendors', VendorController::class);
     });
-});
+
+    Route::middleware(['auth'])->group(function () {
+        //Roles Route is here
+        Route::resource('vehicle_details', VehicleDetailsController::class);
+
+        Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+
+        Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
+            ->name('petrol_pumps.balance');
+
+        // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
+        //     ->name('proforma.index');
+
+        Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
+            ->name('proforma.download');
 
 
-Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
-    //Roles Route is here
+        Route::get('vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
+            ->name('vehicle_receipt.download');
 
+        Route::get(
+            'vehicle-receipt/{moment}/{type}',
+            [ProformaInvoiceController::class, 'generateInvoice']
+        )->name('vehicle_receipt.generate');
 
-    Route::resource('vehicle_details', VehicleDetailsController::class);
+        Route::prefix('gpsdashboard')->name('gpsdashboard.')->controller(GpsDashboardController::class)->group(function () {
 
-    Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+            Route::get('/live-data', 'getLiveData')->name('live');
 
-    Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
-        ->name('petrol_pumps.balance');
+            Route::prefix('vehicle')->group(function () {
+                Route::get('/{imei}', 'getVehicleDetails')->name('vehicle.details');
+                Route::get('/{imei}/history', 'getVehicleHistory')->name('vehicle.history');
+            });
 
-    // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
-    //     ->name('proforma.index');
+            Route::prefix('events')->group(function () {
+                Route::get('/recent', 'getRecentEvents')->name('events.recent');
+            });
 
-    Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
-        ->name('proforma.download');
-
-
-    Route::get('vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
-        ->name('vehicle_receipt.download');
-
-
-
-    Route::get(
-        'vehicle-receipt/{moment}/{type}',
-        [ProformaInvoiceController::class, 'generateInvoice']
-    )->name('vehicle_receipt.generate');
-
-
-    Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');
-    Route::get('/gpsdashboard/vehicle/{imei}', [GpsDashboardController::class, 'getVehicleDetails'])->name('gpsdashboard.vehicle.details');
-    Route::get('/gpsdashboard/vehicle/{imei}/history', [GpsDashboardController::class, 'getVehicleHistory'])->name('gpsdashboard.vehicle.history');
-    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
-    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
+        });
+    });
 });
