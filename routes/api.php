@@ -44,13 +44,13 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', 'logout');
             Route::get('/profile/{customerUuid}', 'getProfileByUuid');
         });
-        
+
         Route::controller(AuthController::class)->group(function () {
             Route::post('/request-otp-login', 'getOtpPasscodeAppLogin');
             Route::post('/login', 'login');
         });
-        
-        Route::get('/get-customerbooking/{customerId}', [BookingController::class, 'getCustomerBookings']);
+
+        Route::get('/get-customerbooking/{customerUUId}', [BookingController::class, 'getCustomerBookings']);
 
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);

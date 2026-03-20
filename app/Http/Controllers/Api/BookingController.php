@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
+use App\Models\Customer;
 use Maatwebsite\Excel\Facades\Excel;
 
 
@@ -81,8 +82,10 @@ class BookingController extends Controller
         ]);
     }
 
-    public function getCustomerBookings($customerId)
+    public function getCustomerBookings($customerUUId)
     {
+        $customers = Customer::where('customer_uuid', $customerUUId)->first();
+        $customerId = $customers->id;
         $bookings = VehicleBooking::where('customer_id', $customerId)
             ->with([
                 'vehicle',
