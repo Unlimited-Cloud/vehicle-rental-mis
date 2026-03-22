@@ -53,8 +53,7 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
 Route::prefix('dashboard')->name('admin.')->group(function () {
     Route::middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
-        Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])
-            ->name('dashboard.data');
+        Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
         Route::resource('customers', CustomerController::class);
         Route::resource('vehicleowner', VehicleOwnerController::class);
         Route::prefix('user_roles')->group(function () {
