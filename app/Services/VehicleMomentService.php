@@ -60,6 +60,8 @@ class VehicleMomentService
             // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
 
+            $this->storeAttendance($vehicleMoment, $data);
+
             // Save questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
                 $this->saveQuestionnaireAnswers($vehicleMoment->id, $data['answers']);
@@ -113,6 +115,10 @@ class VehicleMomentService
 
             // Update vehicle moment
             $vehicleMoment->update($data);
+            DB::table('attendance')
+                ->where('vehicle_moment_id', $id)
+                ->delete();
+            $this->storeAttendance($vehicleMoment, $data);
 
             // Update questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
@@ -225,5 +231,63 @@ class VehicleMomentService
         }
 
         return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    public function storeAttendance($moment, $data)
+    {
+        if (empty($data['start_datetime'])) {
+            return;
+        }
+
+        $start = \Carbon\Carbon::parse($data['start_datetime'])->startOfDay();
+        $end = !empty($data['end_datetime'])
+            ? \Carbon\Carbon::parse($data['end_datetime'])->startOfDay()
+            : $start;
+
+        $crewIds = [];
+
+        if (!empty($data['driver_id'])) {
+            $crewIds[] = $data['driver_id'];
+        }
+
+        if (!empty($data['helper_id'])) {
+            $crewIds[] = $data['helper_id'];
+        }
+
+        $datesToInsert = [];
+
+        foreach ($crewIds as $crewId) {
+
+            $currentDate = $start->copy();
+
+            while ($currentDate->lte($end)) {
+
+                // Check if already exists
+                $exists = DB::table('attendance')
+                    ->where('vehicle_moment_id', $moment->id)
+                    ->where('crew_id', $crewId)
+                    ->where('attendance_date', $currentDate->toDateString())
+                    ->exists();
+
+                if (!$exists) {
+                    $datesToInsert[] = [
+                        'crew_id' => $crewId,
+                        'vehicle_moment_id' => $moment->id,
+                        'booking_id' => $data['booking_id'] ?? null,
+                        'attendance_date' => $currentDate->toDateString(),
+                        'salary_amount' => 0,
+                        'status' => 'present',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                $currentDate->addDay();
+            }
+        }
+
+        if (!empty($datesToInsert)) {
+            DB::table('attendance')->insert($datesToInsert);
+        }
     }
 }

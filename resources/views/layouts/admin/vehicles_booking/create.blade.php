@@ -36,15 +36,23 @@
                         @if($currentUserIsCustomer == 'N')
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label>Customer <span class="text-danger">*</span></label>
-                                <select name="customer_id" class="form-control">
-                                    <option value="">Select Customer</option>
-                                    @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" {{ old('customer_id', $booking->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
-                                            {{ $customer->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label for="customer_id">Customer <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <select name="customer_id" id="customer_id" class="form-control">
+                                        <option value="">Select Customer</option>
+                                        @foreach($customers as $customer)
+                                            <option value="{{ $customer->id }}" 
+                                                {{ old('customer_id', $booking->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
+                                                {{ $customer->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-success" id="addCustomerBtn">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         @endif
@@ -104,37 +112,51 @@
                                 </select>
                             </div>
                         </div>
+<div class="col-md-4">
+    <div class="form-group">
+        <label for="trip_category_id">Trip Category</label>
+        <div class="input-group">
+            <select name="trip_category_id" id="trip_category_id" class="form-control">
+                <option value="">Select Category</option>
+                @foreach($tripCategories as $category)
+                    <option value="{{ $category->id }}" 
+                        {{ old('trip_category_id', $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+            <div class="input-group-append">
+                <button type="button" class="btn btn-success" id="addCategoryBtn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Trip Category</label>
-                                <select name="trip_category_id" id="trip_category_id" class="form-control">
-                                    <option value="">Select Category</option>
-                                    @foreach($tripCategories as $category)
-                                        <option value="{{ $category->id }}" {{ old('trip_category_id', $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
-                                            {{ $category->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Trip Route</label>
-                                <select name="trip_route_id" id="trip_route_id" class="form-control">
-                                    <option value="">Select Route</option>
-                                    @if(isset($booking) && $booking->trip_route_id)
-                                        @php
-                                            $selectedRoute = \App\Models\TripRoute::find($booking->trip_route_id);
-                                        @endphp
-                                        @if($selectedRoute)
-                                            <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
-                                        @endif
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
+<div class="col-md-4">
+    <div class="form-group">
+        <label for="trip_route_id">Trip Route</label>
+        <div class="input-group">
+            <select name="trip_route_id" id="trip_route_id" class="form-control">
+                <option value="">Select Route</option>
+                @if(isset($booking) && $booking->trip_route_id)
+                    @php
+                        $selectedRoute = \App\Models\TripRoute::find($booking->trip_route_id);
+                    @endphp
+                    @if($selectedRoute)
+                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
+                    @endif
+                @endif
+            </select>
+            <div class="input-group-append">
+                <button type="button" class="btn btn-success" id="addRouteBtn">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                         <div class="col-md-4">
                             <div class="form-group">
@@ -400,6 +422,51 @@
                     </button>
                 </div>
             </form>
+            <div class="modal fade" id="customerModal">
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <h5>Add Customer</h5>
+                        <input id="c_name" class="form-control mb-2" placeholder="Name">
+                        <input id="c_phone" class="form-control mb-2" placeholder="Phone">
+                        <input id="c_email" class="form-control mb-2" placeholder="Email">
+                        <input id="c_address" class="form-control mb-2" placeholder="Address">
+                        <button class="btn btn-primary" id="saveCustomer">Save</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="categoryModal">
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <h5>Add Category</h5>
+                        <input id="cat_name" class="form-control mb-2" placeholder="Name">
+                        <textarea id="cat_desc" class="form-control mb-2" placeholder="Description"></textarea>
+                        <button class="btn btn-primary" id="saveCategory">Save</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="routeModal">
+                <div class="modal-dialog">
+                    <div class="modal-content p-3">
+                        <h5>Add Route</h5>
+
+                        <select id="r_category" class="form-control mb-2">
+                            @foreach($tripCategories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+
+                        <input id="r_title" class="form-control mb-2" placeholder="Title">
+                        <input id="r_km" class="form-control mb-2" placeholder="KM">
+
+                        <input id="r_car" class="form-control mb-2" placeholder="Car Price">
+                        <input id="r_hiace" class="form-control mb-2" placeholder="Hiace Price">
+                        <input id="r_coaster" class="form-control mb-2" placeholder="Coaster Price">
+                        <input id="r_bus" class="form-control mb-2" placeholder="Bus Price">
+
+                        <button class="btn btn-primary" id="saveRoute">Save</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -620,7 +687,246 @@ $(document).ready(function() {
     // Initial discount symbol
     updateDiscountSymbol();
 });
+
+function reloadCustomers(selectedId = null) {
+
+    $.ajax({
+        url: "{{ route('admin.ajax.customers.list') }}",
+        type: "GET",
+        success: function (data) {
+
+            let options = '<option value="">Select Customer</option>';
+
+            data.forEach(function (c) {
+                options += `<option value="${c.id}">${c.name}</option>`;
+            });
+
+            $('#customer_id').html(options);
+
+            if (selectedId) {
+                $('#customer_id').val(selectedId).trigger('change');
+            }
+        }
+    });
+}
+
+function reloadCategory(selectedId = null) {
+    $.ajax({
+        url: "{{ route('admin.ajax.trip-categories.list') }}",
+        type: "GET",
+        success: function (data) {
+            let options = '<option value="">Select Category</option>';
+            
+            data.forEach(function (category) {
+                options += `<option value="${category.id}">${category.name}</option>`;
+            });
+            
+            $('#trip_category_id').html(options);
+            
+            if (selectedId) {
+                $('#trip_category_id').val(selectedId).trigger('change');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading categories:', error);
+            $('#trip_category_id').html('<option value="">Error loading categories</option>');
+        }
+    });
+}
+
+function reloadCategoryDropdown(selectedId = null) {
+    $.ajax({
+        url: "{{ route('admin.ajax.trip-categories.list') }}",
+        type: "GET",
+        success: function (data) {
+            let options = '<option value="">Select Category</option>';
+            
+            data.forEach(function (category) {
+                options += `<option value="${category.id}">${category.name}</option>`;
+            });
+            
+            // Update both the booking form select AND the route modal select
+            $('#trip_category_id, #r_category').html(options);
+
+            if (selectedId) {
+                $('#trip_category_id, #r_category').val(selectedId).trigger('change');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading categories:', error);
+            $('#trip_category_id, #r_category').html('<option value="">Error loading categories</option>');
+        }
+    });
+}
+
+function reloadRoutes(selectedId = null) {
+    $.ajax({
+        url: "{{ route('admin.ajax.trip-routes.list') }}",
+        type: "GET",
+        success: function (data) {
+            let options = '<option value="">Select Route</option>';
+            
+            data.forEach(function (route) {
+                // Use 'title' instead of 'name' since that's what your database uses
+                options += `<option value="${route.id}">${route.title}</option>`;
+            });
+            
+            $('#trip_route_id').html(options);
+            
+            if (selectedId) {
+                $('#trip_route_id').val(selectedId).trigger('change');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading routes:', error);
+            $('#trip_route_id').html('<option value="">Error loading routes</option>');
+        }
+    });
+}
+
+
+
+
+// OPEN MODALS
+$('#addCustomerBtn').click(() => $('#customerModal').modal('show'));
+$('#addCategoryBtn').click(() => $('#categoryModal').modal('show'));
+$('#addRouteBtn').click(() => $('#routeModal').modal('show'));
+
+
+// SAVE CUSTOMER
+$('#saveCustomer').click(function () {
+
+    $.ajax({
+        url: "{{ route('admin.ajax.customers.store') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            name: $('#c_name').val(),
+            phone: $('#c_phone').val(),
+            email: $('#c_email').val(),
+            address: $('#c_address').val(),
+        },
+        success: function (res) {
+
+            console.log(res);
+
+            if (res.success) {
+
+                // 🔥 reload dropdown from DB
+                reloadCustomers(res.id);
+
+                $('#customerModal').modal('hide');
+            }
+        },
+        error: function (err) {
+            console.log(err.responseText);
+        }
+    });
+
+});
+
+
+$('#saveCategory').click(function () {
+
+    $.ajax({
+        url: "{{ route('admin.ajax.trip-categories.store') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            name: $('#cat_name').val(),
+            description: $('#cat_desc').val()
+        },
+        success: function (res) {
+
+            console.log(res);
+
+            if (res.success) {
+
+                // 🔥 reload dropdown from DB
+                reloadCategoryDropdown(res.id);
+
+                $('#categoryModal').modal('hide');
+                $('#cat_name, #cat_desc').val('');
+            }
+        },
+        error: function (err) {
+            console.log(err.responseText);
+        }
+    });
+
+});
+
+
+$('#saveRoute').click(function () {
+    $.ajax({
+        url: "{{ route('admin.ajax.trip-routes.store') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            trip_category_id: $('#r_category').val(),
+            title: $('#r_title').val(),
+            km: $('#r_km').val(),
+            car_price: $('#r_car').val(),
+            hiace_price: $('#r_hiace').val(),
+            coaster_price: $('#r_coaster').val(),
+            bus_price: $('#r_bus').val()
+        },
+        success: function (res) {
+            console.log(res);
+            
+            if (res.success) {
+                // reload routes from DB
+                reloadRoutes(res.id);
+                
+                // Optionally, also update the category filter to show new route
+                $('#trip_category_id').trigger('change');
+                
+                $('#routeModal').modal('hide');
+                
+                // Clear form
+                $('#r_title, #r_km, #r_car, #r_hiace, #r_coaster, #r_bus').val('');
+            }
+        },
+        error: function (err) {
+            console.error('Error saving route:', err.responseText);
+            alert('Error saving route. Please check console for details.');
+        }
+    });
+});
+
+
+// SAVE CATEGORY
+// $('#saveCategory').click(function () {
+//     $.post("{{ route('admin.ajax.trip-categories.store') }}", {
+//         _token: "{{ csrf_token() }}",
+//         name: $('#cat_name').val(),
+//         description: $('#cat_desc').val()
+//     }, function (res) {
+//         $('#trip_category_id').append(`<option value="${res.id}" selected>${res.name}</option>`);
+//         $('#categoryModal').modal('hide');
+//     });
+// });
+
+
+// SAVE ROUTE
+// $('#saveRoute').click(function () {
+//     $.post("{{ route('admin.ajax.trip-routes.store') }}", {
+//         _token: "{{ csrf_token() }}",
+//         trip_category_id: $('#r_category').val(),
+//         title: $('#r_title').val(),
+//         km: $('#r_km').val(),
+//         car_price: $('#r_car').val(),
+//         hiace_price: $('#r_hiace').val(),
+//         coaster_price: $('#r_coaster').val(),
+//         bus_price: $('#r_bus').val()
+//     }, function (res) {
+//         $('#trip_route_id').append(`<option value="${res.id}" selected>${res.title}</option>`);
+//         $('#routeModal').modal('hide');
+//     });
+// });
 </script>
+
+
 
 <style>
 .text-danger {
