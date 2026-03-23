@@ -106,7 +106,6 @@
     </div>
 </div>
 </section>
-@endsection
 
 <!-- Modal Filter -->
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
@@ -191,3 +190,5 @@ $(document).ready(function() {
 });
 </script>
 @endpush
+
+@endsection

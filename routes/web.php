@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AttendanceController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\VehicleController;
@@ -128,6 +129,11 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         Route::resource('vehicle-repairs', VehicleRepairController::class);
         Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
         Route::resource('vendors', VendorController::class);
+        Route::post('attendance/convert-ad-to-bs', [AttendanceController::class, 'convertAdToBs'])->name('attendance.convert_ad_to_bs');
+        Route::post('attendance/convert-multiple-ad-to-bs', [AttendanceController::class, 'convertMultipleAdToBs'])->name('attendance.convert_multiple_ad_to_bs');
+        Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
+        Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
+        Route::resource('attendance', AttendanceController::class);
     });
 });
 
