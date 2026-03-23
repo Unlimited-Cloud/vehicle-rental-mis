@@ -632,10 +632,16 @@ class UserRepository implements UserRepositoryInterface
     }
 
     public function getUsers(){
-        return User::latest()->get();
+        return User::latest()
+        ->select('users.*','roles.name as rolename')
+        ->leftJoin('roles','roles.id','=','users.role_id')
+        ->get();
     }
 
     public function getUsersByCustomerId($customerId){
-        return User::where('customer_id',$customerId)->latest()->get();
+        return User::where('customer_id',$customerId)->latest()
+        ->select('users.*','roles.name as rolename')
+        ->leftJoin('roles','roles.id','=','users.role_id')
+        ->get();
     }
 }
