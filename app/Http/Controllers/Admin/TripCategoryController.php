@@ -60,4 +60,26 @@ class TripCategoryController extends Controller
 
         return back()->with('success', 'Deleted successfully');
     }
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|max:255',
+        ]);
+
+        $category = TripCategory::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'status' => 1
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'id' => $category->id,
+            'name' => $category->name
+        ]);
+    }
+    public function listAjax()
+    {
+        return TripCategory::select('id', 'name')->get();
+    }
 }
