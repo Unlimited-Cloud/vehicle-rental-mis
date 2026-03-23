@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\TripCategoryController;
 use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\AttendanceController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -125,6 +126,11 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle-repairs', VehicleRepairController::class);
         Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
         Route::resource('vendors', VendorController::class);
+        Route::post('attendance/convert-ad-to-bs', [AttendanceController::class, 'convertAdToBs'])->name('attendance.convert_ad_to_bs');
+        Route::post('attendance/convert-multiple-ad-to-bs', [AttendanceController::class, 'convertMultipleAdToBs'])->name('attendance.convert_multiple_ad_to_bs');
+        Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
+        Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
+        Route::resource('attendance', AttendanceController::class);
     });
 
     Route::middleware(['auth'])->group(function () {
