@@ -34,7 +34,7 @@
     <th>SN</th>
     <th>Name</th>
     <th>Email</th>
-    <th>Role ID</th>
+    <th>Role</th>
     <th>Created At</th>
     <th>Actions</th>
 </tr>
@@ -46,7 +46,7 @@
     <td>{{ $loop->iteration }}</td>
     <td>{{ $user->name }}</td>
     <td>{{ $user->email }}</td>
-    <td>{{ $user->role_id ?? 'N/A' }}</td>
+    <td>{{ $user->rolename ?? 'N/A' }}</td>
     <td>{{ $user->created_at->format('d M Y') }}</td>
 
     <td>
