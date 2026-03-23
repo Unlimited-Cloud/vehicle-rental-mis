@@ -22,7 +22,7 @@ class CustomerController extends Controller
         CustomerRepositoryInterface $customerRepository
     ) {
         $this->customerRepository = $customerRepository;
-        
+
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
@@ -37,8 +37,8 @@ class CustomerController extends Controller
     {
         Gate::authorize('index_customers');
         $currentUserIsCustomer = $this->currentUserIsCustomer;
-        $customers = $this->currentUserIsCustomer == 'Y' ? $this->customerRepository->getCustomerById($this->currentUserCustomerId): $this->customerRepository->getAllCustomers();
-        return view('layouts.admin.customers.index', compact('customers','currentUserIsCustomer'));
+        $customers = $this->currentUserIsCustomer == 'Y' ? $this->customerRepository->getCustomerById($this->currentUserCustomerId) : $this->customerRepository->getAllCustomers();
+        return view('layouts.admin.customers.index', compact('customers', 'currentUserIsCustomer'));
     }
 
 
@@ -189,5 +189,31 @@ class CustomerController extends Controller
 
         return redirect()->route('admin.customers.index')
             ->with('success', 'Customer deleted successfully.');
+    }
+
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|max:255',
+            'phone' => 'required|max:20',
+        ]);
+
+        $customer = Customer::create([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'address' => $request->address,
+            'status' => 'active',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'id' => $customer->id,
+            'name' => $customer->name
+        ]);
+    }
+    public function listAjax()
+    {
+        return Customer::select('id', 'name')->get();
     }
 }

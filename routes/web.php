@@ -46,6 +46,12 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 Route::prefix('dashboard')->name('admin.')->group(function () {
     Route::middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
         Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
+        Route::post('/ajax/customers', [CustomerController::class, 'storeAjax'])->name('ajax.customers.store');
+        Route::get('/ajax/customers', [CustomerController::class, 'listAjax'])->name('ajax.customers.list');
+        Route::post('/ajax/trip-categories', [TripCategoryController::class, 'storeAjax'])->name('ajax.trip-categories.store');
+        Route::get('/ajax/trip-categories', [TripCategoryController::class, 'listAjax'])->name('ajax.trip-categories.list');
+        Route::post('/ajax/trip-routes', [TripRouteController::class, 'storeAjax'])->name('ajax.trip-routes.store');
+        Route::get('/ajax/trip-routes', [TripRouteController::class, 'listAjax'])->name('ajax.trip-routes.list');
         Route::resource('customers', CustomerController::class);
         Route::resource('vehicleowner', VehicleOwnerController::class);
         Route::prefix('user_roles')->group(function () {
