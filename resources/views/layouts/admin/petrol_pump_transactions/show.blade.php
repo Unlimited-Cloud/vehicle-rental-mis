@@ -35,12 +35,13 @@
                                     </a>
                                 </td>
                             </tr>
-
                             <tr>
-                                <th>Vehicle </th>
-                                <td>
-                                        {{ $petrolPumpTransaction->vehicle->vehicle_name }}
-                                </td>
+                                <th>Vehicle</th>
+                                <td>{{ $petrolPumpTransaction->vehicle->vehicle_name ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Driver</th>
+                                <td>{{ $petrolPumpTransaction->driver->name ?? 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <th>Transaction Type</th>
@@ -55,14 +56,14 @@
                     
                     <div class="col-md-6">
                         <table class="table table-bordered">
-                            {{-- <tr>
+                            <tr>
                                 <th style="width: 200px;">Paid Amount</th>
-                                <td>{{ $petrolPumpTransaction->formatted_paid_amount }}</td>
+                                <td>{{ $petrolPumpTransaction->formatted_paid_amount ?? '₹ 0.00' }}</td>
                             </tr>
                             <tr>
                                 <th>Balance</th>
-                                <td>{{ $petrolPumpTransaction->formatted_balance }}</td>
-                            </tr> --}}
+                                <td>{{ $petrolPumpTransaction->formatted_balance ?? '₹ 0.00' }}</td>
+                            </tr>
                             <tr>
                                 <th>Status</th>
                                 <td>{!! $petrolPumpTransaction->status_badge !!}</td>
@@ -74,6 +75,10 @@
                             <tr>
                                 <th>Reference Number</th>
                                 <td>{{ $petrolPumpTransaction->reference_number ?? 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Odometer Reading</th>
+                                <td>{{ $petrolPumpTransaction->odometer_reading ?? 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -105,10 +110,63 @@
                 </div>
                 @endif
 
+                {{-- Image Gallery Section --}}
+                @php
+                    $images = [
+                        'pump_before' => ['label' => 'Pump Reading (Before)', 'icon' => 'fa-camera', 'color' => 'primary'],
+                        'pump_after' => ['label' => 'Pump Reading (After)', 'icon' => 'fa-camera', 'color' => 'success'],
+                        'tank_before' => ['label' => 'Tank Reading (Before)', 'icon' => 'fa-gas-pump', 'color' => 'warning'],
+                        'tank_after' => ['label' => 'Tank Reading (After)', 'icon' => 'fa-gas-pump', 'color' => 'info'],
+                    ];
+                    $hasImages = false;
+                    foreach ($images as $field => $details) {
+                        if (!empty($petrolPumpTransaction->$field)) {
+                            $hasImages = true;
+                            break;
+                        }
+                    }
+                @endphp
+
+                @if($hasImages)
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h4><i class="fas fa-images"></i> Transaction Images</h4>
+                        <hr>
+                        <div class="row">
+                            @foreach($images as $field => $details)
+                                @if(!empty($petrolPumpTransaction->$field))
+                                    @php
+                                        $imagePath = asset($petrolPumpTransaction->$field);
+                                        $imageUrl = $petrolPumpTransaction->$field;
+                                    @endphp
+                                    <div class="col-md-6 col-lg-3 mb-4">
+                                        <div class="card h-100 shadow-sm">
+                                            <div class="card-header bg-{{ $details['color'] }} text-white">
+                                                <i class="fas {{ $details['icon'] }}"></i>
+                                                {{ $details['label'] }}
+                                            </div>
+                                            <div class="card-body p-2 text-center">
+                                                <a href="{{ $imagePath }}" data-toggle="lightbox" data-gallery="transaction-gallery" data-title="{{ $details['label'] }}">
+                                                    <img src="{{ $imagePath }}" 
+                                                         alt="{{ $details['label'] }}" 
+                                                         class="img-fluid rounded"
+                                                         style="max-height: 200px; object-fit: cover; cursor: pointer;">
+                                                </a>
+                                            </div>
+                                            
+                                        </div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 @if($petrolPumpTransaction->remarks)
                 <div class="row mt-3">
                     <div class="col-md-12">
-                        <h4>Remarks</h4>
+                        <h4><i class="fas fa-comment"></i> Remarks</h4>
                         <div class="card">
                             <div class="card-body">
                                 {{ $petrolPumpTransaction->remarks }}
@@ -120,7 +178,7 @@
 
                 <div class="row mt-4">
                     <div class="col-md-12">
-                        <h4>Additional Information</h4>
+                        <h4><i class="fas fa-info-circle"></i> Additional Information</h4>
                         <table class="table table-bordered">
                             <tr>
                                 <th style="width: 200px;">Created At</th>
@@ -129,6 +187,10 @@
                             <tr>
                                 <th>Last Updated</th>
                                 <td>{{ $petrolPumpTransaction->updated_at ? $petrolPumpTransaction->updated_at->format('d-m-Y H:i:s') : 'N/A' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Created By</th>
+                                <td>{{ $petrolPumpTransaction->creator->name ?? 'N/A' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -159,3 +221,95 @@
 </div>
 </section>
 @endsection
+
+@push('styles')
+<style>
+    .view-image {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .view-image:hover {
+        transform: scale(1.05);
+    }
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    }
+    img {
+        transition: transform 0.3s ease;
+    }
+    img:hover {
+        transform: scale(1.05);
+    }
+</style>
+@endpush
+
+@push('scripts')
+<!-- Include Lightbox2 or Bootstrap Lightbox -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ekko-lightbox/5.3.0/ekko-lightbox.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Initialize lightbox for gallery
+    $(document).on('click', '[data-toggle="lightbox"]', function(event) {
+        event.preventDefault();
+        $(this).ekkoLightbox({
+            alwaysShowClose: true,
+            wrapping: true,
+            onShow: function() {
+                console.log('Lightbox opened');
+            }
+        });
+    });
+
+    // Full size image viewer
+    $('.view-image').click(function() {
+        var imageUrl = $(this).data('image');
+        var title = $(this).data('title');
+        
+        // Create modal for full size image
+        var modalHtml = `
+            <div class="modal fade" id="imageModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">${title}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img src="${imageUrl}" class="img-fluid" alt="${title}">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <a href="${imageUrl}" class="btn btn-primary" download>
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        $('#imageModal').remove();
+        
+        // Append modal to body
+        $('body').append(modalHtml);
+        
+        // Show modal
+        $('#imageModal').modal('show');
+        
+        // Remove modal on hide
+        $('#imageModal').on('hidden.bs.modal', function() {
+            $(this).remove();
+        });
+    });
+});
+</script>
+@endpush
