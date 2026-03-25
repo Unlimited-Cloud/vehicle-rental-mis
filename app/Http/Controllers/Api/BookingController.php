@@ -14,6 +14,7 @@ use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Events\EmailEvent;
 
 
 class BookingController extends Controller
@@ -128,19 +129,24 @@ class BookingController extends Controller
     public function createBooking(Request $request)
     {
         try {
-            //  Validate basic input
+            //  Validation
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
                 'vehicle_id' => 'required|exists:vehicles,id',
                 'trip_category_id' => 'required|exists:trip_categories,id',
                 'trip_route_id' => 'required|exists:trip_routes,id',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-                'discount_amount_type' => 'nullable|string|in:flat,percent',
-                'discount' => 'nullable|numeric|min:0',
-                'from_destination' => 'nullable',
-                'to_destination' => 'nullable',
 
+                'start_datetime' => 'required|date|after_or_equal:now',
+                'end_datetime' => 'required|date|after:start_datetime',
+
+                'discount_amount_type' => 'nullable|in:flat,percent',
+                'discount' => 'nullable|numeric|min:0',
+
+                'from_destination' => 'nullable|string',
+                'to_destination' => 'nullable|string',
+                'notes' => 'nullable|string',
+                'no_of_people' => 'nullable|string',
+                'signage_information' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -151,55 +157,107 @@ class BookingController extends Controller
                 ], 422);
             }
 
-            // Get vehicle type
-            $vehicle = Vehicle::find($request->vehicle_id);
-            $vehicle_type = strtolower($vehicle->vehicle_type); // e.g., car, hiace, bus
+            //  Parse DateTime objects
+            $startDateTime = \Carbon\Carbon::parse($request->start_datetime);
+            $endDateTime = \Carbon\Carbon::parse($request->end_datetime);
 
-            //  Get TripRoute
-            $tripRoute = TripRoute::find($request->trip_route_id);
+            // Apply buffer for overlap (30 mins)
+            $bufferMinutes = 30;
+            $startWithBuffer = $startDateTime->copy()->subMinutes($bufferMinutes);
+            $endWithBuffer = $endDateTime->copy()->addMinutes($bufferMinutes);
 
-            // Get rate per day dynamically based on vehicle type
-            $rate_field = $vehicle_type . '_price'; // car_price, hiace_price, etc.
+            //  Prevent Double Booking
+            $conflict = VehicleBooking::where('vehicle_id', $request->vehicle_id)
+                ->where('status', '!=', 'cancelled')
+                ->whereRaw("
+                CONCAT(start_date, ' ', start_time) <= ?
+                AND CONCAT(end_date, ' ', end_time) >= ?
+            ", [
+                    $endWithBuffer->format('Y-m-d H:i'),
+                    $startWithBuffer->format('Y-m-d H:i')
+                ])
+                ->exists();
+
+            if ($conflict) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Vehicle is already booked for the selected time range'
+                ], 409);
+            }
+
+            // Get Vehicle & TripRoute
+            $vehicle = Vehicle::findOrFail($request->vehicle_id);
+            $tripRoute = TripRoute::findOrFail($request->trip_route_id);
+
+            $vehicle_type = strtolower($vehicle->vehicle_type);
+            $rate_field = $vehicle_type . '_price';
+
             if (!isset($tripRoute->$rate_field)) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Rate not found for this vehicle type'
+                    'message' => 'Rate not defined for this vehicle type'
                 ], 400);
             }
 
             $rate_per_day = $tripRoute->$rate_field;
 
-            // Calculate number of days
-            $start_date = \Carbon\Carbon::parse($request->start_date);
-            $end_date = \Carbon\Carbon::parse($request->end_date);
-            $days = $start_date->diffInDays($end_date) + 1; // Include start day
+            // Calculate number of days (include start day)
+            $days = $startDateTime->copy()->startOfDay()
+                ->diffInDays($endDateTime->copy()->startOfDay()) + 1;
 
-            //  Calculate sub_total
+            // Calculate pricing
             $sub_total = $rate_per_day * $days;
-
-            //  Apply discount if exists
             $discount_amount = 0;
-            if ($request->discount_amount_type && $request->discount) {
-                if ($request->discount_amount_type == 'amount') {
+
+            if ($request->discount && $request->discount_amount_type) {
+                if ($request->discount_amount_type === 'flat') {
                     $discount_amount = $request->discount;
-                } elseif ($request->discount_amount_type == 'percentage') {
+                } elseif ($request->discount_amount_type === 'percent') {
                     $discount_amount = ($sub_total * $request->discount) / 100;
                 }
             }
 
-            //  Calculate final total_amount
-            $total_amount = $sub_total - $discount_amount;
+            $total_amount = max(0, $sub_total - $discount_amount);
 
-            //  Create Booking
-            $booking = VehicleBooking::create(array_merge($request->all(), [
+            // Extract separate date & time for DB
+            $start_date = $startDateTime->format('Y-m-d');
+            $start_time = $startDateTime->format('H:i');
+            $end_date = $endDateTime->format('Y-m-d');
+            $end_time = $endDateTime->format('H:i');
+
+            $customers = Customer::where('customer_uuid', $request->customer_id)->first();
+            $customerId = $customers->id;
+            //  Create booking
+            $booking = VehicleBooking::create([
+                'customer_id' => $customerId,
+                'vehicle_id' => $request->vehicle_id,
+                'trip_category_id' => $request->trip_category_id,
+                'trip_route_id' => $request->trip_route_id,
+
+                'start_date' => $start_date,
+                'start_time' => $start_time,
+                'end_date' => $end_date,
+                'end_time' => $end_time,
+
+                'from_destination' => $request->from_destination,
+                'to_destination' => $request->to_destination,
+                'notes' => $request->notes,
+                'no_of_people' => $request->no_of_people,
+                'signage_information' => $request->signage_information,
+
                 'rate_per_day' => $rate_per_day,
                 'sub_total' => $sub_total,
                 'discount' => $discount_amount,
                 'total_amount' => $total_amount,
-                'status' => "pending",
-            ]));
-            $this->service->createProforma($booking);
 
+                'status' => 'pending',
+            ]);
+
+            //  Generate Proforma
+            $this->service->createProforma($booking);
+            event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
+
+            // Return response
             return response()->json([
                 'status' => true,
                 'message' => 'Booking created successfully',
