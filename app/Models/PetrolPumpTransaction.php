@@ -88,8 +88,8 @@ class PetrolPumpTransaction extends Model
         ];
 
         $labels = [
-            'credit' => 'Credit (Inbound)',
-            'debit' => 'Debit (Outbound)',
+            'credit' => 'In',
+            'debit' => 'Out',
             'payment' => 'Payment',
             'payable' => 'Payable'
         ];

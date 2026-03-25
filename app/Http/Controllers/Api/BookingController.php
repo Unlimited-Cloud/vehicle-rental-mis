@@ -130,13 +130,17 @@ class BookingController extends Controller
         try {
             //  Validate basic input
             $validator = Validator::make($request->all(), [
+                'customer_id' => 'required|exists:customers,customer_uuid',
                 'vehicle_id' => 'required|exists:vehicles,id',
                 'trip_category_id' => 'required|exists:trip_categories,id',
                 'trip_route_id' => 'required|exists:trip_routes,id',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'discount_amount_type' => 'nullable|string|in:flat,percent',
-                'discount' => 'nullable|numeric|min:0'
+                'discount' => 'nullable|numeric|min:0',
+                'from_destination' => 'nullable',
+                'to_destination' => 'nullable',
+
             ]);
 
             if ($validator->fails()) {

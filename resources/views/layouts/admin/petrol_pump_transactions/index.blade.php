@@ -47,11 +47,12 @@
                                 <th>Invoice No.</th>
                                 <th>Date</th>
                                 <th>Petrol Pump</th>
+                                <th>Vehicle Name</th>
                                 <th>Type</th>
                                 <th>Amount</th>
                                 <th>Balance</th>
                                 <th>Fuel</th>
-                                <th>Payment Method</th>
+                                <th>Odometer(KM)</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -63,6 +64,7 @@
                                 <td>{{ $transaction->invoice_number }}</td>
                                 <td>{{ $transaction->transaction_date->format('d-m-Y') }}</td>
                                 <td>{{ $transaction->petrolPump->name }}</td>
+                                <td>{{ optional($transaction->vehicle)->vehicle_name ?? 'N/A' }}</td>
                                 <td>{!! $transaction->transaction_type_badge !!}</td>
                                 <td>{{ $transaction->formatted_amount }}</td>
                                 <td>{{ $transaction->formatted_balance_amount }}</td>
@@ -74,7 +76,7 @@
                                         N/A
                                     @endif
                                 </td>
-                                <td>{!! $transaction->payment_method_badge !!}</td>
+                                <td>{{$transaction->odometer_reading}}</td>
                                 <td>{!! $transaction->status_badge !!}</td>
                                 <td>
                                     <a href="{{ route('admin.petrol_pump_transactions.edit', $transaction->id) }}" class="btn btn-primary btn-sm">
