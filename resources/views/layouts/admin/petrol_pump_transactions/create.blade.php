@@ -180,10 +180,25 @@
                                 <label>Fuel Type</label>
                                 <select name="fuel_type" class="form-control">
                                     <option value="">-- Select Fuel Type --</option>
-                                    <option value="petrol" {{ (old('fuel_type', $petrolPumpTransaction->fuel_type ?? '') == 'petrol') ? 'selected' : '' }}>Petrol</option>
-                                    <option value="diesel" {{ (old('fuel_type', $petrolPumpTransaction->fuel_type ?? '') == 'diesel') ? 'selected' : '' }}>Diesel</option>
-                                    <option value="cng" {{ (old('fuel_type', $petrolPumpTransaction->fuel_type ?? '') == 'cng') ? 'selected' : '' }}>CNG</option>
-                                    <option value="other" {{ (old('fuel_type', $petrolPumpTransaction->fuel_type ?? '') == 'other') ? 'selected' : '' }}>Other</option>
+                                    <option value="diesel" 
+                                        {{ old('fuel_type', $petrolPumpTransaction->fuel_type ?? 'diesel') == 'diesel' ? 'selected' : '' }}>
+                                        Diesel
+                                    </option>
+
+                                      <option value="petrol" 
+                                        {{ old('fuel_type', $petrolPumpTransaction->fuel_type ?? 'diesel') == 'petrol' ? 'selected' : '' }}>
+                                        Petrol
+                                    </option>
+
+                                    <option value="cng" 
+                                        {{ old('fuel_type', $petrolPumpTransaction->fuel_type ?? 'diesel') == 'cng' ? 'selected' : '' }}>
+                                        CNG
+                                    </option>
+
+                                    <option value="other" 
+                                        {{ old('fuel_type', $petrolPumpTransaction->fuel_type ?? 'diesel') == 'other' ? 'selected' : '' }}>
+                                        Other
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -281,8 +296,8 @@
                             <div class="form-group">
                                 <label>Status <span class="text-danger">*</span></label>
                                 <select name="status" class="form-control" required>
-                                    <option value="pending" {{ (old('status', $petrolPumpTransaction->status ?? '') == 'pending') ? 'selected' : '' }}>Pending</option>
                                     <option value="completed" {{ (old('status', $petrolPumpTransaction->status ?? '') == 'completed') ? 'selected' : '' }}>Completed</option>
+                                    <option value="pending" {{ (old('status', $petrolPumpTransaction->status ?? '') == 'pending') ? 'selected' : '' }}>Pending</option>
                                     <option value="cancelled" {{ (old('status', $petrolPumpTransaction->status ?? '') == 'cancelled') ? 'selected' : '' }}>Cancelled</option>
                                 </select>
                             </div>
