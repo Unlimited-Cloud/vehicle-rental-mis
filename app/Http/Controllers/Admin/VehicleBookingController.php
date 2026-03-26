@@ -462,4 +462,217 @@ class VehicleBookingController extends Controller
             'data'    => $results
         ]);
     }
+
+
+    /**
+     * Show form for creating multiple bookings with same base details
+     */
+    public function createMultiple(Request $request)
+    {
+        Gate::authorize('create_vehicle_bookings');
+
+        $vehicles = Vehicle::all();
+        $drivers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'driver');
+        })->with('user')->get();
+
+        $helpers = CrewProfile::whereHas('user', function ($q) {
+            $q->where('role', 'helper');
+        })->with('user')->get();
+
+        $tripCategories = TripCategory::where('status', 1)->get();
+        $customers = Customer::all();
+        $currentUserIsCustomer = $this->currentUserIsCustomer;
+
+        return view('layouts.admin.vehicles_booking.multiple_create', compact(
+            'vehicles',
+            'drivers',
+            'helpers',
+            'customers',
+            'currentUserIsCustomer',
+            'tripCategories'
+        ));
+    }
+
+    /**
+     * Store multiple bookings
+     */
+    public function storeMultiple(Request $request)
+    {
+        Gate::authorize('create_vehicle_bookings');
+
+        $request->validate([
+            // Common fields
+            'customer_id' => 'required|exists:customers,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'driver_id' => 'nullable|exists:crew_profiles,id',
+            'helper_id' => 'nullable|exists:crew_profiles,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_time' => 'required',
+            'end_time' => 'required',
+            'no_of_hours' => 'nullable|numeric',
+            'rate_per_day' => 'nullable|numeric',
+            'sub_total' => 'nullable|numeric',
+            'tax' => 'nullable|numeric',
+            'discount' => 'nullable|numeric',
+            'vat' => 'nullable',
+            'signage_information' => 'nullable|string',
+
+            // Individual booking details
+            'bookings' => 'required|array|min:1',
+            'bookings.*.passenger' => 'nullable|string',
+            'bookings.*.file_no' => 'nullable|string',
+            'bookings.*.trip_category_id' => 'nullable|exists:trip_categories,id',
+            'bookings.*.trip_route_id' => 'nullable|exists:trip_routes,id',
+            'bookings.*.from_destination' => 'nullable|string',
+            'bookings.*.to_destination' => 'nullable|string',
+            'bookings.*.no_of_people' => 'nullable|integer',
+            'bookings.*.status' => 'required|in:pending,confirmed,cancelled',
+            'bookings.*.paid_amount' => 'nullable|numeric',
+            'bookings.*.payment_method' => 'nullable|string',
+            'bookings.*.payment_date' => 'nullable|date',
+            'bookings.*.payment_note' => 'nullable|string',
+            'bookings.*.payment_status' => 'nullable|in:0,1,2',
+            'bookings.*.notes' => 'nullable|string',
+        ]);
+
+        $createdBookings = [];
+        $errors = [];
+
+        DB::beginTransaction();
+
+        try {
+            // Common data for all bookings
+            $commonData = [
+                'customer_id' => $request->customer_id,
+                'vehicle_id' => $request->vehicle_id,
+                'driver_id' => $request->driver_id,
+                'helper_id' => $request->helper_id,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'no_of_hours' => $request->no_of_hours,
+                'rate_per_day' => $request->rate_per_day,
+                'tax_amount_type' => 'percentage',
+                'discount_amount_type' => $request->discount_amount_type ?? 'amount',
+                'vat' => $request->vat,
+                'signage_information' => $request->signage_information,
+            ];
+
+            // Calculate days for common data
+            $startDateTime = Carbon::parse($request->start_date . ' ' . $request->start_time);
+            $endDateTime = Carbon::parse($request->end_date . ' ' . $request->end_time);
+            $days = $startDateTime->diffInDays($endDateTime);
+            if ($days == 0) $days = 1;
+
+            foreach ($request->bookings as $index => $bookingData) {
+                // Get rate based on trip route and vehicle type if rate_per_day is not set manually
+                $ratePerDay = $request->rate_per_day;
+
+                if (empty($ratePerDay) && !empty($bookingData['trip_route_id'])) {
+                    $tripRoute = TripRoute::find($bookingData['trip_route_id']);
+                    $vehicleType = Vehicle::find($request->vehicle_id)->vehicle_type ?? 'car';
+
+                    if ($tripRoute) {
+                        switch (strtolower($vehicleType)) {
+                            case 'car':
+                                $ratePerDay = $tripRoute->car_price;
+                                break;
+                            case 'hiace':
+                                $ratePerDay = $tripRoute->hiace_price;
+                                break;
+                            case 'coaster':
+                                $ratePerDay = $tripRoute->coaster_price;
+                                break;
+                            case 'bus':
+                                $ratePerDay = $tripRoute->bus_price;
+                                break;
+                            default:
+                                $ratePerDay = 0;
+                        }
+                    }
+                }
+
+                // Calculate sub_total
+                $subTotal = $days * ($ratePerDay ?? 0);
+
+                // Calculate discount
+                $discount = $request->discount ?? 0;
+                $discountAmount = 0;
+                if ($discount > 0) {
+                    if (($request->discount_amount_type ?? 'amount') === 'percentage') {
+                        $discountAmount = $subTotal * ($discount / 100);
+                    } else {
+                        $discountAmount = $discount;
+                    }
+                }
+
+                $afterDiscount = $subTotal - $discountAmount;
+
+                // Calculate VAT
+                $vatAmount = 0;
+                if (($request->vat ?? 0) == 1 && $afterDiscount > 0) {
+                    $vatAmount = $afterDiscount * 0.13;
+                }
+
+                $totalAmount = $afterDiscount + $vatAmount;
+                $paidAmount = $bookingData['paid_amount'] ?? 0;
+                $remainingBalance = $totalAmount - $paidAmount;
+
+                // Create booking data
+                $bookingToCreate = array_merge($commonData, [
+                    'rate_per_day' => $ratePerDay,
+                    'sub_total' => $subTotal,
+                    'tax' => $vatAmount,
+                    'discount' => $request->discount ?? 0,
+                    'total_amount' => $totalAmount,
+                    'remaining_balance' => $remainingBalance,
+                    'passenger' => $bookingData['passenger'] ?? null,
+                    'file_no' => $bookingData['file_no'] ?? null,
+                    'trip_category_id' => $bookingData['trip_category_id'] ?? null,
+                    'trip_route_id' => $bookingData['trip_route_id'] ?? null,
+                    'from_destination' => $bookingData['from_destination'] ?? null,
+                    'to_destination' => $bookingData['to_destination'] ?? null,
+                    'no_of_people' => $bookingData['no_of_people'] ?? null,
+                    'status' => $bookingData['status'],
+                    'payment_status' => $bookingData['payment_status'] ?? 0,
+                    'notes' => $bookingData['notes'] ?? null,
+                ]);
+
+                // Create the booking
+                $vehicleBooking = VehicleBooking::create($bookingToCreate);
+                $createdBookings[] = $vehicleBooking->id;
+
+                // Create proforma
+                $this->service->createProforma($vehicleBooking);
+
+                // Create payment if paid amount exists
+                if (!empty($paidAmount) && $paidAmount > 0) {
+                    $paymentData = [
+                        'vehicle_booking_id' => $vehicleBooking->id,
+                        'amount' => $paidAmount,
+                        'payment_method' => $bookingData['payment_method'] ?? 'cash',
+                        'transaction_reference' => (string) Str::uuid(),
+                        'payment_date' => ($bookingData['payment_date'] ?? date('Y-m-d')) . ' ' . ($bookingData['payment_time'] ?? '00:00:00'),
+                        'notes' => $bookingData['payment_note'] ?? null,
+                    ];
+
+                    Payment::create($paymentData);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.vehicle_bookings.index')
+                ->with('success_message', count($createdBookings) . ' bookings created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->route('admin.vehicle_bookings.multiple.create')
+                ->with('error_message', 'Error creating bookings: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
 }

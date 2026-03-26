@@ -52,13 +52,13 @@ class OwnMail extends Mailable
         }
 
         if ($response == 'success') {
-
             $this->emailContent =  VehicleRentalUtilities::searchForEmailVar($emailTemplates->success_email_content, $personalDetails, $this->passcode);
         } else {
             $this->emailContent = $emailTemplates->emailTemplate->error_email_content;
         }
 
         $this->personalDetails = $personalDetails;
+
 
         $this->emailSubject = $emailTemplates->email_subject;
         $this->ccs = $emailTemplates->email_cc;

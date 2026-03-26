@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Passcode;
@@ -107,15 +108,10 @@ class CustomerController extends Controller
                 'attempt_count' => 0
             ]);
         }
-
-        Mail::raw("Your OTP is: $otp", function ($message) use ($request) {
-            $message->to($request->email);
-            $message->subject('Password Reset OTP');
-        });
-
+        event(new EmailEvent($request->email, 'forgot_password', 'success', 'customer'));
         return response()->json([
             'status' => true,
-            'message' => 'OTP sent successfully'
+            'message' => 'Passcode sent successfully'
         ]);
     }
 
@@ -147,7 +143,7 @@ class CustomerController extends Controller
         if (now()->diffInMinutes($passcode->requested_at) > 10) {
             return response()->json([
                 'status' => false,
-                'message' => 'OTP expired'
+                'message' => 'Passcode expired'
             ], 400);
         }
 
@@ -167,7 +163,7 @@ class CustomerController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid OTP'
+                'message' => 'Invalid Passcode'
             ], 400);
         }
 
@@ -179,7 +175,7 @@ class CustomerController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'OTP verified successfully'
+            'message' => 'Passcode verified successfully'
         ]);
     }
 
@@ -204,7 +200,7 @@ class CustomerController extends Controller
         if (now()->diffInMinutes($passcode->requested_at) > 10) {
             return response()->json([
                 'status' => false,
-                'message' => 'OTP expired'
+                'message' => 'Passcode expired'
             ], 400);
         }
 

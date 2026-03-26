@@ -24,6 +24,9 @@
                class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> Add Booking
             </a>
+            {{-- <a href="{{ route('admin.vehicle_bookings.multiple.create') }}" class="btn btn-success ml-2">
+                 <i class="fas fa-layer-group"></i> Create Multiple Bookings
+            </a> --}}
             @endif
 
             @if(auth()->user()->can('export_vehicles_vehicle_bookings'))
@@ -202,10 +205,10 @@
                     <th>File No.</th>
                     <th>Vehicle</th>
                     <th>Customer</th>
-                    <th>From</th>
-                    <th>To</th>
+                    <th>Pick & Drop</th>
                     <th>Start Date (AD/BS)</th>
                     <th>End Date (AD/BS)</th>
+                    <th>Rate & Total</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -228,8 +231,17 @@
                             </div>
                         </td>
                         <td>{{ $passengerName }}</td>
-                        <td>{{ $booking->from_destination ?? '-' }}</td>
-                        <td>{{ $booking->to_destination ?? '-' }}</td>
+                       <td>
+                            @if($booking->from_destination && $booking->to_destination)
+                                {{ $booking->from_destination }} → {{ $booking->to_destination }}
+                            @elseif($booking->from_destination)
+                                {{ $booking->from_destination }}
+                            @elseif($booking->to_destination)
+                                {{ $booking->to_destination }}
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="start-date-cell">
                             <span class="ad-date">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</span>
                             <br>
@@ -239,6 +251,22 @@
                             <span class="ad-date">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</span>
                             <br>
                             <small class="bs-date text-muted">Loading...</small>
+                        </td>
+                        <td>
+                            <div class="text-right">
+                                <div>
+                                    <small class="text-muted">Rate/day:</small>
+                                    <span class="font-weight-bold">
+                                        {{ number_format($booking->rate_per_day ?? 0, 2) }}
+                                    </span>
+                                </div>
+                                <div class="mt-1">
+                                    <small class="text-muted">Total:</small>
+                                    <span class="font-weight-bold text-success">
+                                        {{ number_format($booking->total_amount ?? 0, 2) }}
+                                    </span>
+                                </div>
+                            </div>
                         </td>
                         <td>
                             <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">

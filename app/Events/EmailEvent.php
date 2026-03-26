@@ -64,6 +64,14 @@ class EmailEvent
             if (empty($this->PersonalDetails)) {
                 $this->PersonalDetails = User::where('email', $email)->first();
             }
+
+            if ($this->activity == 'forgot_password') {
+                $this->PersonalDetails = Customer::where('email', $email)->first();
+
+                // if (empty($this->PersonalDetails)) {
+                //     $this->PersonalDetails = User::where('email', $email)->first();
+                // }
+            }
             //
             if ($this->activity == 'create_booking') {
                 $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
