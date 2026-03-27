@@ -43,6 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/register', 'register');
             Route::post('/logout', 'logout');
             Route::get('/profile/{customerUuid}', 'getProfileByUuid');
+            Route::post('/forgot-password',  'forgotPassword');
+            Route::post('/verify-otp-password',  'verifyOtp');
+            Route::post('/reset-password',  'resetPassword');
+            Route::post('/change-password',  'changePassword');
         });
 
         Route::controller(AuthController::class)->group(function () {

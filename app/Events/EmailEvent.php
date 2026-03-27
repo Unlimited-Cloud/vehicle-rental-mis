@@ -23,6 +23,7 @@ use App\Models\EmailTemplate;
 use App\Models\EmailLog;
 use App\Models\Passcode;
 use App\Mail\OwnMail;
+use App\Models\VehicleBooking;
 use App\Utilities\VehicleRentalUtilities;
 
 class EmailEvent
@@ -56,28 +57,59 @@ class EmailEvent
         $this->recurringRemittanceId = $recurringRemittanceId;
 
         if ($this->userType == 'customer') {
-
+            $emailconfig = 'asiyana';
+            $this->mailType = 'Customer';
             $this->PersonalDetails = Customer::where('email', $email)->first();
 
             if (empty($this->PersonalDetails)) {
                 $this->PersonalDetails = User::where('email', $email)->first();
             }
+
+            if ($this->activity == 'forgot_password') {
+                $this->PersonalDetails = Customer::where('email', $email)->first();
+
+                // if (empty($this->PersonalDetails)) {
+                //     $this->PersonalDetails = User::where('email', $email)->first();
+                // }
+            }
+            //
+            if ($this->activity == 'create_booking') {
+                $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
+                    ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
+                    ->join('trip_routes', 'vehicle_bookings.trip_route_id', '=', 'trip_routes.id')
+                    ->where('vehicle_bookings.customer_id', $this->PersonalDetails->id)
+                    ->select(
+                        'vehicle_bookings.*',
+                        'customers.name',
+                        'customers.email',
+                        'customers.customer_uuid',
+                        'vehicles.vehicle_name',
+                        'vehicles.vehicle_type',
+                        'trip_routes.title as trip_route_name'
+                    )
+                    ->latest('vehicle_bookings.created_at')
+                    ->first();
+            }
+
+
+            $this->emailTemplates = EmailTemplate::where('activity',  $this->activity)->where('email_template_triggered', 1)
+                ->first();
         } else {
             $emailconfig = 'asiyana';
             $this->mailType = 'User';
 
             $this->PersonalDetails = $userDetail = User::where('email', $email)->first();
             $userDetailId = $userDetail->id;
-            
+
             $this->emailTemplates = EmailTemplate::where('activity',  $this->activity)->where('email_template_triggered', 1)
-                    ->first();
+                ->first();
         }
 
         try {
-            
+
             Mail::mailer($emailconfig)->to($this->email)->send(new OwnMail($this->mailType, $this->emailTemplates, $this->PersonalDetails, $this->response, $this->activity));
 
-            
+
             if (!empty($this->emailTemplates)) {
                 $emailTemplateSend = $this->emailTemplates;
                 $emailTemplateId = $this->emailTemplates->id;
