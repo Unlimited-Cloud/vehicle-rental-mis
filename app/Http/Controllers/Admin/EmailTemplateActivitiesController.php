@@ -46,7 +46,7 @@ class EmailTemplateActivitiesController extends Controller
         ]);
 
         $data = $request->all();
-        $data['Uuid'] = (string) Str::uuid();
+        $data['Uuid'] = 'Act-' . (string) Str::uuid();
         $data['added_by'] = auth()->id();
 
         EmailtemplateActivities::create($data);

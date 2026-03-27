@@ -87,6 +87,10 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             'get-trip-routes/{category}',
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
+
+        Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
+        Route::post('/vehicle-bookings/multiple/store', [VehicleBookingController::class, 'storeMultiple'])->name('vehicle_bookings.multiple.store');
+
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
