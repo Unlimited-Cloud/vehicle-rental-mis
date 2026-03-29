@@ -24,9 +24,9 @@
                class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> Add Booking
             </a>
-            {{-- <a href="{{ route('admin.vehicle_bookings.multiple.create') }}" class="btn btn-success ml-2">
-                 <i class="fas fa-layer-group"></i> Create Multiple Bookings
-            </a> --}}
+            <a href="{{ route('admin.vehicle_bookings.multiple.create') }}" class="btn btn-success btn-sm">
+                <i class="fa fa-plus"></i> Multiple Bookings
+            </a>
             @endif
 
             @if(auth()->user()->can('export_vehicles_vehicle_bookings'))

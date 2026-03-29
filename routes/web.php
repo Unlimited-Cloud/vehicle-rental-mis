@@ -88,8 +88,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
 
+        Route::get('trip-categories/list', [VehicleBookingController::class, 'getTripCategoriesList'])->name('ajax.trip-categories.list');
+        Route::post('trip-categories/store', [VehicleBookingController::class, 'storeTripCategory'])->name('ajax.trip-categories.store');
+        Route::get('trip-routes/list', [VehicleBookingController::class, 'getTripRoutesList'])->name('ajax.trip-routes.list');
+        Route::post('trip-routes/store', [VehicleBookingController::class, 'storeTripRoute'])->name('ajax.trip-routes.store');
+        Route::post('drivers/store', [VehicleBookingController::class, 'storeDriver'])->name('ajax.drivers.store');
+        Route::post('helpers/store', [VehicleBookingController::class, 'storeHelper'])->name('ajax.helpers.store');
+
         Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
-        Route::post('/vehicle-bookings/multiple/store', [VehicleBookingController::class, 'storeMultiple'])->name('vehicle_bookings.multiple.store');
+        Route::post('vehicle-bookings/multiple-store', [VehicleBookingController::class, 'multipleStore'])->name('vehicle_bookings.multiple.store');
 
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
