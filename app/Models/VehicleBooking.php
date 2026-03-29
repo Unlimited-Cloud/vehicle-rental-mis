@@ -74,4 +74,8 @@ class VehicleBooking extends Model
     {
         return $this->hasMany(ProformaInvoice::class, 'vehicle_booking_id');
     }
+    public function tripRoute()
+    {
+        return $this->belongsTo(TripRoute::class, 'trip_route_id');
+    }
 }
