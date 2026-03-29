@@ -10,10 +10,13 @@ use App\Models\Module;
 use App\Models\Customer;
 use App\Models\Otp;
 use App\Models\OtpSetup;
+use App\Models\PasscodeSetup;
+use App\Models\Passcode;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Events\SmsEvent;
+use App\Events\EmailEvent;
 use Illuminate\Support\Facades\Log;
 
 class AuthService
@@ -83,6 +86,33 @@ class AuthService
             $userId = $user->id;
             if ($emailLogin == 1) {
 
+                $setup = PasscodeSetup::firstOrFail();
+                $windowStart = now()->subMinutes($setup->window_minutes);
+
+                $recent = Passcode::where('email', $user->email)
+                    ->where('requested_at', '>=', $windowStart)
+                    ->latest()
+                    ->first();
+
+                $requestCount = $recent ? $recent->request_count + 1 : 1;
+
+                if ($requestCount > $setup->max_requests) {
+                    return back()->withErrors([
+                        'otp' => 'OTP request limit reached. Try again later.'
+                    ]);
+                }
+                $otp = random_int(100000, 999999);
+
+                Passcode::create([
+                    'user_id'       => $user->id,
+                    'email'         => $user->email,
+                    'passcode'      => $otp,
+                    'requested_at'  => now(),
+                    'request_count' => $requestCount,
+                    'attempt_count' => 0,
+                    'locked_until'  => null,
+                ]);
+                event(new EmailEvent($user->email,'passcode','success','customer'));
                 $message = 'Login Passcode sent to email ' . $email;
             } else {
                 $mobileNumberCountryCode = $customer->mobile_number_country_code;
@@ -93,7 +123,6 @@ class AuthService
                 $smsService = new SmsEvent($fullMobileNumber, 'login_otp', 'customer', $userId);
                 $otpResponse = $smsService->handle();
             }
-
 
             return array(
                 'status' => 'success',
