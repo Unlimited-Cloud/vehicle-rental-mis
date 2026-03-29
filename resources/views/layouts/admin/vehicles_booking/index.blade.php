@@ -205,7 +205,7 @@
                     <th>File No.</th>
                     <th>Vehicle</th>
                     <th>Customer</th>
-                    <th>Pick & Drop</th>
+                    <th>Trip Route</th>
                     <th>Start Date (AD/BS)</th>
                     <th>End Date (AD/BS)</th>
                     <th>Rate & Total</th>
@@ -232,15 +232,7 @@
                         </td>
                         <td>{{ $passengerName }}</td>
                        <td>
-                            @if($booking->from_destination && $booking->to_destination)
-                                {{ $booking->from_destination }} → {{ $booking->to_destination }}
-                            @elseif($booking->from_destination)
-                                {{ $booking->from_destination }}
-                            @elseif($booking->to_destination)
-                                {{ $booking->to_destination }}
-                            @else
-                                -
-                            @endif
+                            {{ $booking->tripRoute->title ?? '-' }}
                         </td>
                         <td class="start-date-cell">
                             <span class="ad-date">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</span>

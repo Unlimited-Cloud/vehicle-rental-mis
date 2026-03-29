@@ -84,7 +84,8 @@ class VehicleRepository implements VehicleRepositoryInterface
             'vehicle',
             'customer',
             'payment',
-            'driver.user'
+            'driver.user',
+            'tripRoute'
         ]);
 
         // Filter by vehicle
