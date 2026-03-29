@@ -158,6 +158,18 @@
     </div>
 </div>
 
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">रू</span>
+                                    </div>
+                                    <input id="rate_per_day" name="rate_per_day" type="number" step="0.01" value="{{ old('rate_per_day', $booking->rate_per_day ?? '0') }}" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Pickup Destination</label>
@@ -182,7 +194,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Start Date <span class="text-danger">*</span></label>
-                                <input type="date" id="start_date" name="start_date" value="{{ old('start_date', $booking->start_date ?? $start ?? '') }}" class="form-control" required>
+                                <input type="date" id="start_date" name="start_date"  value="{{ old('start_date', $booking->start_date ?? $start ?? now()->format('Y-m-d')) }}"  class="form-control" required>
                             </div>
                         </div>
 
@@ -193,11 +205,12 @@
                             </div>
                         </div>
 
-                        <div class="col-md-3">
+                       <div class="col-md-3">
                             <div class="form-group">
                                 <label>End Date <span class="text-danger">*</span></label>
                                 @php
-                                    $endDateValue = session('warning_message') && session('end_date') ? session('end_date') : old('end_date', $booking->end_date ?? $end ?? '');
+                                    // Set default value to today if no session data or old input is present
+                                    $endDateValue = session('warning_message') && session('end_date') ? session('end_date') : old('end_date', $booking->end_date ?? $end ?? date('Y-m-d'));
                                 @endphp
                                 <input type="date" id="end_date" name="end_date" value="{{ $endDateValue }}" class="form-control" required>
                             </div>
@@ -222,8 +235,8 @@
                             <div class="form-group">
                                 <label>Status</label>
                                 <select name="status" class="form-control">
-                                    <option value="pending" {{ old('status', $booking->status ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="confirmed" {{ old('status', $booking->status ?? '') == 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                                    <option value="pending" {{ old('status', $booking->status ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
                                     <option value="cancelled" {{ old('status', $booking->status ?? '') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                                 </select>
                             </div>
@@ -234,19 +247,9 @@
                     <h4 class="mb-3">Financial Details</h4>
                     
                     <div class="row">
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Rate Per Day</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input id="rate_per_day" name="rate_per_day" type="number" step="0.01" value="{{ old('rate_per_day', $booking->rate_per_day ?? '0') }}" class="form-control">
-                                </div>
-                            </div>
-                        </div>
+                        
 
-                        <div class="col-md-3">
+                        {{-- <div class="col-md-3">
                             <div class="form-group">
                                 <label>Sub Total</label>
                                 <div class="input-group">
@@ -256,7 +259,7 @@
                                     <input id="sub_total" name="sub_total" type="number" step="0.01" value="{{ old('sub_total', $booking->sub_total ?? '0') }}" class="form-control" readonly>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="col-md-3">
                             <div class="form-group">
