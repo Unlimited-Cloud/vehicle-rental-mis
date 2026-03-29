@@ -69,7 +69,7 @@ class SmsEvent
 
             // OTP setup
             $otpSetup = OtpSetup::first();
-            $otpLimit = $otpSetup->otp_limit ?? 3;
+            $otpLimit = $otpSetup->otp_limit ?? 30;
             $expireTime = $otpSetup->expiry_minutes ?? 5;
 
             // Check OTP limit today
