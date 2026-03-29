@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Events\SmsEvent;
+use Illuminate\Support\Facades\Log;
 
 class AuthService
 {
@@ -35,6 +36,7 @@ class AuthService
     }
 
     public function getOtpPasscodeAppLogin($request){
+ 
         try{
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',

@@ -31,7 +31,7 @@ class CustomerService
                 'customerType' => 'required|string',
                 'first_name' => 'required_if:customerType,individual|string',
                 'last_name'  => 'required_if:customerType,individual|string',
-                'email' => 'required|email|unique:customers',
+                'email' => 'required|email|unique:customers,email|unique:users,email',
                 'mobileNumber' => 'required|unique:customers,phone',
                 'password' => [
                     'required',
