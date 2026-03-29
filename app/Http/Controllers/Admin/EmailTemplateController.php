@@ -42,7 +42,7 @@ class EmailTemplateController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'activity' => 'required|string',
-            'template_for' => 'required|string|max:255',
+            'template_for' => 'nullable|string|max:255',
             'partner_Uuid' => 'nullable|exists:partners,Uuid',
             'activity_UUID' => 'nullable|exists:emailtemplate_activities,Uuid',
             'delay_min' => 'nullable|integer',
@@ -62,7 +62,7 @@ class EmailTemplateController extends Controller
         ]);
 
         $data = $request->all();
-        $data['template_UUID'] = (string) Str::uuid();
+        $data['template_UUID'] = 'Et-' . (string) Str::uuid();
 
         EmailTemplate::create($data);
 
@@ -103,7 +103,7 @@ class EmailTemplateController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'activity' => 'required|string',
-            'template_for' => 'required|string|max:255',
+            'template_for' => 'nullable|string|max:255',
             'partner_Uuid' => 'nullable|exists:partners,Uuid',
             'activity_UUID' => 'nullable|exists:emailtemplate_activities,Uuid',
             'delay_min' => 'nullable|integer',

@@ -31,7 +31,7 @@ class PetrolPumpTransactionExport implements
      */
     public function collection()
     {
-        $query = PetrolPumpTransaction::with('petrolPump');
+        $query = PetrolPumpTransaction::with(['petrolPump', 'vehicle']);
 
         if ($this->request->petrol_pump_id) {
             $query->where('petrol_pump_id', $this->request->petrol_pump_id);
@@ -66,6 +66,8 @@ class PetrolPumpTransactionExport implements
             'Invoice No',
             'Date',
             'Petrol Pump',
+            'Vehicle Name',
+            'Odometer (KM)',
             'Transaction Type',
             'Amount',
             'Balance',
@@ -87,6 +89,8 @@ class PetrolPumpTransactionExport implements
             $transaction->invoice_number,
             optional($transaction->transaction_date)->format('d-m-Y'),
             $transaction->petrolPump->name ?? '',
+            optional($transaction->vehicle)->vehicle_name ?? 'N/A', // ✅ vehicle
+            $transaction->odometer_reading ?? 'N/A',
             ucfirst($transaction->transaction_type),
             $transaction->amount,
             $transaction->balance,

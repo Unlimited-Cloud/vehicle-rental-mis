@@ -111,6 +111,17 @@ class VehicleRepository implements VehicleRepositoryInterface
             $query->where('passenger_name', 'LIKE', '%' . $request->passenger . '%');
         }
 
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('start_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        } elseif ($request->start_date) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        } elseif ($request->end_date) {
+            $query->whereDate('start_date', '<=', $request->end_date);
+        }
+
         $bookings = $query->orderBy('start_date', 'desc')->get();
         return $bookings;
     }
@@ -148,6 +159,17 @@ class VehicleRepository implements VehicleRepositoryInterface
         // NEW: Filter by passenger name
         if ($request->passenger) {
             $query->where('passenger_name', 'LIKE', '%' . $request->passenger . '%');
+        }
+
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('start_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        } elseif ($request->start_date) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        } elseif ($request->end_date) {
+            $query->whereDate('start_date', '<=', $request->end_date);
         }
 
         $bookings = $query->orderBy('start_date', 'desc')->get();

@@ -52,17 +52,17 @@ class OwnMail extends Mailable
         }
 
         if ($response == 'success') {
-
             $this->emailContent =  VehicleRentalUtilities::searchForEmailVar($emailTemplates->success_email_content, $personalDetails, $this->passcode);
         } else {
             $this->emailContent = $emailTemplates->emailTemplate->error_email_content;
         }
-        
+
         $this->personalDetails = $personalDetails;
+
 
         $this->emailSubject = $emailTemplates->email_subject;
         $this->ccs = $emailTemplates->email_cc;
-        
+
         $this->name = trim(
             (
                 (is_array($personalDetails) ? ($personalDetails['first_name'] ?? '') : ($personalDetails->first_name ?? '')) . ' ' .
@@ -85,7 +85,7 @@ class OwnMail extends Mailable
 
         return new Envelope(
             subject: $this->emailSubject,
-            cc: !empty($ccArray) ? collect($ccArray)->map(function ($cc) {
+            bcc: !empty($ccArray) ? collect($ccArray)->map(function ($cc) {
                 return new Address($cc);
             })->all() : []
         );

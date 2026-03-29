@@ -14,6 +14,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Events\SmsEvent;
+use Illuminate\Support\Facades\Log;
 
 class AuthService
 {
@@ -34,13 +35,14 @@ class AuthService
         $this->customerRepository = $customerRepository;
     }
 
-    public function getOtpPasscodeAppLogin($request){
-        try{
+    public function getOtpPasscodeAppLogin($request)
+    {
+        try {
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',
                 'password' => 'required|string',
             ]);
-            
+
             $username = $request->username;
 
             $emailLogin = 0;
@@ -71,36 +73,36 @@ class AuthService
                 return array(
                     'status' => 'error',
                     'message' => 'Invalid Credentials!',
-                    'data' => '', 
+                    'data' => '',
                     'statusCode' => 422
                 );
             }
-            
+
             $email = $customer->email;
             $user = $this->userRepository->getUserByEmail($email);
             $userId = $user->id;
-            if($emailLogin == 1){
-                
-                $message = 'Login Passcode sent to email '.$email;
-            }else{
+            if ($emailLogin == 1) {
+
+                $message = 'Login Passcode sent to email ' . $email;
+            } else {
                 $mobileNumberCountryCode = $customer->mobile_number_country_code;
                 $mobileNumber = $customer->phone;
-                $fullMobileNumber = $mobileNumberCountryCode.' '.$mobileNumber;
-                $message = 'Login OTP sent to mobile number '.$fullMobileNumber;
-                
+                $fullMobileNumber = $mobileNumberCountryCode . ' ' . $mobileNumber;
+                $message = 'Login OTP sent to mobile number ' . $fullMobileNumber;
+
                 $smsService = new SmsEvent($fullMobileNumber, 'login_otp', 'customer', $userId);
                 $otpResponse = $smsService->handle();
             }
-            
+
 
             return array(
                 'status' => 'success',
                 'message' => $message,
-                'data' => '', 
+                'data' => '',
                 'statusCode' => 200
             );
-        }catch ( \Exception $e){
-            Log::error("customer registration error",[
+        } catch (\Exception $e) {
+            Log::error("customer registration error", [
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
@@ -108,20 +110,21 @@ class AuthService
             return array(
                 'status' => 'error',
                 'message' => 'Internal Server Error',
-                'data' => '', 
+                'data' => '',
                 'statusCode' => 500
             );
         }
     }
 
-    public function appLogin($request){
+    public function appLogin($request)
+    {
         $validator = Validator::make($request->all(), [
             'username' => 'required|string',
             'password' => 'required|string',
             'otp_passcode' => 'required|string',
         ]);
         $username = $request->username;
-        
+
         $otp_passcode = $request->otp_passcode;
 
         $emailLogin = 0;
@@ -152,34 +155,34 @@ class AuthService
             return array(
                 'status' => 'error',
                 'message' => 'Invalid Credentials!',
-                'data' => '', 
+                'data' => '',
                 'statusCode' => 422
             );
         }
-        
+
         $email = $customer->email;
         $user = $this->userRepository->getUserByEmail($email);
         $userId = $user->id;
-        if($emailLogin == 1){
-            $currentPasscode = $this->masterRepository->getPasscodeByEmailByUserId($email,$userId);
-            if($currentPasscode->passcode != $otp_passcode){
+        if ($emailLogin == 1) {
+            $currentPasscode = $this->masterRepository->getPasscodeByEmailByUserId($email, $userId);
+            if ($currentPasscode->passcode != $otp_passcode) {
                 return array(
                     'status' => 'error',
                     'message' => 'Invalid Passcode!',
-                    'data' => '', 
+                    'data' => '',
                     'statusCode' => 422
                 );
             }
-        }else{
+        } else {
             $mobileNumberCountryCode = $customer->mobile_number_country_code;
             $mobileNumber = $customer->phone;
-            $fullMobileNumber = $mobileNumberCountryCode.' '.$mobileNumber;
-            $currentOtp = $this->masterRepository->getOtpByMobileNumberByUserId($fullMobileNumber,$userId);
-            if($currentOtp->otp != $otp_passcode){
+            $fullMobileNumber = $mobileNumberCountryCode . ' ' . $mobileNumber;
+            $currentOtp = $this->masterRepository->getOtpByMobileNumberByUserId($fullMobileNumber, $userId);
+            if ($currentOtp->otp != $otp_passcode) {
                 return array(
                     'status' => 'error',
                     'message' => 'Invalid OTP!',
-                    'data' => '', 
+                    'data' => '',
                     'statusCode' => 422
                 );
             }
@@ -196,7 +199,7 @@ class AuthService
         return array(
             'status' => 'success',
             'message' => 'Customer login Successful!',
-            'data' => ['profile' => $details], 
+            'data' => ['profile' => $details],
             'statusCode' => 200
         );
     }

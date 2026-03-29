@@ -3,23 +3,36 @@
 
 @section('dynamicdata')
 
-@if(auth()->user()->can('manage_attendance'))
+@if(auth()->user()->can('index_attendance') || auth()->user()->can('create_attendance') || auth()->user()->can('export_attendance'))
 <div class="content-header">
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <h1>Attendance Management</h1>
         <div>
-            <button class="btn btn-outline-secondary btn-sm" id="listViewBtn">
+            @if(auth()->user()->can('index_attendance'))
+            <button class="btn btn-outline-secondary btn-sm" onclick="showTable()">
                 <i class="fa fa-list"></i> List View
             </button>
-            <button class="btn btn-outline-success btn-sm" id="calendarViewBtn">
+            @endif
+
+            @if(auth()->user()->can('index_attendance'))
+            <button class="btn btn-outline-success btn-sm" onclick="showCalendar()">
                 <i class="fa fa-calendar"></i> Calendar View
             </button>
-            <a href="#" class="btn btn-primary btn-sm" onclick="openMarkAttendanceModal()">
+            @endif
+
+            @if(auth()->user()->can('create_attendance'))
+            <button class="btn btn-primary btn-sm" onclick="openCreateAttendance()">
                 <i class="fa fa-plus"></i> Mark Attendance
-            </a>
-            <a href="{{ route('admin.attendance.export') }}" class="btn btn-success btn-sm">
+            </button>
+            @endif
+
+            @if(auth()->user()->can('export_attendance'))
+            <a id="exportBtn"
+                href="{{ route('admin.attendance.export') }}"
+                class="btn btn-success btn-sm">
                 <i class="fa fa-file-excel"></i> Export Excel
             </a>
+            @endif
         </div>
     </div>
 </div>
@@ -33,7 +46,7 @@
 <div class="card card-primary card-outline">
 <div class="card-body">
 
-<!-- ================= FILTER MODAL ================= -->
+<!-- Filter Modal -->
 <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -73,17 +86,12 @@
                         <label>Date Range</label>
                         <div class="row">
                             <div class="col-6">
-                                <input type="date" id="startDateFilter" class="form-control" placeholder="From" value="{{ request('start_date', $startDate ?? '') }}">
+                                <input type="date" id="startDateFilter" class="form-control" placeholder="From" value="{{ request('start_date') }}">
                             </div>
                             <div class="col-6">
-                                <input type="date" id="endDateFilter" class="form-control" placeholder="To" value="{{ request('end_date', $endDate ?? '') }}">
+                                <input type="date" id="endDateFilter" class="form-control" placeholder="To" value="{{ request('end_date') }}">
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Remarks</label>
-                        <input type="text" id="remarksFilter" class="form-control" placeholder="Search remarks..." value="{{ request('remarks') }}">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -108,7 +116,7 @@
   </button>
 </div>
 
-<!-- ================= CREW LEGEND ================= -->
+<!-- Crew Legend -->
 <div id="crewLegend" class="mb-4">
     <strong>Crew Legend:</strong>
     <div class="d-flex flex-wrap mt-2">
@@ -132,117 +140,80 @@
              onclick="clearCrewFilter()"
              class="crew-legend-item">
             <div style="width:15px;height:15px; background:#6c757d; margin-right:6px;border-radius:3px;"></div>
-            <span>Clear Filter</span>
+            <span>Clear Crew Filter</span>
         </div>
     </div>
 </div>
 
-<!-- ================= SUMMARY CARDS ================= -->
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="small-box bg-success">
-            <div class="inner">
-                <h3>{{ $summary['total_present'] ?? 0 }}</h3>
-                <p>Present</p>
-            </div>
+{{-- <!-- Status Legend -->
+<div class="mb-4">
+    <strong>Status Legend:</strong>
+    <div class="d-flex flex-wrap mt-2">
+        <div style="display:flex;align-items:center;margin-right:20px;">
+            <div style="width:15px;height:15px; background:#28a745; margin-right:6px;border-radius:3px;"></div>
+            <span>Present</span>
         </div>
-    </div>
-    <div class="col-md-2">
-        <div class="small-box bg-danger">
-            <div class="inner">
-                <h3>{{ $summary['total_absent'] ?? 0 }}</h3>
-                <p>Absent</p>
-            </div>
+        <div style="display:flex;align-items:center;margin-right:20px;">
+            <div style="width:15px;height:15px; background:#dc3545; margin-right:6px;border-radius:3px;"></div>
+            <span>Absent</span>
         </div>
-    </div>
-    <div class="col-md-2">
-        <div class="small-box bg-warning">
-            <div class="inner">
-                <h3>{{ $summary['total_half_day'] ?? 0 }}</h3>
-                <p>Half Day</p>
-            </div>
+        <div style="display:flex;align-items:center;margin-right:20px;">
+            <div style="width:15px;height:15px; background:#ffc107; margin-right:6px;border-radius:3px;"></div>
+            <span>Half Day</span>
         </div>
-    </div>
-    <div class="col-md-2">
-        <div class="small-box bg-info">
-            <div class="inner">
-                <h3>{{ $summary['total_holiday'] ?? 0 }}</h3>
-                <p>Holiday</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="small-box bg-secondary">
-            <div class="inner">
-                <h3>{{ $summary['total_leave'] ?? 0 }}</h3>
-                <p>Leave</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="small-box bg-primary">
-            <div class="inner">
-                <h3>Rs. {{ number_format($summary['total_salary'] ?? 0, 2) }}</h3>
-                <p>Total Salary</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- ================= LIST VIEW ================= -->
-<div id="tableView" class="attendance-list-view">
+        <div style="display:flex;align-items:center;margin-right:20px;">
+            <div style="width:15px;height:15px; background:#6c757d; margin-right:6px;border-radius:3px;"></div>
+            <span>Leave</span>
+        </div>
+    </div>
+</div> --}}
+
+
+
+<!-- LIST VIEW -->
+<div id="tableView">
     <div class="table-responsive">
-        <table id="attendanceDataTable" class="table table-bordered table-striped show-search-bar">
+        <table id="dataTable" class="table table-bordered table-striped show-search-bar">
             <thead>
-                    <th>#</th>
+                <td>#</th>
                     <th>Crew Member</th>
                     <th>Date (AD/BS)</th>
                     <th>Status</th>
-                    {{-- <th>Salary Amount</th>
-                    <th>Bonus</th>
-                    <th>Deduction</th>
+                    {{-- <th>Salary (Rs)</th>
                     <th>Net Amount</th> --}}
-                    {{-- <th>Remarks</th> --}}
                     <th>Actions</th>
-                 </tr>
-            </thead>
+                </thead>
             <tbody id="attendanceTableBody">
                 @forelse($attendances as $i => $attendance)
                     @php
-                        $statusColor = match($attendance->status) {
-                            'present' => '#28a745',
-                            'absent' => '#dc3545',
-                            'half_day' => '#ffc107',
-                            'holiday' => '#17a2b8',
-                            'leave' => '#6c757d',
-                            default => '#6c757d',
-                        };
+                        $statusColor = $attendance->status == 'present' ? '#28a745' : 
+                                      ($attendance->status == 'half_day' ? '#ffc107' : 
+                                      ($attendance->status == 'holiday' ? '#17a2b8' : 
+                                      ($attendance->status == 'leave' ? '#6c757d' : '#dc3545')));
                         $crewColor = '#'.substr(md5($attendance->crew_id),0,6);
                     @endphp
                     <tr data-attendance-id="{{ $attendance->id }}" data-attendance-date="{{ $attendance->attendance_date }}">
-                         <td>{{ $i+1 }}</td>
-                         <td>
+                        <td>{{ $i+1 }}</td>
+                        <td>
                             <div style="display: flex; align-items: center;">
                                 <div style="width:12px;height:12px; background:{{ $crewColor }}; border-radius:3px; margin-right:6px;"></div>
                                 {{ $attendance->crew->user->name ?? '' }}
                             </div>
-                         </td>
+                        </td>
                         <td class="date-cell">
                             <span class="ad-date">{{ \Carbon\Carbon::parse($attendance->attendance_date)->format('M d, Y') }}</span>
                             <br>
-                            <small class="bs-date text-muted">Loading...</small>
-                         </td>
-                         <td>
+                            <small class="bs-date text-muted" data-date="{{ $attendance->attendance_date }}">Loading...</small>
+                        </td>
+                        <td>
                             <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
                                 {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
                             </span>
-                         </td>
-                         {{-- <td>Rs. {{ number_format($attendance->salary_amount, 2) }}</td>
-                         <td>Rs. {{ number_format($attendance->bonus, 2) }}</td>
-                         <td>Rs. {{ number_format($attendance->deduction, 2) }}</td>
-                         <td><strong>Rs. {{ number_format($attendance->net_amount, 2) }}</strong></td> --}}
-                         {{-- <td>{{ $attendance->remarks ?? '-' }}</td> --}}
-                         <td>
+                        </td>
+                        {{-- <td>Rs. {{ number_format($attendance->salary_amount ?? 0, 2) }}</td>
+                        <td><strong>Rs. {{ number_format($attendance->net_amount ?? 0, 2) }}</strong></td> --}}
+                        <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
                                     Actions
@@ -251,7 +222,7 @@
                                     <a class="dropdown-item" href="#" onclick="viewAttendance({{ $attendance->id }})">
                                         <i class="fas fa-eye text-info mr-2"></i> View
                                     </a>
-                                    <a class="dropdown-item" href="#" onclick="editAttendance({{ $attendance->id }})">
+                                    <a class="dropdown-item" href="{{ route('admin.attendance.edit', $attendance->id) }}">
                                         <i class="fas fa-edit text-primary mr-2"></i> Edit
                                     </a>
                                     <div class="dropdown-divider"></div>
@@ -260,11 +231,10 @@
                                     </button>
                                 </div>
                             </div>
-                         </td>
+                        </td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="10" class="text-center">No attendance records found</td>
+                    <td colspan="7" class="text-center">No attendance records found</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -272,27 +242,29 @@
     </div>
 </div>
 
-<!-- ================= CALENDAR VIEW ================= -->
-<div id="calendarView" class="attendance-calendar-view" style="display: none;">
-    <div class="calendar-header mb-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <button class="btn btn-sm btn-outline-primary" id="prevMonthBtn">
-                <i class="fa fa-chevron-left"></i> Previous Month
-            </button>
-            <div class="text-center">
-                <h4 id="currentMonthDisplay" class="mb-0">{{ date('F Y') }}</h4>
-                <h5 id="currentNepaliMonthDisplay" class="mb-0 nepali-date" style="color:#198754; font-size:14px;">Loading...</h5>
-            </div>
-            <button class="btn btn-sm btn-outline-primary" id="nextMonthBtn">
-                Next Month <i class="fa fa-chevron-right"></i>
-            </button>
+<!-- CALENDAR VIEW -->
+<div id="calendarView" style="display:none;">
+    <!-- Month Navigation -->
+    <div id="monthNav" class="mb-3 d-flex justify-content-between align-items-center" style="display: none;">
+        <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(-1)">
+            <i class="fa fa-chevron-left"></i> Previous Month
+        </button>
+        <div class="text-center">
+            <h4 id="currentMonth" class="mb-0">{{ date('F Y') }}</h4>
+            <h5 id="currentNepaliMonth" class="mb-0 nepali-date" style="color:#198754; font-size:16px;">Loading...</h5>
         </div>
+        <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(1)">
+            Next Month <i class="fa fa-chevron-right"></i>
+        </button>
     </div>
     <div class="mb-3">
         <small class="text-muted">Click on any empty cell to mark attendance. Click on attendance block to view details.</small>
     </div>
-    <div style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
-        <div id="calendarGridContainer"></div>
+    <div style="overflow-x:auto; max-height: 600px; overflow-y: auto;">
+        <table class="table table-bordered attendance-grid" style="min-width: 1200px;">
+            <thead id="attendanceGridHead" style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;"></thead>
+            <tbody id="attendanceGridBody"></tbody>
+        </table>
     </div>
 </div>
 
@@ -301,7 +273,7 @@
 </div>
 </section>
 
-<!-- ================= ATTENDANCE DETAILS MODAL ================= -->
+<!-- Attendance Details Modal -->
 <div class="modal fade" id="attendanceDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
@@ -322,69 +294,10 @@
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
                     <i class="fa fa-times"></i> Close
                 </button>
-                <button type="button" class="btn btn-primary btn-sm" id="editAttendanceBtn">
+                <a href="#" id="editAttendanceBtn" class="btn btn-primary btn-sm">
                     <i class="fa fa-edit"></i> Edit Attendance
-                </button>
+                </a>
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ================= MARK ATTENDANCE MODAL ================= -->
-<div class="modal fade" id="markAttendanceModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">Mark Attendance</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-            </div>
-            <form id="markAttendanceForm">
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Crew Member *</label>
-                        <select id="markCrewSelect" name="crew_id" class="form-control" required>
-                            <option value="">Select Crew Member</option>
-                            @foreach($crews as $crew)
-                                <option value="{{ $crew->id }}">{{ $crew->user->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Date *</label>
-                        <input type="date" id="markDateInput" name="attendance_date" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Status *</label>
-                        <select id="markStatus" name="status" class="form-control" required>
-                            <option value="present">Present</option>
-                            <option value="absent">Absent</option>
-                            <option value="half_day">Half Day</option>
-                            <option value="holiday">Holiday</option>
-                            <option value="leave">Leave</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Salary Amount (Rs.)</label>
-                        <input type="number" step="0.01" id="markSalary" name="salary_amount" class="form-control" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Bonus (Rs.)</label>
-                        <input type="number" step="0.01" id="markBonus" name="bonus" class="form-control" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Deduction (Rs.)</label>
-                        <input type="number" step="0.01" id="markDeduction" name="deduction" class="form-control" value="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Remarks</label>
-                        <textarea id="markRemarks" name="remarks" rows="2" class="form-control"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Attendance</button>
-                </div>
-            </form>
         </div>
     </div>
 </div>
@@ -397,6 +310,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+
 .nepali-date {
     font-family: 'Hind Siliguri', 'Preeti', 'Arial Unicode MS', sans-serif;
     font-size: 11px;
@@ -405,7 +320,7 @@
     line-height: 1.3;
 }
 
-.calendar-grid th, .calendar-grid td {
+.attendance-grid th, .attendance-grid td {
     min-width: 80px;
     text-align: center;
     font-size: 12px;
@@ -465,6 +380,48 @@
     background-color: #fff3cd !important;
 }
 
+.badge {
+    padding: 5px 10px;
+    font-weight: 500;
+}
+
+#monthNav {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+.small-box {
+    border-radius: 0.25rem;
+    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+    margin-bottom: 20px;
+}
+
+.small-box .inner {
+    padding: 10px;
+}
+
+.small-box h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: white;
+}
+
+.small-box p {
+    font-size: 1rem;
+    margin: 0;
+    color: white;
+}
+
+.bg-success { background-color: #28a745 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+.bg-warning { background-color: #ffc107 !important; }
+.bg-info { background-color: #17a2b8 !important; }
+.bg-secondary { background-color: #6c757d !important; }
+.bg-primary { background-color: #007bff !important; }
+
 .crew-legend-item {
     padding: 3px 8px;
     border-radius: 15px;
@@ -482,42 +439,6 @@
     border-color: #2196F3;
     font-weight: 500;
 }
-
-.small-box {
-    border-radius: 0.25rem;
-    box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
-    display: block;
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.small-box .inner {
-    padding: 10px;
-}
-
-.small-box h3 {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0 0 10px 0;
-    white-space: nowrap;
-    padding: 0;
-}
-
-.small-box p {
-    font-size: 1rem;
-}
-
-.small-box .inner h3, 
-.small-box .inner p {
-    color: white;
-}
-
-.bg-success { background-color: #28a745 !important; }
-.bg-danger { background-color: #dc3545 !important; }
-.bg-warning { background-color: #ffc107 !important; }
-.bg-info { background-color: #17a2b8 !important; }
-.bg-secondary { background-color: #6c757d !important; }
-.bg-primary { background-color: #007bff !important; }
 </style>
 
 <script>
@@ -525,8 +446,6 @@ let currentMonth = moment();
 let allCrews = @json($crews);
 let crewColors = {};
 let dateCache = {};
-let dataTable = null;
-let calendarAttendances = [];
 
 // Generate consistent colors for crews
 @foreach($crews as $crew)
@@ -542,89 +461,51 @@ const statusColors = {
     'leave': '#6c757d'
 };
 
-let currentAttendanceId = null;
-
 $(document).ready(function() {
-    // Initialize DataTable only if it doesn't exist
-    if ($('#attendanceDataTable').length && !$.fn.DataTable.isDataTable('#attendanceDataTable')) {
-        dataTable = $('#attendanceDataTable').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "pageLength": 25
-        });
-    }
-    
-    // View toggle buttons
-    $('#listViewBtn').on('click', function() {
-        showTableView();
-    });
-    
-    $('#calendarViewBtn').on('click', function() {
-        showCalendarView();
-    });
-    
-    // Month navigation buttons
-    $('#prevMonthBtn').on('click', function() {
-        changeMonth(-1);
-    });
-    
-    $('#nextMonthBtn').on('click', function() {
-        changeMonth(1);
-    });
-    
+    // Check if we should show calendar view based on URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('view') === 'calendar') {
-        showCalendarView();
+        showCalendar();
     } else {
-        showTableView();
+        showTable();
     }
     
+    // Set filter values from URL
     setFilterValuesFromUrl();
+    
+    // Load Nepali dates for table view
     loadNepaliDatesForTable();
     
-    // Mark attendance form submit
-    $('#markAttendanceForm').on('submit', function(e) {
-        e.preventDefault();
-        saveAttendance();
-    });
-    
-    // Edit button click handler
-    $('#editAttendanceBtn').on('click', function() {
-        if (currentAttendanceId) {
-            window.location.href = `/dashboard/attendance/${currentAttendanceId}/edit`;
-        }
+    // Initialize DataTable
+    if ($.fn.DataTable.isDataTable('#dataTable')) {
+        $('#dataTable').DataTable().destroy();
+    }
+    $('#dataTable').DataTable({
+        paging: true,
+        lengthChange: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        autoWidth: false,
+        responsive: true
     });
 });
 
-function showTableView() {
-    $('#tableView').show();
-    $('#calendarView').hide();
-    let url = new URL(window.location.href);
-    url.searchParams.set('view', 'list');
-    window.history.replaceState({}, '', url);
-}
-
-function showCalendarView() {
-    $('#tableView').hide();
-    $('#calendarView').show();
-    let url = new URL(window.location.href);
-    url.searchParams.set('view', 'calendar');
-    window.history.replaceState({}, '', url);
-    loadCalendarGrid();
-}
-
 function setFilterValuesFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('crew_id')) $('#crewFilter').val(urlParams.get('crew_id'));
-    if (urlParams.has('status')) $('#statusFilter').val(urlParams.get('status'));
-    if (urlParams.has('start_date')) $('#startDateFilter').val(urlParams.get('start_date'));
-    if (urlParams.has('end_date')) $('#endDateFilter').val(urlParams.get('end_date'));
-    if (urlParams.has('remarks')) $('#remarksFilter').val(urlParams.get('remarks'));
+    
+    if (urlParams.has('crew_id')) {
+        $('#crewFilter').val(urlParams.get('crew_id'));
+    }
+    if (urlParams.has('status')) {
+        $('#statusFilter').val(urlParams.get('status'));
+    }
+    if (urlParams.has('start_date')) {
+        $('#startDateFilter').val(urlParams.get('start_date'));
+    }
+    if (urlParams.has('end_date')) {
+        $('#endDateFilter').val(urlParams.get('end_date'));
+    }
 }
 
 function filterByCrew(crewId) {
@@ -634,6 +515,7 @@ function filterByCrew(crewId) {
 
 function clearCrewFilter() {
     $('#crewFilter').val('');
+    
     let url = new URL(window.location.href);
     url.searchParams.delete('crew_id');
     
@@ -646,22 +528,8 @@ function clearCrewFilter() {
     } else {
         window.location.href = url.toString();
     }
-}
-
-async function loadNepaliDatesForTable() {
-    $('#attendanceTableBody tr').each(async function() {
-        let $row = $(this);
-        let attendanceDate = $row.data('attendance-date');
-        
-        if (attendanceDate) {
-            try {
-                let bsDate = await convertToNepaliDate(attendanceDate);
-                $row.find('.date-cell .bs-date').text(bsDate.display);
-            } catch (e) {
-                console.error('Error converting date:', e);
-            }
-        }
-    });
+    
+    updateExportLink();
 }
 
 function convertToNepaliDate(adDate) {
@@ -680,23 +548,108 @@ function convertToNepaliDate(adDate) {
             },
             success: function(response) {
                 if (response.success) {
-                    let nepaliOnly = response.display || response.nepali || '';
+                    let nepaliOnly = '';
+                    if (response.display && response.display.includes('|')) {
+                        nepaliOnly = response.display.split('|')[1].trim();
+                    } else if (response.nepali) {
+                        nepaliOnly = response.nepali;
+                    } else {
+                        nepaliOnly = response.display || '';
+                    }
+                    
+                    let dayOnly = '';
+                    if (nepaliOnly) {
+                        let parts = nepaliOnly.split(' ');
+                        dayOnly = parts.length >= 3 ? parts[2] : (parts.length >= 2 ? parts[1] : '');
+                    }
+                    
                     dateCache[adDate] = {
-                        display: nepaliOnly,
-                        day: response.day || '',
+                        nepali: response.nepali || '',
+                        day: response.day || dayOnly,
                         month: response.month || '',
-                        year: response.year || ''
+                        year: response.year || '',
+                        display: nepaliOnly,
+                        day_only: dayOnly
                     };
                     resolve(dateCache[adDate]);
                 } else {
                     reject('Conversion failed');
                 }
             },
-            error: function() {
-                reject('Error converting date');
+            error: function(xhr, status, error) {
+                console.error('Date conversion error:', error);
+                let date = new Date(adDate);
+                let nepYear = date.getFullYear() + 57;
+                let nepMonth = date.getMonth() + 9;
+                let nepDay = date.getDate();
+                
+                if (nepMonth > 12) {
+                    nepMonth -= 12;
+                    nepYear += 1;
+                }
+                
+                const monthNames = {
+                    1: 'बैशाख', 2: 'जेठ', 3: 'असार', 4: 'साउन',
+                    5: 'भदौ', 6: 'असोज', 7: 'कात्तिक', 8: 'मंसिर',
+                    9: 'पुस', 10: 'माघ', 11: 'फागुन', 12: 'चैत'
+                };
+                let nepaliMonthName = monthNames[nepMonth] || 'बैशाख';
+                
+                const nepaliNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+                let nepaliYearStr = nepYear.toString().split('').map(d => nepaliNumbers[parseInt(d)]).join('');
+                let nepaliDayStr = nepDay.toString().split('').map(d => nepaliNumbers[parseInt(d)]).join('');
+                
+                let fallbackDate = {
+                    nepali: `${nepaliYearStr} ${nepaliMonthName} ${nepaliDayStr}`,
+                    day: nepaliDayStr,
+                    month: nepMonth.toString().padStart(2, '0'),
+                    year: nepYear.toString(),
+                    display: `${nepaliYearStr} ${nepaliMonthName} ${nepaliDayStr}`,
+                    day_only: nepaliDayStr
+                };
+                dateCache[adDate] = fallbackDate;
+                resolve(fallbackDate);
             }
         });
     });
+}
+
+async function loadNepaliDatesForTable() {
+    $('#attendanceTableBody tr').each(async function() {
+        let $row = $(this);
+        let attendanceDate = $row.data('attendance-date');
+        
+        if (attendanceDate) {
+            try {
+                let bsDate = await convertToNepaliDate(attendanceDate);
+                $row.find('.date-cell .bs-date').text(bsDate.display);
+            } catch (e) {
+                console.error('Error converting date:', e);
+            }
+        }
+    });
+}
+
+function showTable() {
+    $('#tableView').show();
+    $('#calendarView').hide();
+    $('#monthNav').hide();
+    
+    let url = new URL(window.location.href);
+    url.searchParams.set('view', 'list');
+    window.history.replaceState({}, '', url);
+}
+
+function showCalendar() {
+    $('#tableView').hide();
+    $('#calendarView').show();
+    $('#monthNav').show();
+    
+    let url = new URL(window.location.href);
+    url.searchParams.set('view', 'calendar');
+    window.history.replaceState({}, '', url);
+    updateNepaliMonthDisplay();
+    loadCalendarGrid();
 }
 
 function applyFilter() {
@@ -706,30 +659,37 @@ function applyFilter() {
         crew_id: $('#crewFilter').val(),
         status: $('#statusFilter').val(),
         start_date: $('#startDateFilter').val(),
-        end_date: $('#endDateFilter').val(),
-        remarks: $('#remarksFilter').val()
+        end_date: $('#endDateFilter').val()
     };
     
     Object.keys(params).forEach(key => {
-        if (!params[key]) delete params[key];
+        if (!params[key]) {
+            delete params[key];
+        }
     });
     
     if ($('#calendarView').is(':visible')) {
         loadCalendarGrid();
         let url = new URL(window.location.href);
-        Object.keys(params).forEach(key => url.searchParams.set(key, params[key]));
+        Object.keys(params).forEach(key => {
+            url.searchParams.set(key, params[key]);
+        });
         url.searchParams.set('view', 'calendar');
         window.history.replaceState({}, '', url);
     } else {
         let url = new URL(window.location.href);
-        Object.keys(params).forEach(key => url.searchParams.set(key, params[key]));
+        Object.keys(params).forEach(key => {
+            url.searchParams.set(key, params[key]);
+        });
         url.searchParams.set('view', 'list');
         window.location.href = url.toString();
     }
+    
+    updateExportLink();
 }
 
 function clearFilter() {
-    $('#crewFilter, #statusFilter, #remarksFilter').val('');
+    $('#crewFilter, #statusFilter').val('');
     $('#startDateFilter, #endDateFilter').val('');
     
     if ($('#calendarView').is(':visible')) {
@@ -740,17 +700,8 @@ function clearFilter() {
     } else {
         window.location.href = "{{ route('admin.attendance.index') }}?view=list";
     }
-}
-
-function changeMonth(direction) {
-    if (direction === -1) {
-        currentMonth.subtract(1, 'month');
-    } else {
-        currentMonth.add(1, 'month');
-    }
-    $('#currentMonthDisplay').text(currentMonth.format('MMMM YYYY'));
-    updateNepaliMonthDisplay();
-    loadCalendarGrid();
+    
+    updateExportLink();
 }
 
 async function updateNepaliMonthDisplay() {
@@ -760,29 +711,41 @@ async function updateNepaliMonthDisplay() {
     try {
         let bsFirstDate = await convertToNepaliDate(firstDate);
         let bsLastDate = await convertToNepaliDate(lastDate);
-        
+
         if (bsFirstDate && bsLastDate) {
-            let firstParts = bsFirstDate.display.split(' ');
-            let lastParts = bsLastDate.display.split(' ');
-            let firstMonthName = firstParts.length >= 2 ? firstParts[1] : '';
-            let lastMonthName = lastParts.length >= 2 ? lastParts[1] : '';
-            let year = firstParts.length >= 1 ? firstParts[0] : '';
+            let firstMonth = bsFirstDate.month || '';
+            let lastMonth = bsLastDate.month || '';
+            let nepaliYear = bsFirstDate.year || '';
             
-            if (firstMonthName && lastMonthName) {
-                if (firstMonthName === lastMonthName) {
-                    $('#currentNepaliMonthDisplay').text(`${firstMonthName} ${year}`);
+            if (firstMonth && lastMonth) {
+                if (firstMonth === lastMonth) {
+                    $('#currentNepaliMonth').text(`${firstMonth} ${nepaliYear}`);
                 } else {
-                    $('#currentNepaliMonthDisplay').text(`${firstMonthName}/${lastMonthName} ${year}`);
+                    $('#currentNepaliMonth').text(`${firstMonth}/${lastMonth} ${nepaliYear}`);
                 }
             }
         }
     } catch (e) {
         console.error('Error loading Nepali month:', e);
-        $('#currentNepaliMonthDisplay').text('');
+        $('#currentNepaliMonth').text('');
     }
 }
 
+function changeMonth(direction) {
+    if (direction === -1) {
+        currentMonth.subtract(1, 'month');
+    } else if (direction === 1) {
+        currentMonth.add(1, 'month');
+    }
+
+    $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
+    updateNepaliMonthDisplay();
+    loadCalendarGrid();
+}
+
 function loadCalendarGrid() {
+    $('#currentMonth').text(currentMonth.format('MMMM YYYY'));
+    
     let filterData = {
         crew_id: $('#crewFilter').val(),
         status: $('#statusFilter').val(),
@@ -791,116 +754,145 @@ function loadCalendarGrid() {
         month: currentMonth.format('YYYY-MM')
     };
     
+    // Remove empty values
+    Object.keys(filterData).forEach(key => {
+        if (!filterData[key]) {
+            delete filterData[key];
+        }
+    });
+    
     $.ajax({
         url: "{{ route('admin.attendance.events') }}",
         type: "GET",
         data: filterData,
         success: function(attendances) {
-            calendarAttendances = attendances;
-            renderCalendarGrid();
+            let startDate = currentMonth.clone().startOf('month');
+            let endDate = currentMonth.clone().endOf('month');
+            
+            buildCalendarHeader(startDate, endDate);
+            buildCalendarBody(attendances, startDate, endDate);
         },
-        error: function() {
+        error: function(xhr) {
+            console.error('Error loading calendar:', xhr);
             toastr.error('Error loading calendar data');
         }
     });
 }
 
-async function renderCalendarGrid() {
-    let startDate = currentMonth.clone().startOf('month');
-    let endDate = currentMonth.clone().endOf('month');
-    let today = moment().format('YYYY-MM-DD');
-    
-    // Get Nepali dates for header
-    let dates = [];
+async function buildCalendarHeader(startDate, endDate) {
+    let adRow = '<tr><th class="crew-column">Crew / Date</th>';
+    let bsRow = '<tr><th class="crew-column">कर्मचारी / मिति</th>';
+
     let current = startDate.clone();
+    let today = moment().format('YYYY-MM-DD');
+    let dates = [];
+
     while (current <= endDate) {
         dates.push(current.format('YYYY-MM-DD'));
         current.add(1, 'day');
     }
-    
-    let nepaliMap = {};
-    try {
-        let response = await $.ajax({
-            url: "{{ route('admin.attendance.convert_multiple_ad_to_bs') }}",
-            type: "POST",
-            data: { dates: dates, _token: "{{ csrf_token() }}" }
-        });
-        nepaliMap = response.data || {};
-    } catch(e) {
-        console.error('Error fetching Nepali dates:', e);
-    }
-    
-    // Build header HTML
-    let headerHtml = '<table class="table table-bordered calendar-grid" style="min-width: 1200px;">';
-    headerHtml += '<thead><tr><th class="crew-column">Crew Member / Date</th>';
-    
+
+    let response = await $.ajax({
+        url: "{{ route('admin.attendance.convert_multiple_ad_to_bs') }}",
+        type: "POST",
+        data: {
+            dates: dates,
+            _token: "{{ csrf_token() }}"
+        }
+    });
+
+    let nepaliMap = response.data || {};
+
     current = startDate.clone();
+
     while (current <= endDate) {
         let dateStr = current.format('YYYY-MM-DD');
         let isToday = dateStr === today;
         let bsData = nepaliMap[dateStr] || {};
         let nepaliDay = bsData.day || '';
-        
-        headerHtml += `<th style="min-width: 80px; ${isToday ? 'background:#cfe2ff;' : ''}">
-            ${current.format('D')}<br>
-            <small class="nepali-date">${nepaliDay}</small>
-        </th>`;
+
+        adRow += `<th style="${isToday ? 'background:#fff3cd;' : ''}">${current.format('D')}</th>`;
+        bsRow += `<th style="${isToday ? 'background:#fff3cd;' : ''}">${nepaliDay}</th>`;
+
         current.add(1, 'day');
     }
-    headerHtml += '</tr></thead><tbody>';
+
+    adRow += '<th>Total</th></tr>';
+    bsRow += '<th>जम्मा</th></tr>';
+
+    $('#attendanceGridHead').html(adRow + bsRow);
+}
+
+function buildCalendarBody(attendances, startDate, endDate) {
+    let html = '';
+    let today = moment().format('YYYY-MM-DD');
     
-    // Build body rows for each crew
     let crewsToShow = allCrews;
     let selectedCrewId = $('#crewFilter').val();
     if (selectedCrewId) {
         crewsToShow = allCrews.filter(c => c.id == parseInt(selectedCrewId));
     }
     
-    for (let crew of crewsToShow) {
-        headerHtml += `<tr data-crew-id="${crew.id}">`;
-        headerHtml += `<td class="crew-column">
-            <div style="display: flex; align-items: center; padding: 5px;">
-                <div style="width:15px;height:15px; background:${crewColors[crew.id]}; border-radius:3px; margin-right:8px;"></div>
-                <span style="font-weight: 600;">${crew.user.name}</span>
-            </div>
-        </td>`;
+    crewsToShow.forEach(crew => {
+        let totalDays = 0;
+        html += `<tr data-crew-id="${crew.id}">`;
+        html += `<td class="crew-column">
+                    <div style="display: flex; align-items: center; padding: 5px;">
+                        <div style="width:15px;height:15px; background:${crewColors[crew.id]}; border-radius:3px; margin-right:8px;"></div>
+                        <span style="font-weight: 600;">${crew.user.name}</span>
+                    </div>
+                  </td>`;
+
+        let current = startDate.clone();
         
-        current = startDate.clone();
         while (current <= endDate) {
-            let dateStr = current.format('YYYY-MM-DD');
-            let isToday = dateStr === today;
-            let dayAttendance = calendarAttendances.filter(a => a.crew_id == crew.id && a.start == dateStr);
+            let currentDateStr = current.format('YYYY-MM-DD');
+            let isToday = currentDateStr === today;
             
-            if (dayAttendance.length > 0) {
-                headerHtml += `<td class="${isToday ? 'today-cell' : ''}" style="padding: 2px;">`;
-                for (let attendance of dayAttendance) {
-                    let statusColor = statusColors[attendance.extendedProps.status] || '#6c757d';
-                    let statusText = attendance.extendedProps.status.replace('_', ' ').toUpperCase();
-                    
-                    headerHtml += `
-                        <div class="attendance-block" 
-                            style="background: ${crewColors[crew.id]}; border-left: 4px solid ${statusColor};"
-                            onclick="event.stopPropagation(); viewAttendance(${attendance.id})"
-                            title="${statusText}">
-                            <i class="fa ${getStatusIcon(attendance.extendedProps.status)}"></i> ${statusText}
-                        </div>`;
-                }
-                headerHtml += `</td>`;
-            } else {
-                headerHtml += `<td class="calendar-empty-cell ${isToday ? 'today-cell' : ''}" 
-                    onclick="quickMarkAttendance(${crew.id}, '${dateStr}')"
-                    style="cursor: pointer; background: #f9f9f9;"
-                    title="Click to mark attendance for ${crew.user.name} on ${dateStr}">
-                    <div style="min-height: 60px;"></div>
-                </td>`;
+            // Find attendance for this crew on this date
+            let attendance = null;
+            if (attendances && attendances.length > 0) {
+                attendance = attendances.find(a => {
+                    // Check if a has extendedProps or direct crew_id
+                    let crewId = a.extendedProps ? a.extendedProps.crew_id : a.crew_id;
+                    let startDate = a.start || a.attendance_date;
+                    return crewId == crew.id && startDate == currentDateStr;
+                });
             }
+
+            if (attendance) {
+                totalDays++;
+                // Get status from either extendedProps or direct
+                let status = attendance.extendedProps ? attendance.extendedProps.status : attendance.status;
+                let statusColor = statusColors[status] || '#6c757d';
+                let statusText = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+                let attendanceId = attendance.id;
+                
+                html += `<td class="${isToday ? 'today-cell' : ''}" style="padding: 2px;">
+                            <div class="attendance-block" 
+                                style="background: ${crewColors[crew.id]}; border-left: 4px solid ${statusColor};"
+                                onclick="event.stopPropagation(); viewAttendance(${attendanceId})"
+                                title="${statusText}">
+                                <i class="fa ${getStatusIcon(status)}"></i> ${statusText.substring(0, 3)}
+                            </div>
+                          </td>`;
+            } else {
+                html += `<td class="calendar-empty-cell ${isToday ? 'today-cell' : ''}" 
+                            onclick="openCreateAttendance(${crew.id}, '${currentDateStr}')"
+                            style="cursor: pointer;"
+                            title="Click to mark attendance for ${crew.user.name} on ${currentDateStr}">
+                            &nbsp;
+                          </td>`;
+            }
+            
             current.add(1, 'day');
         }
-        headerHtml += `</tr>`;
-    }
+        
+        html += `<td><span class="badge badge-info">${totalDays}</span></td>`;
+        html += `</tr>`;
+    });
     
-    headerHtml += '</tbody></table>';
-    $('#calendarGridContainer').html(headerHtml);
+    $('#attendanceGridBody').html(html);
 }
 
 function getStatusIcon(status) {
@@ -911,94 +903,41 @@ function getStatusIcon(status) {
         'holiday': 'fa-sun-o',
         'leave': 'fa-bed'
     };
-    return icons[status] || 'fa-question-circle';
+    return icons[status] || 'fa-calendar';
 }
 
-function openMarkAttendanceModal() {
-    $('#markCrewSelect').val('');
-    $('#markDateInput').val(new Date().toISOString().split('T')[0]);
-    $('#markStatus').val('present');
-    $('#markSalary').val(0);
-    $('#markBonus').val(0);
-    $('#markDeduction').val(0);
-    $('#markRemarks').val('');
-    $('#markAttendanceModal').modal('show');
+function openCreateAttendance(crewId, date) {
+    let url = "{{ route('admin.attendance.create') }}?crew_id=" + crewId + "&date=" + date;
+    window.location.href = url;
 }
 
-function quickMarkAttendance(crewId, date) {
-    $('#markCrewSelect').val(crewId);
-    $('#markDateInput').val(date);
-    $('#markStatus').val('present');
-    $('#markSalary').val(0);
-    $('#markBonus').val(0);
-    $('#markDeduction').val(0);
-    $('#markRemarks').val('');
-    $('#markAttendanceModal').modal('show');
-}
-
-function saveAttendance() {
-    let data = {
-        _token: "{{ csrf_token() }}",
-        crew_id: $('#markCrewSelect').val(),
-        attendance_date: $('#markDateInput').val(),
-        status: $('#markStatus').val(),
-        salary_amount: $('#markSalary').val(),
-        bonus: $('#markBonus').val(),
-        deduction: $('#markDeduction').val(),
-        remarks: $('#markRemarks').val()
-    };
-    
-    if (!data.crew_id) {
-        toastr.error('Please select a crew member');
-        return;
-    }
-    
-    $.ajax({
-        url: "{{ route('admin.attendance.store') }}",
-        type: "POST",
-        data: data,
-        success: function(response) {
-            toastr.success('Attendance saved successfully');
-            $('#markAttendanceModal').modal('hide');
-            if ($('#calendarView').is(':visible')) {
-                loadCalendarGrid();
-            } else {
-                location.reload();
-            }
-        },
-        error: function(xhr) {
-            let errorMsg = xhr.responseJSON?.message || 'Error saving attendance';
-            toastr.error(errorMsg);
-        }
-    });
-}
-
-function viewAttendance(id) {
-    currentAttendanceId = id;
+async function viewAttendance(attendanceId) {
+    $('#attendanceModalBody').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Loading attendance details...</p></div>');
     $('#attendanceDetailsModal').modal('show');
     
     $.ajax({
-        url: `/dashboard/attendance/${id}`,
+        url: `/dashboard/attendance/${attendanceId}`,
         type: "GET",
-        success: function(attendance) {
+        success: async function(attendance) {
             let statusColor = statusColors[attendance.status] || '#6c757d';
             let crewColor = crewColors[attendance.crew_id] || '#3498db';
-            let date = moment(attendance.attendance_date).format('MMMM D, YYYY');
+            let adDate = moment(attendance.attendance_date).format('MMMM D, YYYY');
+            let bsDate = attendance.nepali_date || adDate;
             
             let html = `
                 <div class="container-fluid">
+                    <!-- Status Bar -->
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="d-flex justify-content-between align-items-center p-2" style="background: ${statusColor}20; border-left: 4px solid ${statusColor};">
                                 <span><strong>Status:</strong> ${attendance.status ? attendance.status.toUpperCase().replace('_', ' ') : 'N/A'}</span>
-                                <span class="badge" style="background: ${statusColor}; color: white;">
-                                    ${attendance.status ? attendance.status.replace('_', ' ') : 'N/A'}
-                                </span>
+                                <span class="badge" style="background: ${statusColor}; color: white;">${getStatusText(attendance.status)}</span>
                             </div>
                         </div>
                     </div>
                     
                     <div class="row">
+                        <!-- Crew Info -->
                         <div class="col-md-6 mb-3">
                             <div class="card h-100">
                                 <div class="card-header bg-light">
@@ -1006,14 +945,27 @@ function viewAttendance(id) {
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-sm table-borderless">
-                                         <tr><td style="width: 100px;"><strong>Name:</strong> <td><span style="display: inline-block; width: 12px; height: 12px; background: ${crewColor}; border-radius: 3px; margin-right: 5px;"></span>${attendance.crew?.user?.name || 'N/A'}</td></tr>
-                                        <tr><td><strong>Email:</strong> <td>${attendance.crew?.user?.email || 'N/A'}</td></tr>
-                                        <tr><td><strong>Phone:</strong> <td>${attendance.crew?.user?.phone || 'N/A'}</td></tr>
+                                         <tr>
+                                            <td style="width: 100px;"><strong>Name:</strong></td>
+                                            <td>
+                                                <span style="display: inline-block; width: 12px; height: 12px; background: ${crewColor}; border-radius: 3px; margin-right: 5px;"></span>
+                                                ${attendance.crew?.user?.name || attendance.crew_name || 'N/A'}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Email:</strong></td>
+                                            <td>${attendance.crew?.user?.email || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Phone:</strong></td>
+                                            <td>${attendance.crew?.user?.phone || 'N/A'}</td>
+                                        </tr>
                                     </table>
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- Attendance Details -->
                         <div class="col-md-6 mb-3">
                             <div class="card h-100">
                                 <div class="card-header bg-light">
@@ -1021,54 +973,188 @@ function viewAttendance(id) {
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-sm table-borderless">
-                                        <tr><td style="width: 100px;"><strong>Date:</strong> <td>${date}</td></tr>
-                                        <tr><td><strong>Salary Amount:</strong> <td>Rs. ${formatNumber(attendance.salary_amount)}</td></tr>
-                                        <tr><td><strong>Bonus:</strong> <td>Rs. ${formatNumber(attendance.bonus)}</td></tr>
-                                        <tr><td><strong>Deduction:</strong> <td>Rs. ${formatNumber(attendance.deduction)}</td></tr>
-                                        <tr><td><strong>Net Amount:</strong> <td><strong>Rs. ${formatNumber(attendance.net_amount)}</strong></td></tr>
-                                        ${attendance.remarks ? `<tr><td><strong>Remarks:</strong> <td>${attendance.remarks}</td></tr>` : ''}
+                                        <tr>
+                                            <td style="width: 100px;"><strong>AD Date:</strong></td>
+                                            <td>${adDate}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>BS Date:</strong></td>
+                                            <td class="nepali-date">${bsDate}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Salary:</strong></td>
+                                            <td>Rs. ${parseFloat(attendance.salary_amount || 0).toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Bonus:</strong></td>
+                                            <td>Rs. ${parseFloat(attendance.bonus || 0).toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Deduction:</strong></td>
+                                            <td>Rs. ${parseFloat(attendance.deduction || 0).toFixed(2)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Net Amount:</strong></td>
+                                            <td><strong>Rs. ${parseFloat(attendance.net_amount || 0).toFixed(2)}</strong></td>
+                                        </tr>
+                                        ${attendance.remarks ? `
+                                        <tr>
+                                            <td><strong>Remarks:</strong></td>
+                                            <td>${escapeHtml(attendance.remarks)}</td>
+                                        </tr>
+                                        ` : ''}
                                     </table>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
+                    </div>`;
+            
+            // Add Booking Info if exists
+            if (attendance.booking && attendance.booking.id) {
+                html += `
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-truck"></i> Related Booking</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td style="width: 120px;"><strong>Booking ID:</strong></td>
+                                            <td>#${attendance.booking.id}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Vehicle:</strong></td>
+                                            <td>${attendance.booking.vehicle_name || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Customer:</strong></td>
+                                            <td>${attendance.booking.customer_name || 'N/A'}</td>
+                                        </tr>
+                                        ${attendance.booking.start_date ? `
+                                        <tr>
+                                            <td><strong>Date Range:</strong></td>
+                                            <td>${attendance.booking.start_date} to ${attendance.booking.end_date}</td>
+                                        </tr>
+                                        ` : ''}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            
+            // Add Vehicle Moment Info if exists
+            if (attendance.vehicle_moment && attendance.vehicle_moment.id) {
+                html += `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-road"></i> Related Vehicle Moment</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td style="width: 120px;"><strong>Moment ID:</strong></td>
+                                            <td>#${attendance.vehicle_moment.id}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Vehicle:</strong></td>
+                                            <td>${attendance.vehicle_moment.vehicle_name || 'N/A'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Moment Type:</strong></td>
+                                            <td>${attendance.vehicle_moment.moment_type || 'N/A'}</td>
+                                        </tr>
+                                        ${attendance.vehicle_moment.moment_date ? `
+                                        <tr>
+                                            <td><strong>Date:</strong></td>
+                                            <td>${attendance.vehicle_moment.moment_date}</td>
+                                        </tr>
+                                        ` : ''}
+                                        ${attendance.vehicle_moment.description ? `
+                                        <tr>
+                                            <td><strong>Description:</strong></td>
+                                            <td>${attendance.vehicle_moment.description}</td>
+                                        </tr>
+                                        ` : ''}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            
+            html += `</div>`;
+            
             $('#attendanceModalBody').html(html);
+            $('#editAttendanceBtn').attr('href', `/dashboard/attendance/${attendance.id}/edit`);
         },
-        error: function() {
-            $('#attendanceModalBody').html('<div class="alert alert-danger">Error loading attendance details</div>');
+        error: function(xhr) {
+            console.error('Error loading attendance:', xhr);
+            let errorMsg = xhr.responseJSON?.message || 'Error loading attendance details';
+            $('#attendanceModalBody').html(`
+                <div class="alert alert-danger">
+                    <i class="fa fa-exclamation-triangle"></i> 
+                    ${errorMsg}
+                </div>
+            `);
         }
     });
 }
 
-function editAttendance(id) {
-    window.location.href = `/dashboard/attendance/${id}/edit`;
+function getStatusText(status) {
+    const texts = {
+        'present': 'Present',
+        'absent': 'Absent',
+        'half_day': 'Half Day',
+        'holiday': 'Holiday',
+        'leave': 'Leave'
+    };
+    return texts[status] || status;
+}
+
+function updateExportLink() {
+    let params = {
+        crew_id: $('#crewFilter').val(),
+        status: $('#statusFilter').val(),
+        start_date: $('#startDateFilter').val(),
+        end_date: $('#endDateFilter').val()
+    };
+    
+    Object.keys(params).forEach(key => {
+        if (!params[key]) {
+            delete params[key];
+        }
+    });
+    
+    $('#exportBtn').attr('href', "{{ route('admin.attendance.export') }}?" + $.param(params));
 }
 
 function deleteAttendance(id) {
-    if (confirm('Are you sure you want to delete this attendance record?')) {
+    if (confirm('Are you sure you want to delete this attendance record? This action cannot be undone.')) {
         $.ajax({
-            url: `/dashboard/attendance/${id}`,
+            url: '/dashboard/attendance/' + id,
             type: "DELETE",
-            data: { _token: "{{ csrf_token() }}" },
-            success: function() {
+            data: {
+                _token: "{{ csrf_token() }}"
+            },
+            success: function(response) {
                 toastr.success('Attendance deleted successfully');
+                $(`tr[data-attendance-id="${id}"]`).fadeOut(500, function() {
+                    $(this).remove();
+                });
                 if ($('#calendarView').is(':visible')) {
                     loadCalendarGrid();
-                } else {
-                    location.reload();
                 }
             },
-            error: function() {
-                toastr.error('Error deleting attendance');
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error deleting attendance');
             }
         });
     }
-}
-
-function formatNumber(num) {
-    return parseFloat(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 </script>
 @endsection

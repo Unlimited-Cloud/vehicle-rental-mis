@@ -87,11 +87,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             'get-trip-routes/{category}',
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
+
+        Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
+        Route::post('/vehicle-bookings/multiple/store', [VehicleBookingController::class, 'storeMultiple'])->name('vehicle_bookings.multiple.store');
+
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
             ]);
-        
+
         Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
         Route::resource('petrol_pumps', PetrolPumpController::class);
         Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
@@ -131,13 +135,14 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
         Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
         Route::resource('attendance', AttendanceController::class);
+        Route::resource('vehicle_assignments', VehicleAssignmentController::class);
     });
 
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
         Route::resource('vehicle_details', VehicleDetailsController::class);
 
-        Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+        // Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
         Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
             ->name('petrol_pumps.balance');
@@ -169,7 +174,6 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             Route::prefix('events')->group(function () {
                 Route::get('/recent', 'getRecentEvents')->name('events.recent');
             });
-
         });
     });
 });
