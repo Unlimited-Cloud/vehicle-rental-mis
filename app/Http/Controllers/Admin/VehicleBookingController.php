@@ -540,7 +540,7 @@ class VehicleBookingController extends Controller
             'bookings.*.sub_total' => 'nullable|numeric',
             'bookings.*.discount' => 'nullable|numeric',
             'bookings.*.tax' => 'nullable|numeric',
-            'bookings.*.file_no' => 'nullable|string',
+            // 'bookings.*.file_no' => 'nullable|string',
             'bookings.*.total_amount' => 'nullable|numeric',
             'bookings.*.paid_amount' => 'nullable|numeric',
         ]);
@@ -561,7 +561,7 @@ class VehicleBookingController extends Controller
                     'driver_id' => $request->driver_id,
                     'helper_id' => $request->helper_id,
                     'passenger' => $request->passenger,
-                    'file_no' =>  $bookingData['file_no'] ?? null,
+                    'file_no' =>  $request->file_no ?? null,
                     'signage_information' => $request->signage_information,
                     'trip_category_id' => $bookingData['trip_category_id'] ?? null,
                     'trip_route_id' => $bookingData['trip_route_id'] ?? null,

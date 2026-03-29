@@ -122,12 +122,12 @@
                                     </div>
                                 </div>
 
-                                {{-- <div class="col-md-4">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label>File No</label>
                                         <input type="text" name="file_no" id="file_no" class="form-control" placeholder="Enter file no">
                                     </div>
-                                </div> --}}
+                                </div>
 
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -164,12 +164,12 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            {{-- <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>File No</label>
                                                     <input type="text" name="bookings[1][file_no]" id="file_no" class="form-control" placeholder="Enter file no">
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Trip Category</label>
@@ -203,6 +203,18 @@
                                                                 <i class="fas fa-plus"></i>
                                                             </button>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Amount</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">रू</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" name="bookings[1][rate_per_day]" class="form-control rate-per-day" data-row="1" value="0">
                                                     </div>
                                                 </div>
                                             </div>
@@ -254,19 +266,9 @@
                                                 <h6>Financial Details - Booking #1</h6>
                                             </div>
 
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Rate Per Day</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][rate_per_day]" class="form-control rate-per-day" data-row="1" value="0">
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            
 
-                                            <div class="col-md-3">
+                                            {{-- <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label>Sub Total</label>
                                                     <div class="input-group">
@@ -276,7 +278,7 @@
                                                         <input type="number" step="0.01" name="bookings[1][sub_total]" class="form-control sub-total" data-row="1" readonly>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> --}}
 
                                             <div class="col-md-3">
                                                 <div class="form-group">
@@ -448,6 +450,8 @@
 $(document).ready(function() {
     const VAT_RATE = 0.13;
     let rowCounter = 1;
+    document.getElementById('start_date_1').value = new Date().toISOString().split('T')[0];
+    document.getElementById('end_date_1').value = new Date().toISOString().split('T')[0];
 
     // Calculate days between dates
     function calculateDays(startDate, endDate) {
@@ -630,12 +634,7 @@ $(document).ready(function() {
                 </div>
                 <div class="card-body">
                     <div class="row">
-                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label>File No</label>
-                                <input type="text" name="bookings[${rowCounter}][file_no]" class="form-control" placeholder="Enter file no">
-                            </div>
-                        </div>
+                       
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Trip Category</label>
