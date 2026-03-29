@@ -111,4 +111,33 @@ class TripRouteController extends Controller
     {
         return view('layouts.admin.trip_routes.upload'); // Blade file path
     }
+
+    public function storeAjax(Request $request)
+    {
+        $request->validate([
+            'trip_category_id' => 'required|exists:trip_categories,id',
+            'title' => 'required|max:255',
+        ]);
+
+        $route = TripRoute::create([
+            'trip_category_id' => $request->trip_category_id,
+            'title' => $request->title,
+            'km' => $request->km ?? 0,
+            'car_price' => $request->car_price ?? 0,
+            'hiace_price' => $request->hiace_price ?? 0,
+            'coaster_price' => $request->coaster_price ?? 0,
+            'bus_price' => $request->bus_price ?? 0,
+            'status' => 1
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'id' => $route->id,
+            'title' => $route->title
+        ]);
+    }
+    public function listAjax()
+    {
+        return TripRoute::select('id', 'title')->get();
+    }
 }

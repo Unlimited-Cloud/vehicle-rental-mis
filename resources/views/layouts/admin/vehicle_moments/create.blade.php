@@ -230,7 +230,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                    name="end_datetime"
                    class="form-control"
                    value="{{ \Carbon\Carbon::parse($booking->end_date)->format('Y-m-d\TH:i') }}"
-                   required>
+                   >
         </div>
     </div>
 
@@ -244,7 +244,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                    step="0.01" 
                    min="0"
                    placeholder="Enter ending kilometer"
-                   required>
+                   >
         </div>
     </div>
 

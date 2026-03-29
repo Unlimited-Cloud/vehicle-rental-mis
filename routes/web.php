@@ -32,28 +32,27 @@ use App\Http\Controllers\Admin\TripCategoryController;
 use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\AttendanceController;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
 require __DIR__ . '/auth.php';
 
-
-// Auth::routes();
-
-// Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
 Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+});
 
-    Route::prefix('dashboard')->name('admin.')->group(function () {
-        Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])
-            ->name('dashboard.data');
+Route::prefix('dashboard')->name('admin.')->group(function () {
+    Route::middleware(['auth', 'verified', 'gatedefine.middleware'])->group(function () {
+        Route::get('/dashboard/data', [DashboardController::class, 'getDashboardData'])->name('dashboard.data');
+        Route::post('/ajax/customers', [CustomerController::class, 'storeAjax'])->name('ajax.customers.store');
+        Route::get('/ajax/customers', [CustomerController::class, 'listAjax'])->name('ajax.customers.list');
+        Route::post('/ajax/trip-categories', [TripCategoryController::class, 'storeAjax'])->name('ajax.trip-categories.store');
+        Route::get('/ajax/trip-categories', [TripCategoryController::class, 'listAjax'])->name('ajax.trip-categories.list');
+        Route::post('/ajax/trip-routes', [TripRouteController::class, 'storeAjax'])->name('ajax.trip-routes.store');
+        Route::get('/ajax/trip-routes', [TripRouteController::class, 'listAjax'])->name('ajax.trip-routes.list');
         Route::resource('customers', CustomerController::class);
         Route::resource('vehicleowner', VehicleOwnerController::class);
         Route::prefix('user_roles')->group(function () {
@@ -88,10 +87,15 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
             'get-trip-routes/{category}',
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
+
+        Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
+        Route::post('/vehicle-bookings/multiple/store', [VehicleBookingController::class, 'storeMultiple'])->name('vehicle_bookings.multiple.store');
+
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
             ]);
+
         Route::get('/gps', [GpsDashboardController::class, 'index'])->name('gpsdashboard');
         Route::resource('petrol_pumps', PetrolPumpController::class);
         Route::resource('petrol_pump_transactions', PetrolPumpTransactionController::class);
@@ -105,8 +109,6 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
 
         Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
             ->name('receipt.index');
-
-
 
         Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
         Route::resource('email-templates', EmailTemplateController::class);
@@ -128,42 +130,50 @@ Route::namespace('App\Http\Controllers\Admin')->middleware(['auth', 'verified', 
         Route::resource('vehicle-repairs', VehicleRepairController::class);
         Route::resource('vehicle-tyre-changes', VehicleTyreChangeController::class);
         Route::resource('vendors', VendorController::class);
+        Route::post('attendance/convert-ad-to-bs', [AttendanceController::class, 'convertAdToBs'])->name('attendance.convert_ad_to_bs');
+        Route::post('attendance/convert-multiple-ad-to-bs', [AttendanceController::class, 'convertMultipleAdToBs'])->name('attendance.convert_multiple_ad_to_bs');
+        Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
+        Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
+        Route::resource('attendance', AttendanceController::class);
+        Route::resource('vehicle_assignments', VehicleAssignmentController::class);
     });
-});
+
+    Route::middleware(['auth'])->group(function () {
+        //Roles Route is here
+        Route::resource('vehicle_details', VehicleDetailsController::class);
+
+        // Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+
+        Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
+            ->name('petrol_pumps.balance');
+
+        // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
+        //     ->name('proforma.index');
+
+        Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
+            ->name('proforma.download');
 
 
-Route::namespace('App\Http\Controllers\Admin')->middleware(['auth'])->prefix('dashboard')->name('admin.')->group(function () {
-    //Roles Route is here
+        Route::get('vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
+            ->name('vehicle_receipt.download');
 
+        Route::get(
+            'vehicle-receipt/{moment}/{type}',
+            [ProformaInvoiceController::class, 'generateInvoice']
+        )->name('vehicle_receipt.generate');
 
-    Route::resource('vehicle_details', VehicleDetailsController::class);
+        Route::prefix('gpsdashboard')->name('gpsdashboard.')->controller(GpsDashboardController::class)->group(function () {
 
-    Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+            Route::get('/live-data', 'getLiveData')->name('live');
 
-    Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
-        ->name('petrol_pumps.balance');
+            Route::prefix('vehicle')->group(function () {
+                Route::get('/{imei}', 'getVehicleDetails')->name('vehicle.details');
+                Route::get('/{imei}/history', 'getVehicleHistory')->name('vehicle.history');
+            });
 
-    // Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
-    //     ->name('proforma.index');
-
-    Route::get('proforma-invoices/download/{id}', [ProformaInvoiceController::class, 'download'])
-        ->name('proforma.download');
-
-
-    Route::get('vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
-        ->name('vehicle_receipt.download');
-
-
-
-    Route::get(
-        'vehicle-receipt/{moment}/{type}',
-        [ProformaInvoiceController::class, 'generateInvoice']
-    )->name('vehicle_receipt.generate');
-
-
-    Route::get('/gpsdashboard/live-data', [GpsDashboardController::class, 'getLiveData'])->name('gpsdashboard.live');
-    Route::get('/gpsdashboard/vehicle/{imei}', [GpsDashboardController::class, 'getVehicleDetails'])->name('gpsdashboard.vehicle.details');
-    Route::get('/gpsdashboard/vehicle/{imei}/history', [GpsDashboardController::class, 'getVehicleHistory'])->name('gpsdashboard.vehicle.history');
-    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
-    Route::get('/gpsdashboard/events/recent', [GpsDashboardController::class, 'getRecentEvents'])->name('gpsdashboard.events.recent');
+            Route::prefix('events')->group(function () {
+                Route::get('/recent', 'getRecentEvents')->name('events.recent');
+            });
+        });
+    });
 });

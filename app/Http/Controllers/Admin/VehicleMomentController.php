@@ -84,7 +84,7 @@ class VehicleMomentController extends Controller
     {
         $request->validate([
             'start_km' => 'required|numeric|min:0',
-            'end_km' => 'required|numeric|gt:start_km',
+            'end_km' => 'nullable|numeric|gt:start_km',
         ], [
             'end_km.gt' => 'End KM must be greater than Start KM.',
         ]);
@@ -167,7 +167,7 @@ class VehicleMomentController extends Controller
     {
         $request->validate([
             'start_km' => 'required|numeric|min:0',
-            'end_km' => 'required|numeric|gt:start_km',
+            'end_km' => 'nullable|numeric|gt:start_km',
         ], [
             'end_km.gt' => 'End KM must be greater than Start KM.',
         ]);

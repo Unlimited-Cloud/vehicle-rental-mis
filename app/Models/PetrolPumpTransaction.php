@@ -66,10 +66,17 @@ class PetrolPumpTransaction extends Model
 
         static::creating(function ($transaction) {
             $date = now()->format('Ymd');
-            $lastTransaction = self::whereDate('created_at', today())->count();
-            $transaction->invoice_number = 'PPT-' . $date . '-' . str_pad($lastTransaction + 1, 4, '0', STR_PAD_LEFT);
+
+            $lastTransaction = self::whereDate('created_at', today())
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $lastId = $lastTransaction ? $lastTransaction->id : 0;
+
+            $transaction->invoice_number = 'PPT-' . $date . '-' . str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
         });
     }
+
 
     public function getTransactionTypeBadgeAttribute()
     {
@@ -81,8 +88,8 @@ class PetrolPumpTransaction extends Model
         ];
 
         $labels = [
-            'credit' => 'Credit (Inbound)',
-            'debit' => 'Debit (Outbound)',
+            'credit' => 'In',
+            'debit' => 'Out',
             'payment' => 'Payment',
             'payable' => 'Payable'
         ];

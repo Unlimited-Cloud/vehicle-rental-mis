@@ -39,6 +39,20 @@
 
             <div class="col-md-6">
                 <div class="form-group">
+                    <label>Activity UUID</label>
+                    <select name="activity_UUID" class="form-control">
+                        <option value="">Select Activity</option>
+                        @foreach($activities as $activity)
+                            <option value="{{ $activity->Uuid }}" {{ old('activity_UUID') == $activity->Uuid ? 'selected' : '' }}>
+                                {{ $activity->activity }} ({{ $activity->activity_for }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
                     <label>Activity *</label>
                     <input type="text" name="activity" class="form-control"
                            value="{{ old('activity') }}" required>
@@ -47,9 +61,9 @@
 
             <div class="col-md-6">
                 <div class="form-group">
-                    <label>Template For *</label>
+                    <label>Template For</label>
                     <input type="text" name="template_for" class="form-control"
-                           value="{{ old('template_for') }}" required>
+                           value="{{ old('template_for') }}">
                 </div>
             </div>
 
@@ -67,19 +81,7 @@
                 </div>
             </div> --}}
 
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Activity UUID</label>
-                    <select name="activity_UUID" class="form-control">
-                        <option value="">Select Activity</option>
-                        @foreach($activities as $activity)
-                            <option value="{{ $activity->Uuid }}" {{ old('activity_UUID') == $activity->Uuid ? 'selected' : '' }}>
-                                {{ $activity->activity }} ({{ $activity->activity_for }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+            
 
             <div class="col-md-6">
                 <div class="form-group">

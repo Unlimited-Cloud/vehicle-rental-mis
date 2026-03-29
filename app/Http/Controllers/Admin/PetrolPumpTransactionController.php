@@ -112,7 +112,7 @@ class PetrolPumpTransactionController extends Controller
             'pump_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
             'tank_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
             'tank_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
-            'driver_id' => 'nullable|exists:users,id',
+            'driver_id' => 'nullable|exists:crew_profiles,id',
         ]);
 
         // Calculate amount
@@ -216,7 +216,7 @@ class PetrolPumpTransactionController extends Controller
             'pump_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
             'tank_before' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
             'tank_after' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
-            'driver_id' => 'nullable|exists:users,id',
+            'driver_id' => 'nullable|exists:crew_profiles,id',
         ]);
 
         DB::transaction(function () use ($request, &$validated, $petrolPumpTransaction) {
