@@ -540,7 +540,7 @@ class VehicleBookingController extends Controller
             'bookings.*.sub_total' => 'nullable|numeric',
             'bookings.*.discount' => 'nullable|numeric',
             'bookings.*.tax' => 'nullable|numeric',
-            // 'bookings.*.file_no' => 'nullable|string',
+            'bookings.*.status' => 'nullable|string',
             'bookings.*.total_amount' => 'nullable|numeric',
             'bookings.*.paid_amount' => 'nullable|numeric',
         ]);
