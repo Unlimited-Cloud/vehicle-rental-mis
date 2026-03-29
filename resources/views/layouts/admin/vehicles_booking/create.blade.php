@@ -205,16 +205,20 @@
                             </div>
                         </div>
 
-                       <div class="col-md-3">
-                            <div class="form-group">
-                                <label>End Date <span class="text-danger">*</span></label>
+                      <!-- Alternative: Simple icon button version -->
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label>End Date <span class="text-danger">*</span></label>
+                            <div class="input-group">
                                 @php
                                     // Set default value to today if no session data or old input is present
                                     $endDateValue = session('warning_message') && session('end_date') ? session('end_date') : old('end_date', $booking->end_date ?? $end ?? date('Y-m-d'));
                                 @endphp
                                 <input type="date" id="end_date" name="end_date" value="{{ $endDateValue }}" class="form-control" required>
+                            
                             </div>
                         </div>
+                    </div>
 
                         {{-- <div class="col-md-2">
                             <div class="form-group">
@@ -502,6 +506,27 @@ $(document).ready(function() {
         }
         return 0;
     }
+
+    // Copy start date to end date
+    $('#start_date').change(function() {
+    var startDate = $('#start_date').val();
+    if (startDate) {
+        $('#end_date').val(startDate);
+        // Trigger change event to recalculate totals
+        $('#end_date').trigger('change');
+        
+        // Optional: Show success message
+        var btn = $(this);
+        var originalHtml = btn.html();
+        btn.html('<i class="fas fa-check"></i>');
+        setTimeout(function() {
+            btn.html(originalHtml);
+        }, 1000);
+    } else {
+        // Show warning if start date is empty
+        alert('Please select a start date first');
+    }
+    });
 
     // Function to calculate days from hours
    function calculateDays() {
@@ -948,6 +973,12 @@ $('#saveRoute').click(function () {
 }
 hr {
     border-top: 2px solid rgba(0,0,0,.1);
+}
+
+.btn-same-date {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
 }
 </style>
 @endsection

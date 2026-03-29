@@ -122,12 +122,12 @@
                                     </div>
                                 </div>
 
-                                {{-- <div class="col-md-4">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label>File No</label>
                                         <input type="text" name="file_no" id="file_no" class="form-control" placeholder="Enter file no">
                                     </div>
-                                </div> --}}
+                                </div>
 
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -164,12 +164,12 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-4">
+                                            {{-- <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>File No</label>
                                                     <input type="text" name="bookings[1][file_no]" id="file_no" class="form-control" placeholder="Enter file no">
                                                 </div>
-                                            </div>
+                                            </div> --}}
                                             <div class="col-md-4">
                                                 <div class="form-group">
                                                     <label>Trip Category</label>
@@ -203,6 +203,18 @@
                                                                 <i class="fas fa-plus"></i>
                                                             </button>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Amount</label>
+                                                    <div class="input-group">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">रू</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" name="bookings[1][rate_per_day]" class="form-control rate-per-day" data-row="1" value="0">
                                                     </div>
                                                 </div>
                                             </div>
@@ -249,24 +261,25 @@
                                                 </div>
                                             </div>
 
+                                              <div class="col-md-3">
+                                                <div class="form-group">
+                                                    <label>Status</label>
+                                                    <select name="bookings[1][status]" class="form-control status-type" data-row="1">
+                                                        <option value="confirmed">Confirmed</option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="cancelled">Cancelled</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
                                             <div class="col-md-12">
                                                 <hr>
                                                 <h6>Financial Details - Booking #1</h6>
                                             </div>
 
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Rate Per Day</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][rate_per_day]" class="form-control rate-per-day" data-row="1" value="0">
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            
 
-                                            <div class="col-md-3">
+                                            {{-- <div class="col-md-3">
                                                 <div class="form-group">
                                                     <label>Sub Total</label>
                                                     <div class="input-group">
@@ -276,7 +289,7 @@
                                                         <input type="number" step="0.01" name="bookings[1][sub_total]" class="form-control sub-total" data-row="1" readonly>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> --}}
 
                                             <div class="col-md-3">
                                                 <div class="form-group">
@@ -448,6 +461,11 @@
 $(document).ready(function() {
     const VAT_RATE = 0.13;
     let rowCounter = 1;
+  function setDefaultDates(rowId) {
+    var today = new Date().toISOString().split('T')[0];
+    $(`#start_date_${rowId}`).val(today);
+    $(`#end_date_${rowId}`).val(today);
+}
 
     // Calculate days between dates
     function calculateDays(startDate, endDate) {
@@ -464,6 +482,9 @@ $(document).ready(function() {
         }
         return 0;
     }
+
+    
+
 
     // Calculate total for a specific row
     function calculateRowTotal(rowId) {
@@ -523,7 +544,7 @@ $(document).ready(function() {
     // Attach event handlers for a specific row
     function attachRowEventHandlers(rowId) {
         console.log(`Attaching event handlers for row ${rowId}`);
-        
+        setDefaultDates(rowId);
         // Date change handlers
         $(`#start_date_${rowId}`).off('change').on('change', function() {
             console.log(`Start date changed for row ${rowId}`);
@@ -535,6 +556,13 @@ $(document).ready(function() {
             calculateRowTotal(rowId);
         });
         
+          $(`#start_date_${rowId}`).off('change').on('change', function() {
+            var startDate = $(this).val();
+            if (startDate) {
+                $(`#end_date_${rowId}`).val(startDate);
+                $(`#end_date_${rowId}`).trigger('change');
+            }
+        });
         // Rate per day change
         $(`input[name="bookings[${rowId}][rate_per_day]"]`).off('change keyup').on('change keyup', function() {
             console.log(`Rate per day changed for row ${rowId}`);
@@ -630,12 +658,7 @@ $(document).ready(function() {
                 </div>
                 <div class="card-body">
                     <div class="row">
-                         <div class="col-md-4">
-                            <div class="form-group">
-                                <label>File No</label>
-                                <input type="text" name="bookings[${rowCounter}][file_no]" class="form-control" placeholder="Enter file no">
-                            </div>
-                        </div>
+                       
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Trip Category</label>
@@ -669,6 +692,17 @@ $(document).ready(function() {
                                             <i class="fas fa-plus"></i>
                                         </button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Amount</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">रू</span>
+                                    </div>
+                                    <input type="number" step="0.01" name="bookings[${rowCounter}][rate_per_day]" class="form-control rate-per-day" data-row="${rowCounter}" value="0">
                                 </div>
                             </div>
                         </div>
@@ -715,34 +749,25 @@ $(document).ready(function() {
                             </div>
                         </div>
 
+                         <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select name="bookings[${rowCounter}][status]" class="form-control vat" data-row="${rowCounter}">
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="col-md-12">
                             <hr>
                             <h6>Financial Details - Booking #${rowCounter}</h6>
                         </div>
 
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Rate Per Day</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][rate_per_day]" class="form-control rate-per-day" data-row="${rowCounter}" value="0">
-                                </div>
-                            </div>
-                        </div>
+                        
 
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Sub Total</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][sub_total]" class="form-control sub-total" data-row="${rowCounter}" readonly>
-                                </div>
-                            </div>
-                        </div>
+                        
 
                         <div class="col-md-3">
                             <div class="form-group">
