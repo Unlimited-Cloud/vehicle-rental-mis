@@ -12,7 +12,7 @@
                     </div>
                     <div>
                         <h5 class="m-0 font-weight-bold text-dark">
-                            Welcome to <span class="text-primary">Vehicle Rental Pvt Ltd</span>
+                            Welcome to <span class="text-primary">ASHIYANA VEHICLE SERVICE PVT. LTD</span>
                         </h5>
                         <small class="text-muted" style="font-size: 0.8rem;">
                             Dashboard overview & system insights
@@ -190,14 +190,14 @@
                             <table class="table table-hover table-striped table-sm mb-0">
                                 <thead class="bg-light">
                                     <tr>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">#</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">Vehicle</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">Customer</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">From</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">To</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">Start Date</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">End Date</th>
-                                        <th style="font-size: 0.75rem; font-weight: 600;">Status</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">#</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Vehicle</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Customer</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Route</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Start Date</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">End Date</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Total Amount</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -208,15 +208,15 @@
                                                           ($booking->status == 'pending' ? 'warning' : 'danger');
                                         @endphp
                                         <tr>
-                                            <td style="font-size: 0.75rem;">{{ $index + 1 }}</td>
-                                            <td style="font-size: 0.75rem;">{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
-                                            <td style="font-size: 0.75rem;">{{ $booking->customer->name ?? 'N/A' }}</td>
-                                            <td style="font-size: 0.75rem;">{{ $booking->from_destination ?? '-' }}</td>
-                                            <td style="font-size: 0.75rem;">{{ $booking->to_destination ?? '-' }}</td>
-                                            <td style="font-size: 0.75rem;">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
-                                            <td style="font-size: 0.75rem;">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
+                                            <td style="font-size: 0.9rem;">{{ $index + 1 }}</td>
+                                            <td style="font-size: 0.9rem;">{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
+                                            <td style="font-size: 0.9rem;">{{ $booking->customer->name ?? 'N/A' }}</td>
+                                            <td style="font-size: 0.9rem;">{{ $booking->tripRoute->title ?? 'N/A' }}</td>
+                                            <td style="font-size: 0.9rem;">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
+                                            <td style="font-size: 0.9rem;">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
+                                            <td style="font-size: 0.9rem;">{{ $booking->total_amount ?? 'N/A' }}</td>
                                             <td>
-                                                <span class="badge badge-{{ $statusColor }}" style="font-size: 0.65rem; padding: 3px 6px;">
+                                                <span class="badge badge-{{ $statusColor }}" style="font-size: 0.9rem; padding: 3px 6px;">
                                                     {{ ucfirst($booking->status) }}
                                                 </span>
                                             </td>
@@ -224,7 +224,7 @@
                                     @endforeach
                                     @else
                                         <tr>
-                                            <td colspan="8" class="text-center py-2" style="font-size: 0.75rem;">
+                                            <td colspan="8" class="text-center py-2" style="font-size: 0.9rem;">
                                                 <i class="fas fa-info-circle mr-1"></i>No recent bookings found
                                             </td>
                                         </tr>
@@ -234,7 +234,7 @@
                         </div>
                     </div>
                     <div class="card-footer text-right p-2">
-                        <a href="{{ route('admin.vehicle_bookings.index') }}" class="btn btn-sm btn-primary" style="font-size: 0.7rem; padding: 3px 8px;">
+                        <a href="{{ route('admin.vehicle_bookings.index') }}" class="btn btn-sm btn-primary" style="font-size: 0.9rem; padding: 3px 8px;">
                             View All Bookings <i class="fas fa-arrow-right ml-1"></i>
                         </a>
                     </div>
@@ -288,10 +288,9 @@
 </div>
 
 <!-- ================= CHARTS ================= -->
-<!-- ================= CHARTS ================= -->
 <div class="row">
     <!-- Booking Trends -->
-    <div class="col-md-8 mb-3">
+    <div class="col-12 mb-3">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-2">
                 <small class="font-weight-bold text-muted">
@@ -304,16 +303,15 @@
         </div>
     </div>
 
-    <!-- Status Pie -->
-    <div class="col-md-4 mb-3">
+    <div class="col-12 mb-3">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white border-0 py-2">
                 <small class="font-weight-bold text-muted">
-                    <i class="fas fa-chart-pie mr-1 text-success"></i>Status
+                    <i class="fas fa-coins mr-1 text-success"></i>Revenue Trends
                 </small>
             </div>
             <div class="card-body p-2">
-                <canvas id="bookingStatusChart" height="200"></canvas>
+                <canvas id="revenueTrendChart" height="200"></canvas>
             </div>
         </div>
     </div>
@@ -346,8 +344,6 @@
         </div>
     </div>
 </div>
-
-
 
         <!-- Quick Actions -->
         <div class="row mt-2">
@@ -492,7 +488,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-let trendChart, statusChart, customerChart, vehicleChart, utilizationChart;
+let trendChart, statusChart, customerChart, vehicleChart, utilizationChart,revenueChart;
 
 function fetchDashboard() {
     const range = document.getElementById('range').value;
@@ -505,6 +501,9 @@ function fetchDashboard() {
             // 📈 Trends
             const trendLabels = data.trends.length ? data.trends.map(i => i.date) : ['No Data'];
             const trendData = data.trends.length ? data.trends.map(i => i.total) : [0];
+            const trendRevenue = data.trends.length ? data.trends.map(i => i.total_amount) : [0];
+
+
 
             if (trendChart) trendChart.destroy();
             trendChart = new Chart(document.getElementById('bookingTrendChart'), {
@@ -531,18 +530,56 @@ function fetchDashboard() {
                         legend: { display: false },
                         tooltip: { enabled: true }
                     },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { display: false },
-                            ticks: { stepSize: 1, font: { size: 8 } }
+                   scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false }
                         },
-                        x: { 
-                            grid: { display: false },
-                            ticks: { maxRotation: 0, font: { size: 7 } }
+                        x: {
+                            grid: { display: false }
                         }
                     },
                     layout: { padding: { top: 5, bottom: 5 } }
+                }
+            });
+
+
+            if (revenueChart) revenueChart.destroy();
+
+            revenueChart = new Chart(document.getElementById('revenueTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Revenue',
+                        data: trendRevenue,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `Rs. ${ctx.raw}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { display: false }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
                 }
             });
 
@@ -614,14 +651,14 @@ function fetchDashboard() {
                             grid: { display: false, drawBorder: false },
                             ticks: { 
                                 stepSize: 1, 
-                                font: { size: 7 },
+                                font: { size: 10 },
                                 maxTicksLimit: 3
                             },
                             border: { display: false }
                         },
                         x: { 
                             grid: { display: false, drawBorder: false },
-                            ticks: { font: { size: 7 } },
+                            ticks: { font: { size: 10 } },
                             border: { display: false }
                         }
                     },
@@ -670,14 +707,14 @@ function fetchDashboard() {
                             grid: { display: false, drawBorder: false },
                             ticks: { 
                                 stepSize: 1, 
-                                font: { size: 7 },
+                                font: { size: 10 },
                                 maxTicksLimit: 3
                             },
                             border: { display: false }
                         },
                         x: { 
                             grid: { display: false, drawBorder: false },
-                            ticks: { font: { size: 7 } },
+                            ticks: { font: { size: 10 } },
                             border: { display: false }
                         }
                     },
