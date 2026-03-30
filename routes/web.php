@@ -98,6 +98,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
         Route::post('vehicle-bookings/multiple-store', [VehicleBookingController::class, 'multipleStore'])->name('vehicle_bookings.multiple.store');
 
+
+        Route::get('/invoice/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalInvoice']);
+        Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'

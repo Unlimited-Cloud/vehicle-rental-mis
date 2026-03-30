@@ -66,5 +66,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
 });
 
-
+Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
