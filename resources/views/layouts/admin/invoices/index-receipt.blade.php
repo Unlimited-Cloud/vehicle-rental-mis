@@ -9,6 +9,47 @@
 
 <section class="content">
 <div class="container-fluid">
+
+{{-- NEW SECTION: Generate Invoice by File Number --}}
+<div class="card card-primary card-outline mb-4">
+    <div class="card-header">
+        <h3 class="card-title">Generate Invoice by File Number</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Select File Number</label>
+                    <select id="file_no_select" class="form-control">
+                        <option value="">-- Select File Number --</option>
+                        @php
+                            $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
+                                ->distinct()
+                                ->orderBy('file_no', 'desc')
+                                ->pluck('file_no');
+                        @endphp
+                        @foreach($fileNumbers as $fileNo)
+                            <option value="{{ $fileNo }}">{{ $fileNo }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div>
+                       <button type="button" id="generateInvoiceBtn" class="btn btn-success">
+                            <i class="fas fa-file-invoice"></i> Generate Invoice
+                        </button>
+                        <span id="invoiceStatus" class="ml-2"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- EXISTING RECEIPTS TABLE --}}
 <div class="card card-primary card-outline card-tabs">
 <div class="card-body">
 
@@ -20,12 +61,11 @@
             <tr>
                 <th>S.N.</th>
                 <th>Receipt No.</th>
-                <th>Booking ID</th>
-                <th>Vehicle</th>
+                <th>File No.</th>
+                {{-- <th>Vehicle</th> --}}
                 <th>Customer</th>
-                <th>Days</th>
                 <th>Total Amount</th>
-                <th>Invoice Type</th>
+                {{-- <th>Invoice Type</th> --}}
                 <th>Generated Date</th>
                 <th>Action</th>
             </tr>
@@ -36,20 +76,19 @@
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $receipt->receipt_number }}</td>
                 <td>
-                    <a href="{{ route('admin.vehicle_bookings.show', $receipt->vehicle_booking_id) }}" 
-                    class="text-primary" 
-                    title="View Booking Details">
-                        #{{ $receipt->vehicle_booking_id }}
-                    </a>
+                    @if($receipt->file_no)
+                        <span class="badge badge-info">{{ $receipt->file_no }}</span>
+                    @else
+                        <span class="text-muted">N/A</span>
+                    @endif
                 </td>
-                {{-- <td>#{{ $receipt->vehicle_booking_id }}</td> --}}
-                <td>
+                {{-- <td>
                     @if($receipt->vehicle)
                         {{ $receipt->vehicle->vehicle_name ?? $receipt->vehicle->name ?? 'N/A' }}
                     @else
-                        Vehicle ID: {{ $receipt->vehicle_id }}
+                        <span class="text-muted">Multiple Vehicles</span>
                     @endif
-                </td>
+                </td> --}}
                 <td>
                     @if($receipt->customer)
                         {{ $receipt->customer->name ?? $receipt->customer->customer_name ?? 'N/A' }}
@@ -57,37 +96,45 @@
                         Customer ID: {{ $receipt->customer_id }}
                     @endif
                 </td>
-                <td>{{ $receipt->days }}</td>
                 <td>रू {{ number_format($receipt->total_amount, 2) }}</td>
-                <td>
-                    @if($receipt->invoice_type == 'vat')
-                        <span class="badge badge-success">VAT</span>
+                {{-- <td>
+                    @if($receipt->invoice_type == 'credit' || $receipt->invoice_type == 'vat')
+                        <span class="badge badge-success">Credit</span>
                     @else
                         <span class="badge badge-secondary">Non VAT</span>
                     @endif
-                </td>
+                </td> --}}
                 <td>{{ $receipt->created_at->format('Y-m-d H:i') }}</td>
                 <td>
                     @if($receipt->pdf_path && file_exists(public_path($receipt->pdf_path)))
                         <a href="{{ route('admin.vehicle_receipt.download', $receipt->id) }}" 
                            class="btn btn-sm btn-primary" 
+                        title="Download" 
                            target="_blank">
-                            <i class="fas fa-download"></i> Download PDF
+                            <i class="fas fa-download"></i>
                         </a>
                         
                         <a href="{{ asset($receipt->pdf_path) }}" 
                            class="btn btn-sm btn-info" 
+                           title="View" 
                            target="_blank">
-                            <i class="fas fa-eye"></i> View
+                            <i class="fas fa-eye"></i>
                         </a>
+                         @if($receipt->file_no)
+                        <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
+        class="btn btn-sm btn-warning" title="Regenerate">
+                            <i class="fas fa-sync"></i> 
+                        </button>
+                        @endif
                     @else
                         <span class="badge badge-danger">File Missing</span>
                         
-                        <!-- Option to regenerate if needed -->
-                        <a href="{{ route('admin.vehicle_receipt.generate', [$receipt->vehicle_moment_id, $receipt->invoice_type]) }}" 
-                           class="btn btn-sm btn-warning">
+                        @if($receipt->file_no)
+                        <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
+        class="btn btn-sm btn-warning">
                             <i class="fas fa-sync"></i> Regenerate
-                        </a>
+                        </button>
+                        @endif
                     @endif
                 </td>
             </tr>
@@ -102,19 +149,126 @@
 </section>
 @endsection
 
-@push('scripts')
+{{-- @push('scripts') --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
+$(document).ready(function () {
+
     $('#dataTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-        "order": [[0, 'desc']] // Sort by S.N. descending (newest first)
+      order: [[5, 'desc']]
     });
+
+    // GENERATE INVOICE
+    $('#generateInvoiceBtn').on('click', function () {
+        console.log("here");
+
+        let fileNo = $('#file_no_select').val();
+
+        if (!fileNo) {
+            alert('Please select a file number');
+            return;
+        }
+
+        let btn = $(this);
+
+        btn.prop('disabled', true)
+           .html('<i class="fas fa-spinner fa-spin"></i> Generating...');
+
+        $('#invoiceStatus').html('<span class="text-info">Generating invoice...</span>');
+
+        $.ajax({
+            url: "{{ url('/api/invoice/generate') }}",
+            method: "POST",
+            data: {
+                file_no: fileNo,
+                _token: "{{ csrf_token() }}"
+            },
+            xhrFields: {
+                responseType: 'blob'
+            },
+
+            success: function (blob, status, xhr) {
+
+                let disposition = xhr.getResponseHeader('Content-Disposition');
+                let fileName = 'invoice-' + fileNo + '.pdf';
+
+                if (disposition && disposition.includes('filename=')) {
+                    fileName = disposition.split('filename=')[1].replace(/"/g, '');
+                }
+
+                let url = window.URL.createObjectURL(blob);
+                let a = document.createElement('a');
+
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+
+                window.URL.revokeObjectURL(url);
+                a.remove();
+
+                $('#invoiceStatus').html('<span class="text-success">Invoice generated!</span>');
+
+                setTimeout(() => location.reload(), 1500);
+            },
+
+            error: function (xhr) {
+                console.error(xhr.responseText);
+
+                $('#invoiceStatus').html('<span class="text-danger">Error generating invoice</span>');
+                btn.prop('disabled', false)
+                   .html('<i class="fas fa-file-invoice"></i> Generate Invoice');
+            }
+        });
+    });
+
 });
+
+
+/* ===========================
+   REGENERATE (GLOBAL FUNCTION)
+=========================== */
+function regenerateByFileNo(fileNo) {
+
+    if (!confirm('This will regenerate invoice. Continue?')) return;
+
+    $('#invoiceStatus').html('<span class="text-warning">Regenerating...</span>');
+
+    $.ajax({
+        url: "{{ url('/api/invoice/regenerate') }}",
+        method: "POST",
+        data: {
+            file_no: fileNo,
+            _token: "{{ csrf_token() }}"
+        },
+        xhrFields: {
+            responseType: 'blob'
+        },
+
+        success: function (blob) {
+
+            let url = window.URL.createObjectURL(blob);
+            let a = document.createElement('a');
+
+            a.href = url;
+            a.download = 'invoice-' + fileNo + '.pdf';
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+            $('#invoiceStatus').html('<span class="text-success">Invoice regenerated!</span>');
+
+            setTimeout(() => location.reload(), 1500);
+        },
+
+        error: function (xhr) {
+            console.error(xhr.responseText);
+            $('#invoiceStatus').html('<span class="text-danger">Regeneration failed</span>');
+        }
+    });
+}
 </script>
-@endpush
+{{-- @endpush --}}
