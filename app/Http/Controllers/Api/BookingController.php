@@ -393,14 +393,17 @@ class BookingController extends Controller
     {
         $items = [];
         foreach ($bookings as $index => $booking) {
-            $routeName = $booking->tripRoute ? $booking->tripRoute->name : 'Transportation Service';
+            $routeName = $booking->tripRoute ? $booking->tripRoute->title : 'Transportation Service';
             $vehicleName = $booking->vehicle ? $booking->vehicle->vehicle_name : 'Vehicle';
             $date = $booking->start_date
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
             // Get the actual service description from booking notes if available
-            $description = $booking->notes ?: "{$routeName} By {$vehicleName}";
+            $description = "{$routeName} By {$vehicleName}";
+            if ($date) {
+                $description .= " on {$date}";
+            }
 
             $items[] = [
                 'sn' => $index + 1,
