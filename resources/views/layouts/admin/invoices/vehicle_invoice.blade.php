@@ -208,56 +208,66 @@
         </tr>
         </thead>
 
-        <tbody>
-        @foreach($items as $item)
-            <tr>
-                <td align="center">{{ $item['sn'] }}</td>
-                <td>{{ $item['hs_code'] }}</td>
-                <td>{{ $item['particular'] }}</td>
-                <td align="center">{{ $item['qty'] }} {{ $item['qty_type'] }}</td>
-                <td align="right">{{ number_format($item['rate'],2) }}</td>
-                <td align="right">{{ number_format($item['amount'],2) }}</td>
-            </tr>
-        @endforeach
-        </tbody>
+ <tbody>
+
+@foreach($items as $item)
+<tr>
+    <td align="center">{{ $item['sn'] }}</td>
+    <td>{{ $item['hs_code'] }}</td>
+    <td>{{ $item['particular'] }}</td>
+    <td align="center">{{ $item['qty'] }} {{ $item['qty_type'] }}</td>
+    <td align="right">{{ number_format($item['rate'],2) }}</td>
+    <td align="right">{{ number_format($item['amount'],2) }}</td>
+</tr>
+@endforeach
+
+{{-- EMPTY SPACE --}}
+<tr>
+    <td colspan="6" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 14px;">&nbsp;</td>
+</tr>
+
+
+{{-- PRINTING DATE ROW --}}
+{{-- TOTALS & PRINTING DATE --}}
+<tr>
+    <!-- LEFT SIDE: Printing Date & In Words -->
+    <td colspan="4" rowspan="5" style="padding: 4px; vertical-align: top;">
+        <div><b>Printing Date & Time :</b> {{ $printing_time }}</div>
+        <div style="margin-top:5px;"><b>In Words :</b> {{ $amount_in_words }}</div>
+    </td>
+
+    <!-- RIGHT SIDE: Basic Amount -->
+    <td style="border: 1px solid #000; padding: 4px;">Basic Amount</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($sub_total,2) }}</td>
+</tr>
+<tr>
+    <!-- RIGHT SIDE: Discount -->
+    <td style="border: 1px solid #000; padding: 4px;">Discount</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($discount,2) }}</td>
+</tr>
+<tr>
+    <!-- RIGHT SIDE: Taxable Value -->
+    <td style="border: 1px solid #000; padding: 4px;">Taxable Value</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($sub_total - $discount,2) }}</td>
+</tr>
+<tr>
+    <!-- RIGHT SIDE: VAT -->
+    <td style="border: 1px solid #000; padding: 4px;">Vat {{ $vat_percentage }} %</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($tax,2) }}</td>
+</tr>
+<tr>
+    <!-- RIGHT SIDE: Net Amount -->
+    <td style="border: 1px solid #000; padding: 4px;"><b>Net Amount</b></td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right"><b>{{ number_format($net_amount,2) }}</b></td>
+</tr>
+
+</tbody>
     </table>
 
-    <!-- TOTALS -->
-    <table class="totals">
-        <tr>
-            <td><b>Basic Amount</b></td>
-            <td align="right">{{ number_format($sub_total,2) }}</td>
-        </tr>
-        <tr>
-            <td><b>Discount</b></td>
-            <td align="right">{{ number_format($discount,2) }}</td>
-        </tr>
-        <tr>
-            <td><b>Taxable value</b></td>
-            <td align="right">{{ number_format($sub_total - $discount,2) }}</td>
-        </tr>
-        <tr>
-            <td><b>Vat {{ $vat_percentage }} %</b></td>
-            <td align="right">{{ number_format($tax,2) }}</td>
-        </tr>
-        <tr>
-            <td><b>Net Amount</b></td>
-            <td align="right"><b>{{ number_format($net_amount,2) }}</b></td>
-        </tr>
-    </table>
+   
 
     <div style="clear: both;"></div>
 
-    <!-- FOOTER -->
-   <div class="footer">
-    <div>
-        <b>Printing Date & Time :</b> {{ $printing_time }}
-    </div>
-
-    <div style="margin-top:5px;">
-        In Words : {{ $amount_in_words }}
-    </div>
-</div>
 
     <!-- SIGNATURE -->
     <table width="100%" class="signature" style="margin-top:50px;">
