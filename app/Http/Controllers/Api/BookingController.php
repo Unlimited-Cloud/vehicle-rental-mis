@@ -20,6 +20,7 @@ use App\Models\VehicleReceipt;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
+use Carbon\Carbon;
 
 class BookingController extends Controller
 {
@@ -325,7 +326,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'customer' => $customer,
             'file_no' => $request->file_no,
-            'invoice_date' => now(),
+            'invoice_date' => Carbon::now('Asia/Kathmandu')->format('m/d/Y'),
             'miti_date' => $this->convertToNepaliDate(now()),
             'amount_in_words' => $this->convertNumberToWords($net_amount),
             'items' => $this->prepareInvoiceItems($bookings),
@@ -340,7 +341,7 @@ class BookingController extends Controller
             'company_address' => 'Jwagal-10 Lalitpur, Nepal',
             'company_phone' => '602439925',
             'company_email' => 'e-account@ashivana.com.np',
-            'printing_time' => now()->format('m/d/Y h:i:s A'),
+            'printing_time' => Carbon::now('Asia/Kathmandu')->format('m/d/Y h:i:s A'),
         ];
 
         // Save receipt to database
