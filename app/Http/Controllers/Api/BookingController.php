@@ -353,6 +353,7 @@ class BookingController extends Controller
             'customer_id' => $customer ? $customer->id : null,
             'receipt_number' => $receipt_number,
             'invoice_type' => 'vat',
+            'rate_per_day' => $sub_total,
             'sub_total' => $sub_total,
             'discount' => $discount,
             'tax' => $tax,
@@ -556,5 +557,28 @@ class BookingController extends Controller
         $month = $monthMap[$monthName] ?? '00';
 
         return "{$day}/{$month}/{$year}";
+    }
+
+    /**
+     * API endpoint to regenerate invoice
+     */
+    public function apiRegenerateInvoice(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string',
+        ]);
+
+        // Delete existing receipt
+        $existingReceipt = VehicleReceipt::where('file_no', $request->file_no)->first();
+        if ($existingReceipt) {
+            // Delete old PDF file from public folder
+            if ($existingReceipt->pdf_path && file_exists(public_path($existingReceipt->pdf_path))) {
+                unlink(public_path($existingReceipt->pdf_path));
+            }
+            $existingReceipt->delete();
+        }
+
+        // Generate new invoice
+        return $this->apiGenerateInvoice($request);
     }
 }

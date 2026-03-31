@@ -126,8 +126,14 @@ class DashboardController extends Controller
         }
 
         // 📈 Trends
+        // $trends = (clone $query)
+        //     ->selectRaw('DATE(start_date) as date, COUNT(*) as total')
+        //     ->groupBy('date')
+        //     ->orderBy('date')
+        //     ->get();
+
         $trends = (clone $query)
-            ->selectRaw('DATE(start_date) as date, COUNT(*) as total')
+            ->selectRaw('DATE(start_date) as date, COUNT(*) as total, SUM(total_amount) as total_amount')
             ->groupBy('date')
             ->orderBy('date')
             ->get();

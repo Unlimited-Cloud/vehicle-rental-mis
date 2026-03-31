@@ -83,6 +83,7 @@ class ProformaInvoiceController extends Controller
             return redirect()->back()->with('error', 'PDF file not found in database.');
         }
 
+        // Check in public/uploads/invoices path
         $filePath = public_path($receipt->pdf_path);
 
         if (!File::exists($filePath)) {
@@ -94,7 +95,6 @@ class ProformaInvoiceController extends Controller
             'Content-Type' => 'application/pdf',
         ]);
     }
-
 
 
     public function generateInvoice($momentId, $type)
@@ -402,5 +402,62 @@ class ProformaInvoiceController extends Controller
         // This is a simplified version
         // You should implement proper Nepali date conversion or use a library
         return $date->format('d/m/Y');
+    }
+
+
+
+
+
+
+    /**
+     * Get bookings by file number for preview
+     */
+    public function getBookingsByFileNo($file_no)
+    {
+        $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('file_no', $file_no)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No bookings found'
+            ]);
+        }
+
+        $customer = $bookings->first()->customer;
+        $sub_total = $bookings->sum('sub_total');
+        $discount = $bookings->sum('discount');
+        $tax = $bookings->sum('tax');
+        $net_amount = $sub_total - $discount + $tax;
+
+        $items = [];
+        foreach ($bookings as $index => $booking) {
+            $routeName = $booking->tripRoute ? $booking->tripRoute->name : 'Transportation Service';
+            $vehicleName = $booking->vehicle ? $booking->vehicle->vehicle_name : 'Vehicle';
+            $date = $booking->start_date ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y') : '';
+
+            $items[] = [
+                'sn' => $index + 1,
+                'particular' => "{$routeName} By {$vehicleName} On {$date}",
+                'qty' => $booking->passenger ?: 1,
+                'rate' => $booking->sub_total,
+                'amount' => $booking->sub_total,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'file_no' => $file_no,
+            'customer_name' => $customer ? $customer->name : 'N/A',
+            'customer_pan' => $customer ? $customer->pan_number : '',
+            'customer_address' => $customer ? $customer->address : '',
+            'items' => $items,
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'net_amount' => $net_amount,
+            'total_bookings' => $bookings->count()
+        ]);
     }
 }
