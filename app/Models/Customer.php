@@ -54,4 +54,9 @@ class Customer extends Model
             ? '<span class="badge badge-success">Active</span>'
             : '<span class="badge badge-danger">Inactive</span>';
     }
+
+    public function bookings()
+    {
+        return $this->hasMany(VehicleBooking::class, 'customer_id');
+    }
 }
