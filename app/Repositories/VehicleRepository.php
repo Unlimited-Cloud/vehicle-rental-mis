@@ -63,7 +63,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getAllRecentVehicleBookings($orderBy, $order, $limit)
     {
-        return VehicleBooking::with(['vehicle', 'customer'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->orderBy($orderBy, $order)
             ->limit(6)
             ->get();
@@ -71,7 +71,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $limit, $customerId)
     {
-        VehicleBooking::with(['vehicle', 'customer'])
+        VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('vehicle_bookings.customer_id', $customerId)
             ->orderBy($orderBy, $order)
             ->limit($limit)
