@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -158,6 +159,13 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export-pdf');
+            Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
+            Route::get('/export-client-report', [ReportController::class, 'exportClientReport'])->name('export-client');
+        });
     });
 
     Route::middleware(['auth'])->group(function () {
