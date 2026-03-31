@@ -38,7 +38,7 @@
                                     <th>Brand</th>
                                     <th>Model</th>
                                     <th>Year</th>
-                                    <th>Rent/Day</th>
+                                    {{-- <th>Rent/Day</th> --}}
                                     <th>Fuel</th>
                                     <th>Transmission</th>
                                     <th>Status</th>
@@ -66,7 +66,7 @@
                                     <td>{{ $vehicle->brand }}</td>
                                     <td>{{ $vehicle->model }}</td>
                                     <td>{{ $vehicle->year }}</td>
-                                    <td>Rs {{ number_format($vehicle->rent_price_per_day,2) }}</td>
+                                    {{-- <td>Rs {{ number_format($vehicle->rent_price_per_day,2) }}</td> --}}
                                     <td>{{ $vehicle->fuel_type }}</td>
                                     <td>{{ $vehicle->transmission }}</td>
 
