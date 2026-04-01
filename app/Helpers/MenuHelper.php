@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Models\BasicTable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Gate;
@@ -82,5 +83,20 @@ class MenuHelper
     {
         $user = Auth::user();
         return $user;
+    }
+
+    public static function showBasicSetup()
+    {
+        $basic = BasicTable::latest()->first();
+        if (!$basic) {
+            return (object)[
+                'logo' => null,
+                'login_logo' => null,
+                'company_name' => null,
+                'footer_text' => null,
+            ];
+        }
+
+        return $basic;
     }
 }
