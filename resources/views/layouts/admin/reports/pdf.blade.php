@@ -667,7 +667,7 @@
                     <td>{{ \Illuminate\Support\Str::limit($booking['trip_route'] ?? 'N/A', 35) }}</td>
                     <td class="text-right">₹ {{ number_format($booking['expected_amount'] ?? 0, 2) }}</td>
                     <td class="text-right">₹ {{ number_format($booking['actual_amount'] ?? 0, 2) }}</td>
-                    <td class="text-right text-danger"><strong>-₹ {{ number_format($booking['discount_given'] ?? 0, 2) }}</strong></td>
+                    <td class="text-right text-danger"><strong>₹ {{ number_format($booking['discount_given'] ?? 0, 2) }}</strong></td>
                     <td class="text-center">
                         <span class="badge badge-warning">{{ $booking['discount_percentage'] ?? 0 }}%</span>
                     </td>
