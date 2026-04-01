@@ -22,7 +22,7 @@
            @if($user->img)
             <img src="{{ asset('uploads/users/'.$user->img) }}" class="img-fluid rounded-circle" width="130">
                @else
-                  <img src="https://via.placeholder.com/150" class="img-fluid rounded-circle">
+                  <img src="{{ asset('adminlte/dist/img/avatar4.png') }}" class="img-circle elevation-2" alt="User Image">
                @endif
             </div>
         <div class="info">
