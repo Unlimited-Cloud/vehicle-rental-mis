@@ -70,6 +70,11 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             ->name('vehicles.set-active-tab');
         Route::resource('vehicles', VehicleController::class);
         Route::resource('users', UserController::class);
+        Route::get('profile', [UserController::class, 'show'])->name('profile.show');
+        Route::get('profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
+        Route::post('profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
+        Route::post('profile/password-update', [UserController::class, 'updatePassword'])
+            ->name('profile.password.update');
         Route::resource('modules', ModulesController::class);
         Route::resource('permissions', PermissionsController::class);
         Route::resource('crew_profiles', CrewProfilesController::class);
