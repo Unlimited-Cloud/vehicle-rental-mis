@@ -115,7 +115,17 @@
 
     <div class="card card-authentication1">
         <div class="card-body text-center">
-            <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;">
+            {{-- <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> --}}
+            @php
+               use App\Helpers\MenuHelper;
+               $basic = MenuHelper::showBasicSetup();
+            @endphp
+
+            @if($basic->login_logo)
+               <img src="{{ asset($basic->login_logo) }}" class="img-fluid rounded" width="100" alt="Company Logo">
+            @else
+               <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> 
+            @endif
 
             @if ($errors->any())
             <div class="alert alert-danger">

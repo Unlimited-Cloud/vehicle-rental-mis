@@ -12,7 +12,18 @@
                     </div>
                     <div>
                         <h5 class="m-0 font-weight-bold text-dark">
-                            Welcome to <span class="text-primary">ASHIYANA VEHICLE SERVICE PVT. LTD</span>
+                            Welcome to <span class="text-primary">
+                                @php
+                                use App\Helpers\MenuHelper;
+                                $basic = MenuHelper::showBasicSetup();
+                                @endphp
+
+                                @if($basic->company_name)
+                                   {{ strtoupper($basic->company_name) }}
+                                @else
+                                   {{ strtoupper(env('APP_NAME')) }}
+                                @endif
+                            </span>
                         </h5>
                         <small class="text-muted" style="font-size: 0.8rem;">
                             Dashboard overview & system insights
