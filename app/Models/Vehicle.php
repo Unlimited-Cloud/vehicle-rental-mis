@@ -39,6 +39,8 @@ class Vehicle extends Model
 
     protected $appends = ['vehicle_image_url'];
 
+    protected $hidden = ['image'];
+
     public function vehicleDetail()
     {
         return $this->hasOne(VehicleDetail::class);
