@@ -69,6 +69,14 @@
                 </div>
             </div>
 
+             <div class="col-md-6">
+                <div class="form-group">
+                    <label>Seater</label>
+                    <input type="number" name="seater" class="form-control"
+                           value="{{ old('seater',$vehicle->seater ?? '') }}" required>
+                </div>
+            </div>
+
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Year *</label>
