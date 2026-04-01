@@ -22,11 +22,11 @@
         <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">{{ Auth::user()->name }}</a>
         <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
           <!-- Profile -->
-          {{-- <li>
-            <a href="{{ route('profile.edit') }}" class="dropdown-item">
+          <li>
+            <a href="{{ route('admin.profile.show') }}" class="dropdown-item">
               <i class="fas fa-user mr-2"></i> Profile
             </a>
-          </li> --}}
+          </li>
 
           <li>
             <hr class="dropdown-divider">

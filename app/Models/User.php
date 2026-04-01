@@ -27,7 +27,8 @@ class User extends Authenticatable
         'user_type',
         'customer_id',
         'mobile_number_country_code',
-        'mobile_number'
+        'mobile_number',
+        'img'
     ];
 
     /**
