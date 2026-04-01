@@ -2,7 +2,18 @@
   <!-- Brand Logo -->
   <a href="{{ route('dashboard') }}" class="brand-link">
      {{-- @if(!empty($setting->img_logo) && file_exists(public_path('uploads/settings/'.$setting->img_logo))) --}}
-         <img src="{{ asset('adminlte/logo4.png') }}" style="width:35px;">
+        <div class="image">
+            @php
+               use App\Helpers\MenuHelper;
+               $basic = MenuHelper::showBasicSetup();
+            @endphp
+
+            @if($basic->logo)
+               <img src="{{ asset($basic->logo) }}" class="img-fluid rounded" width="40" alt="Company Logo">
+            @else
+               <img src="{{ asset('adminlte/logo4.png') }}" style="width:150px; margin-bottom:20px;"> 
+            @endif
+         </div>
      {{-- @else
      <img src="{{ asset('adminlte/dist/img/logo.png') }}" alt="Default Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
      @endif --}}
@@ -16,13 +27,13 @@
      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
            @php
-            use App\Helpers\MenuHelper;
+           
             $user = MenuHelper::showProfile();
             @endphp
            @if($user->img)
             <img src="{{ asset('uploads/users/'.$user->img) }}" class="img-fluid rounded-circle" width="130">
                @else
-                  <img src="{{ asset('adminlte/dist/img/avatar4.png') }}" class="img-circle elevation-2" alt="User Image">
+                  <img src="https://via.placeholder.com/150" class="img-fluid rounded-circle">
                @endif
             </div>
         <div class="info">
