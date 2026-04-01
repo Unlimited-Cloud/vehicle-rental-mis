@@ -11,6 +11,7 @@ class Vehicle extends Model
         'vehicle_type',
         'brand',
         'model',
+        'seater',
         'year',
         'rent_price_per_day',
         'fuel_type',
