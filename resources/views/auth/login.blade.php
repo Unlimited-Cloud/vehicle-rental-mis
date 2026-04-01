@@ -115,7 +115,7 @@
 
     <div class="card card-authentication1">
         <div class="card-body text-center">
-            <img src="{{ asset('adminlte/logo2.png') }}" style="width:150px; margin-bottom:20px;">
+            <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;">
 
             @if ($errors->any())
             <div class="alert alert-danger">
