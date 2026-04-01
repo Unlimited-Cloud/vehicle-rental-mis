@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -69,6 +70,11 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             ->name('vehicles.set-active-tab');
         Route::resource('vehicles', VehicleController::class);
         Route::resource('users', UserController::class);
+        Route::get('profile', [UserController::class, 'show'])->name('profile.show');
+        Route::get('profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
+        Route::post('profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
+        Route::post('profile/password-update', [UserController::class, 'updatePassword'])
+            ->name('profile.password.update');
         Route::resource('modules', ModulesController::class);
         Route::resource('permissions', PermissionsController::class);
         Route::resource('crew_profiles', CrewProfilesController::class);
@@ -88,9 +94,31 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
 
-        Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
-        Route::post('/vehicle-bookings/multiple/store', [VehicleBookingController::class, 'storeMultiple'])->name('vehicle_bookings.multiple.store');
+        Route::get('trip-categories/list', [VehicleBookingController::class, 'getTripCategoriesList'])->name('ajax.trip-categories.list');
+        Route::post('trip-categories/store', [VehicleBookingController::class, 'storeTripCategory'])->name('ajax.trip-categories.store');
+        Route::get('trip-routes/list', [VehicleBookingController::class, 'getTripRoutesList'])->name('ajax.trip-routes.list');
+        Route::post('trip-routes/store', [VehicleBookingController::class, 'storeTripRoute'])->name('ajax.trip-routes.store');
+        Route::post('drivers/store', [VehicleBookingController::class, 'storeDriver'])->name('ajax.drivers.store');
+        Route::post('helpers/store', [VehicleBookingController::class, 'storeHelper'])->name('ajax.helpers.store');
 
+        Route::get('/vehicle-bookings/multiple/create', [VehicleBookingController::class, 'createMultiple'])->name('vehicle_bookings.multiple.create');
+        Route::post('vehicle-bookings/multiple-store', [VehicleBookingController::class, 'multipleStore'])->name('vehicle_bookings.multiple.store');
+
+
+        Route::get('/invoice/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalInvoice']);
+        Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
+
+
+
+
+        Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
+            ->name('vehicle_receipt.bookings');
+
+        Route::get('/vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
+            ->name('vehicle_receipt.download');
+
+        Route::get('/vehicle-receipt/index', [ProformaInvoiceController::class, 'indexReceipt'])
+            ->name('vehicle_receipt.index');
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
@@ -136,6 +164,13 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [ReportController::class, 'index'])->name('index');
+            Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export-pdf');
+            Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
+            Route::get('/export-client-report', [ReportController::class, 'exportClientReport'])->name('export-client');
+        });
     });
 
     Route::middleware(['auth'])->group(function () {

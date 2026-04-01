@@ -63,14 +63,24 @@ class MenuHelper
         return false;
     }
 
-    public static function getParentModules(){
+    public static function getParentModules()
+    {
         return Module::whereNull('parent_id')
-        ->orderBy('order_by')
-        ->get()
-        ->toArray();
+            ->orderBy('order_by')
+            ->get()
+            ->toArray();
     }
 
-    public static function getSubModulesByParentId($parentId){
-        return Module::where('parent_id',$parentId)->orderBy('order_by')->get()->toArray();
+
+
+    public static function getSubModulesByParentId($parentId)
+    {
+        return Module::where('parent_id', $parentId)->orderBy('order_by')->get()->toArray();
+    }
+
+    public static function showProfile()
+    {
+        $user = Auth::user();
+        return $user;
     }
 }

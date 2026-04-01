@@ -32,7 +32,7 @@ class UserController extends Controller
         $this->customerRepository = $customerRepository;
         $this->masterRepository = $masterRepository;
         $this->userRepository = $userRepository;
-        
+
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
@@ -60,7 +60,7 @@ class UserController extends Controller
         $customers = $this->customerRepository->getAllCustomers();
         $roles = $this->masterRepository->getAllRoles();
         $isCustomerUser = $this->currentUserIsCustomer;
-        return view('layouts.admin.users.create', compact('customers','roles','isCustomerUser'));
+        return view('layouts.admin.users.create', compact('customers', 'roles', 'isCustomerUser'));
     }
 
     /**
@@ -84,7 +84,7 @@ class UserController extends Controller
         ];
 
         $addData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
-        if(!empty($addData['customer_id'])){
+        if (!empty($addData['customer_id'])) {
             $addData['user_type'] = 'customer_dashboard';
         }
 
@@ -103,7 +103,7 @@ class UserController extends Controller
         $customers = $this->customerRepository->getAllCustomers();
         $roles = $this->masterRepository->getAllRoles();
         $isCustomerUser = $this->currentUserIsCustomer;
-        return view('layouts.admin.users.create', compact('user','customers','roles','isCustomerUser'));
+        return view('layouts.admin.users.create', compact('user', 'customers', 'roles', 'isCustomerUser'));
     }
 
     /**
@@ -130,7 +130,7 @@ class UserController extends Controller
         }
 
         $data['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
-        if(!empty($data['customer_id'])){
+        if (!empty($data['customer_id'])) {
             $data['user_type'] = 'customer_dashboard';
         }
 
@@ -150,5 +150,70 @@ class UserController extends Controller
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User Deleted Successfully');
+    }
+
+    public function show()
+    {
+        $user = Auth::user();
+        return view('layouts.admin.profile.index', compact('user'));
+    }
+
+
+    public function editProfile()
+    {
+        $user = Auth::user();
+        return view('layouts.admin.profile.create', compact('user'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $data = $request->only(['name', 'email']);
+
+        if ($request->hasFile('img')) {
+
+            // delete old image
+            if ($user->img && file_exists(public_path('uploads/users/' . $user->img))) {
+                unlink(public_path('uploads/users/' . $user->img));
+            }
+
+            $file = $request->file('img');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/users'), $filename);
+
+            $data['img'] = $filename;
+        }
+
+        $user->update($data);
+
+        return redirect()->route('admin.profile.show')->with('success', 'Profile updated successfully');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = Auth::user();
+
+        // check current password
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->with('error', 'Current password is incorrect');
+        }
+
+        // update password
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully');
     }
 }

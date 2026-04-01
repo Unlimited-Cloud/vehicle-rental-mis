@@ -24,9 +24,9 @@
                class="btn btn-primary btn-sm">
                 <i class="fa fa-plus"></i> Add Booking
             </a>
-            {{-- <a href="{{ route('admin.vehicle_bookings.multiple.create') }}" class="btn btn-success ml-2">
-                 <i class="fas fa-layer-group"></i> Create Multiple Bookings
-            </a> --}}
+            <a href="{{ route('admin.vehicle_bookings.multiple.create') }}" class="btn btn-success btn-sm">
+                <i class="fa fa-plus"></i> Multiple Bookings
+            </a>
             @endif
 
             @if(auth()->user()->can('export_vehicles_vehicle_bookings'))
@@ -205,7 +205,7 @@
                     <th>File No.</th>
                     <th>Vehicle</th>
                     <th>Customer</th>
-                    <th>Pick & Drop</th>
+                    <th>Trip Route</th>
                     <th>Start Date (AD/BS)</th>
                     <th>End Date (AD/BS)</th>
                     <th>Rate & Total</th>
@@ -232,15 +232,7 @@
                         </td>
                         <td>{{ $passengerName }}</td>
                        <td>
-                            @if($booking->from_destination && $booking->to_destination)
-                                {{ $booking->from_destination }} → {{ $booking->to_destination }}
-                            @elseif($booking->from_destination)
-                                {{ $booking->from_destination }}
-                            @elseif($booking->to_destination)
-                                {{ $booking->to_destination }}
-                            @else
-                                -
-                            @endif
+                            {{ $booking->tripRoute->title ?? '-' }}
                         </td>
                         <td class="start-date-cell">
                             <span class="ad-date">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</span>

@@ -123,6 +123,15 @@
                                     </div>
                                 </div>
                             </div>
+                             <div class="col-md-6 mb-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-info"><i class="fas fa-cog"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Seater</span>
+                                        <span class="info-box-number">{{ $vehicle->seater }}</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <div class="info-box bg-light">
                                     <span class="info-box-icon bg-info"><i class="fas fa-calendar"></i></span>

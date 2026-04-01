@@ -22,7 +22,8 @@ class VehicleReceipt extends Model
         'discount',
         'tax',
         'total_amount',
-        'pdf_path'
+        'pdf_path',
+        'file_no'
     ];
 
     // In VehicleReceipt.php model

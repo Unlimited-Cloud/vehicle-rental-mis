@@ -1,11 +1,11 @@
   <!-- Main Sidebar Container -->
   <!-- Brand Logo -->
   <a href="{{ route('dashboard') }}" class="brand-link">
-     @if(!empty($setting->img_logo) && file_exists(public_path('uploads/settings/'.$setting->img_logo)))
-     <img src="{{ asset('uploads/settings/'.$setting->img_logo) }}" alt="Logo" class="brand-image img-circle elevation-3">
-     @else
+     {{-- @if(!empty($setting->img_logo) && file_exists(public_path('uploads/settings/'.$setting->img_logo))) --}}
+         <img src="{{ asset('adminlte/logo4.png') }}" style="width:35px;">
+     {{-- @else
      <img src="{{ asset('adminlte/dist/img/logo.png') }}" alt="Default Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-     @endif
+     @endif --}}
 
      <!-- <span class="brand-text font-weight-light">{{ env('APP_NAME') }}</span> -->
   </a>
@@ -15,12 +15,16 @@
      <!-- Sidebar user panel (optional) -->
      <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-           @if(Auth::user()->image_icon)
-           <img src="{{ asset('uploads/users/'. Auth::user()->image_icon) }}" class="img-circle elevation-2" alt="User Image">
-           @else
-           <img src="{{ asset('adminlte/dist/img/avatar4.png') }}" class="img-circle elevation-2" alt="User Image">
-           @endif
-        </div>
+           @php
+            use App\Helpers\MenuHelper;
+            $user = MenuHelper::showProfile();
+            @endphp
+           @if($user->img)
+            <img src="{{ asset('uploads/users/'.$user->img) }}" class="img-fluid rounded-circle" width="130">
+               @else
+                  <img src="{{ asset('adminlte/dist/img/avatar4.png') }}" class="img-circle elevation-2" alt="User Image">
+               @endif
+            </div>
         <div class="info">
            <a href="{{ route('dashboard') }}" class="d-block">{{ Auth::user()->name }}</a>
         </div>
@@ -28,7 +32,6 @@
 
      <!-- Sidebar Menu -->
      @php
-     use App\Helpers\MenuHelper;
      $menuItems = MenuHelper::getParentModules();
      @endphp
      <nav class="mt-2">
