@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EstimateBill;
 use App\Models\ProformaInvoice;
 use App\Models\VehicleBooking;
 use App\Models\VehicleMoment;
@@ -107,6 +108,28 @@ class ProformaInvoiceController extends Controller
 
         // Return file download
         return response()->download($filePath, $receipt->receipt_number . '.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
+
+    public function downloadEstimate($id)
+    {
+        $receipt = EstimateBill::findOrFail($id);
+
+        if (!$receipt->pdf_path) {
+            return redirect()->back()->with('error', 'PDF file not found in database.');
+        }
+
+        // Check in public/uploads/invoices path
+        $filePath = public_path($receipt->pdf_path);
+
+        if (!File::exists($filePath)) {
+            return redirect()->back()->with('error', 'PDF file not found on server.');
+        }
+
+        // Return file download
+        return response()->download($filePath, $receipt->estimate_number . '.pdf', [
             'Content-Type' => 'application/pdf',
         ]);
     }
