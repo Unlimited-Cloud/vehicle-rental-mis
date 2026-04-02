@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Invoice</title>
+    <title>Estimate Bill</title>
 
     <style>
         body {
@@ -140,7 +140,7 @@
             </td>
 
             <td class="header-center">
-                <div class="title">Invoice</div>
+                <div class="title">Estimate Bill</div>
                 <div class="company-name">
                     ASHIYANA VEHICLE SERVICE PVT. LTD. FY-2082-83
                 </div>
@@ -156,53 +156,41 @@
     <div class="line"></div>
 
     <!-- CUSTOMER + INVOICE INFO -->
-    <table class="info-table">
-        <tr>
-            <td>
-                <b>Customer Name</b> : {{ $customer->name ?? '' }}
-            </td>
+<table class="info-table">
+    
+    <tr>
+        <td>
+            <b>Customer Name</b> : {{ $customer->name ?? '' }}
+        </td>
+        <td class="right">
+            <b>EST Invoice No.</b> : {{ $estimate_number }}
+        </td>
+    </tr>
 
-            <td class="right">
-                <b>Invoice No.</b> : {{ $receipt_number }}
-            </td>
-        </tr>
+    <tr>
+        <td>
+            <b>Customer Address</b> : {{ $customer->address ?? '' }}
+        </td>
+        <td class="right">
+            <b>Date</b> : {{ $invoice_date }}
+        </td>
+    </tr>
 
-        <tr>
-            <td>
-                <b>PAN / VAT No.</b> : {{ $customer->pan_number ?? '' }}
-            </td>
+    <tr>
+        <td></td>
+        <td class="right">
+            <b>Miti</b> : {{ $miti_date }}
+        </td>
+    </tr>
 
-            <td class="right">
-                <b>Date</b> : {{ $invoice_date }}
-            </td>
-        </tr>
+    <tr>
+        <td>
+            <b>Tour Details</b> : {{ $file_no }}
+        </td>
+        <td></td>
+    </tr>
 
-        <tr>
-            <td>
-                <b>Customer Address</b> : {{ $customer->address ?? '' }}
-            </td>
-
-            <td class="right">
-                <b>Miti</b> : {{ $miti_date }}
-            </td>
-        </tr>
-
-        <tr>
-            <td>
-                <b>Tour Details</b> : {{ $file_no }}
-            </td>
-
-            <td class="right">
-                <b>Bill Type</b> : Credit
-            </td>
-        </tr>
-
-        <tr>
-            <td colspan="2">
-                <b>Mode of Payment :</b> Cash/Cheque/Credit/Other
-            </td>
-        </tr>
-    </table>
+</table>
 
     <!-- ITEMS -->
     <table class="items">
@@ -224,7 +212,7 @@
     <td align="center">{{ $item['sn'] }}</td>
     <td>{{ $item['hs_code'] }}</td>
     <td>{{ $item['particular'] }}</td>
-    <td align="center">{{ $item['qty'] }} {{ $item['qty_type'] }}</td>
+    <td align="center">{{ $item['qty'] }}</td>
     <td align="right">{{ number_format($item['rate'],2) }}</td>
     <td align="right">{{ number_format($item['amount'],2) }}</td>
 </tr>
@@ -236,14 +224,27 @@
 </tr>
 
 
-{{-- PRINTING DATE ROW --}}
 {{-- TOTALS & PRINTING DATE --}}
 <tr>
     <!-- LEFT SIDE: Printing Date & In Words -->
-    <td colspan="4" rowspan="5" style="padding: 4px; vertical-align: top;">
-        <div><b>Printing Date & Time :</b> {{ $printing_time }}</div>
-        <div style="margin-top:5px;"><b>In Words :</b> {{ $amount_in_words }}</div>
-    </td>
+        <td colspan="4" rowspan="3" style="padding: 8px; vertical-align: top; line-height: 1;">
+
+            <div>
+                <strong>Printing Date & Time :</strong><br>
+                {{ $printing_time }}
+            </div>
+
+            <div style="margin-top:8px;">
+                <strong>In Words :</strong><br>
+                {{ $amount_in_words }}
+            </div>
+
+            <div style="margin-top:8px;">
+                <strong>Remarks :</strong><br>
+                <strong>The above amount is exclusive of taxes.</strong>
+            </div>
+
+        </td>
 
     <!-- RIGHT SIDE: Basic Amount -->
     <td style="border: 1px solid #000; padding: 4px;">Basic Amount</td>
@@ -255,23 +256,13 @@
     <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($discount,2) }}</td>
 </tr>
 <tr>
-    <!-- RIGHT SIDE: Taxable Value -->
-    <td style="border: 1px solid #000; padding: 4px;">Taxable Value</td>
-    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($sub_total - $discount,2) }}</td>
-</tr>
-<tr>
-    <!-- RIGHT SIDE: VAT -->
-    <td style="border: 1px solid #000; padding: 4px;">Vat {{ $vat_percentage }} %</td>
-    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($tax,2) }}</td>
-</tr>
-<tr>
     <!-- RIGHT SIDE: Net Amount -->
     <td style="border: 1px solid #000; padding: 4px;"><b>Net Amount</b></td>
-    <td style="border: 1px solid #000; padding: 4px;" align="right"><b>{{ number_format($net_amount,2) }}</b></td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right"><b>{{ number_format($sub_total - $discount,2) }}</b></td>
 </tr>
 
 </tbody>
-    </table>
+</table>
 
    
 

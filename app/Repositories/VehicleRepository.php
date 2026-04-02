@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\EstimateBill;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
 use App\Models\Module;
 use App\Models\Role;
@@ -23,6 +24,38 @@ class VehicleRepository implements VehicleRepositoryInterface
     {
         return VehicleReceipt::with(['vehicle', 'customer', 'booking'])
             ->where('vehicle_receipts.customer_id', $customerId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+
+    public function getAllVehicleProforma()
+    {
+        return ProformaInvoice::with(['vehicle', 'customer', 'booking'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function getVehicleProformaByCustomerId($customerId)
+    {
+        return ProformaInvoice::with(['vehicle', 'customer', 'booking'])
+            ->where('proforma_invoices.customer_id', $customerId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+
+    public function getAllVehicleEstimate()
+    {
+        return EstimateBill::with(['vehicle', 'customer', 'booking'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function getVehicleEstimateByCustomerId($customerId)
+    {
+        return EstimateBill::with(['vehicle', 'customer', 'booking'])
+            ->where('estimate_bills.customer_id', $customerId)
             ->orderBy('created_at', 'desc')
             ->get();
     }

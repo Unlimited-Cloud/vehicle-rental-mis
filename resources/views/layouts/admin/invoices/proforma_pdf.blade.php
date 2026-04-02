@@ -1,307 +1,292 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
+    <meta charset="utf-8">
+    <title>Proforma</title>
 
-<style>
+    <style>
+        body {
+            font-family: DejaVu Sans, Arial, sans-serif;
+            font-size: 11px;
+        }
 
-body{
-    font-family: DejaVu Sans;
-    font-size:12px;
-    color:#333;
+        .container {
+            width: 100%;
+        }
+
+        .header {
+            width: 100%;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .header-table {
+            width: 100%;
+        }
+
+        .header-left {
+            width: 20%;
+        }
+
+        .header-center {
+            width: 60%;
+            text-align: center;
+        }
+
+        .header-right {
+            width: 20%;
+        }
+
+        .title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .company-name {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .line {
+            border-top: 1px solid #000;
+            margin: 5px 0;
+        }
+
+        .info-table {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        .info-table td {
+            padding: 2px;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        table.items {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        table.items th,
+        table.items td {
+            border: 1px solid #000;
+            padding: 4px;
+            font-size: 10px;
+        }
+
+        table.items th {
+            text-align: center;
+        }
+
+        .totals {
+            width: 35%;
+            float: right;
+            margin-top: 10px;
+        }
+
+        .totals td {
+            padding: 3px;
+        }
+
+        .footer {
+            margin-top: 20px;
+            font-size: 10px;
+        }
+
+        .signature {
+            margin-top: 40px;
+        }
+
+        .totals {
+    width: 35%;
+    float: right;
+    margin-top: 10px;
+    border-collapse: collapse;
 }
 
-.header{
-    width:100%;
-    margin-bottom:20px;
+.totals td {
+    border: 1px solid #000;
+    padding: 4px;
+    font-size: 10px;
 }
 
-.logo{
-    float:left;
-}
-
-.company{
-    float:right;
-    text-align:right;
-}
-
-.clear{
-    clear:both;
-}
-
-.title{
-    text-align:center;
-    font-size:22px;
-    font-weight:bold;
-    margin-top:10px;
-    margin-bottom:10px;
-}
-
-.meta{
-    width:100%;
-    margin-top:10px;
-}
-
-.meta td{
-    padding:4px;
-}
-
-.table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:15px;
-}
-
-.table th{
-    background:#f3f3f3;
-    border:1px solid #ccc;
-    padding:8px;
-}
-
-.table td{
-    border:1px solid #ccc;
-    padding:8px;
-}
-
-.total-table{
-    width:40%;
-    float:right;
-    margin-top:20px;
-}
-
-.total-table td{
-    border:1px solid #ccc;
-    padding:8px;
-}
-
-.footer{
-    margin-top:80px;
-}
-
-.signature{
-    width:40%;
-    float:right;
-    text-align:center;
-}
-
-</style>
+    </style>
 </head>
 
 <body>
+<div class="container">
 
-<!-- HEADER -->
+    <!-- HEADER -->
+    <table class="header-table">
+        <tr>
+            <td class="header-left">
+                {{-- LOGO --}}
+                @php
+               use App\Helpers\MenuHelper;
+               $basic = MenuHelper::showBasicSetup();
+                @endphp
 
-<div class="header">
+            @if($basic->login_logo)
+             <img src="{{ public_path($basic->login_logo) }}" width="80">
+            @else
+               <img src="{{ public_path('adminlte/logo4.png') }}" style="width:80px; margin-bottom:20px;"> 
+            @endif
+            </td>
 
-<div class="logo">
-<img src="{{ public_path('uploads/logo.png') }}" height="90" alt="Logo">
+            <td class="header-center">
+                <div class="title">Pro-Forma Invoice</div>
+                <div class="company-name">
+                    ASHIYANA VEHICLE SERVICE PVT. LTD. FY-2082-83
+                </div>
+                <div>Jwagal-10 Lalitpur, Nepal</div>
+                <div>602439925</div>
+                <div>E-account@ashiyana.com.np</div>
+            </td>
 
-</div>
+            <td class="header-right"></td>
+        </tr>
+    </table>
 
-<div class="company">
+    <div class="line"></div>
 
-<strong>Kathmandu Sightseeing Pvt Ltd</strong><br>
+    <!-- CUSTOMER + INVOICE INFO -->
+    <table class="info-table">
+        <tr>
+            <td>
+                <b>Customer Name</b> : {{ $customer->name ?? '' }}
+            </td>
 
-Kathmandu, Nepal<br>
-</div>
+            <td class="right">
+                <b>PF Invoice No.</b> : {{ $receipt_number }}
+            </td>
+        </tr>
 
-<div class="clear"></div>
+        <tr>
+            <td>
+                <b>PAN / VAT No.</b> : {{ $customer->pan_number ?? '' }}
+            </td>
 
-</div>
+            <td class="right">
+                <b>Date</b> : {{ $invoice_date }}
+            </td>
+        </tr>
 
-<hr>
+        <tr>
+            <td>
+                <b>Customer Address</b> : {{ $customer->address ?? '' }}
+            </td>
 
-<div class="title">
-PROFORMA INVOICE
-</div>
+            <td class="right">
+                <b>Miti</b> : {{ $miti_date }}
+            </td>
+        </tr>
 
+        <tr>
+            <td>
+                <b>Tour Details</b> : {{ $file_no }}
+            </td>
 
-<!-- INVOICE META -->
+        </tr>
 
-<table class="meta">
+    </table>
 
+    <!-- ITEMS -->
+    <table class="items">
+        <thead>
+        <tr>
+            <th>S.N</th>
+            <th>HS CODE</th>
+            <th>Particular</th>
+            <th>Qty</th>
+            <th>Rate</th>
+            <th>Amount</th>
+        </tr>
+        </thead>
+
+ <tbody>
+
+@foreach($items as $item)
 <tr>
+    <td align="center">{{ $item['sn'] }}</td>
+    <td>{{ $item['hs_code'] }}</td>
+    <td>{{ $item['particular'] }}</td>
+    <td align="center">{{ $item['qty'] }}</td>
+    <td align="right">{{ number_format($item['rate'],2) }}</td>
+    <td align="right">{{ number_format($item['amount'],2) }}</td>
+</tr>
+@endforeach
 
-<td>
-<strong>Invoice No:</strong> {{ $invoice->invoice_number }}
-</td>
-
-<td align="right">
-<strong>Date:</strong> {{ now()->format('Y-m-d') }}
-</td>
-
+{{-- EMPTY SPACE --}}
+<tr>
+    <td colspan="6" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 14px;">&nbsp;</td>
 </tr>
 
+
+{{-- PRINTING DATE ROW --}}
+{{-- TOTALS & PRINTING DATE --}}
 <tr>
+    <!-- LEFT SIDE: Printing Date & In Words -->
+    <td colspan="4" rowspan="5" style="padding: 4px; vertical-align: top;">
+        <div><b>Printing Date & Time :</b> {{ $printing_time }}</div>
+        <div style="margin-top:5px;"><b>In Words :</b> {{ $amount_in_words }}</div>
+    </td>
 
-<td>
-<strong>Version:</strong> V{{ $invoice->version }}
-</td>
-
-<td align="right">
-<strong>Booking ID:</strong> #{{ $invoice->vehicle_booking_id }}
-</td>
-
+    <!-- RIGHT SIDE: Basic Amount -->
+    <td style="border: 1px solid #000; padding: 4px;">Basic Amount</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($sub_total,2) }}</td>
 </tr>
-
-</table>
-
-
-<!-- CUSTOMER -->
-
-<h4>Customer Details</h4>
-
-<table class="table">
-
 <tr>
-
-<td width="25%"><strong>Name</strong></td>
-
-<td>{{ $invoice->booking->customer->name ?? '' }}</td>
-
+    <!-- RIGHT SIDE: Discount -->
+    <td style="border: 1px solid #000; padding: 4px;">Discount</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($discount,2) }}</td>
 </tr>
-
 <tr>
-
-<td><strong>Phone</strong></td>
-
-<td>{{ $invoice->booking->customer->phone ?? '' }}</td>
-
+    <!-- RIGHT SIDE: Taxable Value -->
+    <td style="border: 1px solid #000; padding: 4px;">Taxable Value</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($sub_total - $discount,2) }}</td>
 </tr>
-
 <tr>
-
-<td><strong>Email</strong></td>
-
-<td>{{ $invoice->booking->customer->email ?? '' }}</td>
-
+    <!-- RIGHT SIDE: VAT -->
+    <td style="border: 1px solid #000; padding: 4px;">Vat {{ $vat_percentage }} %</td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right">{{ number_format($tax,2) }}</td>
 </tr>
-
-</table>
-
-
-<!-- TRIP DETAILS -->
-
-<h4>Trip Details</h4>
-
-<table class="table">
-
-<thead>
-
 <tr>
-
-<th>Vehicle</th>
-<th>From</th>
-<th>To</th>
-<th>Start Date</th>
-<th>End Date</th>
-<th>Days</th>
-<th>Rate / Day</th>
-<th>Total</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-<tr>
-
-<td>{{ $invoice->vehicle->vehicle_name }}</td>
-
-<td>{{ $invoice->booking->from_destination }}</td>
-
-<td>{{ $invoice->booking->to_destination }}</td>
-
-<td>{{ $invoice->from_date }}</td>
-
-<td>{{ $invoice->to_date }}</td>
-
-<td>{{ $invoice->days }}</td>
-
-<td>{{ number_format($invoice->rate_per_day,2) }}</td>
-
-<td>{{ number_format($invoice->sub_total,2) }}</td>
-
+    <!-- RIGHT SIDE: Net Amount -->
+    <td style="border: 1px solid #000; padding: 4px;"><b>Net Amount</b></td>
+    <td style="border: 1px solid #000; padding: 4px;" align="right"><b>{{ number_format($net_amount,2) }}</b></td>
 </tr>
 
 </tbody>
+    </table>
 
-</table>
+   
 
-
-
-<!-- TOTALS -->
-
-<table class="total-table">
-
-<tr>
-
-<td>Sub Total</td>
-
-<td align="right">{{ number_format($invoice->sub_total,2) }}</td>
-
-</tr>
-
-{{-- <tr>
-
-<td>Tax</td>
-
-<td align="right">{{ number_format($invoice->tax,2) }}</td>
-
-</tr> --}}
-
-<tr>
-
-<td>Discount</td>
-
-<td align="right">{{ number_format($invoice->discount,2) }}</td>
-
-</tr>
-
-<tr>
-
-<td><strong>Grand Total (Without Tax)</strong></td>
-
-<td align="right"><strong>{{ number_format($invoice->total_amount,2) }}</strong></td>
-
-</tr>
-
-</table>
-
-<div class="clear"></div>
+    <div style="clear: both;"></div>
 
 
-<!-- NOTES -->
-
-<div style="margin-top:40px">
-
-<strong>Notes:</strong>
-
-<p>
-This is a Proforma Invoice generated for the vehicle rental service.
-Final invoice may vary depending on trip adjustments.
-</p>
+    <!-- SIGNATURE -->
+    <table width="100%" class="signature" style="margin-top:50px;">
+        <tr>
+            <td>
+                <span style="border-top: 1px solid #000; display: inline-block; padding-bottom: 2px; min-width: 80px;">Received By</span>
+            </td>
+            <td align="center">
+                <span style="border-top: 1px solid #000; display: inline-block; padding-bottom: 2px; min-width: 80px;">Prepared By</span>
+            </td>
+            <td align="right">
+                <span style="border-top: 1px solid #000; display: inline-block; padding-bottom: 2px; min-width: 150px;">
+                    For: ASHIYANA VEHICLE SERVICE PVT. LTD.
+                </span>
+            </td>
+        </tr>
+    </table>
 
 </div>
-
-
-<!-- SIGNATURE -->
-
-<div class="footer">
-
-<div class="signature">
-
-<br><br>
-
-________________________<br>
-
-Authorized Signature
-
-</div>
-
-</div>
-
-
 </body>
 </html>

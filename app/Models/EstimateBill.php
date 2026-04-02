@@ -4,15 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProformaInvoice extends Model
+class EstimateBill extends Model
 {
     protected $fillable = [
-        'vehicle_booking_id',
         'vehicle_id',
-        'invoice_number',
-        'from_date',
-        'to_date',
-        'days',
+        'estimate_number',
         'rate_per_day',
         'sub_total',
         'tax',
