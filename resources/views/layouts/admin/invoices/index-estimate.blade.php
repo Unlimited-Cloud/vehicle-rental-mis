@@ -3,17 +3,17 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Proforma Invoices</h1>
+        <h1>Estimates Bills </h1>
     </div>
 </div>
 
 <section class="content">
 <div class="container-fluid">
 
-{{-- NEW SECTION: Generate Invoice by File Number --}}
+{{-- NEW SECTION: Generate Estimate Bill by File Number --}}
 <div class="card card-primary card-outline mb-4">
     <div class="card-header">
-        <h3 class="card-title">Generate Proforma by File Number</h3>
+        <h3 class="card-title">Generate Estimate Bill by File Number</h3>
     </div>
     <div class="card-body">
         <div class="row">
@@ -39,7 +39,7 @@
                     <label>&nbsp;</label>
                     <div>
                        <button type="button" id="generateInvoiceBtn" class="btn btn-success">
-                            <i class="fas fa-file-invoice"></i> Generate Proforma
+                            <i class="fas fa-file-invoice"></i> Generate Estimate Bill
                         </button>
                         <span id="invoiceStatus" class="ml-2"></span>
                     </div>
@@ -60,7 +60,7 @@
         <thead>
             <tr>
                 <th>S.N.</th>
-                <th>Proforma No.</th>
+                <th>Estimate No.</th>
                 <th>File No.</th>
                 {{-- <th>Vehicle</th> --}}
                 <th>Customer</th>
@@ -71,10 +71,10 @@
             </tr>
         </thead>
         <tbody>
-           @foreach($invoices as $index => $receipt)
+           @foreach($estimates as $index => $receipt)
             <tr>
                 <td>{{ $index + 1 }}</td>
-                <td>{{ $receipt->invoice_number }}</td>
+                <td>{{ $receipt->estimate_number }}</td>
                 <td>
                     @if($receipt->file_no)
                         <span class="badge badge-info">{{ $receipt->file_no }}</span>
@@ -107,7 +107,7 @@
                 <td>{{ $receipt->created_at->format('Y-m-d H:i') }}</td>
                 <td>
                     @if($receipt->pdf_path && file_exists(public_path($receipt->pdf_path)))
-                        <a href="{{ route('admin.proforma.download', $receipt->id) }}" 
+                        <a href="{{ route('admin.estimate.download', $receipt->id) }}" 
                            class="btn btn-sm btn-primary" 
                         title="Download" 
                            target="_blank">
@@ -174,10 +174,10 @@ $(document).ready(function () {
         btn.prop('disabled', true)
            .html('<i class="fas fa-spinner fa-spin"></i> Generating...');
 
-        $('#invoiceStatus').html('<span class="text-info">Generating invoice...</span>');
+        $('#invoiceStatus').html('<span class="text-info">Generating estimate...</span>');
 
         $.ajax({
-            url: "{{ url('/api/proforma/generate') }}",
+            url: "{{ url('/api/estimate/generate') }}",
             method: "POST",
             data: {
                 file_no: fileNo,
@@ -207,7 +207,7 @@ $(document).ready(function () {
                 window.URL.revokeObjectURL(url);
                 a.remove();
 
-                $('#invoiceStatus').html('<span class="text-success">Proforma generated!</span>');
+                $('#invoiceStatus').html('<span class="text-success">Estimate generated!</span>');
 
                 setTimeout(() => location.reload(), 1500);
             },
@@ -215,9 +215,9 @@ $(document).ready(function () {
             error: function (xhr) {
                 console.error(xhr.responseText);
 
-                $('#invoiceStatus').html('<span class="text-danger">Error generating proforma</span>');
+                $('#invoiceStatus').html('<span class="text-danger">Error generating estimate</span>');
                 btn.prop('disabled', false)
-                   .html('<i class="fas fa-file-invoice"></i> Generate Proforma');
+                   .html('<i class="fas fa-file-invoice"></i> Generate Estimate');
             }
         });
     });
@@ -235,7 +235,7 @@ function regenerateByFileNo(fileNo) {
     $('#invoiceStatus').html('<span class="text-warning">Regenerating...</span>');
 
     $.ajax({
-        url: "{{ url('/api/proforma/regenerate') }}",
+        url: "{{ url('/api/estimate/regenerate') }}",
         method: "POST",
         data: {
             file_no: fileNo,
@@ -259,7 +259,7 @@ function regenerateByFileNo(fileNo) {
             window.URL.revokeObjectURL(url);
             a.remove();
 
-            $('#invoiceStatus').html('<span class="text-success">Proforma regenerated!</span>');
+            $('#invoiceStatus').html('<span class="text-success">Estimate regenerated!</span>');
 
             setTimeout(() => location.reload(), 1500);
         },
