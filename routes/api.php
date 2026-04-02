@@ -69,4 +69,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);
 Route::post('/invoice/regenerate', [BookingController::class, 'apiRegenerateInvoice']);
 
+Route::post('/proforma/generate', [BookingController::class, 'apiGenerateProforma']);
+Route::post('/proforma/regenerate', [BookingController::class, 'apiRegenerateProforma']);
+
+Route::post('/estimate/generate', [BookingController::class, 'apiGenerateEstimate']);
+Route::post('/estimate/regenerate', [BookingController::class, 'apiRegenerateEstimate']);
+
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
