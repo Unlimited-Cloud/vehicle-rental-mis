@@ -914,11 +914,11 @@ class BookingController extends Controller
     public function vehiclesByBrand(Request $request)
     {
         $request->validate([
-            'brand_id' => 'required|exists:brands,id'
+            'brand_id' => 'required'
         ]);
 
         // get brand
-        $brand = Brand::find($request->brand_id);
+        $brand = Brand::where('id', $request->brand_id)->first();
 
         if (!$brand) {
             return response()->json([
