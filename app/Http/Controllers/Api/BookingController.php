@@ -920,6 +920,13 @@ class BookingController extends Controller
         // get brand
         $brand = Brand::find($request->brand_id);
 
+        if (!$brand) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Brand not found'
+            ], 404);
+        }
+
         // match with vehicle.brand (string)
         $vehicles = Vehicle::whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
             ->get();
