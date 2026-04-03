@@ -181,7 +181,7 @@ class VehicleBookingController extends Controller
         $addData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
         $addData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         $vehicleBooking = VehicleBooking::create($addData);
-        $this->service->createProforma($vehicleBooking);
+        // $this->service->createProforma($vehicleBooking);
         $vehicleBookingId = $vehicleBooking->id;
 
         if (!empty($request->paid_amount) && $request->paid_amount > 0) {
@@ -276,12 +276,12 @@ class VehicleBookingController extends Controller
         $oldRate = $vehicleBooking->rate_per_day;
         $oldTotal = $vehicleBooking->sub_total;
         $vehicleBooking->update($updateData);
-        if (
-            $oldRate != $vehicleBooking->rate_per_day ||
-            $oldTotal != $vehicleBooking->sub_total
-        ) {
-            $this->service->createProforma($vehicleBooking);
-        }
+        // if (
+        //     $oldRate != $vehicleBooking->rate_per_day ||
+        //     $oldTotal != $vehicleBooking->sub_total
+        // ) {
+        //     $this->service->createProforma($vehicleBooking);
+        // }
 
         $vehicleBookingId = $vehicleBooking->id;
 
@@ -603,7 +603,7 @@ class VehicleBookingController extends Controller
                 }
 
                 // Create proforma invoice
-                $this->service->createProforma($vehicleBooking);
+                // $this->service->createProforma($vehicleBooking);
 
                 $createdBookings[] = $vehicleBooking->id;
             } catch (\Exception $e) {

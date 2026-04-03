@@ -56,8 +56,17 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Brand *</label>
-                    <input type="text" name="brand" class="form-control"
-                           value="{{ old('brand',$vehicle->brand ?? '') }}" required>
+                    <select name="brand" class="form-control" required>
+                        <option value="">Select Brand</option>
+
+                        @foreach($brands as $b)
+                            <option value="{{ $b->name }}"
+                                {{ old('brand', $vehicle->brand ?? '') == $b->name ? 'selected' : '' }}>
+                                {{ $b->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
                 </div>
             </div>
 

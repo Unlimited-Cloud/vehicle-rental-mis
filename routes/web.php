@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BasicTableController;
+use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', function () {
@@ -106,20 +107,32 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::post('vehicle-bookings/multiple-store', [VehicleBookingController::class, 'multipleStore'])->name('vehicle_bookings.multiple.store');
 
 
+        Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
+            ->name('proforma.index');
+        Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
+            ->name('receipt.index');
+        Route::get('estimate-invoices', [ProformaInvoiceController::class, 'indexEstimate'])
+            ->name('estimate.index');
+
+
         Route::get('/invoice/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalInvoice']);
-        Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
+        Route::get('/proforma/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalProforma']);
 
-
-
-
-        Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
-            ->name('vehicle_receipt.bookings');
 
         Route::get('/vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
             ->name('vehicle_receipt.download');
+        Route::get('/proforma/download/{id}', [ProformaInvoiceController::class, 'downloadProforma'])
+            ->name('proforma.download');
+        Route::get('/estimate/download/{id}', [ProformaInvoiceController::class, 'downloadEstimate'])
+            ->name('estimate.download');
 
-        Route::get('/vehicle-receipt/index', [ProformaInvoiceController::class, 'indexReceipt'])
-            ->name('vehicle_receipt.index');
+
+
+        Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
+        Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
+            ->name('vehicle_receipt.bookings');
+
+
         Route::resource('vehicle_bookings', VehicleBookingController::class)
             ->parameters([
                 'vehicle_bookings' => 'vehicle_booking'
@@ -133,11 +146,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle_moments', VehicleMomentController::class);
         Route::resource('fuel_purchased', FuelPurchaseController::class);
 
-        Route::get('proforma-invoices', [ProformaInvoiceController::class, 'index'])
-            ->name('proforma.index');
 
-        Route::get('receipt-invoices', [ProformaInvoiceController::class, 'indexReceipt'])
-            ->name('receipt.index');
 
         Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
         Route::resource('email-templates', EmailTemplateController::class);
@@ -149,8 +158,6 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             [TripRouteController::class, 'export']
         )->name('trip-routes.export');
         Route::get('/trip-routes/category/view', [TripRouteController::class, 'categoryView'])->name('trip-routes.category.view');
-
-
         Route::get('trip-routes-upload', [TripRouteController::class, 'upload'])->name('trip-routes.upload');
         Route::post('trip-routes-import', [TripRouteController::class, 'import'])->name('trip-routes.import');
         Route::resource('trip-routes', TripRouteController::class);
@@ -166,6 +173,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
+        Route::resource('brand', BrandController::class);
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export-pdf');

@@ -20,6 +20,9 @@ use App\Models\VehicleReceipt;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
+use App\Models\Brand;
+use App\Models\EstimateBill;
+use App\Models\ProformaInvoice;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -259,7 +262,7 @@ class BookingController extends Controller
             ]);
 
             //  Generate Proforma
-            $this->service->createProforma($booking);
+            // $this->service->createProforma($booking);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
@@ -580,5 +583,350 @@ class BookingController extends Controller
 
         // Generate new invoice
         return $this->apiGenerateInvoice($request);
+    }
+
+
+
+
+
+
+    public function apiGenerateProforma(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string',
+            'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
+        ]);
+
+        $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('file_no', $request->file_no)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No bookings found for this file number'
+                ], 404);
+            }
+            abort(404, 'No bookings found');
+        }
+
+        $customer = optional($bookings->first())->customer;
+        $sub_total = $bookings->sum('rate_per_day');
+        $discount = $bookings->sum('discount');
+        $tax = $bookings->sum('tax');
+        $net_amount = $sub_total - $discount + $tax;
+
+        $receipt_number = $this->generateProformaNumber();
+
+        // Prepare data for view
+        $data = [
+            'receipt' => null, // We'll create after view if needed
+            'bookings' => $bookings,
+            'customer' => $customer,
+            'file_no' => $request->file_no,
+            'invoice_date' => Carbon::now('Asia/Kathmandu')->format('m/d/Y'),
+            'miti_date' => $this->convertToNepaliDate(now()),
+            'amount_in_words' => $this->convertNumberToWords($net_amount),
+            'items' => $this->prepareInvoiceItems($bookings),
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'net_amount' => $net_amount,
+            'vat_percentage' => 13,
+            'receipt_number' => $receipt_number,
+            'prepared_by' => auth()->user() ? auth()->user()->name : 'BIR',
+            'company_name' => 'ASHIVANA VEHICLE SERVICE PVT.LTD.',
+            'company_address' => 'Jwagal-10 Lalitpur, Nepal',
+            'company_phone' => '602439925',
+            'company_email' => 'e-account@ashivana.com.np',
+            'printing_time' => Carbon::now('Asia/Kathmandu')->format('m/d/Y h:i:s A'),
+        ];
+
+        // Save receipt to database
+        $receipt = ProformaInvoice::create([
+            'vehicle_booking_id' => null,
+            'vehicle_moment_id' => null,
+            'vehicle_id' => null,
+            'file_no' => $request->file_no,
+            'customer_id' => $customer ? $customer->id : null,
+            'invoice_number' => $receipt_number,
+            'rate_per_day' => $sub_total,
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'total_amount' => $net_amount,
+        ]);
+
+        $data['receipt'] = $receipt;
+
+        // Generate PDF
+        $pdf = PDF::loadView('layouts.admin.invoices.proforma_pdf', $data);
+
+        $pdf->setPaper('A4', 'portrait');
+
+        /* Folder path */
+        $folderPath = public_path('uploads/proforma_invoices');
+
+        if (!File::exists($folderPath)) {
+            File::makeDirectory($folderPath, 0755, true);
+        }
+
+        $fileName = $receipt->invoice_number . '.pdf';
+        $fullPath = $folderPath . '/' . $fileName;
+
+        $pdf->save($fullPath);
+
+        $receipt->update([
+            'pdf_path' => 'uploads/proforma_invoices/' . $fileName
+        ]);
+
+        return response()->download($fullPath, $fileName, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
+    private function generateProformaNumber()
+    {
+        $year = date('y');
+        $month = date('m');
+        $lastReceipt = ProformaInvoice::whereYear('created_at', date('Y'))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastReceipt) {
+            $lastNumber = intval(substr($lastReceipt->invoice_number, -4));
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+
+        return "PF-{$month}{$year}-{$newNumber}";
+    }
+
+    /**
+     * API endpoint to regenerate Proforma
+     */
+    public function apiRegenerateProforma(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string',
+        ]);
+
+        // Delete existing receipt
+        $existingReceipt = ProformaInvoice::where('file_no', $request->file_no)->first();
+        if ($existingReceipt) {
+            // Delete old PDF file from public folder
+            if ($existingReceipt->pdf_path && file_exists(public_path($existingReceipt->pdf_path))) {
+                unlink(public_path($existingReceipt->pdf_path));
+            }
+            $existingReceipt->delete();
+        }
+
+        // Generate new invoice
+        return $this->apiGenerateProforma($request);
+    }
+
+
+
+    public function apiGenerateEstimate(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string',
+            'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
+        ]);
+
+        $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('file_no', $request->file_no)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No bookings found for this file number'
+                ], 404);
+            }
+            abort(404, 'No bookings found');
+        }
+
+        $customer = optional($bookings->first())->customer;
+        $sub_total = $bookings->sum('rate_per_day');
+        $discount = $bookings->sum('discount');
+        $tax = $bookings->sum('tax');
+        $net_amount = $sub_total - $discount + $tax;
+
+        $receipt_number = $this->generateEstimateNumber();
+
+        // Prepare data for view
+        $data = [
+            'receipt' => null, // We'll create after view if needed
+            'bookings' => $bookings,
+            'customer' => $customer,
+            'file_no' => $request->file_no,
+            'invoice_date' => Carbon::now('Asia/Kathmandu')->format('m/d/Y'),
+            'miti_date' => $this->convertToNepaliDate(now()),
+            'amount_in_words' => $this->convertNumberToWords($net_amount),
+            'items' => $this->prepareInvoiceItems($bookings),
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'net_amount' => $net_amount,
+            'vat_percentage' => 13,
+            'estimate_number' => $receipt_number,
+            'prepared_by' => auth()->user() ? auth()->user()->name : 'BIR',
+            'company_name' => 'ASHIVANA VEHICLE SERVICE PVT.LTD.',
+            'company_address' => 'Jwagal-10 Lalitpur, Nepal',
+            'company_phone' => '602439925',
+            'company_email' => 'e-account@ashivana.com.np',
+            'printing_time' => Carbon::now('Asia/Kathmandu')->format('m/d/Y h:i:s A'),
+        ];
+
+        // Save receipt to database
+        $receipt = EstimateBill::create([
+            'vehicle_booking_id' => null,
+            'vehicle_moment_id' => null,
+            'vehicle_id' => null,
+            'file_no' => $request->file_no,
+            'customer_id' => $customer ? $customer->id : null,
+            'estimate_number' => $receipt_number,
+            'rate_per_day' => $sub_total,
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'total_amount' => $net_amount,
+        ]);
+
+        $data['receipt'] = $receipt;
+
+        // Generate PDF
+        $pdf = PDF::loadView('layouts.admin.invoices.estimate_pdf', $data);
+
+        $pdf->setPaper('A4', 'portrait');
+
+        /* Folder path */
+        $folderPath = public_path('uploads/estimate_invoices');
+
+        if (!File::exists($folderPath)) {
+            File::makeDirectory($folderPath, 0755, true);
+        }
+
+        $fileName = $receipt->estimate_number . '.pdf';
+        $fullPath = $folderPath . '/' . $fileName;
+
+        $pdf->save($fullPath);
+
+        $receipt->update([
+            'pdf_path' => 'uploads/estimate_invoices/' . $fileName
+        ]);
+
+        return response()->download($fullPath, $fileName, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
+    private function generateEstimateNumber()
+    {
+        $year = date('y');
+        $month = date('m');
+        $lastReceipt = EstimateBill::whereYear('created_at', date('Y'))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastReceipt) {
+            $lastNumber = intval(substr($lastReceipt->estimate_number, -4));
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+
+        return "EST-{$month}{$year}-{$newNumber}";
+    }
+
+    /**
+     * API endpoint to regenerate Proforma
+     */
+    public function apiRegenerateEstimate(Request $request)
+    {
+        $request->validate([
+            'file_no' => 'required|string',
+        ]);
+
+        // Delete existing receipt
+        $existingReceipt = EstimateBill::where('file_no', $request->file_no)->first();
+        if ($existingReceipt) {
+            // Delete old PDF file from public folder
+            if ($existingReceipt->pdf_path && file_exists(public_path($existingReceipt->pdf_path))) {
+                unlink(public_path($existingReceipt->pdf_path));
+            }
+            $existingReceipt->delete();
+        }
+
+        // Generate new invoice
+        return $this->apiGenerateEstimate($request);
+    }
+
+
+
+    public function brands()
+    {
+        $brands = Brand::select('id', 'name', 'logo')->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $brands
+        ]);
+    }
+
+    //  Vehicles grouped by brand name
+    public function BrandWithVehicle()
+    {
+        $brands = Brand::all();
+
+        $data = [];
+
+        foreach ($brands as $brand) {
+
+            $vehicles = Vehicle::where('brand', $brand->name)->get();
+
+            $data[] = [
+                'brand' => $brand->name,
+                'logo' => $brand->logo ? asset('uploads/brands/' . $brand->logo) : null,
+                'vehicles' => $vehicles
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+    public function vehiclesByBrand(Request $request)
+    {
+        $request->validate([
+            'brand_id' => 'required|exists:brands,id'
+        ]);
+
+        // get brand
+        $brand = Brand::find($request->brand_id);
+
+        // match with vehicle.brand (string)
+        $vehicles = Vehicle::whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
+            ->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this brand'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'brand_name' => $brand->name,
+            'logo' => $brand->logo ? asset('uploads/brands/' . $brand->logo) : null,
+            'vehicles' => $vehicles
+        ]);
     }
 }

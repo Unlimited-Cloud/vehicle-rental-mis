@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\EstimateBill;
 use App\Models\ProformaInvoice;
 use App\Models\VehicleBooking;
 use App\Models\VehicleMoment;
@@ -43,12 +44,12 @@ class ProformaInvoiceController extends Controller
     public function index()
     {
         Gate::authorize('index_bills_proforma_invoice');
-        $invoices = ProformaInvoice::with(['vehicle', 'booking'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $invoices = $this->currentUserIsCustomer == 'Y' ? $this->vehicleRepository->getVehicleProformaByCustomerId($this->currentUserCustomerId) : $this->vehicleRepository->getAllVehicleProforma();
 
         return view('layouts.admin.invoices.index', compact('invoices'));
     }
+
+
 
     public function indexReceipt()
     {
@@ -58,21 +59,36 @@ class ProformaInvoiceController extends Controller
         return view('layouts.admin.invoices.index-receipt', compact('receipts'));
     }
 
-    public function download($id)
+
+    public function indexEstimate()
     {
-        $invoice = ProformaInvoice::with([
-            'vehicle',
-            'booking.customer'
-        ])->findOrFail($id);
+        Gate::authorize('index_bills_receipt');
+        $estimates = $this->currentUserIsCustomer == 'Y' ? $this->vehicleRepository->getVehicleEstimateByCustomerId($this->currentUserCustomerId) : $this->vehicleRepository->getAllVehicleEstimate();
 
-        $pdf = Pdf::loadView(
-            'layouts.admin.invoices.proforma_pdf',
-            compact('invoice')
-        );
+        return view('layouts.admin.invoices.index-estimate', compact('estimates'));
+    }
 
-        return $pdf->download(
-            $invoice->invoice_number . '.pdf'
-        );
+
+
+    public function downloadProforma($id)
+    {
+        $invoice = ProformaInvoice::findOrFail($id);
+
+        if (!$invoice->pdf_path) {
+            return redirect()->back()->with('error', 'PDF file not found in database.');
+        }
+
+        // Check in public/uploads/invoices path
+        $filePath = public_path($invoice->pdf_path);
+
+        if (!File::exists($filePath)) {
+            return redirect()->back()->with('error', 'PDF file not found on server.');
+        }
+
+        // Return file download
+        return response()->download($filePath, $invoice->invoice_number . '.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
     }
 
     public function downloadInvoice($id)
@@ -97,100 +113,88 @@ class ProformaInvoiceController extends Controller
     }
 
 
-    public function generateInvoice($momentId, $type)
+    public function downloadEstimate($id)
     {
+        $receipt = EstimateBill::findOrFail($id);
 
-        $moment = VehicleMoment::with(['booking', 'vehicle'])
-            ->findOrFail($momentId);
-
-        $booking = $moment->booking;
-
-        $start = \Carbon\Carbon::parse($moment->start_datetime);
-        $end   = \Carbon\Carbon::parse($moment->end_datetime);
-
-        $hours = $start->diffInHours($end);
-        $days  = ceil($hours / 24);
-
-        $rate = $booking->rate_per_day;
-
-        $subTotal = $rate * $days;
-
-
-        /* DISCOUNT */
-
-        if ($booking->discount_amount_type == 'percentage') {
-            $discount = ($subTotal * $booking->discount) / 100;
-        } else {
-            $discount = $booking->discount;
+        if (!$receipt->pdf_path) {
+            return redirect()->back()->with('error', 'PDF file not found in database.');
         }
 
+        // Check in public/uploads/invoices path
+        $filePath = public_path($receipt->pdf_path);
 
-        /* VAT */
-
-        $tax = 0;
-
-        if ($type == 'vat') {
-            $tax = ($subTotal - $discount) * 0.13;
+        if (!File::exists($filePath)) {
+            return redirect()->back()->with('error', 'PDF file not found on server.');
         }
 
-        $total = $subTotal - $discount + $tax;
-
-
-        $receiptNumber =
-            "INV-" . date('Y') . "-" . str_pad(VehicleReceipt::count() + 1, 5, '0', STR_PAD_LEFT);
-
-
-        $receipt = VehicleReceipt::create([
-
-            'vehicle_booking_id' => $booking->id,
-            'vehicle_moment_id' => $moment->id,
-            'vehicle_id' => $moment->vehicle_no,
-            'customer_id' => $booking->customer_id,
-            'receipt_number' => $receiptNumber,
-            'invoice_type' => $type,
-            'start_datetime' => $moment->start_datetime,
-            'end_datetime' => $moment->end_datetime,
-            'hours' => $hours,
-            'days' => $days,
-            'rate_per_day' => $rate,
-            'sub_total' => $subTotal,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $total
-
-        ]);
-
-
-        $pdf = Pdf::loadView('layouts.admin.invoices.receipt', [
-            'receipt' => $receipt,
-            'booking' => $booking,
-            'moment' => $moment,
-            'customer' => $booking->customer,
-            'vehicle' => $moment->vehicle
-        ]);
-
-        $pdf->setPaper('A4', 'portrait');
-
-        /* Folder path */
-        $folderPath = public_path('uploads/invoices');
-
-        if (!File::exists($folderPath)) {
-            File::makeDirectory($folderPath, 0755, true);
-        }
-
-        $fileName = $receipt->receipt_number . '.pdf';
-        $fullPath = $folderPath . '/' . $fileName;
-
-        $pdf->save($fullPath);
-
-        $receipt->update([
-            'pdf_path' => 'uploads/invoices/' . $fileName
-        ]);
-
-        return response()->download($fullPath, $fileName, [
+        // Return file download
+        return response()->download($filePath, $receipt->estimate_number . '.pdf', [
             'Content-Type' => 'application/pdf',
         ]);
     }
+
+
+
+    public function generateFinalProforma($file_no)
+    {
+        // Fetch all bookings with the same file_no
+        $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('file_no', $file_no)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'No bookings found for this file number'], 404);
+        }
+
+        // Get customer details from first booking
+        $customer = $bookings->first()->customer;
+
+        // Calculate totals
+        $sub_total = $bookings->sum('sub_total');
+        $discount = $bookings->sum('discount');
+        $tax = $bookings->sum('tax');
+        $total_amount = $sub_total - $discount + $tax;
+
+        // Generate receipt number
+        $invoice_number = $this->generateProformaNumber();
+
+        // Create receipt record
+        $receipt = ProformaInvoice::create([
+            'vehicle_booking_id' => null, // Multiple bookings, so null
+            'vehicle_moment_id' => null,
+            'vehicle_id' => null,
+            'customer_id' => $customer ? $customer->id : null,
+            'invoice_number' => $invoice_number,
+            'invoice_type' => 'credit',
+            'sub_total' => $sub_total,
+            'discount' => $discount,
+            'tax' => $tax,
+            'total_amount' => $total_amount,
+        ]);
+
+        // Prepare data for view
+        $data = [
+            'receipt' => $receipt,
+            'bookings' => $bookings,
+            'customer' => $customer,
+            'file_no' => $file_no,
+            'invoice_date' => now(),
+            'miti_date' => $this->convertToNepaliDate(now()),
+        ];
+
+        // Generate PDF
+        $pdf = Pdf::loadView('invoices.proforma-invoice', $data);
+        $pdfPath = 'invoices/proforma-' . $invoice_number . '.pdf';
+        $pdf->save(storage_path('app/public/' . $pdfPath));
+
+        // Update receipt with PDF path
+        $receipt->update(['pdf_path' => $pdfPath]);
+
+        // Return view for preview
+        return view('layouts.admin.invoices.proforma_pdf', $data);
+    }
+
 
 
 
@@ -314,6 +318,24 @@ class ProformaInvoiceController extends Controller
         }
 
         return "ASB-{$month}{$year}-{$newNumber}";
+    }
+
+    private function generateProformaNumber()
+    {
+        $year = date('y');
+        $month = date('m');
+        $lastReceipt = ProformaInvoice::whereYear('created_at', date('Y'))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastReceipt) {
+            $lastNumber = intval(substr($lastReceipt->invoice_number, -4));
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+
+        return "PF-{$month}{$year}-{$newNumber}";
     }
 
 
