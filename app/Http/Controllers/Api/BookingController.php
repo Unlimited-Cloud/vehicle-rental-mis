@@ -870,7 +870,16 @@ class BookingController extends Controller
 
     public function brands()
     {
-        $brands = Brand::select('id', 'name', 'logo')->get();
+        $brands = Brand::select('id', 'name', 'logo')->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'logo' => $b->logo
+                        ? asset('uploads/brands/' . $b->logo)
+                        : null,
+                ];
+            });
 
         return response()->json([
             'status' => true,
