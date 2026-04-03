@@ -20,6 +20,7 @@ use App\Models\VehicleReceipt;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
+use App\Models\Brand;
 use App\Models\EstimateBill;
 use App\Models\ProformaInvoice;
 use Carbon\Carbon;
@@ -863,5 +864,69 @@ class BookingController extends Controller
 
         // Generate new invoice
         return $this->apiGenerateEstimate($request);
+    }
+
+
+
+    public function brands()
+    {
+        $brands = Brand::select('id', 'name', 'logo')->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $brands
+        ]);
+    }
+
+    //  Vehicles grouped by brand name
+    public function BrandWithVehicle()
+    {
+        $brands = Brand::all();
+
+        $data = [];
+
+        foreach ($brands as $brand) {
+
+            $vehicles = Vehicle::where('brand', $brand->name)->get();
+
+            $data[] = [
+                'brand' => $brand->name,
+                'logo' => $brand->logo ? asset('uploads/brands/' . $brand->logo) : null,
+                'vehicles' => $vehicles
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+    public function vehiclesByBrand(Request $request)
+    {
+        $request->validate([
+            'brand_id' => 'required|exists:brands,id'
+        ]);
+
+        // get brand
+        $brand = Brand::find($request->brand_id);
+
+        // match with vehicle.brand (string)
+        $vehicles = Vehicle::whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
+            ->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this brand'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'brand_name' => $brand->name,
+            'logo' => $brand->logo ? asset('uploads/brands/' . $brand->logo) : null,
+            'vehicles' => $vehicles
+        ]);
     }
 }

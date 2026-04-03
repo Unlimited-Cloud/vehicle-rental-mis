@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -26,7 +27,8 @@ class VehicleController extends Controller
     public function create()
     {
         Gate::authorize('create_vehicles');
-        return view('layouts.admin.vehicles.create');
+        $brands = Brand::latest()->get();
+        return view('layouts.admin.vehicles.create', compact('brands'));
     }
 
     public function store(Request $request)
@@ -109,7 +111,8 @@ class VehicleController extends Controller
     public function edit(Vehicle $vehicle)
     {
         Gate::authorize('update_vehicles');
-        return view('layouts.admin.vehicles.create', compact('vehicle'));
+        $brands = Brand::latest()->get();
+        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
