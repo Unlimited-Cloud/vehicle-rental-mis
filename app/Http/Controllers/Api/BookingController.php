@@ -261,7 +261,7 @@ class BookingController extends Controller
             ]);
 
             //  Generate Proforma
-            $this->service->createProforma($booking);
+            // $this->service->createProforma($booking);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
