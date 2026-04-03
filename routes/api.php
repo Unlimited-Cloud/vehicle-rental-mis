@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
     Route::get('/brands', [BookingController::class, 'brands']);
     Route::get('/vehicles-and-brand', [BookingController::class, 'BrandWithVehicle']);
-    Route::get('/vehicles-by-brand', [BookingController::class, 'vehiclesByBrand']);
+    Route::post('/vehicles-by-brand', [BookingController::class, 'vehiclesByBrand']);
 });
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);
