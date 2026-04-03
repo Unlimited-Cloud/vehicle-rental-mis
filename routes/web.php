@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BasicTableController;
+use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', function () {
@@ -172,6 +173,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
+        Route::resource('brand', BrandController::class);
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export-pdf');
