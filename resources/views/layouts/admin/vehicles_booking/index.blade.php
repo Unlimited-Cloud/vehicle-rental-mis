@@ -283,12 +283,60 @@
                                     <a class="dropdown-item" href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}">
                                         <i class="fas fa-road text-success mr-2"></i> Add Movement
                                     </a>
+                                    <a class="dropdown-item" href="#" data-toggle="modal" data-target="#generateCouponModal{{ $booking->id }}">
+                                        <i class="fas fa-ticket-alt text-success mr-2"></i> Generate Coupon
+                                    </a>
 
                                     <div class="dropdown-divider"></div>
 
                                     <button class="dropdown-item text-danger" onclick="deleteBooking({{ $booking->id }})">
                                         <i class="fas fa-trash mr-2"></i> Delete
                                     </button>
+                                </div>
+                            </div>
+                            <!-- Generate Coupon Modal -->
+                            <div class="modal fade" id="generateCouponModal{{ $booking->id }}" tabindex="-1" role="dialog" aria-labelledby="generateCouponModalLabel{{ $booking->id }}" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <form action="{{ route('admin.coupons.store_from_booking') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title" id="generateCouponModalLabel{{ $booking->id }}">Generate Coupon for Booking #{{ $booking->id }}</h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label>Petrol Pump *</label>
+                                                <select name="petrol_pump_id" class="form-control" required>
+                                                    <option value="">Select Petrol Pump</option>
+                                                    @foreach(\App\Models\PetrolPump::active()->get() as $pump)
+                                                        <option value="{{ $pump->id }}">{{ $pump->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Amount *</label>
+                                                <input type="number" name="amount" class="form-control" step="0.01" required>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <label>Coupon Number</label>
+                                                <input type="text" class="form-control" value="Will be auto-generated" readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Generate Coupon</button>
+                                        </div>
+                                    </div>
+                                    </form>
                                 </div>
                             </div>
                         </td>
