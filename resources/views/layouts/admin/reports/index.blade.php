@@ -276,90 +276,173 @@
                                             </div>
 
                                             <!-- Tab 3: Fuel & Maintenance Expenses -->
-                                            <div class="tab-pane fade" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="info-box bg-danger">
-                                                            <span class="info-box-icon"><i class="fas fa-gas-pump"></i></span>
-                                                            <div class="info-box-content">
-                                                                <span class="info-box-text">Fuel Cost</span>
-                                                                <span class="info-box-number">{{ $fuelMaintenanceReport['fuel']['formatted_cost'] }}</span>
-                                                                <small>Total Quantity: {{ number_format($fuelMaintenanceReport['fuel']['total_quantity'], 2) }} L</small>
-                                                                <br>
-                                                                <small>Avg Price: ₹ {{ number_format($fuelMaintenanceReport['fuel']['avg_price_per_liter'], 2) }}/L</small>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="info-box bg-warning">
-                                                            <span class="info-box-icon"><i class="fas fa-tools"></i></span>
-                                                            <div class="info-box-content">
-                                                                <span class="info-box-text">Maintenance Cost</span>
-                                                                <span class="info-box-number">{{ $fuelMaintenanceReport['maintenance']['formatted_total'] }}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+<div class="tab-pane fade" id="expenses" role="tabpanel" aria-labelledby="expenses-tab">
+    <!-- Existing summary boxes -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="info-box bg-danger">
+                <span class="info-box-icon"><i class="fas fa-gas-pump"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Fuel Cost</span>
+                    <span class="info-box-number">{{ $fuelMaintenanceReport['fuel']['formatted_cost'] }}</span>
+                    <small>Total Quantity: {{ number_format($fuelMaintenanceReport['fuel']['total_quantity'], 2) }} L</small>
+                    <br>
+                    <small>Avg Price: ₹ {{ number_format($fuelMaintenanceReport['fuel']['avg_price_per_liter'], 2) }}/L</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="info-box bg-warning">
+                <span class="info-box-icon"><i class="fas fa-tools"></i></span>
+                <div class="info-box-content">
+                    <span class="info-box-text">Maintenance Cost</span>
+                    <span class="info-box-number">{{ $fuelMaintenanceReport['maintenance']['formatted_total'] }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                                                <h5 class="mt-4">Maintenance Breakdown</h5>
-                                                <div class="row">
-                                                    <div class="col-md-4">
-                                                        <div class="small-box bg-primary">
-                                                            <div class="inner">
-                                                                <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_service_cost'] }}</h3>
-                                                                <p>Service Cost</p>
-                                                            </div>
-                                                            <div class="icon">
-                                                                <i class="fas fa-oil-can"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="small-box bg-success">
-                                                            <div class="inner">
-                                                                <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_repair_cost'] }}</h3>
-                                                                <p>Repair Cost</p>
-                                                            </div>
-                                                            <div class="icon">
-                                                                <i class="fas fa-wrench"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="small-box bg-info">
-                                                            <div class="inner">
-                                                                <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_tyre_cost'] }}</h3>
-                                                                <p>Tyre Change Cost</p>
-                                                            </div>
-                                                            <div class="icon">
-                                                                <i class="fas fa-car"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
 
-                                                <div class="progress-group mt-3">
-                                                    <span class="progress-text">Service</span>
-                                                    <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_service_cost'] }}</b></span>
-                                                    <div class="progress progress-sm">
-                                                        <div class="progress-bar bg-primary" style="width: {{ ($fuelMaintenanceReport['maintenance']['service_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="progress-group">
-                                                    <span class="progress-text">Repair</span>
-                                                    <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_repair_cost'] }}</b></span>
-                                                    <div class="progress progress-sm">
-                                                        <div class="progress-bar bg-success" style="width: {{ ($fuelMaintenanceReport['maintenance']['repair_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="progress-group">
-                                                    <span class="progress-text">Tyre Change</span>
-                                                    <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_tyre_cost'] }}</b></span>
-                                                    <div class="progress progress-sm">
-                                                        <div class="progress-bar bg-info" style="width: {{ ($fuelMaintenanceReport['maintenance']['tyre_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
+    <!-- Fuel by Pump Table -->
+    @if(count($fuelAnalytics['fuel_by_pump']) > 0)
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-success">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-gas-pump"></i> Fuel Usage by Petrol Pump
+                    </h3>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Pump Name</th>
+                                <th class="text-right">Total Quantity (L)</th>
+                                <th class="text-right">Total Amount</th>
+                                <th class="text-center">Transactions</th>
+                                <th class="text-right">Avg Price/L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($fuelAnalytics['fuel_by_pump'] as $pump)
+                            <tr>
+                                <td><strong>{{ $pump['pump_name'] }}</strong></td>
+                                <td class="text-right">{{ number_format($pump['total_quantity'], 2) }} L</td>
+                                <td class="text-right">{{ $pump['formatted_amount'] }}</td>
+                                <td class="text-center">{{ $pump['transaction_count'] }}</td>
+                                <td class="text-right">₹ {{ number_format($pump['avg_price'], 2) }}/L</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Fuel by Vehicle Table -->
+    @if(count($fuelAnalytics['fuel_by_vehicle']) > 0)
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline-primary">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-truck"></i> Fuel Usage by Vehicle
+                    </h3>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Vehicle Name</th>
+                                <th>Type</th>
+                                <th class="text-right">Total Quantity (L)</th>
+                                <th class="text-right">Total Amount</th>
+                                <th class="text-center">Transactions</th>
+                                <th class="text-right">Avg Price/L</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($fuelAnalytics['fuel_by_vehicle'] as $vehicle)
+                            <tr>
+                                <td><strong>{{ $vehicle['vehicle_name'] }}</strong></td>
+                                <td><span class="badge badge-info">{{ ucfirst($vehicle['vehicle_type']) }}</span></td>
+                                <td class="text-right">{{ number_format($vehicle['total_quantity'], 2) }} L</td>
+                                <td class="text-right">{{ $vehicle['formatted_amount'] }}</td>
+                                <td class="text-center">{{ $vehicle['transaction_count'] }}</td>
+                                <td class="text-right">₹ {{ number_format($vehicle['avg_price'], 2) }}/L</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Maintenance Breakdown (existing content) -->
+    <h5 class="mt-4">Maintenance Breakdown</h5>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="small-box bg-primary">
+                <div class="inner">
+                    <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_service_cost'] }}</h3>
+                    <p>Service Cost</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-oil-can"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_repair_cost'] }}</h3>
+                    <p>Repair Cost</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-wrench"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ $fuelMaintenanceReport['maintenance']['formatted_tyre_cost'] }}</h3>
+                    <p>Tyre Change Cost</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-car"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-group mt-3">
+        <span class="progress-text">Service</span>
+        <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_service_cost'] }}</b></span>
+        <div class="progress progress-sm">
+            <div class="progress-bar bg-primary" style="width: {{ ($fuelMaintenanceReport['maintenance']['service_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
+        </div>
+    </div>
+    <div class="progress-group">
+        <span class="progress-text">Repair</span>
+        <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_repair_cost'] }}</b></span>
+        <div class="progress progress-sm">
+            <div class="progress-bar bg-success" style="width: {{ ($fuelMaintenanceReport['maintenance']['repair_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
+        </div>
+    </div>
+    <div class="progress-group">
+        <span class="progress-text">Tyre Change</span>
+        <span class="float-right"><b>{{ $fuelMaintenanceReport['maintenance']['formatted_tyre_cost'] }}</b></span>
+        <div class="progress progress-sm">
+            <div class="progress-bar bg-info" style="width: {{ ($fuelMaintenanceReport['maintenance']['tyre_cost'] / max($fuelMaintenanceReport['maintenance']['total'], 1)) * 100 }}%"></div>
+        </div>
+    </div>
+</div>
 
                                             <!-- Tab 4: Discount Analysis -->
                                             <div class="tab-pane fade" id="discount" role="tabpanel" aria-labelledby="discount-tab">
@@ -599,44 +682,27 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        // Preserve active tab after form submit
-        var activeTab = localStorage.getItem('activeReportTab');
-        if (activeTab) {
-            $('#reportTabs a[href="' + activeTab + '"]').tab('show');
-        }
-        
-        // Store active tab in localStorage when clicked
-        $('#reportTabs a').on('shown.bs.tab', function (e) {
-            localStorage.setItem('activeReportTab', $(e.target).attr('href'));
-        });
-        
-        // Initialize tooltips
-        $('[data-toggle="tooltip"]').tooltip();
-        
-        // Add responsive table wrapper for better mobile view
-        $('.table-responsive').each(function() {
-            if (!$(this).parent().hasClass('table-responsive-wrapper')) {
-                $(this).wrapInner('<div class="table-responsive-wrapper" style="overflow-x: auto;"></div>');
-            }
-        });
-    });
-</script>
-@endpush
-@push('scripts')
-<script>
 $(document).ready(function() {
-
-    $('#dataTable').DataTable({
-        paging: true,
-        lengthChange: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        autoWidth: false,
-        responsive: true
+    // Preserve active tab after form submit
+    var activeTab = localStorage.getItem('activeReportTab');
+    if (activeTab) {
+        $('#reportTabs a[href="' + activeTab + '"]').tab('show');
+    }
+    
+    // Store active tab in localStorage when clicked
+    $('#reportTabs a').on('shown.bs.tab', function (e) {
+        localStorage.setItem('activeReportTab', $(e.target).attr('href'));
     });
-
+    
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Add responsive table wrapper for better mobile view
+    $('.table-responsive').each(function() {
+        if (!$(this).parent().hasClass('table-responsive-wrapper')) {
+            $(this).wrapInner('<div class="table-responsive-wrapper" style="overflow-x: auto;"></div>');
+        }
+    });
 });
 </script>
 @endpush
