@@ -41,7 +41,7 @@ class ReportController extends Controller
         $fuelMaintenanceReport = $this->getFuelAndMaintenanceReport($startDate, $endDate, $vehicleId);
         $discountAnalysis = $this->getDiscountAnalysis($startDate, $endDate);
         $clientUsageReport = $this->getClientUsageReport($startDate, $endDate);
-
+        $fuelAnalytics = $this->getFuelUsageAnalytics($startDate, $endDate, $vehicleId);
         // Summary statistics
         $summary = $this->getSummaryStats($startDate, $endDate, $vehicleId);
 
@@ -49,6 +49,7 @@ class ReportController extends Controller
             'profitabilityReport',
             'revenueReport',
             'fuelMaintenanceReport',
+            'fuelAnalytics',
             'discountAnalysis',
             'clientUsageReport',
             'summary',
@@ -438,6 +439,105 @@ class ReportController extends Controller
             ],
             'total_expenses' => $totalExpenses,
             'formatted_total_expenses' => '₹ ' . number_format($totalExpenses, 2)
+        ];
+    }
+
+    /**
+     * Get fuel usage analytics by pump and vehicle
+     */
+    private function getFuelUsageAnalytics($startDate, $endDate, $vehicleId = null)
+    {
+        // Fuel usage by pump (petrol pump)
+        $fuelByPump = PetrolPumpTransaction::whereBetween('transaction_date', [$startDate, $endDate])
+            ->where('transaction_type', 'credit')
+            ->when($vehicleId, function ($query) use ($vehicleId) {
+                return $query->where('vehicle_id', $vehicleId);
+            })
+            ->select(
+                'petrol_pump_id',
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(fuel_quantity) as total_quantity'),
+                DB::raw('COUNT(*) as transaction_count')
+            )
+            ->with('petrolPump')
+            ->groupBy('petrol_pump_id')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'pump_name' => $item->petrolPump->name ?? 'Unknown Pump',
+                    'total_amount' => $item->total_amount,
+                    'formatted_amount' => '₹ ' . number_format($item->total_amount, 2),
+                    'total_quantity' => $item->total_quantity,
+                    'transaction_count' => $item->transaction_count,
+                    'avg_price' => $item->total_quantity > 0 ? $item->total_amount / $item->total_quantity : 0
+                ];
+            });
+
+        // Fuel usage by vehicle
+        $fuelByVehicle = PetrolPumpTransaction::whereBetween('transaction_date', [$startDate, $endDate])
+            ->where('transaction_type', 'credit')
+            ->when($vehicleId, function ($query) use ($vehicleId) {
+                return $query->where('vehicle_id', $vehicleId);
+            })
+            ->select(
+                'vehicle_id',
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(fuel_quantity) as total_quantity'),
+                DB::raw('COUNT(*) as transaction_count')
+            )
+            ->with('vehicle')
+            ->groupBy('vehicle_id')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'vehicle_name' => $item->vehicle->vehicle_name ?? 'Unknown Vehicle',
+                    'vehicle_type' => $item->vehicle->vehicle_type ?? 'N/A',
+                    'total_amount' => $item->total_amount,
+                    'formatted_amount' => '₹ ' . number_format($item->total_amount, 2),
+                    'total_quantity' => $item->total_quantity,
+                    'transaction_count' => $item->transaction_count,
+                    'avg_price' => $item->total_quantity > 0 ? $item->total_amount / $item->total_quantity : 0
+                ];
+            });
+
+        // Monthly fuel trend
+        $monthlyFuelTrend = PetrolPumpTransaction::whereBetween('transaction_date', [$startDate, $endDate])
+            ->where('transaction_type', 'credit')
+            ->when($vehicleId, function ($query) use ($vehicleId) {
+                return $query->where('vehicle_id', $vehicleId);
+            })
+            ->select(
+                DB::raw("DATE_FORMAT(transaction_date, '%Y-%m') as month"),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(fuel_quantity) as total_quantity')
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        // Fuel by fuel type
+        $fuelByType = PetrolPumpTransaction::whereBetween('transaction_date', [$startDate, $endDate])
+            ->where('transaction_type', 'credit')
+            ->when($vehicleId, function ($query) use ($vehicleId) {
+                return $query->where('vehicle_id', $vehicleId);
+            })
+            ->select('fuel_type', DB::raw('SUM(amount) as total_amount'), DB::raw('SUM(fuel_quantity) as total_quantity'))
+            ->groupBy('fuel_type')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'fuel_type' => ucfirst($item->fuel_type ?? 'Other'),
+                    'total_amount' => $item->total_amount,
+                    'formatted_amount' => '₹ ' . number_format($item->total_amount, 2),
+                    'total_quantity' => $item->total_quantity
+                ];
+            });
+
+        return [
+            'fuel_by_pump' => $fuelByPump,
+            'fuel_by_vehicle' => $fuelByVehicle,
+            'monthly_fuel_trend' => $monthlyFuelTrend,
+            'fuel_by_type' => $fuelByType
         ];
     }
 
