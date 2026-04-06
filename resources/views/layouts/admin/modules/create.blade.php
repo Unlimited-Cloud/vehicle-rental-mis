@@ -63,8 +63,25 @@ value="{{ old('route',$module->route ?? '') }}">
 <div class="col-md-6">
 <div class="form-group">
 <label>Order By *</label>
+@php
+$orderBy = '';
+if($module){
+    if(!empty($module->order_by)){
+        if(!empty($module->parent_id)){
+            $explodeOrder = explode($module->parent_id,$module->order_by);
+            if(!empty($explodeOrder)){
+                $orderBy = $explodeOrder[1];
+            }else{
+                $orderBy = $module->order_by;
+            }
+        }else{
+            $orderBy = $module->order_by;
+        }
+    }
+}
+@endphp
 <input type="text" name="order_by" class="form-control"
-value="{{ old('order_by',$module->order_by ?? '') }}">
+value="{{ $orderBy }}">
 </div>
 </div>
 

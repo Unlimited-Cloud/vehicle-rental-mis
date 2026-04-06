@@ -80,13 +80,15 @@ class ModulesController extends Controller
             'icon' => 'required|string|max:255',
         ]);
 
+        $order_by = !empty($request->parent_id) ? $request->parent_id.$request->order_by : $request->order_by;
+
         $data = [
             'name'     => $request->name,
             'parent_id'    => $request->parent_id,
             'icon' => $request->icon,
             'route'  => $request->route,
             'permission'  => $request->permission,
-            'order_by'  => $request->order_by,
+            'order_by'  => $order_by,
         ];
 
         $module->update($data);
