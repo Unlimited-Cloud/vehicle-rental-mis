@@ -13,6 +13,9 @@ use App\Models\PetrolPump;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Coupon;
+use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class PetrolPumpTransactionController extends Controller
 {
@@ -154,6 +157,30 @@ class PetrolPumpTransactionController extends Controller
                     'balance' => $newBalance
                 ]);
             }
+
+            $newRef = $validated['reference_number'] ?? null;
+
+            if (!empty($newRef)) {
+
+                $coupon = Coupon::where('coupon_number', $newRef)->first();
+
+                if ($coupon) {
+
+                    if ($coupon->used) {
+                        // Coupon already used
+                        throw ValidationException::withMessages([
+                            'reference_number' => 'Coupon already used.'
+                        ]);
+                    }
+
+                    // Mark as used
+                    $coupon->update([
+                        'used' => 1,
+                        'used_at' => now()
+                    ]);
+                }
+                // if coupon doesn't exist, do nothing
+            }
         });
 
         return redirect()->route('admin.petrol_pump_transactions.index')
@@ -269,6 +296,30 @@ class PetrolPumpTransactionController extends Controller
                 $petrolPumpTransaction->update([
                     'balance' => $newBalance
                 ]);
+            }
+
+            $newRef = $validated['reference_number'] ?? null;
+
+            if (!empty($newRef)) {
+
+                $coupon = Coupon::where('coupon_number', $newRef)->first();
+
+                if ($coupon) {
+
+                    if ($coupon->used) {
+                        // Coupon already used
+                        throw ValidationException::withMessages([
+                            'reference_number' => 'Coupon already used.'
+                        ]);
+                    }
+
+                    // Mark as used
+                    $coupon->update([
+                        'used' => 1,
+                        'used_at' => now()
+                    ]);
+                }
+                // if coupon doesn't exist, do nothing
             }
         });
 
