@@ -339,6 +339,86 @@ class ProformaInvoiceController extends Controller
     }
 
 
+    public function finalizeReceipt(Request $request)
+    {
+        $receipt = VehicleReceipt::findOrFail($request->id);
+
+        // Update payment details
+        $receipt->update([
+            'payment_method' => $request->payment_method,
+            'check_no'       => $request->check_no,
+            'check_date'     => $request->check_date,
+            'bank_name'      => $request->bank_name,
+            'bank_account'   => $request->bank_account,
+            'amount'         => $request->amount,
+            'paid'        => "1",
+        ]);
+
+        // Load bookings if needed
+        $bookings = [];
+        if ($receipt->file_no) {
+            $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
+                ->where('file_no', $receipt->file_no)
+                ->get();
+        }
+
+        // Prepare data for PDF
+        $data = [
+            'receipt'      => $receipt,
+            'bookings'     => $bookings,
+            'customer'     => $receipt->customer,
+            'invoice_date' => now(),
+            'miti_date'    => now()->format('Y-m-d'), // or use Nepali date converter
+        ];
+
+        // Generate FINAL RECEIPT PDF
+        $pdf = Pdf::loadView('layouts.admin.invoices.final-receipt', $data);
+
+        // Ensure folder exists in public
+        $folderPath = public_path('uploads/finalinvoice');
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0755, true);
+        }
+
+        $pdfFileName = 'final-' . $receipt->receipt_number . '.pdf';
+        $pdfFullPath = $folderPath . '/' . $pdfFileName;
+
+        // Save PDF directly into public folder
+        $pdf->save($pdfFullPath);
+
+        // Save relative path in DB
+        $receipt->update([
+            'receipt_path' => 'uploads/finalinvoice/' . $pdfFileName
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Receipt finalized successfully',
+            'path'    => asset($receipt->receipt_path) // full URL if needed
+        ]);
+    }
+
+
+    public function downloadReceipt($id)
+    {
+        $receipt = VehicleReceipt::findOrFail($id);
+
+        if (!$receipt->receipt_path) {
+            return redirect()->back()->with('error', 'PDF file not found in database.');
+        }
+
+        // Check in public/uploads/invoices path
+        $filePath = public_path($receipt->receipt_path);
+
+        if (!File::exists($filePath)) {
+            return redirect()->back()->with('error', 'PDF file not found on server.');
+        }
+
+        // Return file download
+        return response()->download($filePath, $receipt->receipt_number . '.pdf', [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
 
     private function convertNumberToWords($number)
     {

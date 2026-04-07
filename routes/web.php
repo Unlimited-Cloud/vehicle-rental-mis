@@ -122,6 +122,8 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
         Route::get('/vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
             ->name('vehicle_receipt.download');
+        Route::get('/vehicle-final-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadReceipt'])
+            ->name('vehicle_final_receipt.download');
         Route::get('/proforma/download/{id}', [ProformaInvoiceController::class, 'downloadProforma'])
             ->name('proforma.download');
         Route::get('/estimate/download/{id}', [ProformaInvoiceController::class, 'downloadEstimate'])
@@ -132,6 +134,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
         Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
             ->name('vehicle_receipt.bookings');
+        Route::post('/receipt/finalize', [ProformaInvoiceController::class, 'finalizeReceipt']);
 
 
         Route::resource('vehicle_bookings', VehicleBookingController::class)
