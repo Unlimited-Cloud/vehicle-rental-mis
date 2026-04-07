@@ -14,6 +14,7 @@ class TripRoute extends Model
         'hiace_price',
         'coaster_price',
         'bus_price',
+        'van_price',
         'status'
     ];
 

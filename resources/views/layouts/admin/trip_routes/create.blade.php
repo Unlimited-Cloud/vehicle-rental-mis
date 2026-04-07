@@ -122,6 +122,19 @@ value="{{ old('bus_price',$route->bus_price ?? '') }}">
 
 </div>
 
+<div class="col-md-3 mt-3">
+
+<label>Van Price</label>
+
+<input type="number"
+name="van_price"
+class="form-control"
+value="{{ old('van_price',$route->van_price ?? '') }}">
+
+</div>
+
+
+
 
 </div>
 

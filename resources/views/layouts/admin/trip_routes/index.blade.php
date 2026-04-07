@@ -72,6 +72,7 @@
                                 <th width="120">Hiace (Rs)</th>
                                 <th width="120">Coaster (Rs)</th>
                                 <th width="120">Bus (Rs)</th>
+                                <th width="120">Van (Rs)</th>
                                 <th width="80">Status</th>
                                 <th width="150">Actions</th>
                             </tr>
@@ -91,6 +92,7 @@
                                 <td class="text-right">Rs {{ number_format($route->hiace_price, 2) }}</td>
                                 <td class="text-right">Rs {{ number_format($route->coaster_price, 2) }}</td>
                                 <td class="text-right">Rs {{ number_format($route->bus_price, 2) }}</td>
+                                <td class="text-right">Rs {{ number_format($route->van_price, 2) }}</td>
                                 <td class="text-center">
                                     @if($route->status)
                                         <span class="badge badge-success"><i class="fas fa-check-circle"></i> Active</span>
