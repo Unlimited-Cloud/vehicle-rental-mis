@@ -18,6 +18,7 @@ class TripRoutesImport implements ToModel, WithHeadingRow
             'hiace_price'    => $row['hiace_jeep_price'],
             'coaster_price'  => $row['coaster_price'],
             'bus_price'      => $row['bus_price'],
+            'van_price'      => $row['van_price'],
         ]);
     }
 }

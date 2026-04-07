@@ -119,6 +119,9 @@
                                             <td class="text-right align-middle font-weight-bold text-danger">
                                                 Rs {{ number_format($route->bus_price, 2) }}
                                             </td>
+                                            <td class="text-right align-middle font-weight-bold text-danger">
+                                                Rs {{ number_format($route->van_price, 2) }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endif
