@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TripCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class TripCategoryController extends Controller
 {
@@ -56,10 +57,15 @@ class TripCategoryController extends Controller
     public function destroy($id)
     {
         Gate::authorize('delete_vehicles_trip_categories');
-        TripCategory::destroy($id);
+
+        $tripCategory = TripCategory::findOrFail($id);
+        $tripCategory->deleted_by = Auth::id();
+        $tripCategory->save();
+        $tripCategory->delete(); // soft delete
 
         return back()->with('success', 'Deleted successfully');
     }
+
     public function storeAjax(Request $request)
     {
         $request->validate([

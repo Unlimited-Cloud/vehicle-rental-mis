@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TripRoute extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'trip_category_id',
         'title',
@@ -15,7 +17,8 @@ class TripRoute extends Model
         'coaster_price',
         'bus_price',
         'van_price',
-        'status'
+        'status',
+        'deleted_by'
     ];
 
     public function category()
