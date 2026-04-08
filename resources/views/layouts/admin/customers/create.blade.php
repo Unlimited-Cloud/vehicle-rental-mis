@@ -35,7 +35,7 @@
 
     <div class="col-md-6">
         <div class="form-group">
-            <label>Email *</label>
+            <label>Email </label>
             <input type="email" name="email" class="form-control" 
                    placeholder="email@example.com"
                    value="{{ old('email', $customer->email ?? '') }}">
@@ -44,10 +44,10 @@
 
     <div class="col-md-6">
         <div class="form-group">
-            <label>Phone *</label>
+            <label>Phone </label>
             <input type="text" name="phone" class="form-control" 
                    placeholder="Contact number"
-                   value="{{ old('phone', $customer->phone ?? '') }}" required>
+                   value="{{ old('phone', $customer->phone ?? '') }}">
         </div>
     </div>
 

@@ -23,7 +23,16 @@ class VehicleReceipt extends Model
         'tax',
         'total_amount',
         'pdf_path',
-        'file_no'
+        'file_no',
+        'receipt_path',
+        'check_no',
+        'check_date',
+        'amount',
+        'payment_method',
+        'bank_name',
+        'bank_account',
+        'remarks',
+        'paid'
     ];
 
     // In VehicleReceipt.php model

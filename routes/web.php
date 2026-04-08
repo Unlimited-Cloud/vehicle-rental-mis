@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', function () {
@@ -121,6 +122,8 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
         Route::get('/vehicle-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadInvoice'])
             ->name('vehicle_receipt.download');
+        Route::get('/vehicle-final-receipt/download/{id}', [ProformaInvoiceController::class, 'downloadReceipt'])
+            ->name('vehicle_final_receipt.download');
         Route::get('/proforma/download/{id}', [ProformaInvoiceController::class, 'downloadProforma'])
             ->name('proforma.download');
         Route::get('/estimate/download/{id}', [ProformaInvoiceController::class, 'downloadEstimate'])
@@ -131,6 +134,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
         Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
             ->name('vehicle_receipt.bookings');
+        Route::post('/receipt/finalize', [ProformaInvoiceController::class, 'finalizeReceipt']);
 
 
         Route::resource('vehicle_bookings', VehicleBookingController::class)
@@ -174,6 +178,11 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
+        Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
+            ->name('coupons.pdf');
+        Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])
+            ->name('coupons.store_from_booking');
+        Route::resource('admin/coupons', CouponController::class);
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/export-pdf', [ReportController::class, 'exportPdf'])->name('export-pdf');

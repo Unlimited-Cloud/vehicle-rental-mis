@@ -63,7 +63,7 @@ class CustomerController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|unique:customers',
-            'phone' => 'required|string|unique:customers',
+            'phone' => 'nullable|string|unique:customers',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
@@ -136,7 +136,7 @@ class CustomerController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|unique:customers,email,' . $customer->id,
-            'phone' => 'required|string|unique:customers,phone,' . $customer->id,
+            'phone' => 'nullable|string|unique:customers,phone,' . $customer->id,
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
@@ -195,7 +195,7 @@ class CustomerController extends Controller
     {
         $request->validate([
             'name' => 'required|max:255',
-            'phone' => 'required|max:20',
+            'phone' => 'nullable|max:20',
         ]);
 
         $customer = Customer::create([

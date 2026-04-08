@@ -127,6 +127,7 @@ class TripRouteController extends Controller
             'hiace_price' => $request->hiace_price ?? 0,
             'coaster_price' => $request->coaster_price ?? 0,
             'bus_price' => $request->bus_price ?? 0,
+            'van_price' => $request->van_price ?? 0,
             'status' => 1
         ]);
 
