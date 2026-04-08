@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'gatedefine.middleware' => \App\Http\Middleware\GateDefineMiddleware::class,
             //'cors' => Cors::class,
         ]);
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class); 
 
     })
     ->withExceptions(function (Exceptions $exceptions): void {
