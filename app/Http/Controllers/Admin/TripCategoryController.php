@@ -16,7 +16,7 @@ class TripCategoryController extends Controller
     public function index()
     {
         Gate::authorize('index_vehicles_trip_categories');
-        $categories = TripCategory::latest()->get();
+        $categories = TripCategory::whereNull('deleted_at')->latest()->get();
         return view('layouts.admin.trip_categories.index', compact('categories'));
     }
 

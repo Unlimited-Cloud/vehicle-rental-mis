@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TripCategory extends Model
 {
-    use SoftDeletes;
+    // use SoftDeletes;
 
     protected $table = 'trip_categories';
     protected $fillable = [

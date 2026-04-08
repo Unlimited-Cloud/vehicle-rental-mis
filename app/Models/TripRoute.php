@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TripRoute extends Model
 {
-    use SoftDeletes;
+    // use SoftDeletes;
     protected $fillable = [
         'trip_category_id',
         'title',

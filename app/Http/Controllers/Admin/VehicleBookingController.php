@@ -87,7 +87,7 @@ class VehicleBookingController extends Controller
             $q->where('role', 'helper');
         })->with('user')->get();
 
-        $tripCategories = TripCategory::where('status', 1)->get();
+        $tripCategories = TripCategory::where('status', 1)->whereNull('deleted_at')->get();
         $customers = Customer::all();
         $start = $request->start;
         $end = $request->end;
