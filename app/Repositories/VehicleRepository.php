@@ -119,6 +119,8 @@ class VehicleRepository implements VehicleRepositoryInterface
             'payment',
             'driver.user',
             'tripRoute'
+        ])->withExists([
+            'vehicleMoment as is_moment_started'
         ]);
 
         // Filter by vehicle
