@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TripRoutesExport;
 use App\Imports\TripRoutesImport;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class TripRouteController extends Controller
 {
@@ -86,7 +87,11 @@ class TripRouteController extends Controller
     public function destroy($id)
     {
         Gate::authorize('delete_vehicles_trip_routes');
-        TripRoute::destroy($id);
+
+        $tripRoute = TripRoute::findOrFail($id);
+        $tripRoute->deleted_by = Auth::id();
+        $tripRoute->save();
+        $tripRoute->delete();
 
         return back()->with('success', 'Deleted successfully');
     }
