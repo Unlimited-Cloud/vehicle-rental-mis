@@ -146,6 +146,11 @@
                                                     <i class="fas fa-users"></i> Client Usage
                                                 </a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" id="movement-receipt-tab" data-toggle="pill" href="#movement-receipt" role="tab" aria-controls="movement-receipt" aria-selected="false">
+                                                    <i class="fas fa-exchange-alt"></i> Movement & Receipt
+                                                </a>
+                                            </li>
                                         </ul>
                                     </div>
                                     <div class="card-body">
@@ -582,6 +587,298 @@
                                                     </table>
                                                 </div>
                                             </div>
+                                            <!-- Tab 6: Movement & Receipt Reports -->
+<div class="tab-pane fade" id="movement-receipt" role="tabpanel" aria-labelledby="movement-receipt-tab">
+    
+    <!-- MOVEMENT Summary Cards -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card card-outline card-info">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-truck-moving"></i> MOVEMENT Summary
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Movements</span>
+                                    <span class="info-box-number">{{ $movementReport['total_movements'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-money-bill"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Movement Amount</span>
+                                    <span class="info-box-number">{{ $movementReport['formatted_amount'] ?? '₹ 0' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{-- @if(!empty($movementReport['movements_by_status']))
+                    <h6 class="mt-3">Movements by Status</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($movementReport['movements_by_status'] as $status => $data)
+                                <tr>
+                                    <td><span class="badge badge-{{ $status == 'completed' ? 'success' : 'warning' }}">{{ ucfirst($status) }}</span></td>
+                                    <td class="text-center">{{ $data['count'] }}</td>
+                                    <td class="text-right">₹ {{ number_format($data['amount'], 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif --}}
+                </div>
+            </div>
+        </div>
+        
+        <!-- RECEIPT Summary Cards -->
+        <div class="col-md-6">
+            <div class="card card-outline card-success">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-receipt"></i> RECEIPT Summary
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="info-box bg-info">
+                                <span class="info-box-icon"><i class="fas fa-file-invoice"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Total Receipts</span>
+                                    <span class="info-box-number">{{ $receiptReport['total_receipts'] ?? 0 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-box bg-warning">
+                                <span class="info-box-icon"><i class="fas fa-chart-line"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Booking Amount</span>
+                                    <span class="info-box-number">{{ $receiptReport['formatted_booking_amount'] ?? '₹ 0' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="info-box bg-success">
+                                <span class="info-box-icon"><i class="fas fa-check-circle"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Paid Amount</span>
+                                    <span class="info-box-number">{{ $receiptReport['formatted_paid_amount'] ?? '₹ 0' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="info-box bg-danger">
+                                <span class="info-box-icon"><i class="fas fa-clock"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text">Pending Amount</span>
+                                    <span class="info-box-number">{{ $receiptReport['formatted_pending_amount'] ?? '₹ 0' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @if(!empty($receiptReport['receipts_by_payment_method']))
+                    <h6 class="mt-3">Receipts by Payment Method</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Payment Method</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-right">Paid Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($receiptReport['receipts_by_payment_method'] as $method => $data)
+                                <tr>
+                                    <td>{{ ucfirst(str_replace('_', ' ', $method)) }}</td>
+                                    <td class="text-center">{{ $data['count'] }}</td>
+                                    <td class="text-right">₹ {{ number_format($data['paid_amount'], 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Incomplete Processes Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card card-outline card-danger">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-exclamation-triangle"></i> Incomplete Processes - Action Required
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Bookings without MOVEMENT -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>{{ $bookingsWithoutMovement['count'] ?? 0 }}</h3>
+                                    <p>Bookings Without MOVEMENT</p>
+                                    <p class="mb-0"><small>Amount: {{ $bookingsWithoutMovement['formatted_amount'] ?? '₹ 0' }}</small></p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-calendar-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ $movementsWithoutReceipt['count'] ?? 0 }}</h3>
+                                    <p>MOVEMENTS Without RECEIPT</p>
+                                    <p class="mb-0"><small>Amount: {{ $movementsWithoutReceipt['formatted_amount'] ?? '₹ 0' }}</small></p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-file-invoice"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>{{ $receiptsWithoutFullPayment['count'] ?? 0 }}</h3>
+                                    <p>RECEIPTS Without Full Payment</p>
+                                    <p class="mb-0"><small>Pending: {{ $receiptsWithoutFullPayment['formatted_pending_amount'] ?? '₹ 0' }}</small></p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bookings without MOVEMENT Details Table -->
+                    @if(($bookingsWithoutMovement['count'] ?? 0) > 0)
+                    <div class="mt-4">
+                        <h5><i class="fas fa-calendar-times"></i> Bookings Without MOVEMENT</h5>
+                        <div class="table-responsive">
+                             <table id="dataTable" class="table table-bordered table-striped show-search-bar">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Customer</th>
+                                        <th>Vehicle</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th class="text-right">Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($bookingsWithoutMovement['bookings'] ?? [] as $booking)
+                                    <tr>
+                                        <td>#{{ $booking->id }}</td>
+                                        <td>{{ $booking->customer->name ?? 'N/A' }}</td>
+                                        <td>{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
+                                        <td>{{ Carbon\Carbon::parse($booking->start_date)->format('Y-m-d') }}</td>
+                                        <td>{{ Carbon\Carbon::parse($booking->end_date)->format('Y-m-d') }}</td>
+                                        <td class="text-right">₹ {{ number_format($booking->total_amount, 2) }}</td>
+                                        <td><span class="badge badge-warning">Pending MOVEMENT</span></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- MOVEMENTS without RECEIPT Details Table -->
+                    @if(($movementsWithoutReceipt['count'] ?? 0) > 0)
+                    <div class="mt-4">
+                        <h5><i class="fas fa-file-invoice"></i> MOVEMENTS Without RECEIPT</h5>
+                        <div class="table-responsive">
+                             <table id="dataTable" class="table table-bordered table-striped show-search-bar">
+                                <thead>
+                                    <tr>
+                                        <th>Movement ID</th>
+                                        <th>Booking ID</th>
+                                        <th>Movement Date</th>
+                                        <th class="text-right">Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($movementsWithoutReceipt['movements'] ?? [] as $movement)
+                                    <tr>
+                                        <td>#{{ $movement->id }}</td>
+                                        <td>#{{ $movement->booking->id ?? 'N/A' }}</td>
+                                        <td>{{ Carbon\Carbon::parse($movement->created_at)->format('Y-m-d') }}</td>
+                                        <td class="text-right">₹ {{ number_format($movement->booking->total_amount, 2) }}</td>
+                                        <td><span class="badge badge-info">No RECEIPT</span></td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
+                    
+                    <!-- RECEIPTS without Full Payment Details Table -->
+                    @if(($receiptsWithoutFullPayment['count'] ?? 0) > 0)
+                    <div class="mt-4">
+                        <h5><i class="fas fa-credit-card"></i> RECEIPTS Without Full Payment</h5>
+                        <div class="table-responsive">
+                            <table id="dataTable" class="table table-bordered table-striped show-search-bar">
+                                <thead>
+                                    <tr>
+                                        <th>Receipt ID</th>
+                                        <th>Customer</th>
+                                        <th>Receipt Date</th>
+                                        <th class="text-right">Total Amount</th>
+                                        <th class="text-right">Paid Amount</th>
+                                        <th class="text-right">Pending Amount</th>
+                                        <th>Payment Method</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($receiptsWithoutFullPayment['receipts'] ?? [] as $receipt)
+                                    <tr>
+                                        <td>#{{ $receipt->id }}</td>
+                                        <td>{{ $receipt->customer->name ?? 'N/A' }}</td>
+                                        <td>{{ Carbon\Carbon::parse($receipt->created_at)->format('Y-m-d') }}</td>
+                                        <td class="text-right">₹ {{ number_format($receipt->total_amount, 2) }}</td>
+                                        <td class="text-right text-success">₹ {{ number_format($receipt->amount, 2) }}</td>
+                                        <td class="text-right text-danger">₹ {{ number_format($receipt->total_amount - $receipt->amount, 2) }}</td>
+                                        <td>{{ ucfirst(str_replace('_', ' ', $receipt->payment_method ?? 'N/A')) }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                                         </div>
                                     </div>
                                 </div>

@@ -82,4 +82,8 @@ class VehicleBooking extends Model
     {
         return $this->hasOne(VehicleMoment::class, 'booking_id');
     }
+    public function receipts()
+    {
+        return $this->hasMany(VehicleReceipt::class, 'file_no', 'file_no');
+    }
 }
