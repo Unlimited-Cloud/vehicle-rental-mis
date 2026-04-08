@@ -29,7 +29,7 @@ class VehicleMoment extends Model
 
     public function booking()
     {
-        return $this->belongsTo(VehicleBooking::class);
+        return $this->belongsTo(VehicleBooking::class,);
     }
 
     public function driver()
@@ -50,6 +50,11 @@ class VehicleMoment extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function receipt()
+    {
+        return $this->hasOne(VehicleReceipt::class);
     }
 
     public function getStartImageUrlAttribute()
