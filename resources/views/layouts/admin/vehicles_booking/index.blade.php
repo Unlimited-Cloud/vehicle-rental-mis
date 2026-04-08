@@ -209,6 +209,7 @@
                     <th>Start Date (AD/BS)</th>
                     <th>End Date (AD/BS)</th>
                     <th>Rate & Total</th>
+                    <th>Moment</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -223,7 +224,11 @@
                     @endphp
                     <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
                         <td>{{ $i+1 }}</td>
-                        <td><span class="badge badge-secondary">{{ $fileNo }}</span></td>
+                        <td>
+                            <span class="badge badge-secondary" style="white-space: normal;">
+                                {!! wordwrap($fileNo, 10, '&#8203;', true) !!}
+                            </span>
+                        </td>
                         <td>
                             <div style="display: flex; align-items: center;">
                                 <div style="width:12px;height:12px; background:#{{ substr(md5($booking->vehicle_id),0,6) }}; border-radius:3px; margin-right:6px;"></div>
@@ -260,6 +265,7 @@
                                 </div>
                             </div>
                         </td>
+                     <td>{!! $booking->is_moment_started ? '&#10004;' : '&#10008;' !!}</td>
                         <td>
                             <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
                                 {{ ucfirst($booking->status) }}
@@ -804,6 +810,16 @@ async function loadNepaliDatesForTable() {
         }
     });
 }
+
+$(document).ready(function () {
+    let table = $('#dataTable').DataTable();
+    // Initial load
+    loadNepaliDatesForTable();
+    // 🔥 IMPORTANT: Run after every redraw
+    table.on('draw', function () {
+        loadNepaliDatesForTable();
+    });
+});
 
 // View Toggle Functions
 function showTable() {

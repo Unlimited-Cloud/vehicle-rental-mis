@@ -102,16 +102,23 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+             <div class="col-md-6">
                 <div class="form-group">
                     <label>Fuel Type *</label>
-                    <select name="fuel_type" class="form-control">
-                        <option value="Petrol" {{ old('fuel_type',$vehicle->fuel_type ?? '')=='Petrol'?'selected':'' }}>Petrol</option>
-                        <option value="Diesel" {{ old('fuel_type',$vehicle->fuel_type ?? '')=='Diesel'?'selected':'' }}>Diesel</option>
-                        <option value="Electric" {{ old('fuel_type',$vehicle->fuel_type ?? '')=='Electric'?'selected':'' }}>Electric</option>
+                    <select name="fuel_type" class="form-control" required>
+                        <option value="">Select Fuel Type</option>
+
+                        @foreach($fuel_type as $ft)
+                            <option value="{{ $ft->name }}"
+                                {{ old('fuel_type', $vehicle->fuel_type ?? '') == $ft->name ? 'selected' : '' }}>
+                                {{ $ft->name }}
+                            </option>
+                        @endforeach
+
                     </select>
                 </div>
             </div>
+
 
             <div class="col-md-6">
                 <div class="form-group">

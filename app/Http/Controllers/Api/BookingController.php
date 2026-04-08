@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
 use App\Models\Brand;
 use App\Models\EstimateBill;
+use App\Models\FuelType;
 use App\Models\ProformaInvoice;
 use Carbon\Carbon;
 
@@ -943,6 +944,75 @@ class BookingController extends Controller
             'brand_name' => $brand->name,
             'logo' => $brand->logo ? asset('uploads/brands/' . $brand->logo) : null,
             'vehicles' => $vehicles
+        ]);
+    }
+
+
+
+    public function transmission()
+    {
+        $transmission = FuelType::select('id', 'name', 'status')->where('status', 1)->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'status' => $b->status
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $transmission
+        ]);
+    }
+
+
+    public function vehiclesByTransmission(Request $request)
+    {
+        $request->validate([
+            'transmission_id' => 'required'
+        ]);
+
+        // get brand
+        $transmission = FuelType::where('id', $request->transmission_id)->first();
+
+        if (!$transmission) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Transmission not found'
+            ], 404);
+        }
+
+        // match with vehicle.brand (string)
+        $vehicles = Vehicle::whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
+            ->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this transmission'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'transmission_name' => $transmission->name,
+            'vehicles' => $vehicles
+        ]);
+    }
+
+    public function mostPopularVehicles()
+    {
+        $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
+            ->with('vehicle')
+            ->groupBy('vehicle_id')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $vehicles
         ]);
     }
 }

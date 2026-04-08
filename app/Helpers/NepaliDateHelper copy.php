@@ -2,13 +2,9 @@
 
 namespace App\Helpers;
 
-use App\Models\NepaliDateCache;
 use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Facades\Log;
-
-
-use Carbon\Carbon;
 
 class NepaliDateHelper
 {
@@ -18,40 +14,24 @@ class NepaliDateHelper
     public static function convertToNepali($englishDate)
     {
         try {
-            // Format date
-            if ($englishDate instanceof Carbon) {
-                $formattedDate = $englishDate->format('Y-m-d');
-                $date = $englishDate;
-            } else {
-                $date = Carbon::parse($englishDate);
-                $formattedDate = $date->format('Y-m-d');
-            }
 
-            // Check if already in database
-            $cached = NepaliDateCache::where('english_date', $formattedDate)->first();
-
-            if ($cached) {
-                return [
-                    'nepali' => $cached->nepali_date,
-                    'year'   => $cached->nepali_year,
-                    'month'  => $cached->nepali_month,
-                    'day'    => $cached->nepali_day,
-                ];
-            }
-
-            // Not in database, call API
             $response = Http::asForm()->post(
                 'https://www.hamropatro.com/getMethod.php',
                 [
                     'actionName'     => 'wdconverter',
-                    'datefield'      => $formattedDate,
+                    'datefield'      => $englishDate,
                     'convert_option' => 'eng_to_nep',
                 ]
             );
 
             if ($response->successful()) {
+
+                // Example response:
+                // "March, 01 2026 | <span>२०८२ फागुन १७</span>"
+
                 $raw = trim($response->body());
 
+                // 🔥 Step 1: Split by |
                 if (str_contains($raw, '|')) {
                     $parts = explode('|', $raw);
                     $nepaliPart = trim($parts[1]);
@@ -59,32 +39,20 @@ class NepaliDateHelper
                     $nepaliPart = $raw;
                 }
 
+                // 🔥 Step 2: Remove HTML tags completely
                 $nepaliPart = strip_tags($nepaliPart);
-                $nepaliPart = preg_replace('/\s+/', ' ', $nepaliPart);
-                $nepaliPart = trim($nepaliPart);
+
+                // Now we have:
+                // "२०८२ फागुन १७"
 
                 $segments = explode(' ', $nepaliPart);
 
-                $result = [
+                return [
                     'nepali' => $nepaliPart,
                     'year'   => $segments[0] ?? '',
                     'month'  => $segments[1] ?? '',
                     'day'    => $segments[2] ?? '',
                 ];
-
-
-                // Save to database for next time
-                NepaliDateCache::create([
-                    'english_date' => $formattedDate,
-                    'nepali_date' => $result['nepali'],
-                    'nepali_year' => $result['year'],
-                    'nepali_month' => $result['month'],
-                    'nepali_day' => $result['day'],
-                    'nepali_month_name' => $result['month'],
-                ]);
-                Log::info('Nepali date saved successfully! ID: ' . ($cached->id ?? 'No ID'));
-
-                return $result;
             }
         } catch (\Exception $e) {
             Log::error('Nepali date conversion failed: ' . $e->getMessage());
@@ -96,6 +64,30 @@ class NepaliDateHelper
             'month'  => '',
             'day'    => '',
         ];
+    }
+
+
+    /**
+     * Get Nepali month name from month number
+     */
+    private static function getNepaliMonthName($month)
+    {
+        $months = [
+            '01' => 'बैशाख',
+            '02' => 'जेठ',
+            '03' => 'असार',
+            '04' => 'साउन',
+            '05' => 'भदौ',
+            '06' => 'असोज',
+            '07' => 'कात्तिक',
+            '08' => 'मंसिर',
+            '09' => 'पुस',
+            '10' => 'माघ',
+            '11' => 'फागुन',
+            '12' => 'चैत'
+        ];
+
+        return $months[$month] ?? 'बैशाख';
     }
 
     /**

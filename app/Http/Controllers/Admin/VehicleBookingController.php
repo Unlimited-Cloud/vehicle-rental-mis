@@ -442,12 +442,14 @@ class VehicleBookingController extends Controller
 
     public function convertAdToBs(Request $request)
     {
+
         $date = $request->date;
         $cacheKey = 'nepali_date_' . $date;
 
         $converted = Cache::remember($cacheKey, now()->addDays(30), function () use ($date) {
             return NepaliDateHelper::convertToNepali($date);
         });
+
 
         return response()->json([
             'success' => true,
