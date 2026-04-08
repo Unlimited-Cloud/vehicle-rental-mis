@@ -78,4 +78,8 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(TripRoute::class, 'trip_route_id');
     }
+    public function vehicleMoment()
+    {
+        return $this->hasOne(VehicleMoment::class, 'booking_id');
+    }
 }
