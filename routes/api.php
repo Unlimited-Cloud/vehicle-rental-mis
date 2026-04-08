@@ -67,6 +67,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/brands', [BookingController::class, 'brands']);
     Route::get('/vehicles-and-brand', [BookingController::class, 'BrandWithVehicle']);
     Route::post('/vehicles-by-brand', [BookingController::class, 'vehiclesByBrand']);
+
+    //transmission
+    Route::get('/transmission', [BookingController::class, 'transmission']);
+    Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
+
+    Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
 });
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);

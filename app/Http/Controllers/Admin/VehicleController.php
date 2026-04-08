@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
+use App\Models\FuelType;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -28,7 +29,8 @@ class VehicleController extends Controller
     {
         Gate::authorize('create_vehicles');
         $brands = Brand::latest()->get();
-        return view('layouts.admin.vehicles.create', compact('brands'));
+        $fuel_type = FuelType::latest()->get();
+        return view('layouts.admin.vehicles.create', compact('brands', 'fuel_type'));
     }
 
     public function store(Request $request)
@@ -112,7 +114,8 @@ class VehicleController extends Controller
     {
         Gate::authorize('update_vehicles');
         $brands = Brand::latest()->get();
-        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands'));
+        $fuel_type = FuelType::latest()->get();
+        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'fuel_type'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
