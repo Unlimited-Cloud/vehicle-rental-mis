@@ -17,6 +17,12 @@ class Vehicle extends Model
         'fuel_type',
         'transmission',
         'image',
+        'mileage',
+        'horsepower',
+        'car_color',
+        'description',
+        'car_images',
+
         'status',
         'is_helper_needed',
 
@@ -38,6 +44,9 @@ class Vehicle extends Model
     ];
 
     protected $appends = ['vehicle_image_url'];
+    protected $casts = [
+        'images' => 'array',
+    ];
 
     protected $hidden = ['image'];
 

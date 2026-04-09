@@ -80,6 +80,9 @@
                                 <th width="130" class="text-center">
                                     <i class="fas fa-bus-alt mr-1"></i> Bus
                                 </th>
+                                  <th width="130" class="text-center">
+                                    <i class="fas fa-bus-alt mr-1"></i> Van
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -88,7 +91,7 @@
                                 @if($category->routes->count() > 0)
                                     <!-- Category Header -->
                                     <tr class="category-header" style="background: #e9ecef;">
-                                        <td colspan="7" class="p-0">
+                                        <td colspan="8" class="p-0">
                                             <div class="category-title p-2" style="background: #17a2b8; color: white; font-weight: bold;">
                                                 <i class="fas fa-folder-open"></i>
                                                 {{ $category->name }} ({{ $category->routes->count() }} routes)

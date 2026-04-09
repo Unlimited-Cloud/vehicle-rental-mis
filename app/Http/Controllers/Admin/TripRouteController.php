@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TripRoutesExport;
 use App\Imports\TripRoutesImport;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class TripRouteController extends Controller
 {
@@ -19,7 +20,7 @@ class TripRouteController extends Controller
     public function index()
     {
         Gate::authorize('index_vehicles_trip_routes');
-        $routes = TripRoute::with('category')->latest()->get();
+        $routes = TripRoute::with('category')->whereNull('deleted_at')->latest()->get();
 
         return view('layouts.admin.trip_routes.index', compact('routes'));
     }
@@ -54,7 +55,7 @@ class TripRouteController extends Controller
     public function categoryView()
     {
         Gate::authorize('read_vehicles_trip_routes');
-        $categories = TripCategory::with('routes')->get();
+        $categories = TripCategory::with('routes')->whereNull('deleted_at')->get();
         return view('layouts.admin.trip_routes.show', compact('categories'));
     }
     public function edit($id)
@@ -86,7 +87,11 @@ class TripRouteController extends Controller
     public function destroy($id)
     {
         Gate::authorize('delete_vehicles_trip_routes');
-        TripRoute::destroy($id);
+
+        $tripRoute = TripRoute::findOrFail($id);
+        $tripRoute->deleted_by = Auth::id();
+        $tripRoute->save();
+        $tripRoute->delete();
 
         return back()->with('success', 'Deleted successfully');
     }

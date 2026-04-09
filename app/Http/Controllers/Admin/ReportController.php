@@ -12,6 +12,8 @@ use App\Models\PetrolPumpTransaction;
 use App\Models\TripRoute;
 use App\Models\Customer;
 use App\Models\CrewProfile;
+use App\Models\VehicleMoment;
+use App\Models\VehicleReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -45,6 +47,12 @@ class ReportController extends Controller
         // Summary statistics
         $summary = $this->getSummaryStats($startDate, $endDate, $vehicleId);
 
+        $movementReport = $this->getMovementReport($startDate, $endDate, $vehicleId);
+        $receiptReport = $this->getReceiptReport($startDate, $endDate, $vehicleId);
+        $bookingsWithoutMovement = $this->getBookingsWithoutMovement($startDate, $endDate, $vehicleId);
+        $movementsWithoutReceipt = $this->getMovementsWithoutReceipt($startDate, $endDate, $vehicleId);
+        $receiptsWithoutFullPayment = $this->getReceiptsWithoutFullPayment($startDate, $endDate, $vehicleId);
+
         return view('layouts.admin.reports.index', compact(
             'profitabilityReport',
             'revenueReport',
@@ -52,6 +60,11 @@ class ReportController extends Controller
             'fuelAnalytics',
             'discountAnalysis',
             'clientUsageReport',
+            'movementReport',
+            'receiptReport',
+            'bookingsWithoutMovement',
+            'movementsWithoutReceipt',
+            'receiptsWithoutFullPayment',
             'summary',
             'vehicles',
             'startDate',
@@ -778,5 +791,168 @@ class ReportController extends Controller
         }
 
         return [$start, $end];
+    }
+
+
+
+
+    //vehicle moments report
+    /**
+     * Get MOVEMENT statistics
+     */
+    private function getMovementReport($startDate, $endDate, $vehicleId = null)
+    {
+        $query = VehicleMoment::whereBetween('created_at', [$startDate, $endDate])
+            ->with('booking'); // eager load bookings
+
+
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $movements = $query->get();
+
+        // Sum total_amount from related bookings
+        $totalAmount = $movements->sum(function ($movement) {
+            return $movement->booking ? $movement->booking->total_amount : 0;
+        });
+
+        $totalMovements = $movements->count();
+
+
+
+        return [
+            'total_movements' => $totalMovements,
+            'total_amount' => $totalAmount,
+            'formatted_amount' => '₹ ' . number_format($totalAmount, 2),
+            'movements' => $movements
+        ];
+    }
+
+    /**
+     * Get RECEIPT statistics
+     */
+    private function getReceiptReport($startDate, $endDate, $vehicleId = null)
+    {
+        $query = VehicleReceipt::whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $receipts = $query->get();
+
+        $totalReceipts = $receipts->count();
+        $totalBookingAmount = $receipts->sum('total_amount'); // Amount from booking
+        $totalPaidAmount = $receipts->sum('amount'); // Amount paid by users
+        $totalPendingAmount = $totalBookingAmount - $totalPaidAmount;
+
+        // Receipts by payment method
+        $receiptsByPaymentMethod = $receipts->groupBy('payment_method')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'paid_amount' => $group->sum('amount'),
+                'booking_amount' => $group->sum('total_amount')
+            ];
+        });
+
+        return [
+            'total_receipts' => $totalReceipts,
+            'total_booking_amount' => $totalBookingAmount,
+            'formatted_booking_amount' => '₹ ' . number_format($totalBookingAmount, 2),
+            'total_paid_amount' => $totalPaidAmount,
+            'formatted_paid_amount' => '₹ ' . number_format($totalPaidAmount, 2),
+            'total_pending_amount' => $totalPendingAmount,
+            'formatted_pending_amount' => '₹ ' . number_format($totalPendingAmount, 2),
+            'receipts_by_payment_method' => $receiptsByPaymentMethod,
+            'receipts' => $receipts
+        ];
+    }
+
+    /**
+     * Get bookings without MOVEMENT
+     */
+    private function getBookingsWithoutMovement($startDate, $endDate, $vehicleId = null)
+    {
+        $query = VehicleBooking::whereBetween('start_date', [$startDate, $endDate])
+            ->where('status', 'confirmed')
+            ->whereDoesntHave('vehicleMoment');
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $bookings = $query->with(['vehicle', 'customer'])->get();
+
+        // Calculate total_amount once
+        $totalAmount = $bookings->sum('total_amount');
+
+        return [
+            'count' => $bookings->count(),
+            'total_amount' => $totalAmount,
+            'formatted_amount' => '₹ ' . number_format($totalAmount, 2),
+            'bookings' => $bookings
+        ];
+    }
+
+    /**
+     * Get MOVEMENTS without INVOICE/RECEIPT
+     */
+    private function getMovementsWithoutReceipt($startDate, $endDate, $vehicleId = null)
+    {
+        $query = VehicleMoment::with(['vehicle', 'booking'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereHas('booking')
+            ->whereDoesntHave('booking.receipts'); // booking has no receipts
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $movements = $query->get();
+
+        // Sum total_amount from related bookings
+        $totalAmount = $movements->sum(function ($movement) {
+            return $movement->booking ? $movement->booking->total_amount : 0;
+        });
+
+
+
+        return [
+            'count' => $movements->count(),
+            'total_amount' => $totalAmount,
+            'formatted_amount' => '₹ ' . number_format($totalAmount, 2),
+            'movements' => $movements
+        ];
+    }
+    /**
+     * Get RECEIPTS/INVOICES without PAYMENT (partial or no payment)
+     */
+    private function getReceiptsWithoutFullPayment($startDate, $endDate, $vehicleId = null)
+    {
+        $query = VehicleReceipt::whereBetween('created_at', [$startDate, $endDate])
+            ->whereRaw('amount < total_amount'); // Not fully paid
+
+        if ($vehicleId) {
+            $query->where('vehicle_id', $vehicleId);
+        }
+
+        $receipts = $query->with(['vehicle', 'booking', 'customer'])->get();
+
+        $totalPendingAmount = $receipts->sum(function ($receipt) {
+            return $receipt->total_amount - $receipt->amount;
+        });
+
+        return [
+            'count' => $receipts->count(),
+            'total_booking_amount' => $receipts->sum('total_amount'),
+            'total_paid_amount' => $receipts->sum('amount'),
+            'total_pending_amount' => $totalPendingAmount,
+            'formatted_booking_amount' => '₹ ' . number_format($receipts->sum('total_amount'), 2),
+            'formatted_paid_amount' => '₹ ' . number_format($receipts->sum('amount'), 2),
+            'formatted_pending_amount' => '₹ ' . number_format($totalPendingAmount, 2),
+            'receipts' => $receipts
+        ];
     }
 }

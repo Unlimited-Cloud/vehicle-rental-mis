@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
-
+use App\Http\Controllers\Api\VehicleController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -73,6 +73,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
 
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
+
+    Route::post('reviews', [VehicleController::class, 'storeReview']);
+    Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
 });
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);

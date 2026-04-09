@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Review;
+use Illuminate\Http\Request;
+use App\Models\Vehicle;
+
+class VehicleController extends Controller
+{
+    public function storeReview(Request $request)
+    {
+        $request->validate([
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'customer_id' => 'nullable',
+            'rating' => 'required|integer|min:1|max:5',
+            'description' => 'nullable|string',
+        ]);
+
+
+        $review = Review::create([
+            'vehicle_id' => $request->vehicle_id,
+            'customer_id' => $request->customer_id,
+            'rating' => $request->rating,
+            'description' => $request->description,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Review added successfully',
+            'review' => $review
+        ], 201);
+    }
+
+    // Get all reviews for a vehicle
+    public function getReviews($vehicle_id)
+    {
+        $vehicle = Vehicle::find($vehicle_id);
+
+        if (!$vehicle) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+
+        $reviews = Review::with('customer')
+            ->where('vehicle_id', $vehicle_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'vehicle' => [
+                'id' => $vehicle->id,
+                'name' => $vehicle->vehicle_name
+            ],
+            'reviews' => $reviews
+        ]);
+    }
+}
