@@ -339,6 +339,39 @@ class ProformaInvoiceController extends Controller
     }
 
 
+    private function prepareInvoiceItems($bookings)
+    {
+        $items = [];
+        foreach ($bookings as $index => $booking) {
+            $routeName = $booking->tripRoute ? $booking->tripRoute->title : 'Transportation Service';
+            $vehicleName = $booking->vehicle ? $booking->vehicle->vehicle_name : 'Vehicle';
+            $date = $booking->start_date
+                ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
+                : '';
+
+            // Get the actual service description from booking notes if available
+            $description = "{$routeName} By {$vehicleName}";
+            if ($date) {
+                $description .= " on {$date}";
+            }
+
+            $items[] = [
+                'sn' => $index + 1,
+                'hs_code' => 'Transportation Services',
+                'particular' => $description,
+                'vehicle_name' => $vehicleName,
+                'route_name' => $routeName,
+                'date' => $date,
+                'qty' => 1,
+                'qty_type' => 'PAX',
+                'rate' => $booking->rate_per_day,
+                'amount' => $booking->rate_per_day,
+            ];
+        }
+        return $items;
+    }
+
+
     public function finalizeReceipt(Request $request)
     {
         $receipt = VehicleReceipt::findOrFail($request->id);
@@ -351,30 +384,34 @@ class ProformaInvoiceController extends Controller
             'bank_name'      => $request->bank_name,
             'bank_account'   => $request->bank_account,
             'amount'         => $request->amount,
-            'paid'        => "1",
+            'paid'           => "1",
         ]);
 
-        // Load bookings if needed
-        $bookings = [];
+        // Load bookings
+        $bookings = collect(); // safer default
+
         if ($receipt->file_no) {
             $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
                 ->where('file_no', $receipt->file_no)
                 ->get();
         }
 
+        // ✅ PREPARE ITEMS (IMPORTANT FIX)
+        $items = $this->prepareInvoiceItems($bookings);
+
         // Prepare data for PDF
         $data = [
             'receipt'      => $receipt,
-            'bookings'     => $bookings,
+            'items'        => $items, // ✅ USE THIS
             'customer'     => $receipt->customer,
             'invoice_date' => now(),
-            'miti_date'    => now()->format('Y-m-d'), // or use Nepali date converter
+            'miti_date'    => now()->format('Y-m-d'),
         ];
 
         // Generate FINAL RECEIPT PDF
         $pdf = Pdf::loadView('layouts.admin.invoices.final-receipt', $data);
 
-        // Ensure folder exists in public
+        // Ensure folder exists
         $folderPath = public_path('uploads/finalinvoice');
         if (!file_exists($folderPath)) {
             mkdir($folderPath, 0755, true);
@@ -383,10 +420,9 @@ class ProformaInvoiceController extends Controller
         $pdfFileName = 'final-' . $receipt->receipt_number . '.pdf';
         $pdfFullPath = $folderPath . '/' . $pdfFileName;
 
-        // Save PDF directly into public folder
         $pdf->save($pdfFullPath);
 
-        // Save relative path in DB
+        // Save path
         $receipt->update([
             'receipt_path' => 'uploads/finalinvoice/' . $pdfFileName
         ]);
@@ -394,7 +430,7 @@ class ProformaInvoiceController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Receipt finalized successfully',
-            'path'    => asset($receipt->receipt_path) // full URL if needed
+            'path'    => asset($receipt->receipt_path)
         ]);
     }
 
