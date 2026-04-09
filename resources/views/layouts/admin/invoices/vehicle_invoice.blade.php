@@ -243,6 +243,11 @@
     <td colspan="4" rowspan="5" style="padding: 4px; vertical-align: top;">
         <div><b>Printing Date & Time :</b> {{ $printing_time }}</div>
         <div style="margin-top:5px;"><b>In Words :</b> {{ $amount_in_words }}</div>
+        @if(!empty($invoice_due_date))
+            <div style="margin-top:5px;">
+                <b>Due Date :</b> {{ $invoice_due_date }}
+            </div>
+        @endif
     </td>
 
     <!-- RIGHT SIDE: Basic Amount -->

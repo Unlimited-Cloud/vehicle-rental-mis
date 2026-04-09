@@ -17,28 +17,49 @@
     </div>
     <div class="card-body">
         <div class="row">
-            <div class="col-md-4">
+            <div class="modal fade" id="invoiceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Generate Invoice</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- File Number -->
                 <div class="form-group">
                     <label>Select File Number</label>
                     <select id="file_no_select" class="form-control">
                         <option value="">-- Select File Number --</option>
-                        @php
-                            $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
-                                ->distinct()
-                                ->orderBy('file_no', 'desc')
-                                ->pluck('file_no');
-                        @endphp
+                        @php $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no') ->distinct() ->orderBy('file_no', 'desc') ->pluck('file_no'); @endphp
                         @foreach($fileNumbers as $fileNo)
                             <option value="{{ $fileNo }}">{{ $fileNo }}</option>
                         @endforeach
                     </select>
                 </div>
+
+                <!-- Invoice Due Date -->
+                <div class="form-group">
+                    <label>Invoice Due Date</label>
+                    <input type="date" id="invoice_due_date" class="form-control">
+                </div>
+
+                <span id="invoiceStatus"></span>
             </div>
+
+            <div class="modal-footer">
+                <button type="button" id="generateInvoiceBtn" class="btn btn-success">
+                    Generate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label>&nbsp;</label>
                     <div>
-                       <button type="button" id="generateInvoiceBtn" class="btn btn-success">
+                       <button type="button" class="btn btn-success" data-toggle="modal" data-target="#invoiceModal">
                             <i class="fas fa-file-invoice"></i> Generate Invoice
                         </button>
                         <span id="invoiceStatus" class="ml-2"></span>
@@ -234,9 +255,15 @@ $(document).ready(function () {
         console.log("here");
 
         let fileNo = $('#file_no_select').val();
+        let dueDate = $('#invoice_due_date').val();
 
         if (!fileNo) {
             alert('Please select a file number');
+            return;
+        }
+
+        if (!dueDate) {
+            alert('Please select invoice due date');
             return;
         }
 
@@ -252,6 +279,7 @@ $(document).ready(function () {
             method: "POST",
             data: {
                 file_no: fileNo,
+                invoice_due_date: dueDate,
                 _token: "{{ csrf_token() }}"
             },
             xhrFields: {

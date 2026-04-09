@@ -113,7 +113,7 @@ class BookingController extends Controller
 
     public function tripcategory()
     {
-        $category = TripCategory::where('status', 1)->get();
+        $category = TripCategory::where('status', 1)->whereNull('deleted_at')->get();
 
         return response()->json([
             'status' => true,
@@ -124,7 +124,7 @@ class BookingController extends Controller
 
     public function tripRoutes($category_id)
     {
-        $routes = TripRoute::with('category')->where('trip_category_id', $category_id)->get();
+        $routes = TripRoute::with('category')->whereNull('deleted_at')->where('trip_category_id', $category_id)->get();
 
         return response()->json([
             'status' => true,
@@ -299,6 +299,7 @@ class BookingController extends Controller
     {
         $request->validate([
             'file_no' => 'required|string',
+            'invoice_due_date' => 'nullable|date',
             'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
         ]);
 
@@ -330,6 +331,7 @@ class BookingController extends Controller
             'bookings' => $bookings,
             'customer' => $customer,
             'file_no' => $request->file_no,
+            'invoice_due_date' => $request->invoice_due_date ?? null,
             'invoice_date' => Carbon::now('Asia/Kathmandu')->format('m/d/Y'),
             'miti_date' => $this->convertToNepaliDate(now()),
             'amount_in_words' => $this->convertNumberToWords($net_amount),
@@ -362,6 +364,7 @@ class BookingController extends Controller
             'discount' => $discount,
             'tax' => $tax,
             'total_amount' => $net_amount,
+            'invoice_due_date' => $request->invoice_due_date ?? null,
         ]);
 
         $data['receipt'] = $receipt;

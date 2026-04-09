@@ -251,50 +251,34 @@
             </tr>
         </thead>
         <tbody>
-            @php
-                // To mimic exactly the invoice style, we loop through bookings (or items)
-                // but preserve fields: HS code (optional default), particular, qty, rate, amount.
-                $bookings = $bookings ?? [];
-                $counter = 1;
-            @endphp
+           @php $counter = 1; @endphp
 
-            @forelse($bookings as $booking)
+            @forelse($items as $item)
             <tr>
                 <td align="center">{{ $counter++ }}</td>
-                <td align="center">{{ $booking->hs_code ?? '8703' }}</td>
+                <td align="center">{{ $item['hs_code'] }}</td>
+
                 <td>
-                    {{ $booking->tripRoute->name ?? 'Tour Package' }} 
-                    @if($booking->vehicle->vehicle_name ?? false)
-                        - By {{ $booking->vehicle->vehicle_name }}
-                    @endif
-                    @if($booking->particular ?? false)
-                        {{ $booking->particular }}
-                    @endif
+                    {{ $item['particular'] }}
                 </td>
-                <td align="center">{{ $booking->passenger ?? $booking->qty ?? 1 }} {{ $booking->qty_type ?? 'pax' }}</td>
-                <td align="right">{{ number_format($booking->rate ?? $booking->sub_total_per_unit ?? ($booking->sub_total / max(1, ($booking->passenger ?? 1))), 2) }}</td>
-                <td align="right">{{ number_format($booking->sub_total ?? $booking->amount ?? 0, 2) }}</td>
+
+                <td align="center">
+                    {{ $item['qty'] }} {{ $item['qty_type'] ?? 'pax' }}
+                </td>
+
+                <td align="right">
+                    {{ number_format($item['rate'], 2) }}
+                </td>
+
+                <td align="right">
+                    {{ number_format($item['amount'], 2) }}
+                </td>
             </tr>
             @empty
-            <!-- Dummy entry to show receipt structure if no bookings -->
             <tr>
-                <td align="center">1</td>
-                <td align="center">9983</td>
-                <td>Vehicle Service / Tour Package (Kathmandu-Pokhara)</td>
-                <td align="center">4 pax</td>
-                <td align="right">2500.00</td>
-                <td align="right">10000.00</td>
-            </tr>
-            <tr>
-                <td align="center">2</td>
-                <td align="center">9984</td>
-                <td>Additional Guide Service</td>
-                <td align="center">1</td>
-                <td align="right">1500.00</td>
-                <td align="right">1500.00</td>
+                <td colspan="6" align="center">No items available</td>
             </tr>
             @endforelse
-
             {{-- EMPTY SPACE row for consistent spacing (from original invoice style) --}}
             <tr>
                 <td colspan="6" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 12px;">&nbsp;</td>
