@@ -43,7 +43,7 @@ class VehicleController extends Controller
             'model' => 'required',
             'seater' => 'nullable|integer|min:1',
             'year' => 'required|digits:4',
-            'rent_price_per_day' => 'required|numeric',
+            'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -65,6 +65,14 @@ class VehicleController extends Controller
             'insurance_till' => 'nullable|date',
             'insurance_cost_per_annum' => 'nullable|numeric',
             'insurance_policy_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+
+            'mileage' => 'nullable|integer|min:0',
+            'horsepower' => 'nullable|integer|min:0',
+            'car_color' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+
+            // multiple images
+            'car_images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -78,6 +86,19 @@ class VehicleController extends Controller
             $image->move(public_path('uploads/vehicle'), $imageName);
 
             $data['image'] = 'uploads/vehicle/' . $imageName;
+        }
+
+        if ($request->hasFile('car_images')) {
+            $images = [];
+
+            foreach ($request->file('car_images') as $file) {
+                $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/vehicle'), $fileName);
+
+                $images[] = 'uploads/vehicle/' . $fileName;
+            }
+
+            $data['images'] = json_encode($images);
         }
 
         // Bill Book Image
@@ -128,7 +149,7 @@ class VehicleController extends Controller
             'model' => 'required',
             'seater' => 'nullable|integer|min:1',
             'year' => 'required|digits:4',
-            'rent_price_per_day' => 'required|numeric',
+            'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -150,6 +171,14 @@ class VehicleController extends Controller
             'insurance_till' => 'nullable|date',
             'insurance_cost_per_annum' => 'nullable|numeric',
             'insurance_policy_document' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+
+            'mileage' => 'nullable|integer|min:0',
+            'horsepower' => 'nullable|integer|min:0',
+            'car_color' => 'nullable|string|max:100',
+            'description' => 'nullable|string',
+
+            // multiple images
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -168,6 +197,30 @@ class VehicleController extends Controller
             $image->move(public_path('uploads/vehicle'), $imageName);
 
             $data['image'] = 'uploads/vehicle/' . $imageName;
+        }
+
+        // MULTIPLE IMAGES UPDATE
+        if ($request->hasFile('car_images')) {
+
+            // delete old images
+            if ($vehicle->car_images) {
+                foreach (json_decode($vehicle->car_images) as $oldImage) {
+                    if (file_exists(public_path($oldImage))) {
+                        unlink(public_path($oldImage));
+                    }
+                }
+            }
+
+            $images = [];
+
+            foreach ($request->file('car_images') as $file) {
+                $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('uploads/vehicle'), $fileName);
+
+                $images[] = 'uploads/vehicle/' . $fileName;
+            }
+
+            $data['car_images'] = json_encode($images);
         }
 
         // Bill Book Image
