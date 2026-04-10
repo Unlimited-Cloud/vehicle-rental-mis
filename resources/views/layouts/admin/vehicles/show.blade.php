@@ -341,8 +341,8 @@
             </div>
             <div class="card-body">
 
-              @php
-    $carImages = $vehicle->car_images ? json_decode($vehicle->car_images, true) : [];
+      @php
+$carImages = $vehicle->car_images ?? [];
 @endphp
 
 @if($carImages && count($carImages))

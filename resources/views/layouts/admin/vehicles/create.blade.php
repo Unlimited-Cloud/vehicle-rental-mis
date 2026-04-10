@@ -191,8 +191,9 @@
                     <input type="file" name="car_images[]" class="form-control" multiple>
 
                     {{-- Preview existing images --}}
-                   @php
-    $carImages = $vehicle->car_images ? json_decode($vehicle->car_images, true) : [];
+    
+      @php
+$carImages = $vehicle->car_images ?? [];
 @endphp
 
 @if(!empty($carImages))
