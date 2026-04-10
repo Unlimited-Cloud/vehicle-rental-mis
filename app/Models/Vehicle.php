@@ -46,7 +46,7 @@ class Vehicle extends Model
     protected $appends = ['vehicle_image_url', 'vehicle_description_image_url'];
     protected $casts = [
         'images' => 'array',
-        'car_images' => 'array',
+        // 'car_images' => 'array',
     ];
 
     protected $hidden = ['image', 'car_images'];
