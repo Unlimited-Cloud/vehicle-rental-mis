@@ -47,6 +47,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/verify-otp-password',  'verifyOtp');
             Route::post('/reset-password',  'resetPassword');
             Route::post('/change-password',  'changePassword');
+
+            Route::post('/profile-image/{customer_id}', 'updateProfileImage');
         });
 
         Route::controller(AuthController::class)->group(function () {
