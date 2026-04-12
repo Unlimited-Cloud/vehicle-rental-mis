@@ -1018,4 +1018,24 @@ class BookingController extends Controller
             'data' => $vehicles
         ]);
     }
+
+    public function VehicleDetailById($id)
+    {
+        $vehicle = Vehicle::where('id', $id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$vehicle) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Vehicle Fetched Successfully',
+            'data' => $vehicle
+        ]);
+    }
 }

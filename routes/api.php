@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
 
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
+    Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 
     Route::post('reviews', [VehicleController::class, 'storeReview']);
     Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
