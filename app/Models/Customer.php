@@ -16,6 +16,7 @@ class Customer extends Model
         'last_name',
         'name',
         'email',
+        'profile_image',
         'mobile_number_country_code',
         'phone',
         'address',
@@ -36,6 +37,10 @@ class Customer extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
     ];
+
+    protected $appends = ['profile_image_url'];
+
+    protected $hidden = ['profile_image'];
 
     public function getFullNameAttribute()
     {
@@ -58,5 +63,10 @@ class Customer extends Model
     public function bookings()
     {
         return $this->hasMany(VehicleBooking::class, 'customer_id');
+    }
+
+    public function getProfileImageUrlAttribute()
+    {
+        return $this->profile_image ? asset($this->profile_image) : null;
     }
 }

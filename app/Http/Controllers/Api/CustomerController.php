@@ -245,4 +245,33 @@ class CustomerController extends Controller
             'message' => 'Password reset successful'
         ]);
     }
+
+    public function updateProfileImage(Request $request, $id)
+    {
+        $customer = Customer::where('customer_uuid', $id)->first();
+
+        $request->validate([
+            'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Delete old image
+        if ($customer->profile_image && file_exists(public_path($customer->profile_image))) {
+            unlink(public_path($customer->profile_image));
+        }
+
+        // Upload new image
+        $image = $request->file('profile_image');
+        $imageName = time() . '_' . $image->getClientOriginalName();
+        $image->move(public_path('uploads/profile'), $imageName);
+
+        // Save
+        $customer->profile_image = 'uploads/profile/' . $imageName;
+        $customer->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile image updated successfully',
+            'profile_image' => asset($customer->profile_image),
+        ]);
+    }
 }
