@@ -127,12 +127,21 @@ class CustomerService
     public function getProfileByUuid($uuid){
         try{
             $customerDetail = $this->customerRepository->getCustomerByUuid($uuid);
+            if(!$customerDetail){
+                return array(
+                    'status' => 'error',
+                    'message' => 'Invalid Customer ID!',
+                    'data' => ['customerId' => $uuid], 
+                    'statusCode' => 422
+                );
+            }
             $details = [
                 'id' => $customerDetail->customer_uuid,
                 'customer_type' => $customerDetail->customer_type,
                 'name' => $customerDetail->name,
                 'email' => $customerDetail->email,
-                'phone' => $customerDetail->phone
+                'phone' => $customerDetail->phone,
+                'profile_image' => asset($customerDetail->profile_image),
             ];
             return array(
                 'status' => 'success',
@@ -141,6 +150,11 @@ class CustomerService
                 'statusCode' => 200
             );
         }catch ( \Exception $e){
+            Log::error("customerController getProfileByUuid",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
+            ]);
             return array(
                 'status' => 'error',
                 'message' => 'Internal Server Error',
