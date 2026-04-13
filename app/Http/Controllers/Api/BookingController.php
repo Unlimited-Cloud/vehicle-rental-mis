@@ -1011,7 +1011,12 @@ class BookingController extends Controller
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
             ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'vehicle' => $item->vehicle
+                ];
+            });
 
         return response()->json([
             'status' => 'success',
