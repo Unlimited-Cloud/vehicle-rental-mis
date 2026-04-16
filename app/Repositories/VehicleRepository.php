@@ -70,6 +70,11 @@ class VehicleRepository implements VehicleRepositoryInterface
         return VehicleBooking::where('vehicle_bookings.customer_id', $customerId)->count();
     }
 
+    public function getVehicleBookingsCountByDriverId($driverId)
+    {
+        return VehicleBooking::where('vehicle_bookings.driver_id', $driverId)->count();
+    }
+
     public function getAllActiveVehicleBookingsCount()
     {
         return VehicleBooking::where('status', 'confirmed')
@@ -106,6 +111,15 @@ class VehicleRepository implements VehicleRepositoryInterface
     {
         VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('vehicle_bookings.customer_id', $customerId)
+            ->orderBy($orderBy, $order)
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId)
+    {
+        VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('vehicle_bookings.driver_id', $driverId)
             ->orderBy($orderBy, $order)
             ->limit($limit)
             ->get();
