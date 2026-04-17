@@ -220,12 +220,21 @@ class PetrolPumpTransactionController extends Controller
         Gate::authorize('update_petrol_pumps_fuel_transactions');
         $petrolPumps = PetrolPump::active()->get();
         $vehicles    = Vehicle::where('status', '1')->get();
-        $drivers = CrewProfile::where('role', 'driver')
-            ->with('user')
-            ->get();
+        if ($this->currentUserIsDriver == 'Y') {
+            $drivers = CrewProfile::where('id', $this->currentUserDriverId)
+                ->where('role', 'driver')
+                ->with('user')
+                ->get();
+        } else {
+            $drivers = CrewProfile::where('role', 'driver')
+                ->with('user')
+                ->get();
+        }
+
+        $currentUserIsDriver = $this->currentUserIsDriver;
         return view(
             'layouts.admin.petrol_pump_transactions.create',
-            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction', 'drivers')
+            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction', 'drivers', 'currentUserIsDriver')
         );
     }
 
