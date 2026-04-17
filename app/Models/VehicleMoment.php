@@ -34,12 +34,12 @@ class VehicleMoment extends Model
 
     public function driver()
     {
-        return $this->belongsTo(User::class, 'driver_id');
+        return $this->belongsTo(CrewProfile::class, 'driver_id');
     }
 
     public function helper()
     {
-        return $this->belongsTo(User::class, 'helper_id');
+        return $this->belongsTo(CrewProfile::class, 'helper_id');
     }
 
     public function questionnaireAnswers()

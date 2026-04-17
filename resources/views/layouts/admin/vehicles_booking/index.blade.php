@@ -89,6 +89,7 @@
                         </select>
                     </div>
 
+                    @if($currentUserIsDriver == 'N')
                     <div class="form-group">
                         <label>Driver</label>
                         <select id="driverFilter" class="form-control">
@@ -98,6 +99,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
 
                     <hr>
                     <h6>Search Fields</h6>
@@ -282,22 +284,27 @@
                                         <i class="fas fa-eye text-info mr-2"></i> View
                                     </a>
 
+                                    @can('update_vehicle_bookings')
                                     <a class="dropdown-item" href="{{ route('admin.vehicle_bookings.edit', $booking->id) }}">
                                         <i class="fas fa-edit text-primary mr-2"></i> Edit
                                     </a>
-
+                                    @endcan
                                     <a class="dropdown-item" href="{{ route('admin.vehicle_moments.create',['booking_id'=>$booking->id]) }}">
                                         <i class="fas fa-road text-success mr-2"></i> Add Movement
                                     </a>
+                                     @can('view_petrol_coupon')
                                     <a class="dropdown-item" href="#" data-toggle="modal" data-target="#generateCouponModal{{ $booking->id }}">
                                         <i class="fas fa-ticket-alt text-success mr-2"></i> Generate Coupon
                                     </a>
+                                    @endcan
 
                                     <div class="dropdown-divider"></div>
-
+                                     @can('delete_vehicle_bookings')
                                     <button class="dropdown-item text-danger" onclick="deleteBooking({{ $booking->id }})">
                                         <i class="fas fa-trash mr-2"></i> Delete
                                     </button>
+                                    @endcan
+
                                 </div>
                             </div>
                             <!-- Generate Coupon Modal -->

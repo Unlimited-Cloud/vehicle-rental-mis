@@ -94,11 +94,27 @@
                 </div>
             </div>
 
+           <div class="col-md-6">
+                <div class="form-group">
+                    <label>Mileage (KM)</label>
+                    <input type="number" name="mileage" class="form-control"
+                        value="{{ old('mileage', $vehicle->mileage ?? '') }}">
+                </div>
+            </div>
+
             <div class="col-md-6">
                 <div class="form-group">
-                    <label>Rent Price Per Day *</label>
-                    <input type="number" step="0.01" name="rent_price_per_day" class="form-control"
-                           value="{{ old('rent_price_per_day',$vehicle->rent_price_per_day ?? '') }}" required>
+                    <label>Horsepower</label>
+                    <input type="number" name="horsepower" class="form-control"
+                        value="{{ old('horsepower', $vehicle->horsepower ?? '') }}">
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Car Color</label>
+                    <input type="text" name="car_color" class="form-control"
+                        value="{{ old('car_color', $vehicle->car_color ?? '') }}">
                 </div>
             </div>
 
@@ -150,14 +166,43 @@
                 </div>
             </div>
 
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="4" class="form-control ckeditor"
+                            placeholder="Enter vehicle details...">{{ old('description', $vehicle->description ?? '') }}</textarea>
+                </div>
+            </div>
+
             <div class="col-md-6">
                 <div class="form-group">
-                    <label>Vehicle Image</label>
+                    <label>Vehicle Logo</label>
                     <input type="file" name="image" class="form-control">
                     @if(isset($vehicle) && $vehicle->image)
                         <br>
                         <img src="{{ asset($vehicle->image) }}" width="120" class="img-thumbnail">
                     @endif
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Vehicle Gallery Images</label>
+                    <input type="file" name="car_images[]" class="form-control" multiple>
+
+                    {{-- Preview existing images --}}
+    
+      @php
+$carImages = $vehicle->car_images ?? [];
+@endphp
+
+@if(!empty($carImages))
+    <div class="mt-2">
+        @foreach($carImages as $img)
+            <img src="{{ asset($img) }}" width="100" class="img-thumbnail mr-2 mb-2">
+        @endforeach
+    </div>
+@endif
                 </div>
             </div>
 
@@ -300,5 +345,28 @@
 
 </div>
 </section>
+
+@endsection
+
+
+@section('scripts')
+
+<script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll('.ckeditor').forEach(function (textarea) {
+
+        ClassicEditor
+            .create(textarea)
+            .catch(error => {
+                console.error(error);
+            });
+
+    });
+
+});
+</script>
 
 @endsection

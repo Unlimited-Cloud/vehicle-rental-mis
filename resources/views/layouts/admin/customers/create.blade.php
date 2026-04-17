@@ -13,7 +13,7 @@
 <div class="card card-primary card-outline">
 
 <form action="{{ isset($customer) ? route('admin.customers.update', $customer->id) : route('admin.customers.store') }}"
-      method="POST">
+      enctype="multipart/form-data" method="POST">
 @csrf
 @if(isset($customer)) @method('PUT') @endif
 
@@ -28,6 +28,22 @@
                    placeholder="Enter company or business name"
                    value="{{ old('name', $customer->name ?? '') }}" required>
             <small class="text-muted">This will be the primary name for billing</small>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Profile Image</label>
+            <input type="file" name="profile_image" class="form-control">
+            
+            @if(!empty($customer->profile_image))
+                <div class="mt-2">
+                    <img src="{{ asset($customer->profile_image) }}" 
+                        alt="Profile Image" 
+                        width="80" height="80" 
+                        style="object-fit: cover; border-radius: 5px;">
+                </div>
+            @endif
         </div>
     </div>
 
@@ -51,10 +67,12 @@
         </div>
     </div>
 
-    <div class="col-md-12">
+    
+
+    <div class="col-md-6">
         <div class="form-group">
             <label>Address *</label>
-            <textarea name="address" class="form-control" rows="2" 
+            <textarea name="address" class="form-control" rows="1" 
                       placeholder="Full address">{{ old('address', $customer->address ?? '') }}</textarea>
         </div>
     </div>

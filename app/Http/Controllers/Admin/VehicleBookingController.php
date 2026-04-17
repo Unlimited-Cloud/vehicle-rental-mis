@@ -41,11 +41,10 @@ class VehicleBookingController extends Controller
     private $currentUserIsDriver;
 
     public function __construct(
-        ProformaService $service, 
+        ProformaService $service,
         VehicleRepositoryInterface $vehicleRepository,
         UserRepositoryInterface $userRepository
-    )
-    {
+    ) {
         $this->service = $service;
         $this->vehicleRepository = $vehicleRepository;
         $this->userRepository = $userRepository;
@@ -64,13 +63,13 @@ class VehicleBookingController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {      
+    {
         Gate::authorize('index_vehicle_bookings');
 
         if ($this->currentUserIsCustomer == 'Y') {
             $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request, $this->currentUserCustomerId);
         } else {
-            if ($this->currentUserIsDriver == 'Y') {               
+            if ($this->currentUserIsDriver == 'Y') {
                 $bookings = $this->vehicleRepository->getVehicleBookingsByDriverId($request, $this->currentUserDriverId);
             } else {
                 $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
@@ -83,9 +82,10 @@ class VehicleBookingController extends Controller
             $q->where('role', 'driver');
         })->with('user')->get();
         $currentUserIsCustomer = $this->currentUserIsCustomer;
+        $currentUserIsDriver = $this->currentUserIsDriver;
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer')
+            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer', 'currentUserIsDriver')
         );
     }
     /**

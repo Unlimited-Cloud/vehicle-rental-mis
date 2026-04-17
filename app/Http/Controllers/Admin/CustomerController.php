@@ -63,6 +63,7 @@ class CustomerController extends Controller
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'email' => 'nullable|email|unique:customers',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'phone' => 'nullable|string|unique:customers',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:255',
@@ -72,6 +73,7 @@ class CustomerController extends Controller
             'license_expiry' => 'nullable|date',
             'status' => 'required|in:active,inactive'
         ]);
+
 
         if (!empty($validated['name'])) {
             $nameParts = explode(' ', trim($validated['name']));
@@ -98,6 +100,17 @@ class CustomerController extends Controller
                     $validated['middle_name'] = implode(' ', $middleParts);
                 }
             }
+        }
+
+        if ($request->hasFile('profile_image')) {
+
+            $image = $request->file('profile_image');
+
+            $imageName = time() . '_' . $image->getClientOriginalName();
+
+            $image->move(public_path('uploads/profile'), $imageName);
+
+            $data['profile_image'] = 'uploads/profile/' . $imageName;
         }
 
         Customer::create($validated);
@@ -130,6 +143,7 @@ class CustomerController extends Controller
     public function update(Request $request, Customer $customer)
     {
         Gate::authorize('update_customers');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'first_name' => 'nullable|string|max:255',
@@ -138,6 +152,7 @@ class CustomerController extends Controller
             'email' => 'nullable|email|unique:customers,email,' . $customer->id,
             'phone' => 'nullable|string|unique:customers,phone,' . $customer->id,
             'address' => 'nullable|string',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'city' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|max:20',
@@ -146,33 +161,41 @@ class CustomerController extends Controller
             'status' => 'required|in:active,inactive'
         ]);
 
+        // Split name into parts
         if (!empty($validated['name'])) {
             $nameParts = explode(' ', trim($validated['name']));
             $count = count($nameParts);
 
             if ($count == 1) {
-                // Only one name: treat as first name
                 $validated['first_name'] = $nameParts[0];
                 $validated['middle_name'] = null;
                 $validated['last_name'] = null;
             } elseif ($count == 2) {
-                // Two names: first and last
                 $validated['first_name'] = $nameParts[0];
                 $validated['middle_name'] = null;
                 $validated['last_name'] = $nameParts[1];
-            } elseif ($count >= 3) {
-                // Three or more names: first, middle (all middle parts), last
+            } else {
                 $validated['first_name'] = $nameParts[0];
                 $validated['last_name'] = $nameParts[$count - 1];
-
-                // Everything in between is middle name
-                if ($count > 2) {
-                    $middleParts = array_slice($nameParts, 1, -1);
-                    $validated['middle_name'] = implode(' ', $middleParts);
-                }
+                $validated['middle_name'] = implode(' ', array_slice($nameParts, 1, -1));
             }
         }
 
+        // Handle profile image upload
+        if ($request->hasFile('profile_image')) {
+
+            // delete old image
+            if ($customer->profile_image && file_exists(public_path($customer->profile_image))) {
+                unlink(public_path($customer->profile_image));
+            }
+            $image = $request->file('profile_image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('uploads/profile'), $imageName);
+
+            $validated['profile_image'] = 'uploads/profile/' . $imageName;
+        }
+
+        // Update customer
         $customer->update($validated);
 
         return redirect()->route('admin.customers.index')

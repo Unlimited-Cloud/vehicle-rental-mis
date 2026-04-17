@@ -56,6 +56,10 @@ class PetrolPumpTransaction extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+    public function driver()
+    {
+        return $this->belongsTo(CrewProfile::class, 'driver_id');
+    }
 
     /**
      * Generate invoice number

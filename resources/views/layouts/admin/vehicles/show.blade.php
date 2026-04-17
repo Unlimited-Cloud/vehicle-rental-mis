@@ -143,10 +143,36 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <div class="info-box bg-light">
-                                    <span class="info-box-icon bg-success"><i class="fas fa-money-bill"></i></span>
+                                    <span class="info-box-icon bg-dark"><i class="fas fa-tachometer-alt"></i></span>
                                     <div class="info-box-content">
-                                        <span class="info-box-text">Rent Per Day</span>
-                                        <span class="info-box-number">Rs {{ number_format($vehicle->rent_price_per_day, 2) }}</span>
+                                        <span class="info-box-text">Mileage</span>
+                                        <span class="info-box-number">
+                                            {{ $vehicle->mileage ?? 'N/A' }} KM
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-dark"><i class="fas fa-horse"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Horsepower</span>
+                                        <span class="info-box-number">
+                                            {{ $vehicle->horsepower ?? 'N/A' }} HP
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-dark"><i class="fas fa-palette"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Color</span>
+                                        <span class="info-box-number">
+                                            {{ $vehicle->car_color ?? 'N/A' }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -305,6 +331,59 @@
                 </div>
             </div>
         </div>
+        <div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-images"></i> Vehicle Gallery
+                </h3>
+            </div>
+            <div class="card-body">
+
+      @php
+$carImages = $vehicle->car_images ?? [];
+@endphp
+
+@if($carImages && count($carImages))
+    <div class="row">
+        @foreach($carImages as $img)
+            <div class="col-md-3 mb-3">
+                <img src="{{ asset($img) }}" 
+                     class="img-fluid img-thumbnail"
+                     style="height:180px; object-fit:cover; width:100%;">
+            </div>
+        @endforeach
+    </div>
+@else
+    <p class="text-muted">No gallery images available.</p>
+@endif
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card card-outline card-secondary">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-align-left"></i> Description
+                </h3>
+            </div>
+            <div class="card-body">
+
+                @if($vehicle->description)
+                    <div class="vehicle-description">
+                        {!! $vehicle->description !!}
+                    </div>
+                @else
+                    <p class="text-muted">No description available.</p>
+                @endif
+
+            </div>
+        </div>
+    </div>
+</div>
 
         <!-- Additional Information Row if needed -->
         <div class="row mt-4">

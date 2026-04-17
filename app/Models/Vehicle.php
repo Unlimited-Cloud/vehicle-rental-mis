@@ -17,6 +17,12 @@ class Vehicle extends Model
         'fuel_type',
         'transmission',
         'image',
+        'mileage',
+        'horsepower',
+        'car_color',
+        'description',
+        'car_images',
+
         'status',
         'is_helper_needed',
 
@@ -37,9 +43,13 @@ class Vehicle extends Model
         'insurance_policy_document',
     ];
 
-    protected $appends = ['vehicle_image_url'];
+    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url'];
+    protected $casts = [
+        'images' => 'array',
+        'car_images' => 'array',
+    ];
 
-    protected $hidden = ['image'];
+    protected $hidden = ['image', 'car_images'];
 
     public function vehicleDetail()
     {
@@ -73,5 +83,15 @@ class Vehicle extends Model
     public function getVehicleImageUrlAttribute()
     {
         return $this->image ? asset($this->image) : null;
+    }
+
+    public function getVehicleDescriptionImageUrlAttribute()
+    {
+        if ($this->car_images && is_array($this->car_images)) {
+            return array_map(function ($image) {
+                return asset($image);
+            }, $this->car_images);
+        }
+        return null;
     }
 }
