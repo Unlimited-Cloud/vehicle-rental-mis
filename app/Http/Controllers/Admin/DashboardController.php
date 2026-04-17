@@ -13,6 +13,7 @@ use App\Models\VehicleBooking;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 
 class DashboardController extends Controller
 {
@@ -22,14 +23,23 @@ class DashboardController extends Controller
     private $currentUserRoleId;
     private $currentUserIsCustomer;
     private $currentUserIsDriver;
+    private $currentUserDriverId;
+    
     protected $vehicleRepository;
+    protected $userRepository;
 
-    public function __construct(VehicleRepositoryInterface $vehicleRepository)
+    public function __construct(
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+    )
     {
         $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
+
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
             $this->currentUserRoleId = Auth::user()->role_id;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
             $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
@@ -71,7 +81,7 @@ class DashboardController extends Controller
             $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
         } else {
             if ($this->currentUserIsDriver == 'Y') {
-                $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByDriverId($this->currentUserId);
+                $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByDriverId($this->currentUserDriverId);
             } else {
                 $totalBookings = $this->vehicleRepository->getAllVehicleBookingsCount();
             }
@@ -93,7 +103,7 @@ class DashboardController extends Controller
             $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', 6, $this->currentUserCustomerId);
         } else {
             if ($this->currentUserIsDriver == 'Y') {
-                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', 6, $this->currentUserId);
+                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', 6, $this->currentUserDriverId);
             } else {
                 $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc', 6);
             }

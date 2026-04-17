@@ -7,15 +7,52 @@ use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Repositories\Interfaces\VehicleRepositoryInterface;
 
 class CrewProfilesController extends Controller
 {
+    private $currentUserId;
+
+    private $currentUserCustomerId;
+    private $currentUserRoleId;
+    private $currentUserIsCustomer;
+    private $currentUserIsDriver;
+    private $currentUserDriverId;
+    
+    protected $vehicleRepository;
+    protected $userRepository;
+
+    public function __construct(
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+    )
+    {
+        $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
+
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            return $next($request);
+        });
+    }
     public function index()
     {
         Gate::authorize('index_crew_profiles');
-        $crew = CrewProfile::with('user')->latest()->get();
+        if($this->currentUserIsDriver == 'Y'){
+            $crew = CrewProfile::with('user')->where('id',$this->currentUserDriverId)->latest()->get();
+        }else{
+            $crew = CrewProfile::with('user')->latest()->get();
+        }
+        
         return view('layouts.admin.crew_profiles.index', compact('crew'));
     }
 

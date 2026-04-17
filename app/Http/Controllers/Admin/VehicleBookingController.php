@@ -23,26 +23,39 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Services\ProformaService;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 
 class VehicleBookingController extends Controller
 {
 
     protected $service;
     protected $vehicleRepository;
+    protected $userRepository;
 
     private $currentUserId;
     private $currentUserCustomerId;
+    private $currentUserDriverId;
+    private $currentUserRoleId;
 
     private $currentUserIsCustomer;
+    private $currentUserIsDriver;
 
-    public function __construct(ProformaService $service, VehicleRepositoryInterface $vehicleRepository)
+    public function __construct(
+        ProformaService $service, 
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+    )
     {
         $this->service = $service;
         $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
             return $next($request);
         });
     }
@@ -51,13 +64,17 @@ class VehicleBookingController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
+    {      
         Gate::authorize('index_vehicle_bookings');
 
         if ($this->currentUserIsCustomer == 'Y') {
             $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request, $this->currentUserCustomerId);
         } else {
-            $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
+            if ($this->currentUserIsDriver == 'Y') {               
+                $bookings = $this->vehicleRepository->getVehicleBookingsByDriverId($request, $this->currentUserDriverId);
+            } else {
+                $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
+            }
         }
 
         $vehicles  = Vehicle::orderBy('vehicle_name')->get();
