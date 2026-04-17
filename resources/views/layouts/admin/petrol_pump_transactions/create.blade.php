@@ -142,20 +142,32 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Driver</label>
-                                <select name="driver_id" class="form-control select2">
-                                    <option value="">-- Select Driver --</option>
-                                    @foreach($drivers as $driver)
-                                        <option value="{{ $driver->id }}"
-                                            {{ (old('driver_id', $petrolPumpTransaction->driver_id ?? '') == $driver->id) ? 'selected' : '' }}>
-                                            {{ $driver->user->name }} - {{ $driver->license_number ?? '' }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label>Driver</label>
+
+                            <select name="driver_id"
+                                    class="form-control select2"
+                                    {{ $currentUserIsDriver == 'Y' ? 'readonly disabled' : '' }}>
+
+                                @foreach($drivers as $driver)
+                                    <option value="{{ $driver->id }}"
+                                        {{ (old('driver_id', $petrolPumpTransaction->driver_id ?? ($currentUserIsDriver == 'Y' ? $drivers->first()->id : '')) == $driver->id) ? 'selected' : '' }}>
+                                        
+                                        {{ $driver->user->name }} - {{ $driver->license_number ?? '' }}
+                                    </option>
+                                @endforeach
+
+                            </select>
+
+                            {{-- hidden field to ensure value is submitted when disabled --}}
+                            @if($currentUserIsDriver == 'Y')
+                                <input type="hidden" name="driver_id" value="{{ $drivers->first()->id }}">
+                            @endif
+
                         </div>
+                    </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Odometer Reading (KM)</label>

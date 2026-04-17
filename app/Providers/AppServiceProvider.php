@@ -17,6 +17,8 @@ use App\Events\SmsEvent;
 use App\Listeners\EmailListeners;
 use App\Repositories\Interfaces\VehicleOwnerRepositoryInterface;
 use App\Repositories\VehicleOwnerRepository;
+use App\Repositories\VehicleMovementRepository;
+use App\Repositories\Interfaces\VehicleMovementRepositoryInterface;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
         $this->app->bind(VehicleOwnerRepositoryInterface::class, VehicleOwnerRepository::class);
+        $this->app->bind(VehicleMovementRepositoryInterface::class, VehicleMovementRepository::class);
     }
 
     /**

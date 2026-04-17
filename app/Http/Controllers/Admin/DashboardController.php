@@ -24,15 +24,14 @@ class DashboardController extends Controller
     private $currentUserIsCustomer;
     private $currentUserIsDriver;
     private $currentUserDriverId;
-    
+
     protected $vehicleRepository;
     protected $userRepository;
 
     public function __construct(
         VehicleRepositoryInterface $vehicleRepository,
         UserRepositoryInterface $userRepository
-    )
-    {
+    ) {
         $this->vehicleRepository = $vehicleRepository;
         $this->userRepository = $userRepository;
 
