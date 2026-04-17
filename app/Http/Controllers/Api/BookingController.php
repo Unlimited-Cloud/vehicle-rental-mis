@@ -1011,11 +1011,36 @@ class BookingController extends Controller
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
             ->limit(5)
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'vehicle' => $item->vehicle
+                ];
+            });
 
         return response()->json([
             'status' => 'success',
             'data' => $vehicles
+        ]);
+    }
+
+    public function VehicleDetailById($id)
+    {
+        $vehicle = Vehicle::where('id', $id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$vehicle) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Vehicle Fetched Successfully',
+            'data' => $vehicle
         ]);
     }
 }

@@ -118,7 +118,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId)
     {
-        VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('vehicle_bookings.driver_id', $driverId)
             ->orderBy($orderBy, $order)
             ->limit($limit)
