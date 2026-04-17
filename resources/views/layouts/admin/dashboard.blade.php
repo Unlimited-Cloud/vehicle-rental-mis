@@ -126,6 +126,7 @@
         </div>
 
         @if($currentUserIsCustomer == 'N')
+        @can('read_dashboard_crew_management')
         <!-- Second Row - Crew Members -->
         <div class="row mt-2">
             <div class="col-12">
@@ -182,6 +183,7 @@
                 </a>
             </div>
         </div>
+        @endcan
         @endif
 
         <!-- Recent Bookings Section -->

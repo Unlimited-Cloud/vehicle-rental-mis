@@ -13,12 +13,13 @@
 <div class="card-body">
 
 @include('layouts.admin_theme.alert')
-
+@can('create_crew_profiles')
 <div class="d-flex justify-content-between mb-3">
     <a href="{{ route('admin.crew_profiles.create') }}" class="btn btn-sm btn-primary">
         <i class="fa fa-plus"></i> Add Crew Profile
     </a>
 </div>
+@endcan
 <div class="table-responsive">
 <table id="dataTable" class="table table-bordered table-striped show-search-bar">
 <thead>
