@@ -58,7 +58,46 @@ class VehicleMomentService
             }
 
             // Create vehicle moment
+            // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
+
+            //  NEW: Sync with booking if changed
+            if (!empty($data['booking_id'])) {
+
+                $booking = DB::table('vehicle_bookings')
+                    ->where('id', $data['booking_id'])
+                    ->first();
+
+                if ($booking) {
+
+                    $updateData = [];
+
+                    // Check trip_category_id
+                    if (
+                        isset($data['trip_category_id']) &&
+                        $data['trip_category_id'] != $booking->trip_category_id
+                    ) {
+
+                        $updateData['trip_category_id'] = $data['trip_category_id'];
+                    }
+
+                    // Check trip_route_id
+                    if (
+                        isset($data['trip_route_id']) &&
+                        $data['trip_route_id'] != $booking->trip_route_id
+                    ) {
+
+                        $updateData['trip_route_id'] = $data['trip_route_id'];
+                    }
+
+                    // Only update if something changed
+                    if (!empty($updateData)) {
+                        DB::table('vehicle_bookings')
+                            ->where('id', $booking->id)
+                            ->update($updateData);
+                    }
+                }
+            }
 
             $this->storeAttendance($vehicleMoment, $data);
 
