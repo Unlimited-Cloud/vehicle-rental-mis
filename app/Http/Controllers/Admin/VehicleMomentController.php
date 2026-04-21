@@ -85,7 +85,7 @@ class VehicleMomentController extends Controller
 
         // Get all vehicles for dropdown
         $vehicles = DB::table('vehicles')
-            ->select('id', 'vehicle_name')
+            ->select('id', 'vehicle_name', 'vehicle_type')
             ->where('status', 1)
             ->get();
 
@@ -103,13 +103,25 @@ class VehicleMomentController extends Controller
             ->where('cp.role', 'helper')
             ->get();
 
+        // Get Trip Categories
+        $tripCategories = DB::table('trip_categories')
+            ->select('id', 'name')
+            ->where('status', 1)
+            ->get();
+
+        // Get Trip Routes
+        $tripRoutes = DB::table('trip_routes')
+            ->select('id', 'title')
+            ->where('status', 1)
+            ->get();
+
         $questionnaires = DB::table('questionnaires')
             ->select('id', 'question', 'type', 'is_required', 'sort_order')
             ->where('is_active', 1)
             ->orderBy('sort_order')
             ->get();
 
-        return view('layouts.admin.vehicle_moments.create', compact('booking', 'vehicles', 'drivers', 'helpers', 'questionnaires'));
+        return view('layouts.admin.vehicle_moments.create', compact('booking', 'vehicles', 'drivers', 'helpers', 'questionnaires', 'tripCategories', 'tripRoutes'));
     }
 
     public function store(Request $request)
