@@ -8,9 +8,9 @@ class VehicleBooking extends Model
 {
     protected $fillable = [
         'vehicle_id',
-        'customer_name',
-        'customer_email',
-        'customer_phone',
+        'contact_person',
+        'contact_email',
+        'contact_number',
         'from_destination',
         'to_destination',
         'no_of_people',
