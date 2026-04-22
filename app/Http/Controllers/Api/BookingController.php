@@ -1055,11 +1055,22 @@ class BookingController extends Controller
 
     public function getTripPrice(Request $request)
     {
-        $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'trip_category_id' => 'required|exists:trip_categories,id',
-            'trip_route_id' => 'required|exists:trip_routes,id',
-        ]);
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'trip_category_id' => 'required|exists:trip_categories,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
+            ]
+        );
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()
+            ], 422);
+        }
 
         $vehicle = Vehicle::findOrFail($request->vehicle_id);
         if (!$vehicle) {
