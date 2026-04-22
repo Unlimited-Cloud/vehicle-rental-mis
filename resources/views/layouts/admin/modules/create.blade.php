@@ -65,7 +65,7 @@ value="{{ old('route',isset($module) ? $module->route : '' ?? '') }}">
 <label>Order By *</label>
 @php
 $orderBy = '';
-if($module){
+if(isset($module)){
     if(!empty($module->order_by)){
         if(!empty($module->parent_id)){
             $explodeOrder = explode($module->parent_id,$module->order_by);

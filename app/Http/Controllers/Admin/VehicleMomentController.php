@@ -9,26 +9,58 @@ use App\Models\VehicleBooking;
 use App\Models\CrewProfile;
 use App\Models\User;
 use App\Models\VehicleMoment;
+use App\Repositories\Interfaces\VehicleMovementRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class VehicleMomentController extends Controller
 {
     protected $service;
+    private $currentUserIsDriver;
+    private $currentUserIsCustomer;
+    private $currentUserId;
+    private $currentUserCustomerId;
+    private $currentUserDriverId;
+    private $currentUserRoleId;
+    protected $vehicleMovementRepository;
+    protected $userRepository;
 
-    public function __construct(VehicleMomentService $service)
+
+    public function __construct(VehicleMomentService $service, VehicleMovementRepositoryInterface $vehicleMovementRepository, UserRepositoryInterface $userRepository)
     {
         $this->service = $service;
+        $this->vehicleMovementRepository = $vehicleMovementRepository;
+        $this->userRepository = $userRepository;
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            return $next($request);
+        });
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $moments = $this->service->getAll();
+        Gate::authorize('index_vehicles_vehicle_movement');
+        if ($this->currentUserIsDriver == 'Y') {
+            $moments = $this->vehicleMovementRepository->getVehicleMovementsByDriverId($request, $this->currentUserDriverId);
+        } else {
+            $moments = $this->vehicleMovementRepository->getAllVehicleMovements($request);
+        }
+        $currentUserIsDriver = $this->currentUserIsDriver;
 
-        return view('layouts.admin.vehicle_moments.index', compact('moments'));
+        return view('layouts.admin.vehicle_moments.index', compact('moments', 'currentUserIsDriver'));
     }
 
     public function create(Request $request)
     {
+        Gate::authorize('create_vehicles_vehicle_movement');
         $booking = DB::table('vehicle_bookings as vb')
             ->select(
                 'vb.*',
@@ -53,7 +85,7 @@ class VehicleMomentController extends Controller
 
         // Get all vehicles for dropdown
         $vehicles = DB::table('vehicles')
-            ->select('id', 'vehicle_name')
+            ->select('id', 'vehicle_name', 'vehicle_type')
             ->where('status', 1)
             ->get();
 
@@ -71,17 +103,30 @@ class VehicleMomentController extends Controller
             ->where('cp.role', 'helper')
             ->get();
 
+        // Get Trip Categories
+        $tripCategories = DB::table('trip_categories')
+            ->select('id', 'name')
+            ->where('status', 1)
+            ->get();
+
+        // Get Trip Routes
+        $tripRoutes = DB::table('trip_routes')
+            ->select('id', 'title')
+            ->where('status', 1)
+            ->get();
+
         $questionnaires = DB::table('questionnaires')
             ->select('id', 'question', 'type', 'is_required', 'sort_order')
             ->where('is_active', 1)
             ->orderBy('sort_order')
             ->get();
 
-        return view('layouts.admin.vehicle_moments.create', compact('booking', 'vehicles', 'drivers', 'helpers', 'questionnaires'));
+        return view('layouts.admin.vehicle_moments.create', compact('booking', 'vehicles', 'drivers', 'helpers', 'questionnaires', 'tripCategories', 'tripRoutes'));
     }
 
     public function store(Request $request)
     {
+        Gate::authorize('create_vehicles_vehicle_movement');
         $request->validate([
             'start_km' => 'required|numeric|min:0',
             'end_km' => 'nullable|numeric|gt:start_km',
@@ -101,6 +146,7 @@ class VehicleMomentController extends Controller
     }
     public function edit($id)
     {
+        Gate::authorize('update_vehicles_vehicle_movement');
         $moment = VehicleMoment::findOrFail($id);
 
         $booking = DB::table('vehicle_bookings as vb')
@@ -165,6 +211,7 @@ class VehicleMomentController extends Controller
 
     public function update(Request $request, $id)
     {
+        Gate::authorize('update_vehicles_vehicle_movement');
         $request->validate([
             'start_km' => 'required|numeric|min:0',
             'end_km' => 'nullable|numeric|gt:start_km',
@@ -187,6 +234,7 @@ class VehicleMomentController extends Controller
     }
     public function show(VehicleMoment $vehicleMoment)
     {
+        Gate::authorize('read_vehicles_vehicle_movement');
         try {
             // Fetch vehicle moment with joins
             $moment = DB::table('vehicle_moments as vm')

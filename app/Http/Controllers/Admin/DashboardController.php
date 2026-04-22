@@ -13,23 +13,35 @@ use App\Models\VehicleBooking;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 
 class DashboardController extends Controller
 {
     private $currentUserId;
 
     private $currentUserCustomerId;
-
+    private $currentUserRoleId;
     private $currentUserIsCustomer;
-    protected $vehicleRepository;
+    private $currentUserIsDriver;
+    private $currentUserDriverId;
 
-    public function __construct(VehicleRepositoryInterface $vehicleRepository)
-    {
+    protected $vehicleRepository;
+    protected $userRepository;
+
+    public function __construct(
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+    ) {
         $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
+
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserRoleId = Auth::user()->role_id;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
             return $next($request);
         });
     }
@@ -62,11 +74,16 @@ class DashboardController extends Controller
         $totalPetrolPumps = PetrolPump::count();
 
         $currentUserIsCustomer = $this->currentUserIsCustomer;
+        $currentUserIsDriver = $this->currentUserIsDriver;
         // Booking counts
         if ($this->currentUserIsCustomer == 'Y') {
             $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
         } else {
-            $totalBookings = $this->vehicleRepository->getAllVehicleBookingsCount();
+            if ($this->currentUserIsDriver == 'Y') {
+                $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByDriverId($this->currentUserDriverId);
+            } else {
+                $totalBookings = $this->vehicleRepository->getAllVehicleBookingsCount();
+            }
         }
 
         if ($this->currentUserIsCustomer == 'Y') {
@@ -84,7 +101,11 @@ class DashboardController extends Controller
         if ($this->currentUserIsCustomer == 'Y') {
             $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', 6, $this->currentUserCustomerId);
         } else {
-            $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc', 6);
+            if ($this->currentUserIsDriver == 'Y') {
+                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', 6, $this->currentUserDriverId);
+            } else {
+                $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc', 6);
+            }
         }
 
         return view('layouts.admin.dashboard', compact(
@@ -101,6 +122,7 @@ class DashboardController extends Controller
             'pendingBookings',
             'recentBookings',
             'currentUserIsCustomer',
+            'currentUserIsDriver',
             'vehicles',
             'customers'
         ));

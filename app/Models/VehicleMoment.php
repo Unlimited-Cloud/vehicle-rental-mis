@@ -22,7 +22,9 @@ class VehicleMoment extends Model
         'end_comments',
         'has_incident',
         'incident_report',
-        'incident_image'
+        'incident_image',
+        'trip_category_id',
+        'trip_route_id',
     ];
     protected $appends = ['start_image_url', 'end_image_url', 'incident_image'];
 
@@ -34,12 +36,12 @@ class VehicleMoment extends Model
 
     public function driver()
     {
-        return $this->belongsTo(User::class, 'driver_id');
+        return $this->belongsTo(CrewProfile::class, 'driver_id');
     }
 
     public function helper()
     {
-        return $this->belongsTo(User::class, 'helper_id');
+        return $this->belongsTo(CrewProfile::class, 'helper_id');
     }
 
     public function questionnaireAnswers()
@@ -50,6 +52,11 @@ class VehicleMoment extends Model
     public function vehicle()
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function tripRoute()
+    {
+        return $this->belongsTo(TripRoute::class, 'trip_route_id');
     }
 
     public function receipt()

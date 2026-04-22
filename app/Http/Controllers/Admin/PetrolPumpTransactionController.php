@@ -12,52 +12,54 @@ use App\Models\CrewProfile;
 use App\Models\PetrolPump;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use App\Models\Coupon;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use App\Repositories\Interfaces\VehicleMovementRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use Illuminate\Support\Facades\DB;
+
+use Illuminate\Support\Facades\Auth;
 
 class PetrolPumpTransactionController extends Controller
 {
+    private $currentUserIsDriver;
+    private $currentUserIsCustomer;
+    private $currentUserId;
+    private $currentUserCustomerId;
+    private $currentUserDriverId;
+    private $currentUserRoleId;
+    protected $vehicleMovementRepository;
+    protected $userRepository;
+    public function __construct(VehicleMovementRepositoryInterface $vehicleMovementRepository, UserRepositoryInterface $userRepository)
+    {
+        $this->vehicleMovementRepository = $vehicleMovementRepository;
+        $this->userRepository = $userRepository;
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            return $next($request);
+        });
+    }
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         Gate::authorize('index_petrol_pumps_fuel_transactions');
-        $query = PetrolPumpTransaction::with(['petrolPump', 'vehicle', 'customer']);
-
-        if ($request->filled('petrol_pump_id')) {
-            $query->where('petrol_pump_id', $request->petrol_pump_id);
+        if ($this->currentUserIsDriver == 'Y') {
+            $transactions = $this->vehicleMovementRepository->getTransactionsByDriverId($request, $this->currentUserDriverId);
+        } else {
+            $transactions = $this->vehicleMovementRepository->getAllTransactions($request);
         }
-
-        if ($request->filled('transaction_type')) {
-            $query->where('transaction_type', $request->transaction_type);
-        }
-
-        if ($request->filled('invoice_number')) {
-            $query->where('invoice_number', 'like', '%' . $request->invoice_number . '%');
-        }
-
-        if ($request->filled('from_date')) {
-            $query->whereDate('transaction_date', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->whereDate('transaction_date', '<=', $request->to_date);
-        }
-
-        if ($request->has('export')) {
-            return Excel::download(
-                new PetrolPumpTransactionExport($request),
-                'petrol_pump_transactions.xlsx'
-            );
-        }
-
-        $transactions = $query->latest()->get();
+        $currentUserIsDriver = $this->currentUserIsDriver;
         $petrolPumps = PetrolPump::active()->get();
 
-        return view('layouts.admin.petrol_pump_transactions.index', compact('transactions', 'petrolPumps'));
+        return view('layouts.admin.petrol_pump_transactions.index', compact('transactions', 'petrolPumps', 'currentUserIsDriver'));
     }
 
     /**
@@ -71,9 +73,18 @@ class PetrolPumpTransactionController extends Controller
         $petrol_pump_id = $request->input('petrol_pump_id');
         $vehicle_id     = $request->input('vehicle_id');
         $customer_id    = $request->input('customer_id');
-        $drivers = CrewProfile::where('role', 'driver')
-            ->with('user')
-            ->get();
+        if ($this->currentUserIsDriver == 'Y') {
+            $drivers = CrewProfile::where('id', $this->currentUserDriverId)
+                ->where('role', 'driver')
+                ->with('user')
+                ->get();
+        } else {
+            $drivers = CrewProfile::where('role', 'driver')
+                ->with('user')
+                ->get();
+        }
+
+        $currentUserIsDriver = $this->currentUserIsDriver;
 
         return view(
             'layouts.admin.petrol_pump_transactions.create',
@@ -83,7 +94,8 @@ class PetrolPumpTransactionController extends Controller
                 'petrol_pump_id',
                 'vehicle_id',
                 'customer_id',
-                'drivers'
+                'drivers',
+                'currentUserIsDriver'
             )
         );
     }
@@ -208,12 +220,21 @@ class PetrolPumpTransactionController extends Controller
         Gate::authorize('update_petrol_pumps_fuel_transactions');
         $petrolPumps = PetrolPump::active()->get();
         $vehicles    = Vehicle::where('status', '1')->get();
-        $drivers = CrewProfile::where('role', 'driver')
-            ->with('user')
-            ->get();
+        if ($this->currentUserIsDriver == 'Y') {
+            $drivers = CrewProfile::where('id', $this->currentUserDriverId)
+                ->where('role', 'driver')
+                ->with('user')
+                ->get();
+        } else {
+            $drivers = CrewProfile::where('role', 'driver')
+                ->with('user')
+                ->get();
+        }
+
+        $currentUserIsDriver = $this->currentUserIsDriver;
         return view(
             'layouts.admin.petrol_pump_transactions.create',
-            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction', 'drivers')
+            compact('petrolPumps', 'vehicles', 'petrolPumpTransaction', 'drivers', 'currentUserIsDriver')
         );
     }
 
