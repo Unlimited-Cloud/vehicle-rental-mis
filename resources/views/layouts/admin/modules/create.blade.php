@@ -28,7 +28,7 @@
 <div class="form-group">
 <label>Name *</label>
 <input type="text" name="name" class="form-control"
-value="{{ old('name',$module->name ?? '') }}" required>
+value="{{ old('name',isset($module) ? $module->name : '' ?? '') }}" required>
 </div>
 </div>
 
@@ -48,7 +48,7 @@ value="{{ old('name',$module->name ?? '') }}" required>
 <div class="form-group">
 <label>Icon *</label>
 <input type="text" name="icon" class="form-control"
-value="{{ old('icon',$module->icon ?? '') }}" required>
+value="{{ old('icon',isset($module) ? $module->icon : '' ?? '') }}" required>
 </div>
 </div>
 
@@ -56,7 +56,7 @@ value="{{ old('icon',$module->icon ?? '') }}" required>
 <div class="form-group">
 <label>Route *</label>
 <input type="text" name="route" class="form-control"
-value="{{ old('route',$module->route ?? '') }}">
+value="{{ old('route',isset($module) ? $module->route : '' ?? '') }}">
 </div>
 </div>
 
