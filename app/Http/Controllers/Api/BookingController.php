@@ -156,6 +156,10 @@ class BookingController extends Controller
                 'notes' => 'nullable|string',
                 'no_of_people' => 'nullable|string',
                 'signage_information' => 'nullable|string',
+
+                'contact_person' => 'nullable|string',
+                'contact_email' => 'nullable|string',
+                'contact_number' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -260,6 +264,11 @@ class BookingController extends Controller
                 'total_amount' => $total_amount,
 
                 'status' => 'pending',
+
+                'contact_person' => $request->contact_person,
+                'contact_email' => $request->contact_email,
+                'contact_number' => $request->contact_number,
+
             ]);
 
             //  Generate Proforma
@@ -1041,6 +1050,65 @@ class BookingController extends Controller
             'status' => 'success',
             'message' => 'Vehicle Fetched Successfully',
             'data' => $vehicle
+        ]);
+    }
+
+    public function getTripPrice(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'trip_category_id' => 'required|exists:trip_categories,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
+            ]
+        );
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        if (!$vehicle) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+        $tripCategory = TripCategory::findOrFail($request->trip_category_id);
+        $route = TripRoute::findOrFail($request->trip_route_id);
+
+        if (!$route) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'route not found'
+            ], 404);
+        }
+
+        // Map vehicle_type to price column
+        $priceColumn = match (strtolower($vehicle->vehicle_type)) {
+            'car' => 'car_price',
+            'hiace' => 'hiace_price',
+            'coaster' => 'coaster_price',
+            'bus' => 'bus_price',
+            'van' => 'van_price',
+            default => 'other_price',
+        };
+
+        $price = $route->$priceColumn;
+
+
+
+        return response()->json([
+            'vehicle_name' => $vehicle->vehicle_name,
+            'vehicle_type' => $vehicle->vehicle_type,
+            'trip_category' => $tripCategory->name,
+            'route_name' => $route->title,
+            'price' => $price,
         ]);
     }
 }

@@ -227,9 +227,10 @@
                     <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
                         <td>{{ $i+1 }}</td>
                         <td>
-                            <span class="badge badge-secondary" style="white-space: normal;">
+                           {{$fileNo}} 
+                            {{-- <span class="badge badge-secondary" style="white-space: normal;">
                                 {!! wordwrap($fileNo, 10, '&#8203;', true) !!}
-                            </span>
+                            </span> --}}
                         </td>
                         <td>
                             <div style="display: flex; align-items: center;">
