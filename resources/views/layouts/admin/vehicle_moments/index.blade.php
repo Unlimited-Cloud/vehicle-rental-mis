@@ -135,14 +135,17 @@
                         <a class="dropdown-item" href="{{ route('admin.vehicle_moments.edit', $moment->id) }}">
                             <i class="fas fa-edit text-primary mr-2"></i> Edit
                         </a>
+                        <a class="dropdown-item" href="{{ route('admin.attendance.createAllowance', ['vehicle_moment_id' => $moment->id]) }}">
+                            <i class="fas fa-money-bill-wave text-success mr-2"></i> Add Bhatta/Allowance
+                        </a>
 
-                        <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'vat']) }}" download>
+                        {{-- <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'vat']) }}" download>
                             <i class="fas fa-file-invoice text-success mr-2"></i> VAT Receipt
                         </a>
 
                         <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'non_vat']) }}" download>
                             <i class="fas fa-file text-secondary mr-2"></i> Non VAT Receipt
-                        </a>
+                        </a> --}}
 
                         <div class="dropdown-divider"></div>
 
