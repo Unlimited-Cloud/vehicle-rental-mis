@@ -151,6 +151,11 @@
                                                     <i class="fas fa-exchange-alt"></i> Movement & Receipt
                                                 </a>
                                             </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" id="receivables-tab" data-toggle="pill" href="#receivables" role="tab" aria-controls="receivables" aria-selected="false">
+                                                    <i class="fas fa-hand-holding-usd"></i> Received & Receivables
+                                                </a>
+                                            </li>
                                         </ul>
                                     </div>
                                     <div class="card-body">
@@ -879,6 +884,461 @@
         </div>
     </div>
 </div>
+
+<!-- Tab 7: Received Amount & Receivables -->
+<div class="tab-pane fade" id="receivables" role="tabpanel" aria-labelledby="receivables-tab">
+    
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-lg-4 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ $receivedReceivablesReport['formatted_total_received'] ?? '₹ 0' }}</h3>
+                    <p>Total Received</p>
+                    <small>Collection Rate: {{ $receivedReceivablesReport['collection_rate'] ?? 0 }}%</small>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ $receivedReceivablesReport['formatted_total_receivable'] ?? '₹ 0' }}</h3>
+                    <p>Total Receivable</p>
+                    <small>From {{ $receivedReceivablesReport['total_invoice_amount'] ?? 0 }} invoiced</small>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- SECTION 1: RECEIVED PAYMENTS -->
+    <div class="card card-success card-outline mt-3">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-check-circle"></i> Received Payments
+            </h3>
+            <div class="card-tools">
+                <span class="badge badge-success">{{ $receivedReceivablesReport['received_payments']->count() ?? 0 }} Transactions</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Payment Method Summary -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6>By Payment Method</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Payment Method</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($receivedReceivablesReport['received_by_method'] ?? [] as $method => $data)
+                                <tr>
+                                    <td>
+                                        @if($method == 'cash')
+                                            <i class="fas fa-money-bill"></i> Cash
+                                        @elseif($method == 'cheque')
+                                            <i class="fas fa-check"></i> Cheque
+                                        @elseif($method == 'bank')
+                                            <i class="fas fa-university"></i> Bank Transfer
+                                        @else
+                                            {{ ucfirst($method) }}
+                                        @endif
+                                    </td>
+                                    <td class="text-center">{{ $data['count'] }}</td>
+                                    <td class="text-right text-success">{{ $data['formatted_amount'] }}</td>
+                                </tr>
+                                @empty
+                                <tr><td colspan="3" class="text-center">No payment data available</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>By Bank (Cheque/Transfer)</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Bank Name</th>
+                                    <th>Method</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($receivedReceivablesReport['received_by_bank'] ?? [] as $bank => $data)
+                                <tr>
+                                    <td>{{ $bank ?: 'N/A' }}</td>
+                                    <td>
+                                        @if($data['method'] == 'cheque')
+                                            Cheque
+                                        @else
+                                            Bank Transfer
+                                        @endif
+                                    </td>
+                                    <td class="text-center">{{ $data['count'] }}</td>
+                                    <td class="text-right text-success">{{ $data['formatted_amount'] }}</td>
+                                </tr>
+                                @empty
+                                <td><td colspan="4" class="text-center">No bank transactions</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Received Payments Details Table -->
+            <h6>Payment Details</h6>
+            <div class="table-responsive">
+                <table id="dataTable" class="table table-bordered table-striped show-search-bar">
+                    <thead>
+                        <tr>
+                            <th>Receipt #</th>
+                            <th>Customer</th>
+                            <th>File No.</th>
+                            <th>Payment Method</th>
+                            <th>Reference</th>
+                            <th class="text-right">Amount</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($receivedReceivablesReport['received_payments'] ?? [] as $payment)
+                        <tr>
+                            <td>
+                                <a href="{{ route('admin.vehicle_receipt.details', $payment->id) }}" target="_blank">
+                                    {{ $payment->receipt_number }}
+                                </a>
+                            </td>
+                            <td>{{ $payment->customer->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($payment->file_no)
+                                    <span class="badge badge-info">{{ $payment->file_no }}</span>
+                                @else
+                                    N/A
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->payment_method == 'cash')
+                                    <span class="badge badge-success">Cash</span>
+                                @elseif($payment->payment_method == 'cheque')
+                                    <span class="badge badge-info">Cheque</span>
+                                @elseif($payment->payment_method == 'bank')
+                                    <span class="badge badge-primary">Bank Transfer</span>
+                                @else
+                                    {{ ucfirst($payment->payment_method) }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->payment_method == 'cheque')
+                                    Cheque #: {{ $payment->check_no }}<br>
+                                    <small>Date: {{ $payment->check_date ? date('Y-m-d', strtotime($payment->check_date)) : 'N/A' }}</small>
+                                @elseif($payment->payment_method == 'bank')
+                                    Bank: {{ $payment->bank_name }}<br>
+                                    <small>A/C: {{ $payment->bank_account }}</small>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-right text-success">
+                                <strong>₹ {{ number_format($payment->amount, 2) }}</strong>
+                            </td>
+                            <td>{{ $payment->created_at->format('Y-m-d') }}</td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="7" class="text-center">No received payments found</td></tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <th colspan="5" class="text-right">Total Received:</th>
+                            <th class="text-right text-success">
+                                <strong>{{ $receivedReceivablesReport['formatted_total_received'] ?? '₹ 0' }}</strong>
+                            </th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: PENDING RECEIVABLES -->
+    <div class="card card-warning card-outline mt-4">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-hourglass-half"></i> Pending Receivables
+            </h3>
+            <div class="card-tools">
+                <span class="badge badge-warning">{{ $receivedReceivablesReport['pending_receivables']->count() ?? 0 }} Invoices</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Aging Summary -->
+            <div class="row mb-4">
+                @foreach($receivedReceivablesReport['aging_buckets'] ?? [] as $key => $bucket)
+                @php
+                    $totalReceivable = $receivedReceivablesReport['total_receivable'] ?? 1;
+                    $percentage = $totalReceivable > 0 ? ($bucket['total'] / $totalReceivable) * 100 : 0;
+                    $bgClass = $key == '0-30_days' ? 'bg-success' : ($key == '31-60_days' ? 'bg-info' : ($key == '61-90_days' ? 'bg-warning' : 'bg-danger'));
+                @endphp
+                <div class="col-md-3 col-6">
+                    <div class="small-box {{ $bgClass }}">
+                        <div class="inner">
+                            <h3>{{ $receivedReceivablesReport['formatted_total_receivable'] ? '₹ ' . number_format($bucket['total'], 2) : '₹ 0' }}</h3>
+                            <p>{{ $bucket['label'] }}</p>
+                            <div class="progress progress-xs">
+                                <div class="progress-bar" style="width: {{ $percentage }}%"></div>
+                            </div>
+                            <small>{{ round($percentage, 1) }}% of total</small>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+
+            <!-- Pending Receivables Details Table -->
+            <h6>Pending Invoice Details</h6>
+            <div class="table-responsive">
+               <table id="dataTable" class="table table-bordered table-striped show-search-bar">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th>File No.</th>
+                            <th>Due Date</th>
+                            <th>Days Overdue</th>
+                            <th class="text-right">Total Amount</th>
+                            <th class="text-right">Paid</th>
+                            <th class="text-right">Pending</th>
+                            <th>Aging</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $allPendingItems = [];
+                            foreach($receivedReceivablesReport['aging_buckets'] ?? [] as $bucketKey => $bucket) {
+                                foreach($bucket['items'] as $item) {
+                                    $item['bucket_label'] = $bucket['label'];
+                                    $allPendingItems[] = $item;
+                                }
+                            }
+                        @endphp
+                        
+                        @forelse($allPendingItems as $item)
+                        @php $receipt = $item['receipt']; @endphp
+                        <tr>
+                            <td>
+                                <a href="{{ route('admin.vehicle_receipt.details', $receipt->id) }}" target="_blank">
+                                    {{ $receipt->receipt_number }}
+                                </a>
+                            </td>
+                            <td>{{ $receipt->customer->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($receipt->file_no)
+                                    <span class="badge badge-info">{{ $receipt->file_no }}</span>
+                                @else
+                                    N/A
+                                @endif
+                            </td>
+                            <td>{{ $item['due_date'] }}</td>
+                            <td>
+                                @if($item['days_overdue'] > 0)
+                                    <span class="badge badge-danger">{{ $item['days_overdue'] }} days</span>
+                                @else
+                                    <span class="badge badge-success">Not overdue</span>
+                                @endif
+                            </td>
+                            <td class="text-right">₹ {{ number_format($receipt->total_amount, 2) }}</td>
+                            <td class="text-right text-success">₹ {{ number_format($receipt->amount ?? 0, 2) }}</td>
+                            <td class="text-right text-danger">
+                                <strong>₹ {{ number_format($item['pending_amount'], 2) }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ $item['days_overdue'] > 90 ? 'danger' : ($item['days_overdue'] > 60 ? 'warning' : ($item['days_overdue'] > 30 ? 'info' : 'success')) }}">
+                                    {{ $item['bucket_label'] }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="9" class="text-center">No pending receivables found</td></tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot class="bg-light">
+                        <tr>
+                            <th colspan="7" class="text-right">Total Pending:</th>
+                            <th class="text-right text-danger">
+                                <strong>{{ $receivedReceivablesReport['formatted_total_receivable'] ?? '₹ 0' }}</strong>
+                            </th>
+                            <th></th>
+                        </tr>
+                        @if(($receivedReceivablesReport['total_overdue'] ?? 0) > 0)
+                        <tr>
+                            <th colspan="7" class="text-right">Total Overdue:</th>
+                            <th class="text-right text-danger">
+                                <strong>{{ $receivedReceivablesReport['formatted_total_overdue'] ?? '₹ 0' }}</strong>
+                            </th>
+                            <th></th>
+                        </tr>
+                        @endif
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+ <!-- SECTION 3: UNPAID RECEIPTS (paid = 0 from vehicle_receipts) -->
+<!-- SECTION 3: UNPAID BOOKINGS (All bookings from vehicle_bookings table with unpaid file_no) -->
+<div class="card card-danger card-outline mt-4">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-calendar-times"></i> Unpaid Bookings (By File Number)
+        </h3>
+        <div class="card-tools">
+            <!-- File Number Filter Dropdown -->
+            <form method="GET" action="{{ route('admin.reports.index') }}" class="form-inline">
+                <input type="hidden" name="date_range" value="{{ $dateRange }}">
+                <input type="hidden" name="vehicle_id" value="{{ $vehicleId }}">
+                <input type="hidden" name="vehicle_type" value="{{ $vehicleType }}">
+                
+                <div class="input-group input-group-sm">
+                    <select name="file_no" class="form-control form-control-sm" style="width: 200px;">
+                        <option value="">All File Numbers</option>
+                        @foreach($receivedReceivablesReport['all_file_numbers'] ?? [] as $fileNo)
+                            <option value="{{ $fileNo }}" {{ ($receivedReceivablesReport['selected_file_no'] ?? '') == $fileNo ? 'selected' : '' }}>
+                                {{ $fileNo }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-sm btn-primary">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        @if($receivedReceivablesReport['selected_file_no'] ?? false)
+                            <a href="{{ route('admin.reports.index', array_merge(request()->except('file_no'), ['file_no' => ''])) }}" 
+                               class="btn btn-sm btn-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="card-body">
+        
+        <!-- Summary by File Number -->
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle"></i> 
+            <strong>Total Unpaid Amount: {{ $receivedReceivablesReport['formatted_total_unpaid'] ?? '₹ 0' }}</strong>
+            <br>
+            <small>
+                {{ $receivedReceivablesReport['unpaid_by_file_no']->count() ?? 0 }} File(s) with pending payments | 
+                {{ $receivedReceivablesReport['total_unpaid_bookings_count'] ?? 0 }} Total Booking(s)
+            </small>
+        </div>
+
+        <!-- Show selected filter info -->
+        @if($receivedReceivablesReport['selected_file_no'] ?? false)
+        <div class="alert alert-info">
+            <i class="fas fa-filter"></i> 
+            Showing results for File #: <strong>{{ $receivedReceivablesReport['selected_file_no'] }}</strong>
+            <a href="{{ route('admin.reports.index', array_merge(request()->except('file_no'), ['file_no' => ''])) }}" class="float-right">
+                <i class="fas fa-times"></i> Clear Filter
+            </a>
+        </div>
+        @endif
+
+        <!-- Grouped by File Number showing ALL bookings from vehicle_bookings -->
+        @forelse($receivedReceivablesReport['unpaid_by_file_no'] ?? [] as $fileNo => $fileData)
+        <div class="card card-outline card-secondary mb-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-folder"></i> File #: {{ $fileNo ?: 'N/A' }}
+                </h5>
+                <div class="card-tools">
+                    <span class="badge badge-light">{{ $fileData['count'] }} Booking(s)</span>
+                    <span class="badge badge-warning">{{ $fileData['formatted_amount'] }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer Name</th>
+                                <th>Customer Phone</th>
+                                <th>Vehicle</th>
+                                <th>Registration #</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Trip Route</th>
+                                <th class="text-right">Total Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($fileData['bookings'] as $booking)
+                            <tr>
+                                <td>
+                                    <a href="{{ route('admin.vehicle_bookings.show', $booking->id) }}" target="_blank">
+                                        #{{ $booking->id }}
+                                    </a>
+                                </td>
+                                <td>{{ $booking->customer->name ?? 'N/A' }}</td>
+                                <td>{{ $booking->customer->phone ?? 'N/A' }}</td>
+                                <td>{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
+                                <td>{{ $booking->vehicle->registration_number ?? 'N/A' }}</td>
+                                <td>{{ Carbon\Carbon::parse($booking->start_date)->format('Y-m-d') }}</td>
+                                <td>{{ Carbon\Carbon::parse($booking->end_date)->format('Y-m-d') }}</td>
+                                <td>{{ $booking->tripRoute->title ?? 'N/A' }}</td>
+                                <td class="text-right text-danger">
+                                    <strong>₹ {{ number_format($booking->total_amount, 2) }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge badge-danger">Unpaid</span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <th colspan="8" class="text-right">Total for File {{ $fileNo }}:</th>
+                                <th class="text-right text-danger">
+                                    <strong>{{ $fileData['formatted_amount'] }}</strong>
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="alert alert-success text-center">
+            <i class="fas fa-check-circle"></i> No unpaid bookings found!
+        </div>
+        @endforelse
+    </div>
+</div>
+</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1002,4 +1462,5 @@ $(document).ready(function() {
     });
 });
 </script>
+
 @endpush

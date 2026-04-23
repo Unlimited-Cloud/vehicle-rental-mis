@@ -115,6 +115,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('estimate-invoices', [ProformaInvoiceController::class, 'indexEstimate'])
             ->name('estimate.index');
 
+        Route::get('/receipt/{id}/details', [ProformaInvoiceController::class, 'showDetailsReceipt'])->name('vehicle_receipt.details');
+
+
 
         Route::get('/invoice/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalInvoice']);
         Route::get('/proforma/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalProforma']);
