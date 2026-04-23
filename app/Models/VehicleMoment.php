@@ -51,7 +51,7 @@ class VehicleMoment extends Model
 
     public function vehicle()
     {
-        return $this->belongsTo(Vehicle::class);
+        return $this->belongsTo(Vehicle::class, 'vehicle_no', 'id');
     }
 
     public function tripRoute()
