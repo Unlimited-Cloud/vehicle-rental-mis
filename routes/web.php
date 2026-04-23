@@ -177,6 +177,10 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::post('attendance/convert-multiple-ad-to-bs', [AttendanceController::class, 'convertMultipleAdToBs'])->name('attendance.convert_multiple_ad_to_bs');
         Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
         Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
+
+        Route::get('/attendance/create-allowance', [AttendanceController::class, 'createAllowance'])->name('attendance.createAllowance');
+        Route::post('/attendance/store-allowance', [AttendanceController::class, 'storeAllowance'])->name('attendance.storeAllowance');
+
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);

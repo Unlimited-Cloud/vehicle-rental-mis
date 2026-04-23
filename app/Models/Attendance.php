@@ -18,6 +18,7 @@ class Attendance extends Model
         'deduction',
         'status',
         'remarks',
+        'allowances'
     ];
 
     protected $casts = [
