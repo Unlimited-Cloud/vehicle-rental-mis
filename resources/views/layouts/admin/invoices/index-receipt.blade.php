@@ -140,7 +140,7 @@
             
             <a href="{{ asset($receipt->pdf_path) }}" 
                class="btn btn-sm btn-info" 
-               title="View" 
+               title="View Invoice Details" 
                target="_blank">
                 <i class="fas fa-eye"></i>
             </a>
@@ -169,6 +169,11 @@
                title="Download Receipt" 
                target="_blank">
                 <i class="fas fa-download"></i> Receipt
+            </a>
+            <a href="{{ route('admin.vehicle_receipt.details', $receipt->id) }}" 
+            class="btn btn-sm btn-success" 
+            title="View Receipt Details">
+                <i class="fas fa-eye"></i>
             </a>
         @else
             <button class="btn btn-sm btn-success"
