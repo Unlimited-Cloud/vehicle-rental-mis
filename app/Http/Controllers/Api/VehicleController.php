@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Banner;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 
 class VehicleController extends Controller
 {
@@ -57,6 +59,38 @@ class VehicleController extends Controller
                 'name' => $vehicle->vehicle_name
             ],
             'reviews' => $reviews
+        ]);
+    }
+
+
+    public function getBanner()
+    {
+        $now = Carbon::now();
+
+        $banners = Banner::where('is_active', 1)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('start_date')
+                    ->orWhere('start_date', '<=', $now);
+            })
+            ->where(function ($query) use ($now) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', $now);
+            })
+            ->orderBy('order', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Banner list fetched successfully',
+            'data' => $banners->map(function ($banner) {
+                return [
+                    'id' => $banner->id,
+                    'title' => $banner->title,
+                    'image' => asset('uploads/banners/' . $banner->image),
+                    'link' => $banner->link,
+                    'description' => $banner->description,
+                ];
+            })
         ]);
     }
 }
