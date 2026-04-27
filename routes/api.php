@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('reviews', [VehicleController::class, 'storeReview']);
     Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
+    Route::get('banners', [VehicleController::class, 'getBanner']);
 });
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);

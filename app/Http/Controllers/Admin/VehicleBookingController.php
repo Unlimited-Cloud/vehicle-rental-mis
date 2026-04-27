@@ -329,11 +329,15 @@ class VehicleBookingController extends Controller
         return view('layouts.admin.vehicles_booking.show', compact('vehicleBooking'));
     }
 
-    public function destroy(VehicleBooking $vehicleBooking)
+    public function destroy($id)
     {
         Gate::authorize('delete_vehicle_bookings');
+
         try {
-            $vehicleBooking->delete();
+            VehicleBooking::where('id', $id)->update([
+                'deleted_by' => Auth::id(),
+                'deleted_at' => now(),
+            ]);
 
             if (request()->ajax()) {
                 return response()->json([

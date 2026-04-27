@@ -41,7 +41,9 @@ class VehicleBooking extends Model
         'vat',
         'passenger',
         'file_no',
-        'remaining_balance'
+        'remaining_balance',
+        'deleted_at',
+        'deleted_by'
     ];
 
     protected $dates = ['start_date', 'end_date'];

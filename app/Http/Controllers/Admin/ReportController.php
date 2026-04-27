@@ -27,6 +27,7 @@ class ReportController extends Controller
         $vehicleType = $request->input('vehicle_type', 'all');
         $vehicleId = $request->input('vehicle_id');
 
+        $fileNoFilter = $request->input('file_no');
         // Parse date range
         [$startDate, $endDate] = $this->parseDateRange($dateRange);
 
@@ -53,6 +54,9 @@ class ReportController extends Controller
         $movementsWithoutReceipt = $this->getMovementsWithoutReceipt($startDate, $endDate, $vehicleId);
         $receiptsWithoutFullPayment = $this->getReceiptsWithoutFullPayment($startDate, $endDate, $vehicleId);
 
+        $receivedReceivablesReport = $this->getReceivedAndReceivablesReport($startDate, $endDate, $vehicleId, $fileNoFilter);
+
+
         return view('layouts.admin.reports.index', compact(
             'profitabilityReport',
             'revenueReport',
@@ -65,13 +69,14 @@ class ReportController extends Controller
             'bookingsWithoutMovement',
             'movementsWithoutReceipt',
             'receiptsWithoutFullPayment',
+            'receivedReceivablesReport',
             'summary',
             'vehicles',
             'startDate',
             'endDate',
             'vehicleType',
             'vehicleId',
-            'dateRange'
+            'dateRange',
         ));
     }
 
@@ -808,7 +813,7 @@ class ReportController extends Controller
 
 
         if ($vehicleId) {
-            $query->where('vehicle_id', $vehicleId);
+            $query->where('vehicle_no', $vehicleId);
         }
 
         $movements = $query->get();
@@ -904,20 +909,19 @@ class ReportController extends Controller
         $query = VehicleMoment::with(['vehicle', 'booking'])
             ->whereBetween('created_at', [$startDate, $endDate])
             ->whereHas('booking')
-            ->whereDoesntHave('booking.receipts'); // booking has no receipts
+            ->whereDoesntHave('booking.receipts', function ($q) {
+                $q->where('paid', 1);
+            });
 
         if ($vehicleId) {
-            $query->where('vehicle_id', $vehicleId);
+            $query->where('vehicle_no', $vehicleId);
         }
 
         $movements = $query->get();
 
-        // Sum total_amount from related bookings
         $totalAmount = $movements->sum(function ($movement) {
             return $movement->booking ? $movement->booking->total_amount : 0;
         });
-
-
 
         return [
             'count' => $movements->count(),
@@ -953,6 +957,176 @@ class ReportController extends Controller
             'formatted_paid_amount' => '₹ ' . number_format($receipts->sum('amount'), 2),
             'formatted_pending_amount' => '₹ ' . number_format($totalPendingAmount, 2),
             'receipts' => $receipts
+        ];
+    }
+
+    // Add these methods to your ReportController.php
+
+    /**
+     * Get Received Amount & Receivables Report
+     */
+    private function getReceivedAndReceivablesReport($startDate, $endDate, $vehicleId = null, $fileNoFilter = null)
+    {
+        // Base receipt query
+        $receiptQuery = VehicleReceipt::whereBetween('created_at', [$startDate, $endDate]);
+
+        if ($vehicleId) {
+            $receiptQuery->where('vehicle_id', $vehicleId);
+        }
+
+        // ✅ RECEIVED PAYMENTS (paid = 1)
+        $receivedPayments = (clone $receiptQuery)
+            ->where('paid', 1)
+            ->with(['customer', 'vehicle', 'booking'])
+            ->get();
+
+        // ✅ PENDING RECEIVABLES (invoice exists but not fully paid)
+        $pendingReceivables = (clone $receiptQuery)
+            ->where(function ($q) {
+                $q->where('paid', 0)
+                    ->orWhereRaw('amount < total_amount');
+            })
+            ->with(['customer', 'vehicle', 'booking'])
+            ->get();
+
+        // ✅ UNPAID RECEIPTS (paid = 0 from vehicle_receipts table)
+        $unpaidReceipts = (clone $receiptQuery)
+            ->where('paid', 0)
+            ->with(['customer', 'vehicle', 'booking'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get unique file numbers from unpaid receipts
+        $unpaidFileNumbers = $unpaidReceipts->pluck('file_no')->filter()->unique()->values();
+
+        // ✅ Fetch ALL bookings from vehicle_bookings table for these file numbers
+        $allUnpaidBookings = VehicleBooking::whereIn('file_no', $unpaidFileNumbers)
+            ->when($vehicleId, function ($q) use ($vehicleId) {
+                return $q->where('vehicle_id', $vehicleId);
+            })
+            ->when($fileNoFilter, function ($q) use ($fileNoFilter) {
+                return $q->where('file_no', $fileNoFilter);
+            })
+            ->with(['customer', 'vehicle'])
+            ->orderBy('file_no')
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        // ================== TOTALS ==================
+
+        $totalReceived = $receivedPayments->sum('amount');
+
+        $totalReceivable = $pendingReceivables->sum(function ($receipt) {
+            return $receipt->total_amount - ($receipt->amount ?? 0);
+        });
+
+        $totalInvoiceAmount = $pendingReceivables->sum('total_amount');
+
+        $totalUnpaid = $allUnpaidBookings->sum('total_amount');
+
+        // ================== GROUPING ==================
+
+        $receivedByMethod = $receivedPayments->groupBy('payment_method')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'amount' => $group->sum('amount'),
+                'formatted_amount' => '₹ ' . number_format($group->sum('amount'), 2)
+            ];
+        });
+
+        $receivedByBank = $receivedPayments
+            ->whereIn('payment_method', ['cheque', 'bank'])
+            ->groupBy('bank_name')
+            ->map(function ($group) {
+                return [
+                    'count' => $group->count(),
+                    'amount' => $group->sum('amount'),
+                    'formatted_amount' => '₹ ' . number_format($group->sum('amount'), 2),
+                    'method' => $group->first()->payment_method
+                ];
+            });
+
+        // Group unpaid bookings by file_no
+        $unpaidByFileNo = $allUnpaidBookings->groupBy('file_no')->map(function ($group, $fileNo) {
+            return [
+                'file_no' => $fileNo,
+                'count' => $group->count(),
+                'total_amount' => $group->sum('total_amount'),
+                'formatted_amount' => '₹ ' . number_format($group->sum('total_amount'), 2),
+                'bookings' => $group
+            ];
+        });
+
+        // Get all unique file numbers for filter dropdown
+        $allFileNumbers = $unpaidReceipts->pluck('file_no')->filter()->unique()->values()->toArray();
+
+        // ================== AGING ==================
+
+        $agingBuckets = [
+            '0-30_days' => ['label' => '0-30 Days', 'items' => [], 'total' => 0],
+            '31-60_days' => ['label' => '31-60 Days', 'items' => [], 'total' => 0],
+            '61-90_days' => ['label' => '61-90 Days', 'items' => [], 'total' => 0],
+            '90+_days' => ['label' => '90+ Days', 'items' => [], 'total' => 0]
+        ];
+
+        $today = Carbon::now();
+
+        foreach ($pendingReceivables as $receipt) {
+            $dueDate = $receipt->invoice_due_date
+                ? Carbon::parse($receipt->invoice_due_date)
+                : $receipt->created_at;
+
+            $daysOverdue = $today->diffInDays($dueDate, false);
+            $pendingAmount = $receipt->total_amount - ($receipt->amount ?? 0);
+
+            $bucketKey = $daysOverdue <= 30 ? '0-30_days' : ($daysOverdue <= 60 ? '31-60_days' : ($daysOverdue <= 90 ? '61-90_days' : '90+_days'));
+
+            $agingBuckets[$bucketKey]['items'][] = [
+                'receipt' => $receipt,
+                'pending_amount' => $pendingAmount,
+                'days_overdue' => max(0, $daysOverdue),
+                'due_date' => $dueDate->format('Y-m-d')
+            ];
+
+            $agingBuckets[$bucketKey]['total'] += $pendingAmount;
+        }
+
+        // ================== RETURN ==================
+
+        return [
+            // RECEIVED
+            'received_payments' => $receivedPayments,
+            'total_received' => $totalReceived,
+            'formatted_total_received' => '₹ ' . number_format($totalReceived, 2),
+            'received_by_method' => $receivedByMethod,
+            'received_by_bank' => $receivedByBank,
+
+            // RECEIVABLES (Pending)
+            'pending_receivables' => $pendingReceivables,
+            'total_receivable' => $totalReceivable,
+            'formatted_total_receivable' => '₹ ' . number_format($totalReceivable, 2),
+            'total_invoice_amount' => $totalInvoiceAmount,
+            'formatted_total_invoice_amount' => '₹ ' . number_format($totalInvoiceAmount, 2),
+
+            // UNPAID BOOKINGS (from vehicle_bookings table by file_no)
+            'unpaid_by_file_no' => $unpaidByFileNo,
+            'total_unpaid' => $totalUnpaid,
+            'formatted_total_unpaid' => '₹ ' . number_format($totalUnpaid, 2),
+            'total_unpaid_bookings_count' => $allUnpaidBookings->count(),
+
+            // File numbers for filter
+            'all_file_numbers' => $allFileNumbers,
+            'selected_file_no' => $fileNoFilter,
+
+            // AGING
+            'aging_buckets' => $agingBuckets,
+            'total_overdue' => array_sum(array_column($agingBuckets, 'total')),
+            'formatted_total_overdue' => '₹ ' . number_format(array_sum(array_column($agingBuckets, 'total')), 2),
+
+            // METRIC
+            'collection_rate' => ($totalReceived + $totalInvoiceAmount) > 0
+                ? round(($totalReceived / ($totalReceived + $totalInvoiceAmount)) * 100, 2)
+                : 0,
         ];
     }
 }

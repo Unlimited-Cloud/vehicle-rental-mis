@@ -598,4 +598,19 @@ class ProformaInvoiceController extends Controller
             'total_bookings' => $bookings->count()
         ]);
     }
+
+    public function showDetailsReceipt($id)
+    {
+        $receipt = VehicleReceipt::with(['vehicle', 'customer', 'booking', 'moment'])->findOrFail($id);
+
+        // Fetch all bookings associated with the same file_no
+        $bookings = [];
+        if ($receipt->file_no) {
+            $bookings = VehicleBooking::where('file_no', $receipt->file_no)
+                ->with(['vehicle', 'customer'])
+                ->get();
+        }
+
+        return view('layouts.admin.invoices.vehicle_receipts_details', compact('receipt', 'bookings'));
+    }
 }
