@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CouponController;
@@ -185,6 +186,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
+        Route::resource('banner', BannerController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
         Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])
