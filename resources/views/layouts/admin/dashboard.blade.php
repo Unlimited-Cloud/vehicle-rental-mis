@@ -192,7 +192,7 @@
                 <div class="card card-outline card-primary">
                     <div class="card-header">
                         <h6 class="card-title font-weight-bold">
-                            <i class="fas fa-clock mr-1" style="font-size: 0.9rem;"></i>Recent Bookings
+                            <i class="fas fa-clock mr-1" style="font-size: 0.9rem;"></i>Bookings For Today
                         </h6>
                         <div class="card-tools">
                             <span class="badge badge-primary">{{ $recentBookings ? $recentBookings->count() : 0 }} Recent</span>
@@ -214,34 +214,32 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if(!empty($recentBookings))
-                                    @foreach($recentBookings as $index => $booking)
-                                        @php
-                                            $statusColor = $booking->status == 'confirmed' ? 'success' : 
-                                                          ($booking->status == 'pending' ? 'warning' : 'danger');
-                                        @endphp
-                                        <tr>
-                                            <td style="font-size: 0.9rem;">{{ $index + 1 }}</td>
-                                            <td style="font-size: 0.9rem;">{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
-                                            <td style="font-size: 0.9rem;">{{ $booking->customer->name ?? 'N/A' }}</td>
-                                            <td style="font-size: 0.9rem;">{{ $booking->tripRoute->title ?? 'N/A' }}</td>
-                                            <td style="font-size: 0.9rem;">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
-                                            <td style="font-size: 0.9rem;">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
-                                            <td style="font-size: 0.9rem;">{{ $booking->total_amount ?? 'N/A' }}</td>
-                                            <td>
-                                                <span class="badge badge-{{ $statusColor }}" style="font-size: 0.9rem; padding: 3px 6px;">
-                                                    {{ ucfirst($booking->status) }}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="8" class="text-center py-2" style="font-size: 0.9rem;">
-                                                <i class="fas fa-info-circle mr-1"></i>No recent bookings found
-                                            </td>
-                                        </tr>
-                                    @endif
+                                @forelse($recentBookings as $index => $booking)
+                                    @php
+                                        $statusColor = $booking->status == 'confirmed' ? 'success' : 
+                                                    ($booking->status == 'pending' ? 'warning' : 'danger');
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
+                                        <td>{{ $booking->customer->name ?? 'N/A' }}</td>
+                                        <td>{{ $booking->tripRoute->title ?? 'N/A' }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
+                                        <td>{{ $booking->total_amount ?? 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ $statusColor }}">
+                                                {{ ucfirst($booking->status) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center py-2">
+                                            <i class="fas fa-info-circle mr-1"></i> Today there is no trips/bookings
+                                        </td>
+                                    </tr>
+                                @endforelse
                                 </tbody>
                             </table>
                         </div>
