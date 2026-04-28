@@ -102,20 +102,31 @@ class VehicleRepository implements VehicleRepositoryInterface
             ->whereDate('end_date', '>=', now())->where('vehicle_bookings.customer_id', $customerId)->count();
     }
 
+    // public function getAllRecentVehicleBookings($orderBy, $order, $limit)
+    // {
+    //     return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+    //         ->whereNull('deleted_at')
+    //         ->orderBy($orderBy, $order)
+    //         ->limit(6)
+    //         ->get();
+    // }
+
     public function getAllRecentVehicleBookings($orderBy, $order, $limit)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->whereNull('deleted_at')
+            ->whereDate('start_date', now())
             ->orderBy($orderBy, $order)
-            ->limit(6)
+            ->limit($limit)
             ->get();
     }
 
     public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $limit, $customerId)
     {
-        VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->whereNull('deleted_at')
             ->where('vehicle_bookings.customer_id', $customerId)
+            ->whereDate('start_date', now()) // filter today's bookings
             ->orderBy($orderBy, $order)
             ->limit($limit)
             ->get();
@@ -126,10 +137,31 @@ class VehicleRepository implements VehicleRepositoryInterface
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->whereNull('deleted_at')
             ->where('vehicle_bookings.driver_id', $driverId)
+            ->whereDate('start_date', now()) // filter today's bookings
             ->orderBy($orderBy, $order)
             ->limit($limit)
             ->get();
     }
+
+    // public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $limit, $customerId)
+    // {
+    //     VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+    //         ->whereNull('deleted_at')
+    //         ->where('vehicle_bookings.customer_id', $customerId)
+    //         ->orderBy($orderBy, $order)
+    //         ->limit($limit)
+    //         ->get();
+    // }
+
+    // public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId)
+    // {
+    //     return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+    //         ->whereNull('deleted_at')
+    //         ->where('vehicle_bookings.driver_id', $driverId)
+    //         ->orderBy($orderBy, $order)
+    //         ->limit($limit)
+    //         ->get();
+    // }
 
     public function getAllVehicleBookings($request)
     {
