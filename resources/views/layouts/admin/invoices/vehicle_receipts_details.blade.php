@@ -303,10 +303,15 @@
                                                      <td>{{ ($booking->tripRoute->title) }}</td>
                                                     <td>रू {{ number_format($booking->rate_per_day, 2) }}</td>
                                                     <td class="text-right">
-                                                        <strong>रू {{ number_format($booking->sub_total, 2) }}</strong>
+                                                        <strong>
+                                                            रू {{ number_format($booking->sub_total ?? $booking->rate_per_day, 2) }}
+                                                        </strong>
                                                     </td>
                                                 </tr>
-                                                @php $grandTotal += $booking->sub_total; @endphp
+                                                @php
+                                                    $amount = $booking->sub_total ?? $booking->rate_per_day ?? 0;
+                                                    $grandTotal += $amount;
+                                                @endphp
                                                 @endforeach
                                             </tbody>
                                             <tfoot class="bg-light">
