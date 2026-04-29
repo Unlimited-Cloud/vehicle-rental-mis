@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\NepaliDateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\EstimateBill;
 use App\Models\ProformaInvoice;
@@ -409,7 +410,7 @@ class ProformaInvoiceController extends Controller
             'items'        => $items, // ✅ USE THIS
             'customer'     => $receipt->customer,
             'invoice_date' => now(),
-            'miti_date'    => now()->format('Y-m-d'),
+            'miti_date' => $this->convertToNepaliDate(now()),
         ];
 
         // Generate FINAL RECEIPT PDF
@@ -436,6 +437,44 @@ class ProformaInvoiceController extends Controller
             'message' => 'Receipt finalized successfully',
             'path'    => asset($receipt->receipt_path)
         ]);
+    }
+
+    private function convertToNepaliDate($date)
+    {
+        if (!$date) {
+            return '';
+        }
+
+        // Ensure it's a string date (Y-m-d)
+        $englishDate = $date instanceof \Carbon\Carbon
+            ? $date->format('Y-m-d')
+            : $date;
+
+        $nepaliDate = NepaliDateHelper::convertToNepali($englishDate);
+        $devanagariNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        $englishNumbers   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        $day   = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['day'] ?? '');
+        $monthName = $nepaliDate['month'] ?? '';
+        $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
+        $monthMap = [
+            'वैशाख' => '01',
+            'जेठ'   => '02',
+            'असार'  => '03',
+            'साउन'  => '04',
+            'भदौ'  => '05',
+            'असोज'  => '06',
+            'कात्तिक' => '07',
+            'मंसिर' => '08',
+            'पुस'   => '09',
+            'माघ'   => '10',
+            'फागुन' => '11',
+            'चैत'   => '12',
+        ];
+
+        $month = $monthMap[$monthName] ?? '00';
+
+        return "{$day}/{$month}/{$year}";
     }
 
 
@@ -535,18 +574,6 @@ class ProformaInvoiceController extends Controller
 
         return $this->convertToWords(floor($number / 10000000)) . ' Crore' . ($number % 10000000 ? ' ' . $this->convertToWords($number % 10000000) : '');
     }
-
-    /**
-     * Convert to Nepali date (simplified - you may want to use a proper library)
-     */
-    private function convertToNepaliDate($date)
-    {
-        // This is a simplified version
-        // You should implement proper Nepali date conversion or use a library
-        return $date->format('d/m/Y');
-    }
-
-
 
 
 

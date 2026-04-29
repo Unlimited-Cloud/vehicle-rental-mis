@@ -557,7 +557,7 @@ class BookingController extends Controller
         $monthName = $nepaliDate['month'] ?? '';
         $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
         $monthMap = [
-            'बैशाख' => '01',
+            'वैशाख' => '01',
             'जेठ'   => '02',
             'असार'  => '03',
             'साउन'  => '04',
