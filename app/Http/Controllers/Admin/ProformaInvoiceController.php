@@ -141,6 +141,7 @@ class ProformaInvoiceController extends Controller
         // Fetch all bookings with the same file_no
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -203,6 +204,7 @@ class ProformaInvoiceController extends Controller
         // Fetch all bookings with the same file_no
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -261,6 +263,7 @@ class ProformaInvoiceController extends Controller
     public function generateSingleInvoice($booking_id)
     {
         $booking = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('status', 'confirmed')
             ->findOrFail($booking_id);
 
         $receipt_number = $this->generateReceiptNumber();
@@ -393,6 +396,7 @@ class ProformaInvoiceController extends Controller
         if ($receipt->file_no) {
             $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
                 ->where('file_no', $receipt->file_no)
+                ->where('status', 'confirmed')
                 ->get();
         }
 
@@ -554,6 +558,7 @@ class ProformaInvoiceController extends Controller
     {
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -606,7 +611,7 @@ class ProformaInvoiceController extends Controller
         // Fetch all bookings associated with the same file_no
         $bookings = [];
         if ($receipt->file_no) {
-            $bookings = VehicleBooking::where('file_no', $receipt->file_no)
+            $bookings = VehicleBooking::where('file_no', $receipt->file_no)->where('status', 'confirmed')
                 ->with(['vehicle', 'customer'])
                 ->get();
         }

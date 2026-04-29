@@ -90,14 +90,14 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getAllPendingVehicleBookingsCount()
     {
-        return VehicleBooking::where('status', 'confirmed')
+        return VehicleBooking::where('status', 'pending')
             ->whereNull('deleted_at')
             ->whereDate('end_date', '>=', now())->count();
     }
 
     public function getPendingVehicleBookingsCountByCustomerId($customerId)
     {
-        return VehicleBooking::where('status', 'confirmed')
+        return VehicleBooking::where('status', 'pending')
             ->whereNull('deleted_at')
             ->whereDate('end_date', '>=', now())->where('vehicle_bookings.customer_id', $customerId)->count();
     }
