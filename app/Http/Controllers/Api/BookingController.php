@@ -314,6 +314,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -612,6 +613,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -751,6 +753,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
             ->get();
 
         if ($bookings->isEmpty()) {
