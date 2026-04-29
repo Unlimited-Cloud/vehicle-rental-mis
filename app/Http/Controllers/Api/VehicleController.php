@@ -93,4 +93,64 @@ class VehicleController extends Controller
             })
         ]);
     }
+
+    public function SearchVehicle(Request $request)
+    {
+        $query = Vehicle::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('vehicle_name', 'like', "%$search%")
+                    ->orWhere('brand', 'like', "%$search%")
+                    ->orWhere('seater', 'like', "%$search%")
+                    ->orWhere('fuel_type', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('vehicle_type', 'like', '%' . $request->type . '%');
+        }
+
+        if ($request->filled('fueltype')) {
+            $query->where('fuel_type', 'like', '%' . $request->fueltype . '%');
+        }
+
+        if ($request->filled('brand')) {
+            $query->where('brand', 'like', '%' . $request->brand . '%');
+        }
+
+        if ($request->filled('seater')) {
+            $query->where('seater', 'like', '%' . $request->seater . '%');
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $allowedSortFields = ['vehicle_name', 'brand', 'created_at'];
+
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'created_at';
+        }
+
+        $sortOrder = strtolower($sortOrder) === 'asc' ? 'asc' : 'desc';
+
+        $query->orderBy($sortBy, $sortOrder);
+
+        $query->orderBy($sortBy, $sortOrder);
+
+        $pageSize = $request->input('page_size', 20);
+
+        return response()->json(
+            $query->paginate($pageSize)
+        );
+    }
 }
