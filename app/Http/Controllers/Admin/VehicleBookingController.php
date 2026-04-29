@@ -607,7 +607,7 @@ class VehicleBookingController extends Controller
                     'payment_method' => $bookingData['payment_method'] ?? null,
                     'payment_status' => ($bookingData['paid_amount'] ?? 0) > 0 ? 1 : 0,
                     'notes' => $bookingData['notes'] ?? null,
-                    'status' => 'pending'
+                    'status' => $bookingData['status'] ?? 'pending',
                 ];
 
                 $vehicleBooking = VehicleBooking::create($addData);
