@@ -99,7 +99,7 @@ class VehicleMomentService
                 }
             }
 
-            $this->storeAttendance($vehicleMoment, $data);
+            // $this->storeAttendance($vehicleMoment, $data);
 
             // Save questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
@@ -157,7 +157,7 @@ class VehicleMomentService
             DB::table('attendance')
                 ->where('vehicle_moment_id', $id)
                 ->delete();
-            $this->storeAttendance($vehicleMoment, $data);
+            // $this->storeAttendance($vehicleMoment, $data);
 
             // Update questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
