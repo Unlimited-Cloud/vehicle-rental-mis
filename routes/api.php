@@ -75,7 +75,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transmission', [BookingController::class, 'transmission']);
     Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
 
+
+    //seaters
+    Route::get('/seaters', [BookingController::class, 'seaters']);
+    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeater']);
+
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
+    Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
+
+
+
+    //addres
+
+    Route::get('/province', [BookingController::class, 'provinces']);
+    Route::get('/districts-by-province', [BookingController::class, 'districtsByProvince']);
+    Route::get('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
+
     Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 
     Route::post('reviews', [VehicleController::class, 'storeReview']);
