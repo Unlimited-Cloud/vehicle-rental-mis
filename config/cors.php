@@ -6,7 +6,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://rental.kathmandusightseeing.com/',
+        'https://rental.kathmandusightseeing.com',
         'https://unlimited-vehicle-rental-qkhde5.flutterflow.app'
     ],
 
