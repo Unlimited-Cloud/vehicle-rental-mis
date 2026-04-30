@@ -21,9 +21,13 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
 use App\Models\Brand;
+use App\Models\District;
 use App\Models\EstimateBill;
 use App\Models\FuelType;
 use App\Models\ProformaInvoice;
+use App\Models\Province;
+use App\Models\Splashscreen;
+use App\Models\VDC;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -1016,6 +1020,62 @@ class BookingController extends Controller
         ]);
     }
 
+
+    public function seaters()
+    {
+        $seaters = Vehicle::select('seater')
+            ->whereNotNull('seater')
+            ->distinct()
+            ->get()
+            ->map(function ($s) {
+
+                // get one random vehicle for this seater
+                $vehicle = Vehicle::where('seater', $s->seater)
+                    ->whereNotNull('image')
+                    ->inRandomOrder()
+                    ->first();
+
+                return [
+                    'seater' => $s->seater,
+                    'image' => $vehicle && $vehicle->image
+                        ? asset($vehicle->image)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $seaters
+        ]);
+    }
+
+    public function vehiclesBySeater(Request $request)
+    {
+        $request->validate([
+            'seater' => 'required|numeric'
+        ]);
+
+        // get vehicles by seater
+        $vehicles = Vehicle::where('seater', $request->seater)->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this seater'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'seater' => $request->seater,
+            'vehicles' => $vehicles
+        ]);
+    }
+
+
+
+
+
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
@@ -1112,6 +1172,103 @@ class BookingController extends Controller
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
             'price' => $price,
+        ]);
+    }
+
+    public function splashscreens()
+    {
+        $data = Splashscreen::orderBy('order', 'asc')->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'header' => $item->header,
+                    'description' => $item->description,
+                    'order' => $item->order,
+                    'image' => $item->image
+                        ? asset('uploads/splashscreens/' . $item->image)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+    public function provinces()
+    {
+        $provinces = Province::select('id', 'pname', 'pnumber', 'headquarter', 'pname_np', 'status', 'map_index')
+            ->orderBy('pname', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $provinces
+        ]);
+    }
+
+    public function districtsByProvince(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'province_id' => 'required|exists:province,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $districts = District::where('province_id', $request->province_id)
+            ->select('id', 'name', 'province_id', 'name_np', 'district_index')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        if ($districts->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No districts found for this province'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $districts
+        ]);
+    }
+
+    public function vdcsByDistrict(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'district_id' => 'required|exists:district,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $vdcs = VDC::where('DISTRICT_ID', $request->district_id)
+            ->select('id', 'NAME')
+            ->orderBy('NAME', 'asc')
+            ->get();
+
+        if ($vdcs->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No VDC found for this district'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $vdcs
         ]);
     }
 }
