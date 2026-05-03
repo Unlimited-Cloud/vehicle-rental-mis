@@ -87,6 +87,14 @@ value="{{ old('contact_number',$crew_profile->contact_number ?? '') }}">
 
 <div class="col-md-6">
 <div class="form-group">
+<label>Age</label>
+<input type="text" name="age" class="form-control"
+value="{{ old('age',$crew_profile->age ?? '') }}">
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="form-group">
 <label>Experience Years</label>
 <input type="text" name="experience" class="form-control"
 value="{{ old('experience',$crew_profile->experience ?? '') }}">

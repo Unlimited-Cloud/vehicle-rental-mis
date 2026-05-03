@@ -71,19 +71,18 @@ class CustomerController extends Controller
 
     public function forgotPassword(Request $request)
     {
-        dd("here");
         $request->validate([
             'email' => 'required|email|exists:customers,email'
         ]);
 
         $otp = rand(100000, 999999);
 
-        $passcode = Passcode::where('email', $request->email)->orderBy('id','desc')->first();
+        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
 
         $customerId = Customer::where('email', $request->email)->first()->id;
 
         if ($passcode) {
-            
+
             // Rate limit: max 5 requests
             if (now()->diffInMinutes($passcode->requested_at) >= 10) {
                 $passcode->request_count = 0;
@@ -107,7 +106,7 @@ class CustomerController extends Controller
 
             // dd($updateData);
 
-            Passcode::where('id',$passcode->id)->update($updateData);
+            Passcode::where('id', $passcode->id)->update($updateData);
         } else {
             Passcode::create([
                 'email' => $request->email,
@@ -118,7 +117,7 @@ class CustomerController extends Controller
                 'attempt_count' => 0
             ]);
         }
-        
+
         event(new EmailEvent($request->email, 'forgot_password', 'success', 'customer'));
         return response()->json([
             'status' => true,
@@ -133,7 +132,7 @@ class CustomerController extends Controller
             'otp' => 'required'
         ]);
 
-        $passcode = Passcode::where('email', $request->email)->orderBy('id','desc')->first();
+        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
 
         if (!$passcode) {
             return response()->json([
@@ -198,7 +197,7 @@ class CustomerController extends Controller
             'password' => 'required|min:6|confirmed'
         ]);
 
-        $passcode = Passcode::where('email', $request->email)->orderBy('id','desc')->first();
+        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
 
         if (!$passcode || $passcode->passcode != $request->otp) {
             return response()->json([

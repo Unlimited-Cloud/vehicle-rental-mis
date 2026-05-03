@@ -35,8 +35,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $assignment->vehicle->vehicle_name ?? 'N/A' }}</td>
-                        <td>{{ $assignment->driver->name ?? 'N/A' }}</td>
-                        <td>{{ $assignment->helper->name ?? 'N/A' }}</td>
+                        <td>{{ $assignment->driver->user->name ?? 'N/A' }}</td>
+                        <td>{{ $assignment->helper->user->name ?? 'N/A' }}</td>
                         <td>{{ $assignment->start_date }}</td>
                         <td>{{ $assignment->end_date ?? '-' }}</td>
                         <td>{{ $assignment->shift ?? '-' }}</td>

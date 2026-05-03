@@ -29,6 +29,7 @@
     <th>Role</th>
     <th>License Number</th>
     <th>License Expiry</th>
+    <th>Age</th>
     <th>Contact</th>
     <th>Actions</th>
 </tr>
@@ -41,6 +42,7 @@
     <td>{{ ucfirst($c->role) }}</td>
     <td>{{ $c->license_number ?? 'N/A' }}</td>
     <td>{{ $c->license_expiry ?? 'N/A' }}</td>
+    <td>{{ $c->age ?? 'N/A' }}</td>
     <td>{{ $c->contact_number ?? 'N/A' }}</td>
     <td>
         <a href="{{ route('admin.crew_profiles.edit', $c->id) }}" class="btn btn-primary btn-sm">
