@@ -28,6 +28,7 @@ use App\Models\ProformaInvoice;
 use App\Models\Province;
 use App\Models\Splashscreen;
 use App\Models\VDC;
+use App\Models\VehicleAssignment;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -146,6 +147,7 @@ class BookingController extends Controller
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
                 'vehicle_id' => 'required|exists:vehicles,id',
+                'driver_id' => 'nullable|exists:crew_profiles,id',
                 'trip_category_id' => 'required|exists:trip_categories,id',
                 'trip_route_id' => 'required|exists:trip_routes,id',
 
@@ -1269,6 +1271,57 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'data' => $vdcs
+        ]);
+    }
+
+
+    public function getVehicleDrivers($vehicle_id)
+    {
+        $assignments = VehicleAssignment::with(['driver.user'])
+            ->where('vehicle_id', $vehicle_id)
+            ->get();
+
+        if ($assignments->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No drivers found for this vehicle',
+                'data' => []
+            ]);
+        }
+
+        $drivers = $assignments->map(function ($assignment) {
+
+            $user = $assignment->driver->user ?? null;
+
+            return [
+                'vehicle_name' => $assignment->vehicle->vehicle_name ?? null,
+
+                'driver' => $assignment->driver ? [
+                    'id' => $assignment->driver->id,
+                    'role' => $assignment->driver->role,
+                    'contact_number' => $assignment->driver->contact_number,
+                    'experience' => $assignment->driver->experience,
+                    'age' => $assignment->driver->age,
+                    'license_expiry' => $assignment->driver->license_expiry ?? 'N/A',
+
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'img' => $user->img
+                            ? asset('uploads/users/' . $user->img)
+                            : null,
+                    ] : null,
+                ] : null,
+
+                'helper_name' => $assignment->helper->user->name ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Drivers fetched successfully',
+            'data' => $drivers
         ]);
     }
 }

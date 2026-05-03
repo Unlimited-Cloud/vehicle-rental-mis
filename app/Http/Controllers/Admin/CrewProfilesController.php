@@ -22,15 +22,14 @@ class CrewProfilesController extends Controller
     private $currentUserIsCustomer;
     private $currentUserIsDriver;
     private $currentUserDriverId;
-    
+
     protected $vehicleRepository;
     protected $userRepository;
 
     public function __construct(
         VehicleRepositoryInterface $vehicleRepository,
         UserRepositoryInterface $userRepository
-    )
-    {
+    ) {
         $this->vehicleRepository = $vehicleRepository;
         $this->userRepository = $userRepository;
 
@@ -47,12 +46,12 @@ class CrewProfilesController extends Controller
     public function index()
     {
         Gate::authorize('index_crew_profiles');
-        if($this->currentUserIsDriver == 'Y'){
-            $crew = CrewProfile::with('user')->where('id',$this->currentUserDriverId)->latest()->get();
-        }else{
+        if ($this->currentUserIsDriver == 'Y') {
+            $crew = CrewProfile::with('user')->where('id', $this->currentUserDriverId)->latest()->get();
+        } else {
             $crew = CrewProfile::with('user')->latest()->get();
         }
-        
+
         return view('layouts.admin.crew_profiles.index', compact('crew'));
     }
 
@@ -73,6 +72,7 @@ class CrewProfilesController extends Controller
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
             'experience' => 'nullable|integer',
+            'age' => 'nullable|integer',
 
         ]);
 
@@ -142,6 +142,7 @@ class CrewProfilesController extends Controller
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
             'experience' => 'nullable|integer',
+            'age' => 'nullable|integer',
         ]);
 
         if ($request->hasFile('citizenship_doc')) {

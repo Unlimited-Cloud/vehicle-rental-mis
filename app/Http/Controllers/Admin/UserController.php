@@ -74,7 +74,10 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
             'role_id' => 'nullable|exists:roles,id',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+
+
 
         $addData = [
             'name'     => $request->name,
@@ -82,6 +85,13 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
             'role_id'  => $request->role_id,
         ];
+        if ($request->hasFile('img')) {
+            $file = $request->file('img');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/users'), $filename);
+
+            $addData['img'] = $filename;
+        }
 
         $addData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         if (!empty($addData['customer_id'])) {
@@ -117,6 +127,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6|confirmed',
             'role_id' => 'nullable|exists:roles,id',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = [
@@ -132,6 +143,20 @@ class UserController extends Controller
         $data['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         if (!empty($data['customer_id'])) {
             $data['user_type'] = 'customer_dashboard';
+        }
+
+        if ($request->hasFile('img')) {
+
+            // delete old image
+            if ($user->img && file_exists(public_path('uploads/users/' . $user->img))) {
+                unlink(public_path('uploads/users/' . $user->img));
+            }
+
+            $file = $request->file('img');
+            $filename = time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/users'), $filename);
+
+            $data['img'] = $filename;
         }
 
         $user->update($data);

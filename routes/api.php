@@ -57,6 +57,8 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::get('/get-customerbooking/{customerUUId}', [BookingController::class, 'getCustomerBookings']);
+        Route::get('/get-vehicle-drivers/{vehicleId}', [BookingController::class, 'getVehicleDrivers']);
+
 
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
