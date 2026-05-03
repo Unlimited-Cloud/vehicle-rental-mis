@@ -71,6 +71,7 @@ class CustomerController extends Controller
 
     public function forgotPassword(Request $request)
     {
+        dd("here");
         $request->validate([
             'email' => 'required|email|exists:customers,email'
         ]);
