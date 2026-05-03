@@ -1028,6 +1028,7 @@ class BookingController extends Controller
         $seaters = Vehicle::select('seater')
             ->whereNotNull('seater')
             ->distinct()
+            ->orderBy('seater')
             ->get()
             ->map(function ($s) {
 
