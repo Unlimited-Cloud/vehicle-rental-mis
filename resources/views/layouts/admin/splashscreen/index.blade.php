@@ -45,7 +45,7 @@
     </td>
     <td>{{ $s->header }}</td>
     <td>{{ $s->description }}</td>
-    <td>{{ $s->order }}</td>
+    <td>{{ $s->order_by }}</td>
     <td>
         <a href="{{ route('admin.splashscreen.edit', $s->id) }}" class="btn btn-primary btn-sm">
             <i class="fas fa-edit"></i>

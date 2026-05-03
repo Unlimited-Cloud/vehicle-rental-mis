@@ -81,12 +81,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeater']);
 
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
-    Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
-
-
 
     //addres
-
     Route::get('/province', [BookingController::class, 'provinces']);
     Route::post('/districts-by-province', [BookingController::class, 'districtsByProvince']);
     Route::post('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
@@ -98,6 +94,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
 });
+
+Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);
 Route::post('/invoice/regenerate', [BookingController::class, 'apiRegenerateInvoice']);
