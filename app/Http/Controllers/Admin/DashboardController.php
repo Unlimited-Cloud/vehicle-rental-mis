@@ -99,12 +99,12 @@ class DashboardController extends Controller
         }
 
         if ($this->currentUserIsCustomer == 'Y') {
-            $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', 6, $this->currentUserCustomerId);
+            $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', $this->currentUserCustomerId);
         } else {
             if ($this->currentUserIsDriver == 'Y') {
-                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', 6, $this->currentUserDriverId);
+                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', '6', $this->currentUserDriverId);
             } else {
-                $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc', 6);
+                $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc',);
             }
         }
 

@@ -38,6 +38,7 @@ use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SplashScreenController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -187,6 +188,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
         Route::resource('banner', BannerController::class);
+        Route::resource('splashscreen', SplashScreenController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
         Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])
