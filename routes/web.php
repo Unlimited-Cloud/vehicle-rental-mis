@@ -206,7 +206,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         //Roles Route is here
         Route::resource('vehicle_details', VehicleDetailsController::class);
 
-        // Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+        //Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
         Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
             ->name('petrol_pumps.balance');

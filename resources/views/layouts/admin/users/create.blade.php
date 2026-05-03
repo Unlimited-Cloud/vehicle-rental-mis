@@ -13,7 +13,7 @@
     <div class="card card-primary card-outline">
 
     <form action="{{ isset($user) ? route('admin.users.update', $user->id) : route('admin.users.store') }}"
-          method="POST">
+         enctype="multipart/form-data"  method="POST">
 
     @csrf
     @if(isset($user)) @method('PUT') @endif
@@ -36,6 +36,27 @@
             </div>
         </div>
         @endif
+
+
+<div class="col-md-6">
+    <div class="form-group">
+        <label>Profile Image</label>
+        <input type="file" name="img" class="form-control">
+    </div>
+    <div class="col-md-6">
+    <label>Preview</label><br>
+
+    @if(isset($user) && $user->img)
+        <img src="{{ asset('uploads/users/'.$user->img) }}" width="100" height="100">
+    @else
+        <p>No Image</p>
+    @endif
+</div>
+</div>
+
+
+
+</div>
 
     <div class="col-md-6">
     <div class="form-group">
