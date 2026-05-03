@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('header')->nullable();
             $table->text('description')->nullable();
-            $table->integer('order')->default(0);
+            $table->integer('order_by')->default(0);
             $table->timestamps();
         });
     }
