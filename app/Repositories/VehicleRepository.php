@@ -111,24 +111,22 @@ class VehicleRepository implements VehicleRepositoryInterface
     //         ->get();
     // }
 
-    public function getAllRecentVehicleBookings($orderBy, $order, $limit)
+    public function getAllRecentVehicleBookings($orderBy, $order)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->whereNull('deleted_at')
             ->whereDate('start_date', now())
             ->orderBy($orderBy, $order)
-            ->limit($limit)
             ->get();
     }
 
-    public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $limit, $customerId)
+    public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $customerId)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->whereNull('deleted_at')
             ->where('vehicle_bookings.customer_id', $customerId)
             ->whereDate('start_date', now()) // filter today's bookings
             ->orderBy($orderBy, $order)
-            ->limit($limit)
             ->get();
     }
 
