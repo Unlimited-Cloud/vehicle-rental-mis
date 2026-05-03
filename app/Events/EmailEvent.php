@@ -67,10 +67,6 @@ class EmailEvent
 
             if ($this->activity == 'forgot_password') {
                 $this->PersonalDetails = Customer::where('email', $email)->first();
-
-                // if (empty($this->PersonalDetails)) {
-                //     $this->PersonalDetails = User::where('email', $email)->first();
-                // }
             }
             //
             if ($this->activity == 'create_booking') {
@@ -106,7 +102,6 @@ class EmailEvent
         }
 
         try {
-
             Mail::mailer($emailconfig)->to($this->email)->send(new OwnMail($this->mailType, $this->emailTemplates, $this->PersonalDetails, $this->response, $this->activity));
 
 
@@ -117,11 +112,12 @@ class EmailEvent
                 $personalDetailsSend = $this->PersonalDetails;
                 $emailTemplateActivity = $this->activity;
                 $sendPasscode = null;
-                if ($emailTemplateActivity == 'passcode') {
+                if ($emailTemplateActivity == 'passcode' || $emailTemplateActivity == 'forgot_password') {
 
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }
                 $emailBody = VehicleRentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
+                
                 $emailCc = $this->emailTemplates->email_cc;
             } else {
                 $emailTemplateId = $emailSubject = $emailBody = $emailCc = NULL;
