@@ -84,8 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //addres
     Route::get('/province', [BookingController::class, 'provinces']);
-    Route::get('/districts-by-province', [BookingController::class, 'districtsByProvince']);
-    Route::get('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
+    Route::post('/districts-by-province', [BookingController::class, 'districtsByProvince']);
+    Route::post('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
 
     Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 
