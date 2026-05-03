@@ -25,7 +25,7 @@ class SplashScreenController extends Controller
             'header' => 'required',
             'description' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'order' => 'nullable|integer'
+            'order_by' => 'nullable|integer'
         ]);
 
         $logoName = null;
@@ -40,7 +40,7 @@ class SplashScreenController extends Controller
             'header' => $request->header,
             'description' => $request->description,
             'image' => $logoName,
-            'order' => $request->order ?? 0
+            'order_by' => $request->order_by ?? 0
         ]);
 
         return redirect()->route('admin.splashscreen.index')->with('success', 'Splashscreen created successfully');
@@ -66,7 +66,7 @@ class SplashScreenController extends Controller
             'header' => 'required',
             'description' => 'required',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'order' => 'nullable|integer'
+            'order_by' => 'nullable|integer'
         ]);
 
         $imageName = $splashscreen->image;
@@ -87,7 +87,7 @@ class SplashScreenController extends Controller
             'header' => $request->header,
             'description' => $request->description,
             'image' => $imageName,
-            'order' => $request->order ?? 0
+            'order_by' => $request->order_by ?? 0
         ]);
 
         return redirect()->route('admin.splashscreen.index')->with('success', 'Splashscreen updated successfully');

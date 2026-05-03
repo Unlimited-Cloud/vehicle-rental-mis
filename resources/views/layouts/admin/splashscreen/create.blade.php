@@ -34,8 +34,8 @@
     <div class="col-md-6">
         <div class="form-group">
             <label>Order</label>
-            <input type="number" name="order" class="form-control"
-                   value="{{ old('order',$splashscreen->order ?? 0) }}">
+            <input type="number" name="order_by" class="form-control"
+                   value="{{ old('order_by',$splashscreen->order_by ?? 0) }}">
         </div>
     </div>
 

@@ -1177,13 +1177,13 @@ class BookingController extends Controller
 
     public function splashscreens()
     {
-        $data = Splashscreen::orderBy('order', 'asc')->get()
+        $data = Splashscreen::orderBy('order_by', 'asc')->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'header' => $item->header,
                     'description' => $item->description,
-                    'order' => $item->order,
+                    'order' => $item->order_by,
                     'image' => $item->image
                         ? asset('uploads/splashscreens/' . $item->image)
                         : null,

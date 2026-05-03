@@ -10,6 +10,6 @@ class Splashscreen extends Model
         'image',
         'header',
         'description',
-        'order'
+        'order_by'
     ];
 }
