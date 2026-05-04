@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
+use App\Models\BasicTable;
 use App\Models\Customer;
 use App\Models\Passcode;
 use App\Services\CustomerService;
@@ -282,6 +283,38 @@ class CustomerController extends Controller
             'success' => true,
             'message' => 'Profile image updated successfully',
             'profile_image' => asset($customer->profile_image),
+        ]);
+    }
+
+
+    public function BasicSetup()
+    {
+        $basic = BasicTable::first();
+
+        if (!$basic) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No data found'
+            ], 404);
+        }
+
+        $data = $basic->toArray();
+
+        if (!empty($basic->login_logo)) {
+            $data['login_logo'] = asset($basic->login_logo);
+        } else {
+            $data['login_logo'] = null;
+        }
+
+        if (!empty($basic->logo)) {
+            $data['logo'] = asset($basic->logo);
+        } else {
+            $data['logo'] = null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
         ]);
     }
 }
