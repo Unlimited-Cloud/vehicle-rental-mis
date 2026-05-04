@@ -28,7 +28,10 @@ class Customer extends Model
         'status',
         'password',
         'author_type',
-        'author_id'
+        'author_id',
+        'country_id',
+        'district_id',
+        'vdc_id',
     ];
 
     protected $casts = [
