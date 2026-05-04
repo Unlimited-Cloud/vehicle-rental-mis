@@ -77,7 +77,7 @@ class CustomerController extends Controller
 
         $otp = rand(100000, 999999);
 
-        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
+        $passcode = Passcode::where('email', $request->email)->where('requested_at','>=',now())->orderBy('id', 'desc')->first();
 
         $customerId = Customer::where('email', $request->email)->first()->id;
 
@@ -113,6 +113,7 @@ class CustomerController extends Controller
                 'user_id' => $customerId,
                 'passcode' => $otp,
                 'requested_at' => now(),
+                'created_at' => now(),
                 'request_count' => 1,
                 'attempt_count' => 0
             ]);
