@@ -145,12 +145,15 @@
                 <i class="fas fa-eye"></i>
             </a>
 
+
+       @if(!$receipt->receipt_path || !file_exists(public_path($receipt->receipt_path)))
             @if($receipt->file_no)
-            <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
-                class="btn btn-sm btn-warning" title="Regenerate">
-                <i class="fas fa-sync"></i> 
-            </button>
+                <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
+                    class="btn btn-sm btn-warning" title="Generate">
+                    <i class="fas fa-sync"></i>
+                </button>
             @endif
+        @endif
         @else
             <span class="badge badge-danger">File Missing</span>
             
