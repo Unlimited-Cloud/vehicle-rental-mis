@@ -341,7 +341,12 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateReceiptNumber();
+        // $receipt_number = $this->generateReceiptNumber();
+
+        $existingReceipt = VehicleReceipt::where('file_no', $request->file_no)->first();
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->receipt_number
+            : $this->generateReceiptNumber();
 
         // Prepare data for view
         $data = [
@@ -798,7 +803,13 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateEstimateNumber();
+        // $receipt_number = $this->generateEstimateNumber();
+
+        $existingReceipt = EstimateBill::where('file_no', $request->file_no)->first();
+
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->estimate_number
+            : $this->generateEstimateNumber();
 
         // Prepare data for view
         $data = [
@@ -825,19 +836,22 @@ class BookingController extends Controller
         ];
 
         // Save receipt to database
-        $receipt = EstimateBill::create([
-            'vehicle_booking_id' => null,
-            'vehicle_moment_id' => null,
-            'vehicle_id' => null,
-            'file_no' => $request->file_no,
-            'customer_id' => $customer ? $customer->id : null,
-            'estimate_number' => $receipt_number,
-            'rate_per_day' => $sub_total,
-            'sub_total' => $sub_total,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $net_amount,
-        ]);
+        $receipt = EstimateBill::updateOrCreate(
+            ['file_no' => $request->file_no],
+            [
+                'vehicle_booking_id' => null,
+                'vehicle_moment_id' => null,
+                'vehicle_id' => null,
+                'file_no' => $request->file_no,
+                'customer_id' => $customer ? $customer->id : null,
+                'estimate_number' => $receipt_number,
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount,
+                'tax' => $tax,
+                'total_amount' => $net_amount,
+            ]
+        );
 
         $data['receipt'] = $receipt;
 
