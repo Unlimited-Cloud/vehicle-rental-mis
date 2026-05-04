@@ -1236,7 +1236,7 @@ class BookingController extends Controller
     public function provinces()
     {
         $provinces = Province::select('id', 'pname', 'pnumber', 'headquarter', 'pname_np', 'status', 'map_index')
-            ->orderBy('pname', 'asc')
+            ->orderBy('pnumber', 'asc')
             ->get();
 
         return response()->json([
