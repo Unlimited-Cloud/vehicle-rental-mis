@@ -47,7 +47,7 @@ class OwnMail extends Mailable
             $this->log = 'https://kathmandusightseeing.com/upload/landing/da7/kk80s8bh77k7feeu0h1nlrbgcx09hgj0/sightseeing_1x.png';
         }
 
-        if ($activites == 'passcode') {
+        if ($activites == 'passcode' || $activites == 'forgot_password') {
             $this->passcode  = Passcode::where('email', $personalDetails['email'])->latest()->first();
         }
 

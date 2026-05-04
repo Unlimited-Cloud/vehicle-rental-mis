@@ -42,6 +42,9 @@ class CustomerService
                     'regex:/[!@#$%^&*(),.?":{}|<>]/', // at least 1 special character
                     'max:255',
                 ],
+                'country_id' => 'nullable|exists:countries,id',
+                'district_id' => 'nullable|exists:district,id',
+                'vdc_id' => 'nullable|exists:vdc,id',
             ]);
 
             if ($validator->fails()) {
@@ -64,6 +67,9 @@ class CustomerService
                 'mobile_number_country_code' => $request->mobileNumberCountryCode,
                 'phone' => $request->mobileNumber,
                 'address' => $request->address,
+                'country_id' => $request->country_id,
+                'district_id' => $request->district_id,
+                'vdc_id' => $request->vdc_id,
                 'city' => $request->city,
                 'state' => $request->state,
                 'pan_number' => $request->pan_number,
@@ -106,7 +112,12 @@ class CustomerService
             return array(
                 'status' => 'success',
                 'message' => 'Customer Registered Successfully!',
-                'data' => ['customerId' => $customerUuid], 
+                'data' => [
+                    'customerId' => $customerUuid,
+                    "created_at" => $customer->created_at
+                        ->timezone('Asia/Kathmandu')
+                        ->format('Y-m-d H:i:s'),
+                ], 
                 'statusCode' => 200
             );
         }catch ( \Exception $e){
@@ -141,6 +152,10 @@ class CustomerService
                 'name' => $customerDetail->name,
                 'email' => $customerDetail->email,
                 'phone' => $customerDetail->phone,
+                'country' => $customerDetail->countryname,
+                'state' => $customerDetail->state,
+                'district' => $customerDetail->districtname,
+                'vdc' => $customerDetail->vdcname,
                 'profile_image' => asset($customerDetail->profile_image),
             ];
             return array(

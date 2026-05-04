@@ -28,6 +28,7 @@ use App\Models\ProformaInvoice;
 use App\Models\Province;
 use App\Models\Splashscreen;
 use App\Models\VDC;
+use App\Models\VehicleAssignment;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -146,6 +147,7 @@ class BookingController extends Controller
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
                 'vehicle_id' => 'required|exists:vehicles,id',
+                'driver_id' => 'nullable|exists:crew_profiles,id',
                 'trip_category_id' => 'required|exists:trip_categories,id',
                 'trip_route_id' => 'required|exists:trip_routes,id',
 
@@ -319,6 +321,8 @@ class BookingController extends Controller
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -422,10 +426,17 @@ class BookingController extends Controller
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
+            $time = $booking->start_time
+                ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A')
+                : '';
+
             // Get the actual service description from booking notes if available
             $description = "{$routeName} By {$vehicleName}";
             if ($date) {
                 $description .= " on {$date}";
+            }
+            if ($time) {
+                $description .= " at {$time}";
             }
 
             $items[] = [
@@ -618,6 +629,8 @@ class BookingController extends Controller
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -755,9 +768,12 @@ class BookingController extends Controller
             'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
         ]);
 
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -1026,6 +1042,7 @@ class BookingController extends Controller
         $seaters = Vehicle::select('seater')
             ->whereNotNull('seater')
             ->distinct()
+            ->orderBy('seater')
             ->get()
             ->map(function ($s) {
 
@@ -1269,6 +1286,57 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'data' => $vdcs
+        ]);
+    }
+
+
+    public function getVehicleDrivers($vehicle_id)
+    {
+        $assignments = VehicleAssignment::with(['driver.user'])
+            ->where('vehicle_id', $vehicle_id)
+            ->get();
+
+        if ($assignments->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No drivers found for this vehicle',
+                'data' => []
+            ]);
+        }
+
+        $drivers = $assignments->map(function ($assignment) {
+
+            $user = $assignment->driver->user ?? null;
+
+            return [
+                'vehicle_name' => $assignment->vehicle->vehicle_name ?? null,
+
+                'driver' => $assignment->driver ? [
+                    'id' => $assignment->driver->id,
+                    'role' => $assignment->driver->role,
+                    'contact_number' => $assignment->driver->contact_number,
+                    'experience' => $assignment->driver->experience,
+                    'age' => $assignment->driver->age,
+                    'license_expiry' => $assignment->driver->license_expiry ?? 'N/A',
+
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'img' => $user->img
+                            ? asset('uploads/users/' . $user->img)
+                            : null,
+                    ] : null,
+                ] : null,
+
+                'helper_name' => $assignment->helper->user->name ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Drivers fetched successfully',
+            'data' => $drivers
         ]);
     }
 }

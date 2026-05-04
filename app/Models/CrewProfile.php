@@ -14,7 +14,8 @@ class CrewProfile extends Model
         'citizenship_doc',
         'contact_number',
         'experience',
-        'basic_salary'
+        'basic_salary',
+        'age'
     ];
 
     public function user()

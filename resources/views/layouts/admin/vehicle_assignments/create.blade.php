@@ -43,8 +43,8 @@
                             <select name="driver_id" class="form-control" required>
                                 <option value="">Select Driver</option>
                                 @foreach($drivers as $driver)
-                                    <option value="{{ $driver->id }}"
-                                        {{ old('driver_id', $vehicle_assignment->driver_id ?? '') == $driver->id ? 'selected' : '' }}>
+                                    <option value="{{ $driver->crewProfile->id }}"
+                                        {{ old('driver_id', $vehicle_assignment->driver_id ?? '') == $driver->crewProfile->id ? 'selected' : '' }}>
                                         {{ $driver->name }}
                                     </option>
                                 @endforeach
@@ -59,8 +59,8 @@
                             <select name="helper_id" class="form-control">
                                 <option value="">Select Helper</option>
                                 @foreach($helpers as $helper)
-                                    <option value="{{ $helper->id }}"
-                                        {{ old('helper_id', $vehicle_assignment->helper_id ?? '') == $helper->id ? 'selected' : '' }}>
+                                    <option value="{{ $helper->crewProfile->id }}"
+                                        {{ old('helper_id', $vehicle_assignment->helper_id ?? '') == $helper->crewProfile->id ? 'selected' : '' }}>
                                         {{ $helper->name }}
                                     </option>
                                 @endforeach
@@ -71,9 +71,9 @@
                     {{-- START DATE --}}
                     <div class="col-md-4">
                         <div class="form-group">
-                            <label>Start Date *</label>
+                            <label>Start Date</label>
                             <input type="date" name="start_date" class="form-control"
-                                value="{{ old('start_date', $vehicle_assignment->start_date ?? '') }}" required>
+                                value="{{ old('start_date', $vehicle_assignment->start_date ?? '') }}" >
                         </div>
                     </div>
 

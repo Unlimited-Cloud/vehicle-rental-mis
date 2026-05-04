@@ -77,37 +77,48 @@ class CustomerController extends Controller
 
         $otp = rand(100000, 999999);
 
-        $passcode = Passcode::where('email', $request->email)->first();
+        $passcode = Passcode::where('email', $request->email)->where('requested_at','>=',now())->orderBy('id', 'desc')->first();
 
         $customerId = Customer::where('email', $request->email)->first()->id;
 
         if ($passcode) {
+
             // Rate limit: max 5 requests
-            if ($passcode->request_count >= 5 && now()->diffInMinutes($passcode->requested_at) < 10) {
+            if (now()->diffInMinutes($passcode->requested_at) >= 10) {
+                $passcode->request_count = 0;
+            }
+
+            if ($passcode->request_count >= 25) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Too many requests. Try again later.'
                 ], 429);
             }
 
-            $passcode->update([
+            $updateData = [
                 'passcode' => $otp,
+                'email' => $request->email,
                 'user_id' => $customerId,
                 'requested_at' => now(),
                 'request_count' => $passcode->request_count + 1,
-                'attempt_count' => 0,
-                'locked_until' => null
-            ]);
+                'attempt_count' => 0
+            ];
+
+            // dd($updateData);
+
+            Passcode::where('id', $passcode->id)->update($updateData);
         } else {
             Passcode::create([
                 'email' => $request->email,
                 'user_id' => $customerId,
                 'passcode' => $otp,
                 'requested_at' => now(),
+                'created_at' => now(),
                 'request_count' => 1,
                 'attempt_count' => 0
             ]);
         }
+
         event(new EmailEvent($request->email, 'forgot_password', 'success', 'customer'));
         return response()->json([
             'status' => true,
@@ -122,7 +133,7 @@ class CustomerController extends Controller
             'otp' => 'required'
         ]);
 
-        $passcode = Passcode::where('email', $request->email)->first();
+        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
 
         if (!$passcode) {
             return response()->json([
@@ -187,7 +198,7 @@ class CustomerController extends Controller
             'password' => 'required|min:6|confirmed'
         ]);
 
-        $passcode = Passcode::where('email', $request->email)->first();
+        $passcode = Passcode::where('email', $request->email)->orderBy('id', 'desc')->first();
 
         if (!$passcode || $passcode->passcode != $request->otp) {
             return response()->json([
