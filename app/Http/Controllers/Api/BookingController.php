@@ -321,6 +321,8 @@ class BookingController extends Controller
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -339,7 +341,12 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateReceiptNumber();
+        // $receipt_number = $this->generateReceiptNumber();
+
+        $existingReceipt = VehicleReceipt::where('file_no', $request->file_no)->first();
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->receipt_number
+            : $this->generateReceiptNumber();
 
         // Prepare data for view
         $data = [
@@ -424,10 +431,17 @@ class BookingController extends Controller
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
+            $time = $booking->start_time
+                ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A')
+                : '';
+
             // Get the actual service description from booking notes if available
             $description = "{$routeName} By {$vehicleName}";
             if ($date) {
                 $description .= " on {$date}";
+            }
+            if ($time) {
+                $description .= " at {$time}";
             }
 
             $items[] = [
@@ -620,6 +634,8 @@ class BookingController extends Controller
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -638,7 +654,11 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateProformaNumber();
+        $existingReceipt = ProformaInvoice::where('file_no', $request->file_no)->first();
+
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->invoice_number
+            : $this->generateProformaNumber();
 
         // Prepare data for view
         $data = [
@@ -665,19 +685,21 @@ class BookingController extends Controller
         ];
 
         // Save receipt to database
-        $receipt = ProformaInvoice::create([
-            'vehicle_booking_id' => null,
-            'vehicle_moment_id' => null,
-            'vehicle_id' => null,
-            'file_no' => $request->file_no,
-            'customer_id' => $customer ? $customer->id : null,
-            'invoice_number' => $receipt_number,
-            'rate_per_day' => $sub_total,
-            'sub_total' => $sub_total,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $net_amount,
-        ]);
+        $receipt = ProformaInvoice::updateOrCreate(
+            ['file_no' => $request->file_no],
+            [
+                'vehicle_booking_id' => null,
+                'vehicle_moment_id' => null,
+                'vehicle_id' => null,
+                'customer_id' => $customer ? $customer->id : null,
+                'invoice_number' => $receipt_number,
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount,
+                'tax' => $tax,
+                'total_amount' => $net_amount,
+            ]
+        );
 
         $data['receipt'] = $receipt;
 
@@ -757,9 +779,12 @@ class BookingController extends Controller
             'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
         ]);
 
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -778,7 +803,13 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateEstimateNumber();
+        // $receipt_number = $this->generateEstimateNumber();
+
+        $existingReceipt = EstimateBill::where('file_no', $request->file_no)->first();
+
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->estimate_number
+            : $this->generateEstimateNumber();
 
         // Prepare data for view
         $data = [
@@ -805,19 +836,22 @@ class BookingController extends Controller
         ];
 
         // Save receipt to database
-        $receipt = EstimateBill::create([
-            'vehicle_booking_id' => null,
-            'vehicle_moment_id' => null,
-            'vehicle_id' => null,
-            'file_no' => $request->file_no,
-            'customer_id' => $customer ? $customer->id : null,
-            'estimate_number' => $receipt_number,
-            'rate_per_day' => $sub_total,
-            'sub_total' => $sub_total,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $net_amount,
-        ]);
+        $receipt = EstimateBill::updateOrCreate(
+            ['file_no' => $request->file_no],
+            [
+                'vehicle_booking_id' => null,
+                'vehicle_moment_id' => null,
+                'vehicle_id' => null,
+                'file_no' => $request->file_no,
+                'customer_id' => $customer ? $customer->id : null,
+                'estimate_number' => $receipt_number,
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount,
+                'tax' => $tax,
+                'total_amount' => $net_amount,
+            ]
+        );
 
         $data['receipt'] = $receipt;
 

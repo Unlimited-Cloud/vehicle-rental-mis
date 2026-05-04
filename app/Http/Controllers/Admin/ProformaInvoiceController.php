@@ -140,9 +140,12 @@ class ProformaInvoiceController extends Controller
     public function generateFinalProforma($file_no)
     {
         // Fetch all bookings with the same file_no
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -203,10 +206,14 @@ class ProformaInvoiceController extends Controller
     public function generateFinalInvoice($file_no)
     {
         // Fetch all bookings with the same file_no
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
+
 
         if ($bookings->isEmpty()) {
             return response()->json(['error' => 'No bookings found for this file number'], 404);
@@ -353,11 +360,20 @@ class ProformaInvoiceController extends Controller
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
+            $time = $booking->start_time
+                ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A')
+                : '';
+
             // Get the actual service description from booking notes if available
             $description = "{$routeName} By {$vehicleName}";
             if ($date) {
                 $description .= " on {$date}";
             }
+
+            if ($time) {
+                $description .= " at {$time}";
+            }
+
 
             $items[] = [
                 'sn' => $index + 1,
@@ -398,6 +414,8 @@ class ProformaInvoiceController extends Controller
             $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
                 ->where('file_no', $receipt->file_no)
                 ->where('status', 'confirmed')
+                ->orderBy('start_date', 'asc')
+                ->orderBy('start_time', 'asc')
                 ->get();
         }
 
@@ -586,6 +604,8 @@ class ProformaInvoiceController extends Controller
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
             ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -606,10 +626,11 @@ class ProformaInvoiceController extends Controller
             $routeName = $booking->tripRoute ? $booking->tripRoute->name : 'Transportation Service';
             $vehicleName = $booking->vehicle ? $booking->vehicle->vehicle_name : 'Vehicle';
             $date = $booking->start_date ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y') : '';
+            $time = $booking->start_time ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A') : '';
 
             $items[] = [
                 'sn' => $index + 1,
-                'particular' => "{$routeName} By {$vehicleName} On {$date}",
+                'particular' => "{$routeName} By {$vehicleName} On {$date}" . ($time ? " at {$time}" : ''),
                 'qty' => $booking->passenger ?: 1,
                 'rate' => $booking->sub_total,
                 'amount' => $booking->sub_total,

@@ -119,7 +119,7 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
             $booking->driver->user->name ?? 'Not Assigned',
             $booking->helper->user->name ?? 'Not Assigned',
             $booking->tripRoute->title ?? 'N/A',
-            $booking->total_amount ?? 'N/A', // Total Amount after Route
+            $booking->total_amount ?? 0, // Total Amount after Route
             $booking->vehicleMoment->start_km ?? 'N/A',
             $booking->vehicleMoment->end_km ?? 'N/A',
             $totalKm ?? 'N/A',
@@ -222,12 +222,9 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
                 }
 
                 // Format Total Amount column (J) as currency
-                for ($row = 2; $row <= $lastRow; $row++) {
-                    $amount = $sheet->getCell('J' . $row)->getValue();
-                    if (is_numeric($amount) && $amount !== 'N/A') {
-                        $sheet->getCell('J' . $row)->setValue(number_format($amount, 2));
-                    }
-                }
+                $sheet->getStyle('J2:J' . $lastRow)
+                    ->getNumberFormat()
+                    ->setFormatCode('#,##0.00');
 
                 // Movement Done column (Q) - center alignment and color coding
                 $sheet->getStyle('Q2:Q' . $lastRow)
