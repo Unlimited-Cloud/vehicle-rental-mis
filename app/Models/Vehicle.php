@@ -87,11 +87,19 @@ class Vehicle extends Model
 
     public function getVehicleDescriptionImageUrlAttribute()
     {
-        if ($this->car_images && is_array($this->car_images)) {
+        if (!empty($this->car_images) && is_array($this->car_images)) {
+
             return array_map(function ($image) {
+
+                if (!is_string($image) || empty($image)) {
+                    return null;
+                }
+
                 return asset($image);
+
             }, $this->car_images);
         }
+
         return null;
     }
 }

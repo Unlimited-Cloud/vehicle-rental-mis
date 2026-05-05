@@ -192,17 +192,7 @@
 
                     {{-- Preview existing images --}}
     
-      @php
-$carImages = $vehicle->car_images ?? [];
-@endphp
-
-@if(!empty($carImages))
-    <div class="mt-2">
-        @foreach($carImages as $img)
-            <img src="{{ asset($img) }}" width="100" class="img-thumbnail mr-2 mb-2">
-        @endforeach
-    </div>
-@endif
+      
                 </div>
             </div>
 
