@@ -18,20 +18,27 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-4">
+                @php
+                    $usedFileNos = \App\Models\ProformaInvoice::whereNotNull('file_no')
+                        ->pluck('file_no');
+
+                    $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
+                        ->whereNotIn('file_no', $usedFileNos)
+                        ->distinct()
+                        ->orderBy('file_no', 'desc')
+                        ->pluck('file_no');
+                @endphp
+
                 <div class="form-group">
                     <label>Select File Number</label>
-                    <select id="file_no_select" class="form-control">
-                        <option value="">-- Select File Number --</option>
-                        @php
-                            $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
-                                ->distinct()
-                                ->orderBy('file_no', 'desc')
-                                ->pluck('file_no');
-                        @endphp
+
+                    <input list="fileNumbers" id="file_no_input" class="form-control" placeholder="Type or select file number">
+
+                    <datalist id="fileNumbers">
                         @foreach($fileNumbers as $fileNo)
-                            <option value="{{ $fileNo }}">{{ $fileNo }}</option>
+                            <option value="{{ $fileNo }}">
                         @endforeach
-                    </select>
+                    </datalist>
                 </div>
             </div>
             <div class="col-md-4">
@@ -151,8 +158,11 @@
 
 {{-- @push('scripts') --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
 $(document).ready(function () {
+
+      
 
     $('#dataTable').DataTable({
       order: [[5, 'desc']]
@@ -162,7 +172,7 @@ $(document).ready(function () {
     $('#generateInvoiceBtn').on('click', function () {
         console.log("here");
 
-        let fileNo = $('#file_no_select').val();
+      let fileNo = $('#file_no_input').val();
 
         if (!fileNo) {
             alert('Please select a file number');
