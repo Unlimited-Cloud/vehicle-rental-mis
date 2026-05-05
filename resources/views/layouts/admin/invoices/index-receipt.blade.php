@@ -31,7 +31,16 @@
                     <label>Select File Number</label>
                     <select id="file_no_select" class="form-control">
                         <option value="">-- Select File Number --</option>
-                        @php $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no') ->distinct() ->orderBy('file_no', 'desc') ->pluck('file_no'); @endphp
+                          @php
+                            $usedFileNos = \App\Models\VehicleReceipt::whereNotNull('file_no')
+                                ->pluck('file_no');
+
+                            $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
+                                ->whereNotIn('file_no', $usedFileNos)
+                                ->distinct()
+                                ->orderBy('file_no', 'desc')
+                                ->pluck('file_no');
+                        @endphp
                         @foreach($fileNumbers as $fileNo)
                             <option value="{{ $fileNo }}">{{ $fileNo }}</option>
                         @endforeach
