@@ -1362,7 +1362,7 @@ class BookingController extends Controller
 
     public function BookingbyStatus($status)
     {
-        $validStatuses = ['pending', 'confirmed', 'cancelled'];
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
 
         if (!in_array($status, $validStatuses)) {
             return response()->json([
@@ -1370,9 +1370,44 @@ class BookingController extends Controller
             ], 400);
         }
 
-        $bookings = VehicleBooking::where('status', $status)
-            ->with(['tripRoute:id,title', 'vehicle:id,vehicle_name,image,car_images', 'driver:id,user_id,experience,age', 'driver.user:id,name'])
-            ->get(['id', 'file_no', 'status', 'trip_route_id', 'vehicle_id', 'driver_id', 'start_date', 'start_time', 'end_date', 'rate_per_day', 'tax', 'discount', 'total_amount']);
+        $query = VehicleBooking::query();
+
+        if ($status === 'completed') {
+            $query->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            });
+        } else {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,image,car_images',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,end_datetime,start_datetime'
+        ])
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'trip_route_id',
+                'vehicle_id',
+                'driver_id',
+                'start_date',
+                'start_time',
+                'end_date',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount'
+            ]);
+
+        $bookings->each(function ($booking) {
+            if ($booking->vehicleMoment) {
+                $booking->status = 'completed';
+            }
+        });
 
         return response()->json($bookings);
     }
