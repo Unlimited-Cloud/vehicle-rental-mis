@@ -26,7 +26,7 @@ class VehicleMoment extends Model
         'trip_category_id',
         'trip_route_id',
     ];
-    protected $appends = ['start_image_url', 'end_image_url', 'incident_image'];
+    protected $appends = ['start_image_url', 'end_image_url', 'incident_image_url'];
 
 
     public function booking()

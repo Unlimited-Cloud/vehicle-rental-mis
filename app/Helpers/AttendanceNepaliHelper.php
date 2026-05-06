@@ -3,79 +3,143 @@
 
 namespace App\Helpers;
 
+use App\Models\NepaliDateCache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 
 class AttendanceNepaliHelper
 {
     /**
-     * Convert English date to Nepali using Hamro Patro API
+     * Convert English date to Nepali using database cache first, then API
      * Returns format with 'display' key for attendance system
      */
     public static function convertToNepali($englishDate)
     {
         try {
-            $cacheKey = 'attendance_nepali_date_' . $englishDate;
+            // Format date
+            if ($englishDate instanceof Carbon) {
+                $formattedDate = $englishDate->format('Y-m-d');
+                $date = $englishDate;
+            } else {
+                $date = Carbon::parse($englishDate);
+                $formattedDate = $date->format('Y-m-d');
+            }
 
-            return Cache::remember($cacheKey, now()->addDays(30), function () use ($englishDate) {
-                $response = Http::asForm()->post(
-                    'https://www.hamropatro.com/getMethod.php',
-                    [
-                        'actionName'     => 'wdconverter',
-                        'datefield'      => $englishDate,
-                        'convert_option' => 'eng_to_nep',
-                    ]
-                );
+            // Check Laravel cache first (for performance)
+            $cacheKey = 'attendance_nepali_date_' . $formattedDate;
 
-                if ($response->successful()) {
-                    $raw = trim($response->body());
+            return Cache::remember($cacheKey, now()->addDays(30), function () use ($formattedDate, $date) {
+                // Check database cache
+                $cached = NepaliDateCache::where('english_date', $formattedDate)->first();
 
-                    // Split by | to get English and Nepali parts
-                    if (str_contains($raw, '|')) {
-                        $parts = explode('|', $raw);
-                        $englishPart = trim($parts[0]);
-                        $nepaliPart = trim($parts[1]);
-                    } else {
-                        $englishPart = $raw;
-                        $nepaliPart = $raw;
-                    }
-
-                    // Remove HTML tags from Nepali part
-                    $nepaliPart = strip_tags($nepaliPart);
-
-                    // Parse the Nepali date (format: "२०८२ फागुन १७")
-                    $segments = explode(' ', $nepaliPart);
-                    $year = $segments[0] ?? '';
-                    $month = $segments[1] ?? '';
-                    $day = $segments[2] ?? '';
-
-                    // Create display format with both English and Nepali (for tooltips)
-                    $display = $nepaliPart; // Just Nepali date for display
-
-                    // Also create English part for reference
-                    $englishDateObj = \Carbon\Carbon::parse($englishDate);
-                    $englishDisplay = $englishDateObj->format('F j, Y');
+                if ($cached) {
+                    // Create display format
+                    $display = "{$cached->nepali_year} {$cached->nepali_month} {$cached->nepali_day}";
+                    $englishDisplay = $date->format('F j, Y');
 
                     return [
                         'success' => true,
                         'display' => $display,
-                        'nepali' => $nepaliPart,
+                        'nepali' => $display,
                         'english' => $englishDisplay,
-                        'year' => $year,
-                        'month' => $month,
-                        'day' => $day,
-                        'year_num' => self::toEnglishNumber($year),
-                        'month_num' => self::getMonthNumber($month),
-                        'day_num' => self::toEnglishNumber($day),
+                        'year' => $cached->nepali_year,
+                        'month' => $cached->nepali_month,
+                        'day' => $cached->nepali_day,
+                        'year_num' => self::toEnglishNumber($cached->nepali_year),
+                        'month_num' => self::getMonthNumber($cached->nepali_month),
+                        'day_num' => self::toEnglishNumber($cached->nepali_day),
                     ];
                 }
 
-                return self::getFallbackDate($englishDate);
+                // Not in database, call API and save
+                return self::fetchFromApi($formattedDate, $date);
             });
         } catch (\Exception $e) {
             Log::error('Attendance Nepali date conversion failed: ' . $e->getMessage());
             return self::getFallbackDate($englishDate);
+        }
+    }
+
+    /**
+     * Fetch from API and save to database
+     */
+    private static function fetchFromApi($formattedDate, $date)
+    {
+        try {
+            $response = Http::asForm()->post(
+                'https://www.hamropatro.com/getMethod.php',
+                [
+                    'actionName'     => 'wdconverter',
+                    'datefield'      => $formattedDate,
+                    'convert_option' => 'eng_to_nep',
+                ]
+            );
+
+            if ($response->successful()) {
+                $raw = trim($response->body());
+
+                // Split by | to get English and Nepali parts
+                if (str_contains($raw, '|')) {
+                    $parts = explode('|', $raw);
+                    $englishPart = trim($parts[0]);
+                    $nepaliPart = trim($parts[1]);
+                } else {
+                    $englishPart = $raw;
+                    $nepaliPart = $raw;
+                }
+
+                // Remove HTML tags from Nepali part
+                $nepaliPart = strip_tags($nepaliPart);
+                $nepaliPart = preg_replace('/\s+/', ' ', $nepaliPart);
+                $nepaliPart = trim($nepaliPart);
+
+                // Parse the Nepali date (format: "२०८२ फागुन १७")
+                $segments = explode(' ', $nepaliPart);
+                $year = $segments[0] ?? '';
+                $month = $segments[1] ?? '';
+                $day = $segments[2] ?? '';
+
+                // Create display format with both English and Nepali (for tooltips)
+                $display = $nepaliPart; // Just Nepali date for display
+                $englishDisplay = $date->format('F j, Y');
+
+                // Save to database for future use
+                try {
+                    NepaliDateCache::updateOrCreate(
+                        ['english_date' => $formattedDate],
+                        [
+                            'nepali_date' => $nepaliPart,
+                            'nepali_year' => $year,
+                            'nepali_month' => $month,
+                            'nepali_day' => $day,
+                            'nepali_month_name' => $month,
+                        ]
+                    );
+                    Log::info('Nepali date saved to database: ' . $formattedDate);
+                } catch (\Exception $e) {
+                    Log::warning('Failed to save Nepali date to database: ' . $e->getMessage());
+                }
+
+                return [
+                    'success' => true,
+                    'display' => $display,
+                    'nepali' => $nepaliPart,
+                    'english' => $englishDisplay,
+                    'year' => $year,
+                    'month' => $month,
+                    'day' => $day,
+                    'year_num' => self::toEnglishNumber($year),
+                    'month_num' => self::getMonthNumber($month),
+                    'day_num' => self::toEnglishNumber($day),
+                ];
+            }
+
+            return self::getFallbackDate($formattedDate);
+        } catch (\Exception $e) {
+            Log::error('API fetch failed: ' . $e->getMessage());
+            return self::getFallbackDate($formattedDate);
         }
     }
 
@@ -97,7 +161,7 @@ class AttendanceNepaliHelper
     private static function getFallbackDate($englishDate)
     {
         try {
-            $date = \Carbon\Carbon::parse($englishDate);
+            $date = Carbon::parse($englishDate);
             $year = $date->year + 57;
             $month = $date->month + 8;
             $day = $date->day;
@@ -108,7 +172,7 @@ class AttendanceNepaliHelper
             }
 
             $monthNames = [
-                1 => 'बैशाख',
+                1 => 'वैशाख',
                 2 => 'जेठ',
                 3 => 'असार',
                 4 => 'साउन',
@@ -159,7 +223,7 @@ class AttendanceNepaliHelper
     /**
      * Convert English number to Nepali Unicode
      */
-    private static function toNepaliNumber($number)
+    public static function toNepaliNumber($number)
     {
         $englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
         $nepaliNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
@@ -170,7 +234,7 @@ class AttendanceNepaliHelper
     /**
      * Convert Nepali number to English
      */
-    private static function toEnglishNumber($nepaliNumber)
+    public static function toEnglishNumber($nepaliNumber)
     {
         $nepaliNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
         $englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -184,7 +248,7 @@ class AttendanceNepaliHelper
     private static function getMonthNumber($monthName)
     {
         $months = [
-            'बैशाख' => 1,
+            'वैशाख' => 1,
             'जेठ' => 2,
             'असार' => 3,
             'साउन' => 4,

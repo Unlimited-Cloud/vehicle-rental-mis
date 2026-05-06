@@ -342,17 +342,26 @@
             <div class="card-body">
 
       @php
-$carImages = $vehicle->car_images ?? [];
+    $carImages = $vehicle->car_images ?? [];
 @endphp
 
-@if($carImages && count($carImages))
+@if(!empty($carImages) && is_array($carImages))
     <div class="row">
         @foreach($carImages as $img)
-            <div class="col-md-3 mb-3">
-                <img src="{{ asset($img) }}" 
-                     class="img-fluid img-thumbnail"
-                     style="height:180px; object-fit:cover; width:100%;">
-            </div>
+            
+            @php
+                // handle possible wrong formats safely
+                $imagePath = is_string($img) ? $img : (is_array($img) ? ($img['path'] ?? null) : null);
+            @endphp
+
+            @if(!empty($imagePath))
+                <div class="col-md-3 mb-3">
+                    <img src="{{ asset($imagePath) }}"
+                         class="img-fluid img-thumbnail"
+                         style="height:180px; object-fit:cover; width:100%;">
+                </div>
+            @endif
+
         @endforeach
     </div>
 @else

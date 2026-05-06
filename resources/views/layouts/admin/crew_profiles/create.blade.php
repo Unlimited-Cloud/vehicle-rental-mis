@@ -24,6 +24,28 @@
 <input type="hidden" name="user_id" class="form-control"
 value="{{ $crew_profile->user_id }}">
 @endif
+
+ <div class="col-md-6">
+        <div class="form-group">
+            <label>Profile Image</label>
+            <input type="file" name="img" class="form-control" accept="image/jpeg,image/png,image/jpg">
+            <small class="text-muted">Allowed formats: JPG, JPEG, PNG (Max: 2MB)</small>
+        </div>
+        
+      @if(isset($crew_profile) && $crew_profile->user && $crew_profile->user->img)
+    <div class="form-group">
+        <label>Current Image Preview</label><br>
+        <img src="{{ asset('uploads/users/' . $crew_profile->user->img) }}" width="100" height="100" class="img-thumbnail">
+        <br>
+        <small class="text-muted">Upload new image to replace this one</small>
+    </div>
+@elseif(isset($crew_profile))
+    <div class="form-group">
+        <label>Current Image</label><br>
+        <p class="text-muted">No profile image uploaded</p>
+    </div>
+@endif
+    </div>
 <div class="col-md-6">
 <div class="form-group">
 <label>Name *</label>

@@ -87,18 +87,24 @@ class VehicleController extends Controller
 
             $data['image'] = 'uploads/vehicle/' . $imageName;
         }
-
+        
         if ($request->hasFile('car_images')) {
+           
             $images = [];
 
             foreach ($request->file('car_images') as $file) {
+                if (!$file) continue;
+
                 $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
                 $file->move(public_path('uploads/vehicle'), $fileName);
 
                 $images[] = 'uploads/vehicle/' . $fileName;
             }
 
-            $data['images'] = json_encode($images);
+            $data['car_images'] = !empty($images) ? $images : null;
+        } else {
+           
+            $data['car_images'] = null;
         }
 
         // Bill Book Image
@@ -116,7 +122,7 @@ class VehicleController extends Controller
             $file->move(public_path('uploads/vehicle'), $fileName);
             $data['insurance_policy_document'] = 'uploads/vehicle/' . $fileName;
         }
-
+    
         Vehicle::create($data);
 
         return redirect()->route('admin.vehicles.index')

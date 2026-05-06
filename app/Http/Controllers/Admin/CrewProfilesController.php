@@ -73,10 +73,12 @@ class CrewProfilesController extends Controller
             'contact_number' => 'nullable|string',
             'experience' => 'nullable|integer',
             'age' => 'nullable|integer',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
 
         ]);
 
         $data = $request->all();
+        $userAddData = [];
 
         if ($request->hasFile('citizenship_doc')) {
             $file = $request->file('citizenship_doc');
@@ -102,6 +104,13 @@ class CrewProfilesController extends Controller
         if (empty($crewMemberEmail)) {
             $formattedName = strtolower(str_replace(' ', '', $crewMemberName));
             $userAddData['email'] = $formattedName . '@unlimitedremit.com';
+        }
+
+        if ($request->hasFile('img')) {
+            $profileImage = $request->file('img');
+            $imageName = time() . '_profile_' . $profileImage->getClientOriginalName();
+            $profileImage->move(public_path('uploads/users'), $imageName);
+            $userAddData['img'] = $imageName;
         }
         $userAddData['password'] = $crewMemberPassword;
         $userAddData['created_at'] = now();
@@ -135,47 +144,67 @@ class CrewProfilesController extends Controller
     public function update(Request $request, CrewProfile $crew_profile)
     {
         Gate::authorize('update_crew_profiles');
+
         $request->validate([
             'role' => 'required|in:driver,helper',
             'license_number' => 'nullable|string',
             'license_expiry' => 'nullable|date',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'contact_number' => 'nullable|string',
             'experience' => 'nullable|integer',
             'age' => 'nullable|integer',
         ]);
 
+        $data = $request->all();
+        $userAddData = [];
+
+
         if ($request->hasFile('citizenship_doc')) {
             if ($crew_profile->citizenship_doc && file_exists(public_path($crew_profile->citizenship_doc))) {
                 unlink(public_path($crew_profile->citizenship_doc));
             }
+
             $file = $request->file('citizenship_doc');
             $fileName = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads/crew_docs'), $fileName);
+
             $data['citizenship_doc'] = 'uploads/crew_docs/' . $fileName;
         }
 
         $crewMemberName = $request->crew_member_name;
         $crewMemberEmail = $request->crew_member_email;
-        $roleDetail = DB::table('roles')->where('name', $request->role)->first();
-        if ($roleDetail) {
-            $roleId = $roleDetail->id;
-        } else {
-            $roleId = 3;
-        }
 
-        $userAddData['role_id'] = $roleId;
+        $roleDetail = DB::table('roles')->where('name', $request->role)->first();
+        $userAddData['role_id'] = $roleDetail->id ?? 3;
+
         $userAddData['name'] = $crewMemberName;
-        $userAddData['email'] = $crewMemberEmail;
+
         if (empty($crewMemberEmail)) {
             $formattedName = strtolower(str_replace(' ', '', $crewMemberName));
-            $userAddData['email'] = $formattedName . '@unlimitedremit.com';
+            $crewMemberEmail = $formattedName . time() . '@unlimitedremit.com';
         }
-        $userAddData['created_at'] = now();
-        $userId = $request->user_id;
-        DB::table('users')->where('id', $userId)->update($userAddData);
+        $userAddData['email'] = $crewMemberEmail;
+        if ($request->hasFile('img')) {
 
-        $crew_profile->update($request->all());
+            $user = DB::table('users')->where('id', $crew_profile->user_id)->first();
+
+            // delete old image
+            if ($user && $user->img && file_exists(public_path($user->img))) {
+                unlink(public_path($user->img));
+            }
+
+            $profileImage = $request->file('img');
+            $imageName = time() . '_profile_' . $profileImage->getClientOriginalName();
+            $profileImage->move(public_path('uploads/users'), $imageName);
+
+            $userAddData['img'] =  $imageName;
+        }
+
+        // update user
+        DB::table('users')->where('id', $crew_profile->user_id)->update($userAddData);
+
+        $crew_profile->update($data);
 
         return redirect()->route('admin.crew_profiles.index')
             ->with('success', 'Crew profile updated successfully');
