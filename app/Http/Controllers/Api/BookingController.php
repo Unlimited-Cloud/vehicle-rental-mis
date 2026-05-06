@@ -1359,4 +1359,21 @@ class BookingController extends Controller
             'data' => $drivers
         ]);
     }
+
+    public function BookingbyStatus($status)
+    {
+        $validStatuses = ['pending', 'confirmed', 'cancelled'];
+
+        if (!in_array($status, $validStatuses)) {
+            return response()->json([
+                'message' => 'Invalid status'
+            ], 400);
+        }
+
+        $bookings = VehicleBooking::where('status', $status)
+            ->with(['tripRoute:id,title', 'vehicle:id,vehicle_name,image,car_images', 'driver:id,user_id,experience,age', 'driver.user:id,name'])
+            ->get(['id', 'file_no', 'status', 'trip_route_id', 'vehicle_id', 'driver_id', 'start_date', 'start_time', 'end_date', 'rate_per_day', 'tax', 'discount', 'total_amount']);
+
+        return response()->json($bookings);
+    }
 }
