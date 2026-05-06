@@ -95,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
+    Route::get('booking-by-status/{status}', [BookingController::class, 'BookingbyStatus']);
 });
 
 Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
