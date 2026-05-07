@@ -180,6 +180,7 @@
                     <th>Crew Member</th>
                     <th>Date (AD/BS)</th>
                     <th>Allowances</th>
+                    <th>Pay by Khalti</th>
                     <th>Status</th>
                     {{-- <th>Salary (Rs)</th>
                     <th>Net Amount</th> --}}
@@ -208,11 +209,20 @@
                             <small class="bs-date text-muted" data-date="{{ $attendance->attendance_date }}">Loading...</small>
                         </td>
                         <td>Rs. {{ ($attendance->allowances) }}</td>
-                        <td>
-                            <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
-                                {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
-                            </span>
+                        
+                       <td>
+                            @if(($attendance->payment_status) === 'paid')
+                                <span class="badge badge-success">
+                                    Paid
+                                </span>
+                            @else
+                                <button id="khaltiBtn-{{ $attendance->id }}" class="btn btn-sm btn-primary"
+                                    onclick="payByKhalti({{ $attendance->id }})">
+                                    <i class="fas fa-credit-card mr-2"></i> Pay by Khalti
+                                </button>
+                            @endif
                         </td>
+                        <td> {{ ($attendance->status) }}</td>
                         {{-- <td>Rs. {{ number_format($attendance->salary_amount ?? 0, 2) }}</td>
                         <td><strong>Rs. {{ number_format($attendance->net_amount ?? 0, 2) }}</strong></td> --}}
                         <td>
@@ -1217,6 +1227,46 @@ function deleteAttendance(id) {
                 toastr.error(xhr.responseJSON?.message || 'Error deleting attendance');
             }
         });
+    }
+}
+function payByKhalti(attendanceId) {
+
+    if (!confirm("Are you sure you want to pay this attendance allowance via Khalti?")) {
+        return;
+    }
+
+    let btn = $("#khaltiBtn-" + attendanceId);
+
+    btn.prop("disabled", true);
+    btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Processing...');
+
+    $.ajax({
+        url: "{{ route('admin.attendance.khalti.initiate') }}",
+        type: "POST",
+        data: {
+            attendance_id: attendanceId,
+            _token: "{{ csrf_token() }}"
+        },
+
+        success: function(response) {
+
+            if (response.success) {
+                window.location.href = response.payment_url;
+            } else {
+                toastr.error(response.message);
+                resetButton();
+            }
+        },
+
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Payment initiation failed');
+            resetButton();
+        }
+    });
+
+    function resetButton() {
+        btn.prop("disabled", false);
+        btn.html('<i class="fas fa-credit-card mr-2"></i> Pay by Khalti');
     }
 }
 </script>
