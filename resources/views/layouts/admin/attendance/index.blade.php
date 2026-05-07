@@ -182,6 +182,7 @@
                     <th>Allowances</th>
                     <th>Attendance</th>
                     <th>Pay By</th>
+                    <th>Remarks</th>
                     {{-- <th>Salary (Rs)</th>
                     <th>Net Amount</th> --}}
                     <th>Actions</th>
@@ -228,6 +229,8 @@
                                 </button>
                             @endif
                         </td>
+                        <td> {{ ($attendance->remarks) }}</td>
+
                         {{-- <td>Rs. {{ number_format($attendance->salary_amount ?? 0, 2) }}</td>
                         <td><strong>Rs. {{ number_format($attendance->net_amount ?? 0, 2) }}</strong></td> --}}
                         <td>
