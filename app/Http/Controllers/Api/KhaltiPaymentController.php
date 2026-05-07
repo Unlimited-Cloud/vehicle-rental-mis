@@ -129,7 +129,7 @@ class KhaltiPaymentController extends Controller
 
                     Attendance::where('id', $attendanceId)->update([
                         'payment_status' => 'paid',
-                        'remarks' => 'By Khalti',
+                        'payment_remarks' => 'By Khalti',
                     ]);
                 } else {
 

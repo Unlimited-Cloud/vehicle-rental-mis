@@ -229,7 +229,7 @@
                                 </button>
                             @endif
                         </td>
-                        <td> {{ ($attendance->remarks) }}</td>
+                        <td> {{ ($attendance->payment_remarks) }}</td>
 
                         {{-- <td>Rs. {{ number_format($attendance->salary_amount ?? 0, 2) }}</td>
                         <td><strong>Rs. {{ number_format($attendance->net_amount ?? 0, 2) }}</strong></td> --}}

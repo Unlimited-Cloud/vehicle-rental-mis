@@ -19,7 +19,8 @@ class Attendance extends Model
         'status',
         'remarks',
         'allowances',
-        'payment_status'
+        'payment_status',
+        'payment_remarks'
     ];
 
     protected $casts = [
