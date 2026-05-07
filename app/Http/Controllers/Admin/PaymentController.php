@@ -85,18 +85,18 @@ class PaymentController extends Controller
 
         // Dashboard Statistics
         $totalRevenue = $esewaPayments->where('status', 'Completed')->sum('amount') +
-            $khaltiPayments->where('status', 'completed')->sum('total_amount');
+            $khaltiPayments->where('status', 'Completed')->sum('total_amount');
 
         $totalTransactions = $payments->count();
         $completedCount = $payments->where('status', 'Completed')->count() +
-            $payments->where('status', 'completed')->count();
+            $payments->where('status', 'Completed')->count();
         $pendingCount = $payments->where('status', 'pending')->count();
         $failedCount = $payments->where('status', 'failed')->count();
 
         $esewaTotal = $esewaPayments->where('status', 'Completed')->sum('amount');
-        $khaltiTotal = $khaltiPayments->where('status', 'completed')->sum('total_amount');
+        $khaltiTotal = $khaltiPayments->where('status', 'Completed')->sum('total_amount');
         $esewaCount = $esewaPayments->where('status', 'Completed')->count();
-        $khaltiCount = $khaltiPayments->where('status', 'completed')->count();
+        $khaltiCount = $khaltiPayments->where('status', 'Completed')->count();
 
         // Recent transactions (last 10)
         $recentTransactions = $payments->take(10);
