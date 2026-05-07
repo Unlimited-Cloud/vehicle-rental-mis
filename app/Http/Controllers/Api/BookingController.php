@@ -1360,7 +1360,7 @@ class BookingController extends Controller
         ]);
     }
 
-    public function BookingbyStatus($status)
+    public function BookingbyStatus($status, $customer_id)
     {
         $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
 
@@ -1370,7 +1370,19 @@ class BookingController extends Controller
             ], 400);
         }
 
-        $query = VehicleBooking::query();
+
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+        $customer_id = $customer->id;
+        $query = VehicleBooking::query()->where('customer_id', $customer_id);
+
 
         if ($status === 'completed') {
             $query->whereHas('vehicleMoment', function ($q) {
