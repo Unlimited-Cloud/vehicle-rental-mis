@@ -128,7 +128,8 @@ class KhaltiPaymentController extends Controller
                     );
 
                     Attendance::where('id', $attendanceId)->update([
-                        'payment_status' => 'paid'
+                        'payment_status' => 'paid',
+                        'remarks' => 'By Khalti',
                     ]);
                 } else {
 
@@ -242,7 +243,7 @@ class KhaltiPaymentController extends Controller
             Log::info('Initiating Khalti payment with payload: ', $payload);
 
             $url = env('KHALTI_API_URL') ?? "https://dev.khalti.com/api/v2/" . 'epayment/initiate/';
-            
+
             Log::info('Initiating Khalti payment with payload: ', ['url' => $url, 'payload' => $payload]);
 
             // dd($url, $payload);
@@ -294,7 +295,7 @@ class KhaltiPaymentController extends Controller
                 'payment_url' => $data['payment_url']
             ]);
         } catch (\Exception $e) {
-            Log::error("KhaltiPaymentController initiateAttendancePayment error",[
+            Log::error("KhaltiPaymentController initiateAttendancePayment error", [
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
