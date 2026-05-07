@@ -58,6 +58,7 @@ class AttendanceController extends Controller
             ->orderBy('attendance_date', 'desc')
             ->get();
 
+
         $summary = $this->getAttendanceSummary($attendances);
 
         return view('layouts.admin.attendance.index', compact('crews', 'attendances', 'currentMonth', 'selectedCrewId', 'startDate', 'endDate', 'summary'));
