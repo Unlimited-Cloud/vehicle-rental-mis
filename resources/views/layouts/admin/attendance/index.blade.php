@@ -180,8 +180,9 @@
                     <th>Crew Member</th>
                     <th>Date (AD/BS)</th>
                     <th>Allowances</th>
-                    <th>Pay by Khalti</th>
-                    <th>Status</th>
+                    <th>Attendance</th>
+                    <th>Pay By</th>
+                    <th>Remarks</th>
                     {{-- <th>Salary (Rs)</th>
                     <th>Net Amount</th> --}}
                     <th>Actions</th>
@@ -209,6 +210,8 @@
                             <small class="bs-date text-muted" data-date="{{ $attendance->attendance_date }}">Loading...</small>
                         </td>
                         <td>Rs. {{ ($attendance->allowances) }}</td>
+                        <td> {{ ($attendance->status) }}</td>
+
                         
                        <td>
                             @if(($attendance->payment_status) === 'paid')
@@ -218,11 +221,16 @@
                             @else
                                 <button id="khaltiBtn-{{ $attendance->id }}" class="btn btn-sm btn-primary"
                                     onclick="payByKhalti({{ $attendance->id }})">
-                                    <i class="fas fa-credit-card mr-2"></i> Pay by Khalti
+                                    <i class="fas fa-credit-card mr-2"></i>Khalti
+                                </button>
+                                <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
+                                    onclick="payManual({{ $attendance->id }})">
+                                    <i class="fas fa-money-bill mr-2"></i> Manual
                                 </button>
                             @endif
                         </td>
-                        <td> {{ ($attendance->status) }}</td>
+                        <td> {{ ($attendance->remarks) }}</td>
+
                         {{-- <td>Rs. {{ number_format($attendance->salary_amount ?? 0, 2) }}</td>
                         <td><strong>Rs. {{ number_format($attendance->net_amount ?? 0, 2) }}</strong></td> --}}
                         <td>
@@ -1269,5 +1277,50 @@ function payByKhalti(attendanceId) {
         btn.html('<i class="fas fa-credit-card mr-2"></i> Pay by Khalti');
     }
 }
+
+
+
+function payManual(attendanceId) {
+
+    if (!confirm("Mark this attendance as manually paid?")) {
+        return;
+    }
+
+    let btn = $("#manualBtn-" + attendanceId);
+
+    btn.prop("disabled", true);
+    btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Processing...');
+
+    $.ajax({
+        url: "{{ route('admin.attendance.manual.pay') }}",
+        type: "POST",
+        data: {
+            attendance_id: attendanceId,
+            _token: "{{ csrf_token() }}"
+        },
+
+        success: function(response) {
+
+            if (response.success) {
+                window.location.href = response.payment_url;
+            } else {
+                toastr.error(response.message);
+                resetButton();
+            }
+        },
+
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Payment initiation failed');
+            resetButton();
+        }
+    });
+
+    function resetButton() {
+        btn.prop("disabled", false);
+        btn.html('<i class="fas fa-credit-card mr-2"></i> Pay Manual');
+    }
+}
+
+
 </script>
 @endsection

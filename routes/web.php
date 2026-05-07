@@ -255,5 +255,10 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             '/khalti/confirm',
             [KhaltiPaymentController::class, 'confirmPayment']
         )->name('khalti.confirm');
+
+        Route::post(
+            '/manual/pay',
+            [PaymentController::class, 'payManualAttendance']
+        )->name('attendance.manual.pay');
     });
 });

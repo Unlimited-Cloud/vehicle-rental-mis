@@ -3,11 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\EsewaPayment;
 use App\Models\KhaltiPayment;
+use App\Models\Payment;
 use App\Models\VehicleBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
@@ -139,5 +143,57 @@ class PaymentController extends Controller
 
         return redirect()->route('admin.payments.index')
             ->with('success', 'Payment record deleted successfully');
+    }
+
+
+
+    public function payManualAttendance(Request $request)
+    {
+        $request->validate([
+            'attendance_id' => 'required|exists:attendance,id'
+        ]);
+
+        $attendance = Attendance::with('crew.user')->findOrFail($request->attendance_id);
+
+        // prevent duplicate payment
+        $existing = Payment::where('attendance_id', $attendance->id)
+            ->where('status', 'completed')
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Already paid for this attendance.'
+            ], 422);
+        }
+
+        DB::transaction(function () use ($attendance, $request) {
+
+            // create payment record
+            Payment::create([
+                'attendance_id' => $attendance->id,
+                'vehicle_booking_id' => $attendance->booking_id,
+                'crew_id' => $attendance->crew_id,
+                'amount' => $attendance->allowances,
+                'payment_method' => 'cash',
+                'transaction_reference' => 'MANUAL-' . strtoupper(Str::random(8)),
+                'payment_date' => now(),
+                'payment_type' => "attendance",
+                'status' => 'completed',
+                'created_by' => Auth::id(),
+            ]);
+
+            // update attendance
+            $attendance->update([
+                'payment_status' => 'paid',
+                'remarks' => 'Manual Payment',
+            ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'payment_url' => route('admin.attendance.index'),
+            'message' => 'Payment marked as completed.'
+        ]);
     }
 }
