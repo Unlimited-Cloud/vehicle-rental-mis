@@ -15,7 +15,11 @@ class Payment extends Model
         'notes',
         'created_by',
         'deleted_by',
-        'deleted_at'
+        'deleted_at',
+        'status',
+        'crew_id',
+        'attendance_id',
+        'payment_type',
     ];
 
     public function vehiclepayment()

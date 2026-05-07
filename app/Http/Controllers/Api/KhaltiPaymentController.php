@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use Illuminate\Http\Request;
 use App\Models\KhaltiPayment;
+use App\Models\Payment;
 use App\Models\VehicleBooking;
 use App\Models\VehicleReceipt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class KhaltiPaymentController extends Controller
 {
@@ -39,9 +43,12 @@ class KhaltiPaymentController extends Controller
             ]
         ];
 
+        $url = env('KHALTI_API_URL') . '/epayment/initiate/';
+        Log::info('Initiating Khalti payment with payload: ', ['url' => $url, 'payload' => $payload]);
+
         $response = Http::withHeaders([
             'Authorization' => 'key ' . env('KHALTI_KEY'),
-        ])->post(env('KHALTI_API_URL') . '/api/v2/epayment/initiate/', $payload);
+        ])->post($url, $payload);
 
         $data = $response->json();
 
@@ -72,9 +79,11 @@ class KhaltiPaymentController extends Controller
 
         $response = Http::withHeaders([
             'Authorization' => 'key ' . env('KHALTI_KEY'),
-        ])->post(env('KHALTI_API_URL') . '/api/v2/epayment/lookup/', [
+        ])->post(env('KHALTI_API_URL') . 'epayment/lookup/', [
             'pidx' => $request->pidx
         ]);
+
+        Log::info('Khalti lookup response: ', ['response' => $response->body()]);
 
         $data = $response->json();
 
@@ -86,7 +95,8 @@ class KhaltiPaymentController extends Controller
                 $payment->update([
                     'status' => 'Completed',
                     'txn_id' => $data['transaction_id'] ?? null,
-                    'total_amount' => $data['total_amount'] ?? null,
+                    'total_amount' => isset($data['total_amount']) ? $data['total_amount'] / 100 : null,
+                    'fees' => isset($data['fee']) ? $data['fee'] / 100 : null,
                 ]);
 
                 // Update booking
@@ -96,18 +106,39 @@ class KhaltiPaymentController extends Controller
                     'payment_status' => 1
                 ]);
 
-                // Create Receipt
-                VehicleReceipt::create([
-                    'vehicle_booking_id' => $booking->id,
-                    'vehicle_id' => $booking->vehicle_id,
-                    'customer_id' => $booking->customer_id,
-                    'amount' => $payment->amount,
-                    'payment_method' => 'Khalti',
-                    'remarks' => 'Paid via Khalti',
-                    'paid' => 1,
-                    'receipt_number' => 'ASB-' . strtoupper(Str::random(6)),
-                    'file_no' => $booking->file_no
-                ]);
+                if ($payment->payment_type == 'attendance') {
+                    $attendanceId = $payment->attendance_id;
+
+                    Payment::updateOrCreate(
+                        [
+                            'attendance_id' => $attendanceId,
+                        ],
+                        [
+                            'amount' => $payment->amount,
+                            'transaction_reference' => $data['transaction_id'] ?? null,
+                            'payment_date' => now(),
+                            'status' => 'completed',
+                        ]
+                    );
+
+                    Attendance::where('id', $attendanceId)->update([
+                        'payment_status' => 'paid'
+                    ]);
+                } else {
+
+                    // Create Receipt
+                    VehicleReceipt::create([
+                        'vehicle_booking_id' => $booking->id,
+                        'vehicle_id' => $booking->vehicle_id,
+                        'customer_id' => $booking->customer_id,
+                        'amount' => $payment->amount,
+                        'payment_method' => 'Khalti',
+                        'remarks' => 'Paid via Khalti',
+                        'paid' => 1,
+                        'receipt_number' => 'ASB-' . strtoupper(Str::random(6)),
+                        'file_no' => $booking->file_no
+                    ]);
+                }
             } else {
 
                 // Failed / Pending
@@ -121,9 +152,147 @@ class KhaltiPaymentController extends Controller
             }
         });
 
-        return response()->json([
-            'message' => 'Transaction updated'
+        $redirectUrl = null;
+
+        if ($payment->payment_type == 'attendance') {
+            $redirectUrl = route('admin.attendance.index');
+        }
+
+        return $redirectUrl
+            ? redirect($redirectUrl)->with('success', 'Payment completed successfully')
+            : response()->json([
+                'message' => 'Transaction updated'
+            ]);
+    }
+
+
+
+    public function initiateAttendancePayment(Request $request)
+    {
+        $request->validate([
+            'attendance_id' => 'required|exists:attendance,id'
         ]);
+
+        DB::beginTransaction();
+
+        try {
+
+            $attendance = Attendance::with([
+                'crew.user',
+                'khaltiPayment'
+            ])->findOrFail($request->attendance_id);
+
+            $existingPayment = Payment::where('attendance_id', $attendance->id)
+                ->where('status', 'completed')
+                ->first();
+
+            if ($existingPayment) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Attendance allowance already paid.'
+                ], 422);
+            }
+
+            $crew = $attendance->crew;
+            $user = $crew->user;
+
+            $amount = $attendance->allowances;
+
+            if (!$amount || $amount <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid allowance amount.'
+                ], 422);
+            }
+
+            $merchantTransactionId = 'ATT-' . strtoupper(Str::random(10));
+
+            // Create payment record
+            $payment = Payment::create([
+                'attendance_id' => $attendance->id,
+                'vehicle_booking_id' => $attendance->booking_id,
+                'crew_id' => $attendance->crew_id,
+                'amount' => $amount,
+                'payment_method' => 'online',
+                'payment_type' => 'attendance',
+                'payment_date' => now(),
+                'status' => 'pending',
+                'created_by' => Auth::id(),
+                'notes' => 'Attendance allowance payment'
+            ]);
+
+            $payload = [
+                "return_url" => route('admin.khalti.confirm'),
+                "website_url" => config('app.url'),
+                "amount" => $amount * 100,
+                "purchase_order_id" => $merchantTransactionId,
+                "purchase_order_name" => "Attendance Allowance Payment",
+                "customer_info" => [
+                    "name" => $user->name ?? 'Crew Member',
+                    "email" => $user->email ?? '',
+                    "phone" => $crew->contact_number ?? ''
+                ]
+            ];
+            Log::info('Initiating Khalti payment with payload: ', $payload);
+
+            $url = env('KHALTI_API_URL') . 'epayment/initiate/';
+            Log::info('Initiating Khalti payment with payload: ', ['url' => $url, 'payload' => $payload]);
+
+            // dd($url, $payload);
+
+            $response = Http::withHeaders([
+                'Authorization' => 'key ' . env('KHALTI_KEY'),
+            ])->post(
+                $url,
+                $payload
+            );
+            Log::info('Khalti response: ', ['response' => $response->body()]);
+
+            $data = $response->json();
+
+            if (!isset($data['pidx'])) {
+
+                DB::rollBack();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $data['detail'] ?? 'Failed to initiate Khalti payment',
+                    'response' => $data
+                ], 422);
+            }
+
+            // Save Khalti metadata
+            KhaltiPayment::create([
+                'attendance_id' => $attendance->id,
+                'payment_id' => $payment->id,
+                'payment_type' => 'attendance',
+                'crew_id' => $attendance->crew_id,
+                'booking_id' => $attendance->booking_id,
+                'merchant_transaction_id' => $merchantTransactionId,
+                'pidx' => $data['pidx'],
+                'amount' => $amount,
+                'user_name' => $user->name ?? '',
+                'user_email' => $user->email ?? '',
+                'user_mobile' => $crew->contact_number ?? '',
+                'status' => 'Initiated',
+                'khalti_init_response' => json_encode($data),
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'payment_url' => $data['payment_url']
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function refundPayment(Request $request)

@@ -21,6 +21,10 @@ class KhaltiPayment extends Model
         'user_mobile',
         'status',
         'khalti_init_response',
+        'payment_type',
+        'payment_id',
+        'attendance_id',
+        'crew_id'
     ];
 
     /**
