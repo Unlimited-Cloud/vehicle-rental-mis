@@ -33,11 +33,13 @@ use App\Http\Controllers\Admin\TripRouteController;
 use App\Http\Controllers\Admin\VehicleOwnerController;
 use App\Http\Controllers\Admin\VendorController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SplashScreenController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -116,6 +118,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('estimate-invoices', [ProformaInvoiceController::class, 'indexEstimate'])
             ->name('estimate.index');
 
+        Route::get('/receipt/{id}/details', [ProformaInvoiceController::class, 'showDetailsReceipt'])->name('vehicle_receipt.details');
+
+
 
         Route::get('/invoice/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalInvoice']);
         Route::get('/proforma/generate/{file_no}', [ProformaInvoiceController::class, 'generateFinalProforma']);
@@ -175,10 +180,16 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::post('attendance/convert-multiple-ad-to-bs', [AttendanceController::class, 'convertMultipleAdToBs'])->name('attendance.convert_multiple_ad_to_bs');
         Route::get('attendance/export', [AttendanceController::class, 'export'])->name('attendance.export');
         Route::get('attendance/events', [AttendanceController::class, 'fetchEvents'])->name('attendance.events');
+
+        Route::get('/attendance/create-allowance', [AttendanceController::class, 'createAllowance'])->name('attendance.createAllowance');
+        Route::post('/attendance/store-allowance', [AttendanceController::class, 'storeAllowance'])->name('attendance.storeAllowance');
+
         Route::resource('attendance', AttendanceController::class);
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
+        Route::resource('banner', BannerController::class);
+        Route::resource('splashscreen', SplashScreenController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
         Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])
@@ -200,7 +211,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         //Roles Route is here
         Route::resource('vehicle_details', VehicleDetailsController::class);
 
-        // Route::resource('vehicle_assignments', VehicleAssignmentController::class);
+        //Route::resource('vehicle_assignments', VehicleAssignmentController::class);
 
         Route::get('petrol-pumps/{id}/balance', [PetrolPumpTransactionController::class, 'getPetrolPumpBalance'])
             ->name('petrol_pumps.balance');

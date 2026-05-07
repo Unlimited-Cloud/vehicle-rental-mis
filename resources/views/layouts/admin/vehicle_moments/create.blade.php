@@ -42,7 +42,8 @@
                 <option value="">Select Vehicle</option>
                 @foreach($vehicles as $vehicle)
                     <option value="{{ $vehicle->id }}" 
-                        {{ $booking->vehicle_id == $vehicle->id ? 'selected' : '' }}>
+                        {{ $booking->vehicle_id == $vehicle->id ? 'selected' : '' }}
+                        data-vehicle-type="{{ $vehicle->vehicle_type }}">
                         {{ $vehicle->vehicle_name }}
                     </option>
                 @endforeach
@@ -72,6 +73,54 @@
                     </option>
                 @endforeach
             </select>
+        </div>
+    </div>
+</div>
+
+<!-- Trip Category and Route Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">Trip Information</h4>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Trip Category</label>
+            <select name="trip_category_id" id="trip_category_id" class="form-control select2">
+                <option value="">Select Category</option>
+                @foreach($tripCategories as $category)
+                    <option value="{{ $category->id }}" 
+                        {{ old('trip_category_id', $moment->trip_category_id ?? $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
+                        {{ $category->name }}
+                    </option>
+                @endforeach
+            </select>
+            <small class="text-muted">Leave empty to use booking default</small>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Trip Route</label>
+            <select name="trip_route_id" id="trip_route_id" class="form-control select2">
+                <option value="">Select Route</option>
+                @if(isset($moment) && $moment->trip_route_id)
+                    @php
+                        $selectedRoute = \App\Models\TripRoute::find($moment->trip_route_id);
+                    @endphp
+                    @if($selectedRoute)
+                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
+                    @endif
+                @elseif(isset($booking) && $booking->trip_route_id)
+                    @php
+                        $selectedRoute = \App\Models\TripRoute::find($booking->trip_route_id);
+                    @endphp
+                    @if($selectedRoute)
+                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
+                    @endif
+                @endif
+            </select>
+            <small class="text-muted">Leave empty to use booking default</small>
         </div>
     </div>
 </div>
@@ -131,7 +180,7 @@
     </div>
 </div>
 
-
+<!-- Questionnaires -->
 @forelse($questionnaires as $index => $question)
 
 @php
@@ -272,28 +321,6 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
     </div>
 </div>
 
-<!-- Fuel Information -->
-{{-- <div class="row mt-4">
-    <div class="col-12">
-        <h4 class="mb-3">Fuel Information</h4>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="form-group">
-            <label>Approx Fuel Litre</label>
-            <input type="number" 
-                   name="approx_fuel_litre" 
-                   class="form-control"
-                   value="{{ $booking->approx_fuel_litre ?? '' }}"
-                   step="0.01" 
-                   min="0"
-                   placeholder="Enter approximate fuel in litres">
-        </div>
-    </div>
-</div> --}}
-
-
-
 <!-- Incident Information -->
 <div class="row mt-4">
     <div class="col-12">
@@ -323,11 +350,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
             @endif
         </div>
     </div>
-
-   
 </div>
-
-
 
 </div>
 
@@ -347,9 +370,8 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
 </div>
 </section>
 
-@endsection
 
-@push('styles')
+{{-- @push('styles') --}}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .custom-file-label::after {
@@ -370,17 +392,20 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
         display: block;
     }
 </style>
-@endpush
+{{-- @endpush --}}
 
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{{-- @push('scripts') --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- 2. Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 <script>
     $(document).ready(function() {
         // Initialize Select2
-        $('.select2').select2({
-            placeholder: 'Select an option',
-            width: '100%'
-        });
+        // $('.select2').select2({
+        //     placeholder: 'Select an option',
+        //     width: '100%'
+        // });
 
         // Custom file input label update
         $('.custom-file-input').on('change', function () {
@@ -389,6 +414,93 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                 .addClass("selected")
                 .html(fileName);
         });
+
+        $('#trip_category_id').on('change', function () {
+    console.log('🔥 Category changed!', $(this).val());
+});
+
+        // Trip Category Change - Load Routes via AJAX
+      $('#trip_category_id').change(function() {
+        var category_id = $(this).val();
+        $('#trip_route_id').html('<option value="">Loading...</option>');
+
+        if (category_id) {
+            $.ajax({
+                url: '/dashboard/get-trip-routes/' + category_id,
+                type: 'GET',
+                success: function(routes) {
+                    var options = '<option value="">Select Route</option>';
+                    
+                    $.each(routes, function(index, route) {
+                        options += '<option value="' + route.id + '" ' +
+                            'data-car="' + (route.car_price || 0) + '" ' +
+                            'data-hiace="' + (route.hiace_price || 0) + '" ' +
+                            'data-coaster="' + (route.coaster_price || 0) + '" ' +
+                            'data-bus="' + (route.bus_price || 0) + '">' +
+                            route.title +
+                            '</option>';
+                    });
+
+                    $('#trip_route_id').html(options);
+                    
+                    // If editing, set the previously selected route
+                    @if(isset($booking) && $booking->trip_route_id)
+                        $('#trip_route_id').val('{{ $booking->trip_route_id }}');
+                    @endif
+                },
+                error: function() {
+                    $('#trip_route_id').html('<option value="">Error loading routes</option>');
+                }
+            });
+        } else {
+            $('#trip_route_id').html('<option value="">Select Route</option>');
+        }
+    });
+        // Route selection - Update any related fields (like rate if needed)
+        $('#trip_route_id').change(function() {
+            var selectedRoute = $(this).find(':selected');
+            var routeId = selectedRoute.val();
+            
+            if (routeId) {
+                console.log('Route selected:', {
+                    id: routeId,
+                    title: selectedRoute.text(),
+                    car_price: selectedRoute.data('car'),
+                    hiace_price: selectedRoute.data('hiace'),
+                    coaster_price: selectedRoute.data('coaster'),
+                    bus_price: selectedRoute.data('bus')
+                });
+                
+                // You can add additional logic here if needed
+                // For example, auto-populate rate based on vehicle type
+                var vehicleSelect = $('select[name="vehicle_no"]');
+                var vehicleOption = vehicleSelect.find(':selected');
+                var vehicleType = vehicleOption.data('vehicle-type');
+                
+                if (vehicleType && routeId) {
+                    var rate = selectedRoute.data(vehicleType.toLowerCase());
+                    if (rate && rate > 0) {
+                        // If you have a rate field, you can set it here
+                        // $('input[name="rate"]').val(rate);
+                        console.log('Suggested rate for ' + vehicleType + ': ' + rate);
+                    }
+                }
+            }
+        });
+
+        // Vehicle change - Update rate if route is selected
+        $('select[name="vehicle_no"]').change(function() {
+            if ($('#trip_route_id').val()) {
+                $('#trip_route_id').trigger('change');
+            }
+        });
+
+        // Trigger category change on page load to load routes for existing selection
+        @if(isset($moment) && $moment->trip_category_id)
+            $('#trip_category_id').trigger('change');
+        @elseif(isset($booking) && $booking->trip_category_id)
+            $('#trip_category_id').trigger('change');
+        @endif
 
         // Form validation for yes/no radio buttons
         $('form').on('submit', function (e) {
@@ -428,55 +540,5 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
         });
     });
 </script>
-@endpush
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(document).ready(function() {
-        // Initialize Select2
-        $('.select2').select2({
-            placeholder: 'Select an option',
-            width: '100%'
-        });
-
-    });
-
-    // Show/Hide Incident Report
-    function toggleIncidentReport() {
-        if ($('#hasIncident').val() == '1') {
-            $('#incidentReportField').slideDown(300);
-            $('#incidentReport').prop('required', true);
-        } else {
-            $('#incidentReportField').slideUp(300);
-            $('#incidentReport').prop('required', false).val('');
-        }
-    }
-
-    // Run on page load
-    toggleIncidentReport();
-
-    // Run on dropdown change
-    $('#hasIncident').on('change', function () {
-        toggleIncidentReport();
-    });
-
-    // Custom file input label update
-    $('.custom-file-input').on('change', function () {
-        let fileName = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label')
-            .addClass("selected")
-            .html(fileName);
-    });
-
-    // Form validation
-    $('form').on('submit', function (e) {
-        if ($('#hasIncident').val() == '1' && $('#incidentReport').val().trim() === '') {
-            e.preventDefault();
-            alert('Please provide an incident report when incident is marked as Yes.');
-            $('#incidentReport').focus();
-        }
-    });
-
-</script>
-@endpush
+{{-- @endpush --}}
+@endsection

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\NepaliDateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\EstimateBill;
 use App\Models\ProformaInvoice;
@@ -139,8 +140,12 @@ class ProformaInvoiceController extends Controller
     public function generateFinalProforma($file_no)
     {
         // Fetch all bookings with the same file_no
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -201,9 +206,14 @@ class ProformaInvoiceController extends Controller
     public function generateFinalInvoice($file_no)
     {
         // Fetch all bookings with the same file_no
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
+
 
         if ($bookings->isEmpty()) {
             return response()->json(['error' => 'No bookings found for this file number'], 404);
@@ -261,6 +271,7 @@ class ProformaInvoiceController extends Controller
     public function generateSingleInvoice($booking_id)
     {
         $booking = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+            ->where('status', 'confirmed')
             ->findOrFail($booking_id);
 
         $receipt_number = $this->generateReceiptNumber();
@@ -349,11 +360,20 @@ class ProformaInvoiceController extends Controller
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
+            $time = $booking->start_time
+                ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A')
+                : '';
+
             // Get the actual service description from booking notes if available
             $description = "{$routeName} By {$vehicleName}";
             if ($date) {
                 $description .= " on {$date}";
             }
+
+            if ($time) {
+                $description .= " at {$time}";
+            }
+
 
             $items[] = [
                 'sn' => $index + 1,
@@ -393,6 +413,9 @@ class ProformaInvoiceController extends Controller
         if ($receipt->file_no) {
             $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
                 ->where('file_no', $receipt->file_no)
+                ->where('status', 'confirmed')
+                ->orderBy('start_date', 'asc')
+                ->orderBy('start_time', 'asc')
                 ->get();
         }
 
@@ -405,7 +428,7 @@ class ProformaInvoiceController extends Controller
             'items'        => $items, // ✅ USE THIS
             'customer'     => $receipt->customer,
             'invoice_date' => now(),
-            'miti_date'    => now()->format('Y-m-d'),
+            'miti_date' => $this->convertToNepaliDate(now()),
         ];
 
         // Generate FINAL RECEIPT PDF
@@ -432,6 +455,44 @@ class ProformaInvoiceController extends Controller
             'message' => 'Receipt finalized successfully',
             'path'    => asset($receipt->receipt_path)
         ]);
+    }
+
+    private function convertToNepaliDate($date)
+    {
+        if (!$date) {
+            return '';
+        }
+
+        // Ensure it's a string date (Y-m-d)
+        $englishDate = $date instanceof \Carbon\Carbon
+            ? $date->format('Y-m-d')
+            : $date;
+
+        $nepaliDate = NepaliDateHelper::convertToNepali($englishDate);
+        $devanagariNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        $englishNumbers   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        $day   = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['day'] ?? '');
+        $monthName = $nepaliDate['month'] ?? '';
+        $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
+        $monthMap = [
+            'वैशाख' => '01',
+            'जेठ'   => '02',
+            'असार'  => '03',
+            'साउन'  => '04',
+            'भदौ'  => '05',
+            'असोज'  => '06',
+            'कात्तिक' => '07',
+            'मंसिर' => '08',
+            'पुस'   => '09',
+            'माघ'   => '10',
+            'फागुन' => '11',
+            'चैत'   => '12',
+        ];
+
+        $month = $monthMap[$monthName] ?? '00';
+
+        return "{$day}/{$month}/{$year}";
     }
 
 
@@ -532,18 +593,6 @@ class ProformaInvoiceController extends Controller
         return $this->convertToWords(floor($number / 10000000)) . ' Crore' . ($number % 10000000 ? ' ' . $this->convertToWords($number % 10000000) : '');
     }
 
-    /**
-     * Convert to Nepali date (simplified - you may want to use a proper library)
-     */
-    private function convertToNepaliDate($date)
-    {
-        // This is a simplified version
-        // You should implement proper Nepali date conversion or use a library
-        return $date->format('d/m/Y');
-    }
-
-
-
 
 
 
@@ -554,6 +603,9 @@ class ProformaInvoiceController extends Controller
     {
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -574,10 +626,11 @@ class ProformaInvoiceController extends Controller
             $routeName = $booking->tripRoute ? $booking->tripRoute->name : 'Transportation Service';
             $vehicleName = $booking->vehicle ? $booking->vehicle->vehicle_name : 'Vehicle';
             $date = $booking->start_date ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y') : '';
+            $time = $booking->start_time ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A') : '';
 
             $items[] = [
                 'sn' => $index + 1,
-                'particular' => "{$routeName} By {$vehicleName} On {$date}",
+                'particular' => "{$routeName} By {$vehicleName} On {$date}" . ($time ? " at {$time}" : ''),
                 'qty' => $booking->passenger ?: 1,
                 'rate' => $booking->sub_total,
                 'amount' => $booking->sub_total,
@@ -597,5 +650,20 @@ class ProformaInvoiceController extends Controller
             'net_amount' => $net_amount,
             'total_bookings' => $bookings->count()
         ]);
+    }
+
+    public function showDetailsReceipt($id)
+    {
+        $receipt = VehicleReceipt::with(['vehicle', 'customer', 'booking', 'moment'])->findOrFail($id);
+
+        // Fetch all bookings associated with the same file_no
+        $bookings = [];
+        if ($receipt->file_no) {
+            $bookings = VehicleBooking::where('file_no', $receipt->file_no)->where('status', 'confirmed')
+                ->with(['vehicle', 'customer'])
+                ->get();
+        }
+
+        return view('layouts.admin.invoices.vehicle_receipts_details', compact('receipt', 'bookings'));
     }
 }

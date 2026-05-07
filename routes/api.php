@@ -57,9 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::get('/get-customerbooking/{customerUUId}', [BookingController::class, 'getCustomerBookings']);
+        Route::get('/get-vehicle-drivers/{vehicleId}', [BookingController::class, 'getVehicleDrivers']);
+
 
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
+        Route::post('/get-trip-price', [BookingController::class, 'getTripPrice']);
         Route::post('/bookings', [BookingController::class, 'createBooking']);
         Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
@@ -74,12 +77,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/transmission', [BookingController::class, 'transmission']);
     Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
 
+
+    //seaters
+    Route::get('/seaters', [BookingController::class, 'seaters']);
+    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeater']);
+
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
+
+    //addres
+    Route::get('/province', [BookingController::class, 'provinces']);
+    Route::post('/districts-by-province', [BookingController::class, 'districtsByProvince']);
+    Route::post('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
+
     Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 
     Route::post('reviews', [VehicleController::class, 'storeReview']);
     Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
+    Route::get('banners', [VehicleController::class, 'getBanner']);
+    Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
+    Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
 });
+
+Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
 
 Route::post('/invoice/generate', [BookingController::class, 'apiGenerateInvoice']);
 Route::post('/invoice/regenerate', [BookingController::class, 'apiRegenerateInvoice']);
@@ -91,3 +110,4 @@ Route::post('/estimate/generate', [BookingController::class, 'apiGenerateEstimat
 Route::post('/estimate/regenerate', [BookingController::class, 'apiRegenerateEstimate']);
 
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
+Route::get('/basic-setup', [CustomerController::class, 'BasicSetup']);

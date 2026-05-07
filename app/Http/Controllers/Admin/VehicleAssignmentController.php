@@ -37,9 +37,9 @@ class VehicleAssignmentController extends Controller
         Gate::authorize('create_vehicles_vehicle_assignment');
         $request->validate([
             'vehicle_id' => 'required|exists:vehicles,id',
-            'driver_id' => 'required|exists:users,id',
-            'helper_id' => 'nullable|exists:users,id',
-            'start_date' => 'required|date',
+            'driver_id' => 'required|exists:crew_profiles,id',
+            'helper_id' => 'nullable|exists:crew_profiles,id',
+            'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'shift' => 'nullable|string',
         ]);
@@ -85,7 +85,7 @@ class VehicleAssignmentController extends Controller
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:users,id',
             'helper_id' => 'nullable|exists:users,id',
-            'start_date' => 'required|date',
+            'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'shift' => 'nullable|string',
         ]);

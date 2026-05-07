@@ -230,12 +230,12 @@
         </tr>
         @endif
 
-        @if(($receipt->payment_method ?? '') == 'bank')
+        {{-- @if(($receipt->payment_method ?? '') == 'bank')
         <tr>
             <td><b>Bank Name :</b> {{ $receipt->bank_name ?? 'N/A' }}</td>
             <td class="right"><b>Account No :</b> {{ $receipt->bank_account ?? 'N/A' }}</td>
         </tr>
-        @endif
+        @endif --}}
     </table>
 
     <!-- ======================== ITEMS TABLE (exact invoice style + HS CODE & particular with receipt items) ======================== -->

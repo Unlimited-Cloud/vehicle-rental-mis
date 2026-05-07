@@ -23,26 +23,38 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Services\ProformaService;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 
 class VehicleBookingController extends Controller
 {
 
     protected $service;
     protected $vehicleRepository;
+    protected $userRepository;
 
     private $currentUserId;
     private $currentUserCustomerId;
+    private $currentUserDriverId;
+    private $currentUserRoleId;
 
     private $currentUserIsCustomer;
+    private $currentUserIsDriver;
 
-    public function __construct(ProformaService $service, VehicleRepositoryInterface $vehicleRepository)
-    {
+    public function __construct(
+        ProformaService $service,
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+    ) {
         $this->service = $service;
         $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
         $this->middleware(function ($request, $next) {
             $this->currentUserId = Auth::user()->id;
             $this->currentUserCustomerId = Auth::user()->customer_id;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
+            $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
             return $next($request);
         });
     }
@@ -57,7 +69,11 @@ class VehicleBookingController extends Controller
         if ($this->currentUserIsCustomer == 'Y') {
             $bookings = $this->vehicleRepository->getVehicleBookingsByCustomerId($request, $this->currentUserCustomerId);
         } else {
-            $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
+            if ($this->currentUserIsDriver == 'Y') {
+                $bookings = $this->vehicleRepository->getVehicleBookingsByDriverId($request, $this->currentUserDriverId);
+            } else {
+                $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
+            }
         }
 
         $vehicles  = Vehicle::orderBy('vehicle_name')->get();
@@ -66,9 +82,10 @@ class VehicleBookingController extends Controller
             $q->where('role', 'driver');
         })->with('user')->get();
         $currentUserIsCustomer = $this->currentUserIsCustomer;
+        $currentUserIsDriver = $this->currentUserIsDriver;
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer')
+            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer', 'currentUserIsDriver')
         );
     }
     /**
@@ -312,11 +329,15 @@ class VehicleBookingController extends Controller
         return view('layouts.admin.vehicles_booking.show', compact('vehicleBooking'));
     }
 
-    public function destroy(VehicleBooking $vehicleBooking)
+    public function destroy($id)
     {
         Gate::authorize('delete_vehicle_bookings');
+
         try {
-            $vehicleBooking->delete();
+            VehicleBooking::where('id', $id)->update([
+                'deleted_by' => Auth::id(),
+                'deleted_at' => now(),
+            ]);
 
             if (request()->ajax()) {
                 return response()->json([
@@ -586,7 +607,7 @@ class VehicleBookingController extends Controller
                     'payment_method' => $bookingData['payment_method'] ?? null,
                     'payment_status' => ($bookingData['paid_amount'] ?? 0) > 0 ? 1 : 0,
                     'notes' => $bookingData['notes'] ?? null,
-                    'status' => 'pending'
+                    'status' => $bookingData['status'] ?? 'pending',
                 ];
 
                 $vehicleBooking = VehicleBooking::create($addData);

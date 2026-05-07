@@ -26,6 +26,17 @@ class CustomerRepository implements CustomerRepositoryInterface
     }
 
     public function getCustomerByUuid($uuid){
-        return Customer::where('customer_uuid',$uuid)->first();
+        $data = Customer::select(
+            'customers.*',
+            'countries.name as countryname',
+            'district.name as districtname',
+            'vdc.name as vdcname',
+        )
+        ->where('customer_uuid',$uuid)
+        ->leftJoin('countries','countries.id','=','customers.country_id')
+        ->leftJoin('district','district.id','=','customers.district_id')
+        ->leftJoin('vdc','vdc.id','=','customers.vdc_id')
+        ->first();
+        return $data;
     }
 }

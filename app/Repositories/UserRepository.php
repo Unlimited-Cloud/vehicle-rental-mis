@@ -13,7 +13,7 @@ use App\Models\Role;
 use App\Models\Partnerdetailstable;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PartnerUser;
-
+use App\Models\CrewProfile;
 
 
 
@@ -21,10 +21,6 @@ use App\Models\PartnerUser;
 
 class UserRepository implements UserRepositoryInterface
 {
-
-
-
-
     public function getAllUsers($search)
     {
         $query = User::with('role');
@@ -643,5 +639,10 @@ class UserRepository implements UserRepositoryInterface
         ->select('users.*','roles.name as rolename')
         ->leftJoin('roles','roles.id','=','users.role_id')
         ->get();
+    }
+
+    public function getCrewProfileByUserId($userId)
+    {
+        return CrewProfile::where('user_id', $userId)->first();
     }
 }

@@ -23,9 +23,12 @@ interface VehicleRepositoryInterface
     public function getAllPendingVehicleBookingsCount();
     public function getPendingVehicleBookingsCountByCustomerId($customerId);
 
-    public function getAllRecentVehicleBookings($orderBy, $order, $limit);
-    public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $limit, $customerId);
+    public function getAllRecentVehicleBookings($orderBy, $order);
+    public function getRecentVehicleBookingsByCustomerId($orderBy, $order,$customerId);
 
     public function getAllVehicleBookings($request);
     public function getVehicleBookingsByCustomerId($request, $customerId);
+    public function getVehicleBookingsCountByDriverId($driverId);
+    public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId);
+    public function getVehicleBookingsByDriverId($request, $driverId);
 }

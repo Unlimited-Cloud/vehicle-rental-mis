@@ -8,9 +8,9 @@ class VehicleBooking extends Model
 {
     protected $fillable = [
         'vehicle_id',
-        'customer_name',
-        'customer_email',
-        'customer_phone',
+        'contact_person',
+        'contact_email',
+        'contact_number',
         'from_destination',
         'to_destination',
         'no_of_people',
@@ -41,7 +41,9 @@ class VehicleBooking extends Model
         'vat',
         'passenger',
         'file_no',
-        'remaining_balance'
+        'remaining_balance',
+        'deleted_at',
+        'deleted_by'
     ];
 
     protected $dates = ['start_date', 'end_date'];

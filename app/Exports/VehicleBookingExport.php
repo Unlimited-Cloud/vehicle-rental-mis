@@ -35,7 +35,9 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
             'vehicle',
             'customer',
             'driver.user',
-            'helper.user'
+            'helper.user',
+            'tripRoute',
+            'vehicleMoment'
         ]);
 
         // Apply filters if present
@@ -69,26 +71,23 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     public function headings(): array
     {
         return [
-            'S.No',
-            'Vehicle',
+            'Start Date',
+            'File No',
+            'No. of People',
             'Customer Name',
-            'Customer Email',
             'Customer Phone',
+            'Vehicle',
             'Driver',
             'Helper',
-            'From Destination',
-            'To Destination',
-            'Start Date',
-            'End Date',
-            'Duration (Days)',
+            'Route',
+            'Total Amount',
             'Start KM',
             'End KM',
-            'Total KM',
+            'Total Consumed (KM)',
             'Fuel (Ltr)',
-            'No. of People',
             'Status',
             'Notes',
-            'Created At'
+            'Movement Done'
         ];
     }
 
@@ -100,38 +99,34 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     {
         $this->rowNumber++;
 
-        // Calculate duration
-        $start = \Carbon\Carbon::parse($booking->start_date);
-        $end = \Carbon\Carbon::parse($booking->end_date);
-        $duration = $start->diffInDays($end) + 1;
-
         // Calculate total KM
         $totalKm = null;
-        if ($booking->start_km && $booking->end_km) {
-            $totalKm = $booking->end_km - $booking->start_km;
+        $hasMovement = false;
+        if ($booking->vehicleMoment) {
+            $hasMovement = true;
+            if ($booking->vehicleMoment->start_km && $booking->vehicleMoment->end_km) {
+                $totalKm = $booking->vehicleMoment->end_km - $booking->vehicleMoment->start_km;
+            }
         }
 
         return [
-            $this->rowNumber,
-            $booking->vehicle->vehicle_name ?? 'N/A',
+            \Carbon\Carbon::parse($booking->start_date)->format('d-m-Y'),
+            $booking->file_no ?? 'N/A',
+            $booking->no_of_people ?? 'N/A',
             $booking->customer->name ?? 'N/A',
-            $booking->customer->email ?? 'N/A',
             $booking->customer->phone ?? 'N/A',
+            $booking->vehicle->vehicle_name ?? 'N/A',
             $booking->driver->user->name ?? 'Not Assigned',
             $booking->helper->user->name ?? 'Not Assigned',
-            $booking->from_destination ?? 'N/A',
-            $booking->to_destination ?? 'N/A',
-            \Carbon\Carbon::parse($booking->start_date)->format('d-m-Y'),
-            \Carbon\Carbon::parse($booking->end_date)->format('d-m-Y'),
-            $duration,
-            $booking->start_km ?? 'N/A',
-            $booking->end_km ?? 'N/A',
+            $booking->tripRoute->title ?? 'N/A',
+            $booking->total_amount ?? 0, // Total Amount after Route
+            $booking->vehicleMoment->start_km ?? 'N/A',
+            $booking->vehicleMoment->end_km ?? 'N/A',
             $totalKm ?? 'N/A',
             $booking->approx_fuel_litre ?? 'N/A',
-            $booking->no_of_people ?? 'N/A',
             ucfirst($booking->status),
             $booking->notes ?? 'N/A',
-            \Carbon\Carbon::parse($booking->created_at)->format('d-m-Y H:i:s'),
+            $hasMovement ? '✓' : '✗',
         ];
     }
 
@@ -163,26 +158,23 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     public function columnWidths(): array
     {
         return [
-            'A' => 8,   // S.No
-            'B' => 20,  // Vehicle
-            'C' => 25,  // Customer Name
-            'D' => 30,  // Customer Email
-            'E' => 18,  // Customer Phone
-            'F' => 20,  // Driver
-            'G' => 20,  // Helper
-            'H' => 25,  // From Destination
-            'I' => 25,  // To Destination
-            'J' => 15,  // Start Date
-            'K' => 15,  // End Date
-            'L' => 15,  // Duration
-            'M' => 12,  // Start KM
-            'N' => 12,  // End KM
-            'O' => 12,  // Total KM
-            'P' => 12,  // Fuel
-            'Q' => 15,  // No. of People
-            'R' => 15,  // Status
-            'S' => 30,  // Notes
-            'T' => 20,  // Created At
+            'A' => 20,  // Start Date
+            'B' => 35,  // File No
+            'C' => 15,  // No. of People
+            'D' => 25,  // Customer Name
+            'E' => 20,  // Customer Phone
+            'F' => 15,  // Vehicle
+            'G' => 20,  // Driver
+            'H' => 20,  // Helper
+            'I' => 35,  // Route
+            'J' => 20,  // Total Amount
+            'K' => 15,  // Start KM
+            'L' => 15,  // End KM
+            'M' => 20,  // Total Consumed (KM)
+            'N' => 15,  // Fuel (Ltr)
+            'O' => 15,  // Status
+            'P' => 30,  // Notes
+            'Q' => 18,  // Movement Done
         ];
     }
 
@@ -195,7 +187,7 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
                 $lastRow = $sheet->getHighestRow();
-                $lastColumn = $sheet->getHighestColumn();
+                $lastColumn = 'Q'; // Now 17 columns (A to Q)
 
                 // Auto-size columns (as fallback)
                 foreach (range('A', $lastColumn) as $column) {
@@ -217,32 +209,69 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
                 ]);
 
                 // Style specific columns
-                // Date columns (J, K, T)
-                foreach (['J', 'K', 'T'] as $column) {
-                    $sheet->getStyle($column . '2:' . $column . $lastRow)
-                        ->getAlignment()
-                        ->setHorizontal(Alignment::HORIZONTAL_CENTER);
-                }
+                // Date column (A)
+                $sheet->getStyle('A2:A' . $lastRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Number columns (L, M, N, O, P, Q)
-                foreach (['L', 'M', 'N', 'O', 'P', 'Q'] as $column) {
+                // Number/Currency columns (C, J, K, L, M, N)
+                foreach (['C', 'J', 'K', 'L', 'M', 'N'] as $column) {
                     $sheet->getStyle($column . '2:' . $column . $lastRow)
                         ->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
                 }
 
-                // Status column (R) - color code based on status
+                // Format Total Amount column (J) as currency
+                $sheet->getStyle('J2:J' . $lastRow)
+                    ->getNumberFormat()
+                    ->setFormatCode('#,##0.00');
+
+                // Movement Done column (Q) - center alignment and color coding
+                $sheet->getStyle('Q2:Q' . $lastRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Color code the movement status
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $status = $sheet->getCell('R' . $row)->getValue();
+                    $movementStatus = $sheet->getCell('Q' . $row)->getValue();
+
+                    if ($movementStatus === '✓') {
+                        // Green color for movement done
+                        $sheet->getStyle('Q' . $row)
+                            ->getFont()
+                            ->getColor()
+                            ->setARGB('FF28A745');
+                    } elseif ($movementStatus === '✗') {
+                        // Red color for no movement
+                        $sheet->getStyle('Q' . $row)
+                            ->getFont()
+                            ->getColor()
+                            ->setARGB('FFDC3545');
+                    }
+                }
+
+                // Status column (O) - color code based on status
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $status = $sheet->getCell('O' . $row)->getValue();
                     $color = $this->getStatusColor($status);
 
                     if ($color) {
-                        $sheet->getStyle('R' . $row)
+                        $sheet->getStyle('O' . $row)
                             ->getFont()
                             ->getColor()
                             ->setARGB($color);
                     }
                 }
+
+                // Style header row
+                $sheet->getStyle('A1:' . $lastColumn . '1')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 11],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FF2C3E50'],
+                    ],
+                    'font' => ['color' => ['argb' => 'FFFFFFFF']],
+                ]);
 
                 // Add filter to header row
                 $sheet->setAutoFilter('A1:' . $lastColumn . '1');
@@ -259,12 +288,12 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     private function getStatusColor($status)
     {
         $colors = [
-            'CONFIRMED' => 'FF28A745',
-            'PENDING' => 'FFFFC107',
-            'CANCELLED' => 'FFDC3545',
-            'COMPLETED' => 'FF17A2B8',
+            'Confirmed' => 'FF28A745',
+            'Pending' => 'FFFFC107',
+            'Cancelled' => 'FFDC3545',
+            'Completed' => 'FF17A2B8',
         ];
 
-        return $colors[strtoupper($status)] ?? null;
+        return $colors[$status] ?? null;
     }
 }

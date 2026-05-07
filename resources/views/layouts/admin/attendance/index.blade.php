@@ -179,6 +179,7 @@
                 <td>#</th>
                     <th>Crew Member</th>
                     <th>Date (AD/BS)</th>
+                    <th>Allowances</th>
                     <th>Status</th>
                     {{-- <th>Salary (Rs)</th>
                     <th>Net Amount</th> --}}
@@ -206,6 +207,7 @@
                             <br>
                             <small class="bs-date text-muted" data-date="{{ $attendance->attendance_date }}">Loading...</small>
                         </td>
+                        <td>Rs. {{ ($attendance->allowances) }}</td>
                         <td>
                             <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
                                 {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
@@ -910,7 +912,15 @@ function openCreateAttendance(crewId, date) {
     let url = "{{ route('admin.attendance.create') }}?crew_id=" + crewId + "&date=" + date;
     window.location.href = url;
 }
+// Add this helper function at the top of your script section
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
+// Replace your existing viewAttendance function with this updated version
 async function viewAttendance(attendanceId) {
     $('#attendanceModalBody').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Loading attendance details...</p></div>');
     $('#attendanceDetailsModal').modal('show');
@@ -929,9 +939,9 @@ async function viewAttendance(attendanceId) {
                     <!-- Status Bar -->
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="d-flex justify-content-between align-items-center p-2" style="background: ${statusColor}20; border-left: 4px solid ${statusColor};">
+                            <div class="d-flex justify-content-between align-items-center p-2" style="background: ${statusColor}20; border-left: 4px solid ${statusColor}; border-radius: 4px;">
                                 <span><strong>Status:</strong> ${attendance.status ? attendance.status.toUpperCase().replace('_', ' ') : 'N/A'}</span>
-                                <span class="badge" style="background: ${statusColor}; color: white;">${getStatusText(attendance.status)}</span>
+                                <span class="badge" style="background: ${statusColor}; color: white; padding: 5px 10px;">${getStatusText(attendance.status)}</span>
                             </div>
                         </div>
                     </div>
@@ -945,20 +955,20 @@ async function viewAttendance(attendanceId) {
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-sm table-borderless">
-                                         <tr>
+                                        <tr>
                                             <td style="width: 100px;"><strong>Name:</strong></td>
                                             <td>
                                                 <span style="display: inline-block; width: 12px; height: 12px; background: ${crewColor}; border-radius: 3px; margin-right: 5px;"></span>
-                                                ${attendance.crew?.user?.name || attendance.crew_name || 'N/A'}
+                                                ${escapeHtml(attendance.crew?.user?.name || attendance.crew_name || 'N/A')}
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Email:</strong></td>
-                                            <td>${attendance.crew?.user?.email || 'N/A'}</td>
+                                            <td>${escapeHtml(attendance.crew?.user?.email || 'N/A')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Phone:</strong></td>
-                                            <td>${attendance.crew?.user?.phone || 'N/A'}</td>
+                                            <td>${escapeHtml(attendance.crew?.user?.phone || 'N/A')}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -979,31 +989,72 @@ async function viewAttendance(attendanceId) {
                                         </tr>
                                         <tr>
                                             <td><strong>BS Date:</strong></td>
-                                            <td class="nepali-date">${bsDate}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Salary:</strong></td>
-                                            <td>Rs. ${parseFloat(attendance.salary_amount || 0).toFixed(2)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Bonus:</strong></td>
-                                            <td>Rs. ${parseFloat(attendance.bonus || 0).toFixed(2)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Deduction:</strong></td>
-                                            <td>Rs. ${parseFloat(attendance.deduction || 0).toFixed(2)}</td>
-                                        </tr>
-                                        <tr>
-                                            <td><strong>Net Amount:</strong></td>
-                                            <td><strong>Rs. ${parseFloat(attendance.net_amount || 0).toFixed(2)}</strong></td>
-                                        </tr>
-                                        ${attendance.remarks ? `
-                                        <tr>
-                                            <td><strong>Remarks:</strong></td>
-                                            <td>${escapeHtml(attendance.remarks)}</td>
-                                        </tr>
-                                        ` : ''}
-                                    </table>
+                                            <td class="nepali-date">${escapeHtml(bsDate)}</td>
+                                        </tr>`;
+            
+            // Only show financial details if they have values (not null and not 0)
+            let hasSalary = attendance.salary_amount && parseFloat(attendance.salary_amount) > 0;
+            let hasBonus = attendance.bonus && parseFloat(attendance.bonus) > 0;
+            let hasDeduction = attendance.deduction && parseFloat(attendance.deduction) > 0;
+            let hasAllowances = attendance.allowances && parseFloat(attendance.allowances) > 0;
+            
+            if (hasSalary) {
+                html += `
+                        <tr>
+                            <td><strong>Salary:</strong></td>
+                            <td>Rs. ${parseFloat(attendance.salary_amount).toFixed(2)}</td>
+                        </tr>`;
+            }
+            
+            if (hasBonus) {
+                html += `
+                        <tr>
+                            <td><strong>Bonus:</strong></td>
+                            <td>Rs. ${parseFloat(attendance.bonus).toFixed(2)}</td>
+                        </tr>`;
+            }
+            
+            if (hasAllowances) {
+                html += `
+                        <tr style="background-color: #e8f5e9;">
+                            <td><strong><i class="fa fa-money"></i> Allowances/Bhatta:</strong></td>
+                            <td><strong class="text-success">Rs. ${parseFloat(attendance.allowances).toFixed(2)}</strong></td>
+                        </tr>`;
+            }
+            
+            if (hasDeduction) {
+                html += `
+                        <tr>
+                            <td><strong>Deduction:</strong></td>
+                            <td class="text-danger">Rs. ${parseFloat(attendance.deduction).toFixed(2)}</td>
+                        </tr>`;
+            }
+            
+            // Only show net amount if any financial values exist
+            let hasNetAmount = attendance.net_amount && parseFloat(attendance.net_amount) > 0;
+            if (hasNetAmount || hasSalary || hasBonus || hasAllowances) {
+                let netAmount = attendance.net_amount || 
+                    (parseFloat(attendance.salary_amount || 0) + 
+                     parseFloat(attendance.bonus || 0) + 
+                     parseFloat(attendance.allowances || 0) - 
+                     parseFloat(attendance.deduction || 0));
+                
+                html += `
+                        <tr style="border-top: 2px solid #dee2e6;">
+                            <td><strong>Net Amount:</strong></td>
+                            <td><strong class="text-primary">Rs. ${parseFloat(netAmount).toFixed(2)}</strong></td>
+                        </tr>`;
+            }
+            
+            if (attendance.remarks) {
+                html += `
+                        <tr>
+                            <td><strong>Remarks:</strong></td>
+                            <td>${escapeHtml(attendance.remarks)}</td>
+                        </tr>`;
+            }
+            
+            html += `</table>
                                 </div>
                             </div>
                         </div>
@@ -1026,19 +1077,22 @@ async function viewAttendance(attendanceId) {
                                         </tr>
                                         <tr>
                                             <td><strong>Vehicle:</strong></td>
-                                            <td>${attendance.booking.vehicle_name || 'N/A'}</td>
+                                            <td>${escapeHtml(attendance.booking.vehicle_name || 'N/A')}</td>
                                         </tr>
                                         <tr>
                                             <td><strong>Customer:</strong></td>
-                                            <td>${attendance.booking.customer_name || 'N/A'}</td>
-                                        </tr>
-                                        ${attendance.booking.start_date ? `
+                                            <td>${escapeHtml(attendance.booking.customer_name || 'N/A')}</td>
+                                        </tr>`;
+                
+                if (attendance.booking.start_date) {
+                    html += `
                                         <tr>
                                             <td><strong>Date Range:</strong></td>
                                             <td>${attendance.booking.start_date} to ${attendance.booking.end_date}</td>
-                                        </tr>
-                                        ` : ''}
-                                    </table>
+                                        </tr>`;
+                }
+                
+                html += `</table>
                                 </div>
                             </div>
                         </div>
@@ -1062,25 +1116,34 @@ async function viewAttendance(attendanceId) {
                                         </tr>
                                         <tr>
                                             <td><strong>Vehicle:</strong></td>
-                                            <td>${attendance.vehicle_moment.vehicle_name || 'N/A'}</td>
-                                        </tr>
+                                            <td>${escapeHtml(attendance.vehicle_moment.vehicle_name || 'N/A')}</td>
+                                        </tr>`;
+                
+                if (attendance.vehicle_moment.moment_type) {
+                    html += `
                                         <tr>
                                             <td><strong>Moment Type:</strong></td>
-                                            <td>${attendance.vehicle_moment.moment_type || 'N/A'}</td>
-                                        </tr>
-                                        ${attendance.vehicle_moment.moment_date ? `
+                                            <td>${escapeHtml(attendance.vehicle_moment.moment_type)}</td>
+                                        </tr>`;
+                }
+                
+                if (attendance.vehicle_moment.moment_date) {
+                    html += `
                                         <tr>
                                             <td><strong>Date:</strong></td>
                                             <td>${attendance.vehicle_moment.moment_date}</td>
-                                        </tr>
-                                        ` : ''}
-                                        ${attendance.vehicle_moment.description ? `
+                                        </tr>`;
+                }
+                
+                if (attendance.vehicle_moment.description) {
+                    html += `
                                         <tr>
                                             <td><strong>Description:</strong></td>
-                                            <td>${attendance.vehicle_moment.description}</td>
-                                        </tr>
-                                        ` : ''}
-                                    </table>
+                                            <td>${escapeHtml(attendance.vehicle_moment.description)}</td>
+                                        </tr>`;
+                }
+                
+                html += `</table>
                                 </div>
                             </div>
                         </div>
@@ -1098,7 +1161,7 @@ async function viewAttendance(attendanceId) {
             $('#attendanceModalBody').html(`
                 <div class="alert alert-danger">
                     <i class="fa fa-exclamation-triangle"></i> 
-                    ${errorMsg}
+                    ${escapeHtml(errorMsg)}
                 </div>
             `);
         }

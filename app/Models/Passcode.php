@@ -16,11 +16,6 @@ class Passcode extends Model
         'locked_until',
     ];
 
-    protected $casts = [
-        'requested_at' => 'datetime',
-        'locked_until' => 'datetime',
-    ];
-
     public function user()
     {
         return $this->belongsTo(User::class);

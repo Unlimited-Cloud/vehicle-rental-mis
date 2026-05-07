@@ -21,9 +21,14 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
 use App\Models\Brand;
+use App\Models\District;
 use App\Models\EstimateBill;
 use App\Models\FuelType;
 use App\Models\ProformaInvoice;
+use App\Models\Province;
+use App\Models\Splashscreen;
+use App\Models\VDC;
+use App\Models\VehicleAssignment;
 use Carbon\Carbon;
 
 class BookingController extends Controller
@@ -142,6 +147,7 @@ class BookingController extends Controller
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
                 'vehicle_id' => 'required|exists:vehicles,id',
+                'driver_id' => 'nullable|exists:crew_profiles,id',
                 'trip_category_id' => 'required|exists:trip_categories,id',
                 'trip_route_id' => 'required|exists:trip_routes,id',
 
@@ -156,6 +162,10 @@ class BookingController extends Controller
                 'notes' => 'nullable|string',
                 'no_of_people' => 'nullable|string',
                 'signage_information' => 'nullable|string',
+
+                'contact_person' => 'nullable|string',
+                'contact_email' => 'nullable|string',
+                'contact_number' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -260,6 +270,11 @@ class BookingController extends Controller
                 'total_amount' => $total_amount,
 
                 'status' => 'pending',
+
+                'contact_person' => $request->contact_person,
+                'contact_email' => $request->contact_email,
+                'contact_number' => $request->contact_number,
+
             ]);
 
             //  Generate Proforma
@@ -305,6 +320,9 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -323,7 +341,12 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateReceiptNumber();
+        // $receipt_number = $this->generateReceiptNumber();
+
+        $existingReceipt = VehicleReceipt::where('file_no', $request->file_no)->first();
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->receipt_number
+            : $this->generateReceiptNumber();
 
         // Prepare data for view
         $data = [
@@ -408,10 +431,17 @@ class BookingController extends Controller
                 ? \Carbon\Carbon::parse($booking->start_date)->format('jS M Y')
                 : '';
 
+            $time = $booking->start_time
+                ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A')
+                : '';
+
             // Get the actual service description from booking notes if available
             $description = "{$routeName} By {$vehicleName}";
             if ($date) {
                 $description .= " on {$date}";
+            }
+            if ($time) {
+                $description .= " at {$time}";
             }
 
             $items[] = [
@@ -547,7 +577,7 @@ class BookingController extends Controller
         $monthName = $nepaliDate['month'] ?? '';
         $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
         $monthMap = [
-            'बैशाख' => '01',
+            'वैशाख' => '01',
             'जेठ'   => '02',
             'असार'  => '03',
             'साउन'  => '04',
@@ -603,6 +633,9 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -621,7 +654,11 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateProformaNumber();
+        $existingReceipt = ProformaInvoice::where('file_no', $request->file_no)->first();
+
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->invoice_number
+            : $this->generateProformaNumber();
 
         // Prepare data for view
         $data = [
@@ -648,19 +685,21 @@ class BookingController extends Controller
         ];
 
         // Save receipt to database
-        $receipt = ProformaInvoice::create([
-            'vehicle_booking_id' => null,
-            'vehicle_moment_id' => null,
-            'vehicle_id' => null,
-            'file_no' => $request->file_no,
-            'customer_id' => $customer ? $customer->id : null,
-            'invoice_number' => $receipt_number,
-            'rate_per_day' => $sub_total,
-            'sub_total' => $sub_total,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $net_amount,
-        ]);
+        $receipt = ProformaInvoice::updateOrCreate(
+            ['file_no' => $request->file_no],
+            [
+                'vehicle_booking_id' => null,
+                'vehicle_moment_id' => null,
+                'vehicle_id' => null,
+                'customer_id' => $customer ? $customer->id : null,
+                'invoice_number' => $receipt_number,
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount,
+                'tax' => $tax,
+                'total_amount' => $net_amount,
+            ]
+        );
 
         $data['receipt'] = $receipt;
 
@@ -740,8 +779,12 @@ class BookingController extends Controller
             'download' => 'sometimes|boolean' // Optional: true to download, false to view in browser
         ]);
 
+
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
+            ->where('status', 'confirmed')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->get();
 
         if ($bookings->isEmpty()) {
@@ -760,7 +803,13 @@ class BookingController extends Controller
         $tax = $bookings->sum('tax');
         $net_amount = $sub_total - $discount + $tax;
 
-        $receipt_number = $this->generateEstimateNumber();
+        // $receipt_number = $this->generateEstimateNumber();
+
+        $existingReceipt = EstimateBill::where('file_no', $request->file_no)->first();
+
+        $receipt_number = $existingReceipt
+            ? $existingReceipt->estimate_number
+            : $this->generateEstimateNumber();
 
         // Prepare data for view
         $data = [
@@ -787,19 +836,22 @@ class BookingController extends Controller
         ];
 
         // Save receipt to database
-        $receipt = EstimateBill::create([
-            'vehicle_booking_id' => null,
-            'vehicle_moment_id' => null,
-            'vehicle_id' => null,
-            'file_no' => $request->file_no,
-            'customer_id' => $customer ? $customer->id : null,
-            'estimate_number' => $receipt_number,
-            'rate_per_day' => $sub_total,
-            'sub_total' => $sub_total,
-            'discount' => $discount,
-            'tax' => $tax,
-            'total_amount' => $net_amount,
-        ]);
+        $receipt = EstimateBill::updateOrCreate(
+            ['file_no' => $request->file_no],
+            [
+                'vehicle_booking_id' => null,
+                'vehicle_moment_id' => null,
+                'vehicle_id' => null,
+                'file_no' => $request->file_no,
+                'customer_id' => $customer ? $customer->id : null,
+                'estimate_number' => $receipt_number,
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount,
+                'tax' => $tax,
+                'total_amount' => $net_amount,
+            ]
+        );
 
         $data['receipt'] = $receipt;
 
@@ -1004,6 +1056,63 @@ class BookingController extends Controller
         ]);
     }
 
+
+    public function seaters()
+    {
+        $seaters = Vehicle::select('seater')
+            ->whereNotNull('seater')
+            ->distinct()
+            ->orderBy('seater')
+            ->get()
+            ->map(function ($s) {
+
+                // get one random vehicle for this seater
+                $vehicle = Vehicle::where('seater', $s->seater)
+                    ->whereNotNull('image')
+                    ->inRandomOrder()
+                    ->first();
+
+                return [
+                    'seater' => $s->seater,
+                    'image' => $vehicle && $vehicle->image
+                        ? asset($vehicle->image)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $seaters
+        ]);
+    }
+
+    public function vehiclesBySeater(Request $request)
+    {
+        $request->validate([
+            'seater' => 'required|numeric'
+        ]);
+
+        // get vehicles by seater
+        $vehicles = Vehicle::where('seater', $request->seater)->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this seater'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'seater' => $request->seater,
+            'vehicles' => $vehicles
+        ]);
+    }
+
+
+
+
+
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
@@ -1042,5 +1151,276 @@ class BookingController extends Controller
             'message' => 'Vehicle Fetched Successfully',
             'data' => $vehicle
         ]);
+    }
+
+    public function getTripPrice(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'trip_category_id' => 'required|exists:trip_categories,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
+            ]
+        );
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        if (!$vehicle) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+        $tripCategory = TripCategory::findOrFail($request->trip_category_id);
+        $route = TripRoute::findOrFail($request->trip_route_id);
+
+        if (!$route) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'route not found'
+            ], 404);
+        }
+
+        // Map vehicle_type to price column
+        $priceColumn = match (strtolower($vehicle->vehicle_type)) {
+            'car' => 'car_price',
+            'hiace' => 'hiace_price',
+            'coaster' => 'coaster_price',
+            'bus' => 'bus_price',
+            'van' => 'van_price',
+            default => 'other_price',
+        };
+
+        $price = $route->$priceColumn;
+
+
+
+        return response()->json([
+            'vehicle_name' => $vehicle->vehicle_name,
+            'vehicle_type' => $vehicle->vehicle_type,
+            'trip_category' => $tripCategory->name,
+            'route_name' => $route->title,
+            'price' => $price,
+        ]);
+    }
+
+    public function splashscreens()
+    {
+        $data = Splashscreen::orderBy('order_by', 'asc')->get()
+            ->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'header' => $item->header,
+                    'description' => $item->description,
+                    'order' => $item->order_by,
+                    'image' => $item->image
+                        ? asset('uploads/splashscreens/' . $item->image)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $data
+        ]);
+    }
+
+    public function provinces()
+    {
+        $provinces = Province::select('id', 'pname', 'pnumber', 'headquarter', 'pname_np', 'status', 'map_index')
+            ->orderBy('pnumber', 'asc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $provinces
+        ]);
+    }
+
+    public function districtsByProvince(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'province_id' => 'required|exists:province,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $districts = District::where('province_id', $request->province_id)
+            ->select('id', 'name', 'province_id', 'name_np', 'district_index')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        if ($districts->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No districts found for this province'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $districts
+        ]);
+    }
+
+    public function vdcsByDistrict(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'district_id' => 'required|exists:district,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $vdcs = VDC::where('DISTRICT_ID', $request->district_id)
+            ->select('id', 'NAME')
+            ->orderBy('NAME', 'asc')
+            ->get();
+
+        if ($vdcs->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No VDC found for this district'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $vdcs
+        ]);
+    }
+
+
+    public function getVehicleDrivers($vehicle_id)
+    {
+        $assignments = VehicleAssignment::with(['driver.user'])
+            ->where('vehicle_id', $vehicle_id)
+            ->get();
+
+        if ($assignments->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No drivers found for this vehicle',
+                'data' => []
+            ]);
+        }
+
+        $drivers = $assignments->map(function ($assignment) {
+
+            $user = $assignment->driver->user ?? null;
+
+            return [
+                'vehicle_name' => $assignment->vehicle->vehicle_name ?? null,
+
+                'driver' => $assignment->driver ? [
+                    'id' => $assignment->driver->id,
+                    'role' => $assignment->driver->role,
+                    'contact_number' => $assignment->driver->contact_number,
+                    'experience' => $assignment->driver->experience,
+                    'age' => $assignment->driver->age,
+                    'license_expiry' => $assignment->driver->license_expiry ?? 'N/A',
+
+                    'user' => $user ? [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'img' => $user->img
+                            ? asset('uploads/users/' . $user->img)
+                            : null,
+                    ] : null,
+                ] : null,
+
+                'helper_name' => $assignment->helper->user->name ?? 'N/A',
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Drivers fetched successfully',
+            'data' => $drivers
+        ]);
+    }
+
+    public function BookingbyStatus($status, $customer_id)
+    {
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+
+        if (!in_array($status, $validStatuses)) {
+            return response()->json([
+                'message' => 'Invalid status'
+            ], 400);
+        }
+
+
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+        $customer_id = $customer->id;
+        $query = VehicleBooking::query()->where('customer_id', $customer_id);
+
+
+        if ($status === 'completed') {
+            $query->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            });
+        } else {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,image,car_images',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,end_datetime,start_datetime'
+        ])
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'trip_route_id',
+                'vehicle_id',
+                'driver_id',
+                'start_date',
+                'start_time',
+                'end_date',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount'
+            ]);
+
+        $bookings->each(function ($booking) {
+            if ($booking->vehicleMoment) {
+                $booking->status = 'completed';
+            }
+        });
+
+        return response()->json($bookings);
     }
 }

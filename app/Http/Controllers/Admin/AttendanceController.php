@@ -263,6 +263,7 @@ class AttendanceController extends Controller
                 'salary_amount' => $attendance->salary_amount,
                 'bonus' => $attendance->bonus,
                 'deduction' => $attendance->deduction,
+                'allowances' => $attendance->allowances,
                 'net_amount' => $attendance->net_amount,
                 'remarks' => $attendance->remarks,
                 'booking_id' => $attendance->booking_id,
@@ -427,5 +428,69 @@ class AttendanceController extends Controller
                 ? round(($attendances->whereIn('status', ['present', 'half_day'])->count() / $attendances->count()) * 100, 2)
                 : 0
         ];
+    }
+
+    public function createAllowance(Request $request)
+    {
+        Gate::authorize('create_attendance');
+
+        $vehicleMomentId = $request->vehicle_moment_id;
+        $vehicleMoment = VehicleMoment::with('vehicle', 'driver')->findOrFail($vehicleMomentId);
+
+        // Get crew_id from vehicle_moment
+        $crewId = $vehicleMoment->driver_id;
+
+        // Check if attendance already exists for today
+        $today = Carbon::now()->format('Y-m-d');
+        $existingAttendance = Attendance::where('crew_id', $crewId)
+            ->where('attendance_date', $today)
+            ->first();
+
+        return view('layouts.admin.attendance.allowance_form', compact('vehicleMoment', 'crewId', 'today', 'existingAttendance'));
+    }
+
+    public function storeAllowance(Request $request)
+    {
+        Gate::authorize('create_attendance');
+
+        $request->validate([
+            'crew_id' => 'required|exists:crew_profiles,id',
+            'vehicle_moment_id' => 'required|exists:vehicle_moments,id',
+            'attendance_date' => 'required|date',
+            'allowances' => 'nullable|numeric|min:0',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $allowances = $request->allowances ?? 0;
+
+        // Calculate net amount
+        $attendance = Attendance::updateOrCreate(
+            [
+                'crew_id' => $request->crew_id,
+                'attendance_date' => $request->attendance_date,
+            ],
+            [
+                'vehicle_moment_id' => $request->vehicle_moment_id,
+                'booking_id' => $request->booking_id,
+                'status' => 'present', // Default to present
+                'allowances' => $allowances,
+                'remarks' => $request->remarks,
+                'salary_amount' => $request->salary_amount ?? 0,
+                'bonus' => $request->bonus ?? 0,
+                'deduction' => $request->deduction ?? 0,
+                'net_amount' => ($request->salary_amount ?? 0) + ($request->bonus ?? 0) - ($request->deduction ?? 0) + $allowances,
+            ]
+        );
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'attendance' => $attendance,
+                'message' => 'Allowance added successfully!'
+            ]);
+        }
+
+        return redirect()->route('admin.attendance.index')
+            ->with('success', 'Allowance/Bhatta added successfully.');
     }
 }

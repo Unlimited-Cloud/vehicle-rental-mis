@@ -42,6 +42,7 @@
             <th>Distance</th>
             <th>Images</th>
             <th>Incident</th>
+            <th>Status</th>
             <th width="120">Actions</th>
         </tr>
     </thead>
@@ -87,7 +88,7 @@
             
             <!-- Images -->
 <td>
-     @if($moment->start_image)
+                     @if($moment->start_image)
                         <button class="btn btn-sm btn-info image-btn"
                             data-src="{{ asset($moment->start_image) }}"
                             data-title="Start Image"
@@ -119,6 +120,17 @@
                     </span>
                 @endif
             </td>
+            <td class="text-center">
+    @if($moment->end_datetime)
+        <span class="badge bg-success">
+            <i class="fas fa-check"></i> Completed
+        </span>
+    @else
+        <span class="badge bg-danger">
+            <i class="fas fa-times"></i> Not Completed
+        </span>
+    @endif
+</td>
             
             <!-- Actions -->
             <td>
@@ -135,14 +147,17 @@
                         <a class="dropdown-item" href="{{ route('admin.vehicle_moments.edit', $moment->id) }}">
                             <i class="fas fa-edit text-primary mr-2"></i> Edit
                         </a>
+                        <a class="dropdown-item" href="{{ route('admin.attendance.createAllowance', ['vehicle_moment_id' => $moment->id]) }}">
+                            <i class="fas fa-money-bill-wave text-success mr-2"></i> Add Bhatta/Allowance
+                        </a>
 
-                        <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'vat']) }}" download>
+                        {{-- <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'vat']) }}" download>
                             <i class="fas fa-file-invoice text-success mr-2"></i> VAT Receipt
                         </a>
 
                         <a class="dropdown-item" href="{{ route('admin.vehicle_receipt.generate', [$moment->id,'non_vat']) }}" download>
                             <i class="fas fa-file text-secondary mr-2"></i> Non VAT Receipt
-                        </a>
+                        </a> --}}
 
                         <div class="dropdown-divider"></div>
 

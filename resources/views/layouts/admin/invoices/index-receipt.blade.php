@@ -31,7 +31,16 @@
                     <label>Select File Number</label>
                     <select id="file_no_select" class="form-control">
                         <option value="">-- Select File Number --</option>
-                        @php $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no') ->distinct() ->orderBy('file_no', 'desc') ->pluck('file_no'); @endphp
+                          @php
+                            $usedFileNos = \App\Models\VehicleReceipt::whereNotNull('file_no')
+                                ->pluck('file_no');
+
+                            $fileNumbers = \App\Models\VehicleBooking::whereNotNull('file_no')
+                                ->whereNotIn('file_no', $usedFileNos)
+                                ->distinct()
+                                ->orderBy('file_no', 'desc')
+                                ->pluck('file_no');
+                        @endphp
                         @foreach($fileNumbers as $fileNo)
                             <option value="{{ $fileNo }}">{{ $fileNo }}</option>
                         @endforeach
@@ -140,17 +149,20 @@
             
             <a href="{{ asset($receipt->pdf_path) }}" 
                class="btn btn-sm btn-info" 
-               title="View" 
+               title="View Invoice Details" 
                target="_blank">
                 <i class="fas fa-eye"></i>
             </a>
 
+
+       @if(!$receipt->receipt_path || !file_exists(public_path($receipt->receipt_path)))
             @if($receipt->file_no)
-            <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
-                class="btn btn-sm btn-warning" title="Regenerate">
-                <i class="fas fa-sync"></i> 
-            </button>
+                <button type="button" onclick="regenerateByFileNo('{{ $receipt->file_no }}')"
+                    class="btn btn-sm btn-warning" title="Generate">
+                    <i class="fas fa-sync"></i>
+                </button>
             @endif
+        @endif
         @else
             <span class="badge badge-danger">File Missing</span>
             
@@ -169,6 +181,11 @@
                title="Download Receipt" 
                target="_blank">
                 <i class="fas fa-download"></i> Receipt
+            </a>
+            <a href="{{ route('admin.vehicle_receipt.details', $receipt->id) }}" 
+            class="btn btn-sm btn-success" 
+            title="View Receipt Details">
+                <i class="fas fa-eye"></i>
             </a>
         @else
             <button class="btn btn-sm btn-success"
