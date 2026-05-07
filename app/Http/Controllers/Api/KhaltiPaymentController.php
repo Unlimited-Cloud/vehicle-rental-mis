@@ -77,9 +77,11 @@ class KhaltiPaymentController extends Controller
 
         $payment = KhaltiPayment::where('pidx', $request->pidx)->firstOrFail();
 
+        $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+
         $response = Http::withHeaders([
-            'Authorization' => 'key ' . env('KHALTI_KEY'),
-        ])->post(env('KHALTI_API_URL') . 'epayment/lookup/', [
+            'Authorization' => 'key ' . $khaltiKey,
+        ])->post(env('KHALTI_API_URL') ?? "https://dev.khalti.com/api/v2/" . 'epayment/lookup/', [
             'pidx' => $request->pidx
         ]);
 
@@ -91,12 +93,16 @@ class KhaltiPaymentController extends Controller
 
             if ($data['status'] === 'Completed') {
 
+                $fees = isset($data['fee']) ? $data['fee'] / 100 : 0;
+                $amount = isset($data['total_amount']) ? $data['total_amount'] / 100 : 0;
+                $total_amount = $amount + $fees;
+
                 // Update payment
                 $payment->update([
                     'status' => 'Completed',
                     'txn_id' => $data['transaction_id'] ?? null,
-                    'total_amount' => isset($data['total_amount']) ? $data['total_amount'] / 100 : null,
-                    'fees' => isset($data['fee']) ? $data['fee'] / 100 : null,
+                    'total_amount' => $total_amount,
+                    'fees' => $fees,
                 ]);
 
                 // Update booking
@@ -235,13 +241,16 @@ class KhaltiPaymentController extends Controller
             ];
             Log::info('Initiating Khalti payment with payload: ', $payload);
 
-            $url = env('KHALTI_API_URL') . 'epayment/initiate/';
+            $url = env('KHALTI_API_URL') ?? "https://dev.khalti.com/api/v2/" . 'epayment/initiate/';
+            
             Log::info('Initiating Khalti payment with payload: ', ['url' => $url, 'payload' => $payload]);
 
             // dd($url, $payload);
 
+            $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+
             $response = Http::withHeaders([
-                'Authorization' => 'key ' . env('KHALTI_KEY'),
+                'Authorization' => 'key ' . $khaltiKey,
             ])->post(
                 $url,
                 $payload
@@ -285,7 +294,11 @@ class KhaltiPaymentController extends Controller
                 'payment_url' => $data['payment_url']
             ]);
         } catch (\Exception $e) {
-
+            Log::error("KhaltiPaymentController initiateAttendancePayment error",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
+            ]);
             DB::rollBack();
 
             return response()->json([
