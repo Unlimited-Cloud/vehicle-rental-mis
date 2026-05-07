@@ -211,7 +211,7 @@
                         <td>Rs. {{ ($attendance->allowances) }}</td>
                         
                        <td>
-                            @if(optional($attendance->khaltiPayment)->status === 'Completed')
+                            @if(($attendance->payment_status) === 'paid')
                                 <span class="badge badge-success">
                                     Paid
                                 </span>
