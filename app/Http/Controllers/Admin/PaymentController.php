@@ -186,7 +186,7 @@ class PaymentController extends Controller
             // update attendance
             $attendance->update([
                 'payment_status' => 'paid',
-                'payment_remarks' => 'Manual Payment',
+                'payment_remarks' => 'Manual Payment(Cash)',
             ]);
         });
 

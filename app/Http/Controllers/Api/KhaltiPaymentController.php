@@ -212,7 +212,7 @@ class KhaltiPaymentController extends Controller
                 ], 422);
             }
 
-            $merchantTransactionId = 'ATT-' . strtoupper(Str::random(10));
+            $merchantTransactionId = 'ATTK-' . strtoupper(Str::random(10));
 
             // Create payment record
             $payment = Payment::create([
@@ -225,7 +225,7 @@ class KhaltiPaymentController extends Controller
                 'payment_date' => now(),
                 'status' => 'pending',
                 'created_by' => Auth::id(),
-                'notes' => 'Attendance allowance payment'
+                'notes' => 'Attendance allowance payment via Khalti'
             ]);
 
             $payload = [
