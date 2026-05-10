@@ -641,6 +641,14 @@ class UserRepository implements UserRepositoryInterface
         ->get();
     }
 
+    public function getUserByCustomerIdAndUserType($customerId,$userType){
+        return User::where('customer_id',$customerId)
+        ->where('users.user_type','customer_app')->latest()
+        ->select('users.*','roles.name as rolename')
+        ->leftJoin('roles','roles.id','=','users.role_id')
+        ->first();
+    }
+
     public function getCrewProfileByUserId($userId)
     {
         return CrewProfile::where('user_id', $userId)->first();
