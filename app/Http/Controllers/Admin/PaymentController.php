@@ -150,8 +150,10 @@ class PaymentController extends Controller
     public function payManualAttendance(Request $request)
     {
         $request->validate([
-            'attendance_id' => 'required|exists:attendance,id'
+            'attendance_id' => 'required|exists:attendance,id',
+            'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
+
 
         $attendance = Attendance::with('crew.user')->findOrFail($request->attendance_id);
 
@@ -169,6 +171,27 @@ class PaymentController extends Controller
 
         DB::transaction(function () use ($attendance, $request) {
 
+            $proofPath = null;
+            if ($request->hasFile('proof')) {
+
+                $file = $request->file('proof');
+
+                $filename = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+
+                $destinationPath = public_path('uploads/paymentproof');
+
+                // create folder if not exists
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0777, true);
+                }
+
+                $file->move($destinationPath, $filename);
+
+                // path saved in DB
+                $proofPath = 'uploads/paymentproof/' . $filename;
+            }
+
+
             // create payment record
             Payment::create([
                 'attendance_id' => $attendance->id,
@@ -179,6 +202,7 @@ class PaymentController extends Controller
                 'transaction_reference' => 'MANUAL-' . strtoupper(Str::random(8)),
                 'payment_date' => now(),
                 'payment_type' => "attendance",
+                'proof' => $proofPath,
                 'status' => 'completed',
                 'created_by' => Auth::id(),
             ]);

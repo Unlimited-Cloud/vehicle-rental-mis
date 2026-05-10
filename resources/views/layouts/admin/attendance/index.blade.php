@@ -230,9 +230,14 @@
                                     ESewa
                                 </button> --}}
                                 <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
-                                    onclick="payManual({{ $attendance->id }})">
+                                    onclick="selectProof({{ $attendance->id }})">
                                     <i class="fas fa-money-bill mr-2"></i> Manual Paid(Cash)
                                 </button>
+                                <input type="file"
+                                    id="proofInput-{{ $attendance->id }}"
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    style="display:none"
+                                    onchange="payManual({{ $attendance->id }})">
                             @endif
                         </td>
                         <td> {{ ($attendance->payment_remarks) }}</td>
@@ -1285,8 +1290,18 @@ function payByKhalti(attendanceId) {
 }
 
 
+function selectProof(attendanceId) {
 
-function payManual(attendanceId) {
+    if (confirm("Do you want to upload payment proof?")) {
+        $("#proofInput-" + attendanceId).click();
+    } else {
+        payManual(attendanceId, false);
+    }
+}
+
+
+
+function payManual(attendanceId, fromFile = true) {
 
     if (!confirm("Mark this attendance as manually paid?")) {
         return;
@@ -1297,13 +1312,24 @@ function payManual(attendanceId) {
     btn.prop("disabled", true);
     btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Processing...');
 
+    let formData = new FormData();
+
+    formData.append('attendance_id', attendanceId);
+    formData.append('_token', "{{ csrf_token() }}");
+
+    // append proof file if selected
+    let fileInput = $("#proofInput-" + attendanceId)[0];
+
+    if (fromFile && fileInput.files.length > 0) {
+        formData.append('proof', fileInput.files[0]);
+    }
+
     $.ajax({
         url: "{{ route('admin.attendance.manual.pay') }}",
         type: "POST",
-        data: {
-            attendance_id: attendanceId,
-            _token: "{{ csrf_token() }}"
-        },
+        data: formData,
+        processData: false,
+        contentType: false,
 
         success: function(response) {
 
@@ -1323,10 +1349,9 @@ function payManual(attendanceId) {
 
     function resetButton() {
         btn.prop("disabled", false);
-        btn.html('<i class="fas fa-credit-card mr-2"></i> Pay Manual');
+        btn.html('<i class="fas fa-money-bill mr-2"></i> Manual Paid(Cash)');
     }
 }
-
 
 
 function payByEsewa(attendanceId) {
