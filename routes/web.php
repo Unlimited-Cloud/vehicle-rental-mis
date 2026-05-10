@@ -40,6 +40,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
+use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 
 Route::get('/', function () {
@@ -260,5 +261,16 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             '/manual/pay',
             [PaymentController::class, 'payManualAttendance']
         )->name('attendance.manual.pay');
+
+
+        Route::post(
+            '/attendance/esewa/initiate',
+            [EsewaPaymentController::class, 'generateAttendanceSignature']
+        )->name('attendance.esewa.initiate');
+
+        Route::get(
+            '/esewa/success',
+            [EsewaPaymentController::class, 'success']
+        )->name('esewa.success');
     });
 });

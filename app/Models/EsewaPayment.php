@@ -11,11 +11,25 @@ class EsewaPayment extends Model
         'amount',
         'status',
         'booking_id',
-        'esewa_response'
+        'esewa_response',
+        'attendance_id',
+        'crew_id',
+        'payment_type',
+        'payment_id'
     ];
 
     public function booking()
     {
         return $this->belongsTo(VehicleBooking::class, 'booking_id');
+    }
+
+    public function attendance()
+    {
+        return $this->belongsTo(Attendance::class, 'attendance_id');
+    }
+
+    public function crew()
+    {
+        return $this->belongsTo(CrewProfile::class, 'crew_id');
     }
 }
