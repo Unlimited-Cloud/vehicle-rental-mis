@@ -6,23 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\User;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
 use App\Utilities\VehicleRentalUtilities;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CustomerService
 {
     protected $customerRepository;
+    protected $userRepository;
     /**
      * Create a new class instance.
      */
     public function __construct(
-        CustomerRepositoryInterface $customerRepository
+        CustomerRepositoryInterface $customerRepository,
+        UserRepositoryInterface $userRepository
     ) {
         $this->customerRepository = $customerRepository;
+        $this->userRepository = $userRepository;
     }
 
     public function saveCustomer($request){
@@ -135,6 +140,133 @@ class CustomerService
         }
     }
 
+    public function updateProfile($request){
+        try{
+            $validator = Validator::make($request->all(), [
+                'customer_uuid' => 'nullable|exists:customers,customer_uuid',
+                'first_name' => 'required_if:customerType,individual|string',
+                'last_name'  => 'required_if:customerType,individual|string',
+                'institutionName'  => 'required_if:customerType,institution|string',
+                'email' => [
+                    'required',
+                    'email',
+                    Rule::unique('customers', 'email')
+                        ->ignore($request->customer_uuid, 'customer_uuid'),
+                ],
+                'mobileNumber' => [
+                    'required',
+                    Rule::unique('customers', 'phone')->ignore($request->customer_uuid, 'customer_uuid'),
+                ],
+                'password' => [
+                    'required',
+                    'string',
+                    'min:12', // at least 12 characters
+                    'regex:/[A-Z]/', // at least 1 capital letter
+                    'regex:/[!@#$%^&*(),.?":{}|<>]/', // at least 1 special character
+                    'max:255',
+                ],
+                'country_id' => 'nullable|exists:countries,id',
+                'district_id' => 'nullable|exists:district,id',
+                'vdc_id' => 'nullable|exists:vdc,id',
+            ]);
+
+            if ($validator->fails()) {
+                return array(
+                    'status' => 'error',
+                    'message' => $validator->errors(),
+                    'data' => '', 
+                    'statusCode' => 422
+                );
+            }
+
+            $customer_uuid = $request->customer_uuid;
+
+            $updated_at = now();
+
+            $updateData = [
+                'customer_uuid' => $customer_uuid,
+                'email' => $request->email,
+                'mobile_number_country_code' => $request->mobileNumberCountryCode,
+                'phone' => $request->mobileNumber,
+                'address' => $request->address,
+                'country_id' => $request->country_id,
+                'district_id' => $request->district_id,
+                'vdc_id' => $request->vdc_id,
+                'city' => $request->city,
+                'state' => $request->state,
+                'pan_number' => $request->pan_number,
+                'status' => 1,
+                'password' => Hash::make($request->password),
+                'updated_at' => $updated_at,
+            ];
+
+            $customer = $this->customerRepository->getCustomerByUuid($customer_uuid);
+
+            if($customer->customer_type == 'institution'){
+                $updateData['name'] = $request->institutionName;
+                $updateData['license_number'] = $request->licenseNumber;
+                $updateData['license_expiry'] = VehicleRentalUtilities::covertDateToYmd($request->licenseExpiry);
+            }else{
+                $updateData['first_name'] = $request->firstName;
+                $updateData['middle_name'] = $request->middleName;
+                $updateData['last_name'] = $request->lastName;
+                $updateData['name'] = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name);
+            }
+            
+            Customer::where('customer_uuid',$customer_uuid)->update($updateData);
+
+            $customerId = $customer->id;
+
+            $customerUser = $this->userRepository->getUserByCustomerIdAndUserType($customerId,'customer_app');
+
+            $userData = [
+                'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'user_type' => 'customer_app',
+                'customer_id' => $customerId,
+                'created_at' => now()
+            ];
+
+            if($customerUser){
+                $user = User::where('id',$customerUser->id)->create($userData);
+                $userId = $customerUser->id;
+            }else{
+                $user = User::create($userData);
+                $userId = $user->id;
+            }
+
+            $customerUpdate = array(
+                'author_type' => 'customer_app',
+                'author_id' => $userId
+            );
+            $customer->update($customerUpdate);
+
+            return array(
+                'status' => 'success',
+                'message' => 'Customer Updated Successfully!',
+                'data' => [
+                    'customerId' => $customer_uuid,
+                    "updated_at" => $customer->updated_at
+                        ->timezone('Asia/Kathmandu')
+                        ->format('Y-m-d H:i:s'),
+                ], 
+                'statusCode' => 200
+            );
+        }catch ( \Exception $e){
+            Log::error("CustomerService updateProfile error",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
+            ]);
+            return array(
+                'status' => 'error',
+                'message' => 'Internal Server Error',
+                'data' => '', 
+                'statusCode' => 500
+            );
+        }
+    }
     public function getProfileByUuid($uuid){
         try{
             $customerDetail = $this->customerRepository->getCustomerByUuid($uuid);

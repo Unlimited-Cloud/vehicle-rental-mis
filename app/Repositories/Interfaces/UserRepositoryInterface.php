@@ -60,4 +60,5 @@ interface UserRepositoryInterface
     public function getUsers();
     public function getUsersByCustomerId($customerId);
     public function getCrewProfileByUserId($userId);
+    public function getUserByCustomerIdAndUserType($customerId,$userType);
 }

@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('customer')->group(function () {
         Route::controller(CustomerController::class)->group(function () {
             Route::post('/register', 'register');
+            Route::post('/update-profile', 'updateProfile');
             Route::post('/logout', 'logout');
             Route::get('/profile/{customerUuid}', 'getProfileByUuid');
             Route::post('/forgot-password',  'forgotPassword');
