@@ -220,7 +220,7 @@
                 <select name="status" class="form-control">
                     <option value="">All Status</option>
                     <option value="Completed" {{ request('status') == 'Completed' ? 'selected' : '' }}>Completed</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed (Khalti)</option>
+                    <option value="Complete" {{ request('status') == 'Complete' ? 'selected' : '' }}>Completed (Esewa)</option>
                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>Failed</option>
                 </select>
