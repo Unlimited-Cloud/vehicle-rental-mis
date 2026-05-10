@@ -32,6 +32,12 @@ class CustomerController extends Controller
         return VehicleRentalUtilities::jsonResponse($data);
     }
 
+    public function updateProfile(Request $request)
+    {
+        $data = $this->customerService->updateProfile($request);
+        return VehicleRentalUtilities::jsonResponse($data);
+    }
+
     public function getProfileByUuid($uuid)
     {
         $data = $this->customerService->getProfileByUuid($uuid);
