@@ -18,7 +18,9 @@ class Attendance extends Model
         'deduction',
         'status',
         'remarks',
-        'allowances'
+        'allowances',
+        'payment_status',
+        'payment_remarks'
     ];
 
     protected $casts = [
@@ -41,6 +43,11 @@ class Attendance extends Model
     public function crew()
     {
         return $this->belongsTo(CrewProfile::class);
+    }
+
+    public function khaltiPayment()
+    {
+        return $this->hasOne(KhaltiPayment::class, 'attendance_id');
     }
 
     public function getStatusBadgeAttribute()

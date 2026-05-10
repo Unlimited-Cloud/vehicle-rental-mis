@@ -88,4 +88,19 @@ class VehicleBooking extends Model
     {
         return $this->hasMany(VehicleReceipt::class, 'file_no', 'file_no');
     }
+
+    public function khaltiPayments()
+    {
+        return $this->hasMany(KhaltiPayment::class, 'booking_id');
+    }
+
+    public function latestKhaltiPayment()
+    {
+        return $this->hasOne(KhaltiPayment::class, 'booking_id')->latest();
+    }
+
+    public function esewaPayments()
+    {
+        return $this->hasMany(EsewaPayment::class, 'booking_id');
+    }
 }

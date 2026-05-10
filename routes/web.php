@@ -37,8 +37,10 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
+use App\Http\Controllers\Api\KhaltiPaymentController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -200,6 +202,10 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
             Route::get('/export-client-report', [ReportController::class, 'exportClientReport'])->name('export-client');
         });
+
+        Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{method}/{id}', [PaymentController::class, 'show'])->name('payments.show');
+        Route::delete('/payments/{method}/{id}', [PaymentController::class, 'destroy'])->name('payments.destroy');
     });
 
     Route::middleware(['auth'])->group(function () {
@@ -239,5 +245,20 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
                 Route::get('/recent', 'getRecentEvents')->name('events.recent');
             });
         });
+
+        Route::post(
+            '/attendance/khalti/initiate',
+            [KhaltiPaymentController::class, 'initiateAttendancePayment']
+        )->name('attendance.khalti.initiate');
+
+        Route::get(
+            '/khalti/confirm',
+            [KhaltiPaymentController::class, 'confirmPayment']
+        )->name('khalti.confirm');
+
+        Route::post(
+            '/manual/pay',
+            [PaymentController::class, 'payManualAttendance']
+        )->name('attendance.manual.pay');
     });
 });
