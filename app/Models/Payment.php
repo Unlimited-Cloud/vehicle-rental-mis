@@ -20,6 +20,7 @@ class Payment extends Model
         'crew_id',
         'attendance_id',
         'payment_type',
+        'proof'
     ];
 
     public function vehiclepayment()
