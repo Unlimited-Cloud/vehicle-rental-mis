@@ -61,18 +61,6 @@ class VehicleMomentService
             // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
 
-            if (
-                !empty($vehicleMoment->booking_id) &&
-                !empty($vehicleMoment->end_datetime)
-            ) {
-                DB::table('vehicle_bookings')
-                    ->where('id', $vehicleMoment->booking_id)
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => now(),
-                    ]);
-            }
-
             //  NEW: Sync with booking if changed
             if (!empty($data['booking_id'])) {
 
@@ -110,6 +98,19 @@ class VehicleMomentService
                             ->update($updateData);
                     }
                 }
+            }
+
+
+            if (
+                !empty($vehicleMoment->booking_id) &&
+                !empty($vehicleMoment->end_datetime)
+            ) {
+                DB::table('vehicle_bookings')
+                    ->where('id', $vehicleMoment->booking_id)
+                    ->update([
+                        'status' => 'completed',
+                        'updated_at' => now(),
+                    ]);
             }
 
             // $this->storeAttendance($vehicleMoment, $data);
@@ -167,6 +168,12 @@ class VehicleMomentService
                 $data['incident_image'] = $this->uploadImage($data['incident_image'], 'incident');
             }
 
+
+
+            // Update vehicle moment
+            $vehicleMoment->update($data);
+
+
             if (
                 !empty($vehicleMoment->booking_id) &&
                 !empty($vehicleMoment->end_datetime)
@@ -179,11 +186,11 @@ class VehicleMomentService
                     ]);
             }
 
-            // Update vehicle moment
-            $vehicleMoment->update($data);
-            DB::table('attendance')
-                ->where('vehicle_moment_id', $id)
-                ->delete();
+            $vehicleMoment->refresh();
+
+            // DB::table('attendance')
+            //     ->where('vehicle_moment_id', $id)
+            //     ->delete();
             // $this->storeAttendance($vehicleMoment, $data);
 
             // Update questionnaire answers if present
