@@ -157,14 +157,6 @@ class CustomerService
                     'required',
                     Rule::unique('customers', 'phone')->ignore($request->customer_uuid, 'customer_uuid'),
                 ],
-                'password' => [
-                    'required',
-                    'string',
-                    'min:12', // at least 12 characters
-                    'regex:/[A-Z]/', // at least 1 capital letter
-                    'regex:/[!@#$%^&*(),.?":{}|<>]/', // at least 1 special character
-                    'max:255',
-                ],
                 'country_id' => 'nullable|exists:countries,id',
                 'district_id' => 'nullable|exists:district,id',
                 'vdc_id' => 'nullable|exists:vdc,id',
@@ -196,7 +188,6 @@ class CustomerService
                 'state' => $request->state,
                 'pan_number' => $request->pan_number,
                 'status' => 1,
-                'password' => Hash::make($request->password),
                 'updated_at' => $updated_at,
             ];
 
@@ -222,7 +213,6 @@ class CustomerService
             $userData = [
                 'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
                 'user_type' => 'customer_app',
                 'customer_id' => $customerId,
                 'created_at' => now()
