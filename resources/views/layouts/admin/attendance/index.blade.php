@@ -231,13 +231,8 @@
                                 </button> --}}
                                 <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
                                     onclick="selectProof({{ $attendance->id }})">
-                                    <i class="fas fa-money-bill mr-2"></i> Manual Paid(Cash)
+                                    <i class="fas fa-money-bill mr-2"></i> Cash Payment
                                 </button>
-                                <input type="file"
-                                    id="proofInput-{{ $attendance->id }}"
-                                    accept=".jpg,.jpeg,.png,.pdf"
-                                    style="display:none"
-                                    onchange="payManual({{ $attendance->id }})">
                             @endif
                         </td>
                         <td> {{ ($attendance->payment_remarks) }}</td>
@@ -1290,68 +1285,141 @@ function payByKhalti(attendanceId) {
 }
 
 
-function selectProof(attendanceId) {
+// Replace the existing selectProof, payManual functions with these updated versions:
 
-    if (confirm("Do you want to upload payment proof?")) {
-        $("#proofInput-" + attendanceId).click();
-    } else {
-        payManual(attendanceId, false);
-    }
+function selectProof(attendanceId) {
+    // Open modal for manual payment
+    showManualPaymentModal(attendanceId);
 }
 
-
-
-function payManual(attendanceId, fromFile = true) {
-
-    if (!confirm("Mark this attendance as manually paid?")) {
-        return;
+function showManualPaymentModal(attendanceId) {
+    // Remove existing modal if any
+    if ($('#manualPaymentModal').length) {
+        $('#manualPaymentModal').remove();
     }
+    
+    let modalHtml = `
+        <div class="modal fade" id="manualPaymentModal" tabindex="-1" role="dialog" aria-labelledby="manualPaymentModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title" id="manualPaymentModalLabel">
+                            <i class="fas fa-money-bill-wave mr-2"></i> Manual Payment (Cash)
+                        </h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <form id="manualPaymentForm" enctype="multipart/form-data">
+                        <div class="modal-body">
+                            <input type="hidden" name="attendance_id" value="${attendanceId}">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            
+                            <!-- Optional File Upload -->
+                            <div class="form-group">
+                                <label for="paymentProof">
+                                    <i class="fas fa-paperclip mr-1"></i> Payment Proof (Optional)
+                                </label>
+                                <div class="custom-file">
+                                    <input type="file" 
+                                           class="custom-file-input" 
+                                           id="paymentProof" 
+                                           name="proof" 
+                                           accept=".jpg,.jpeg,.png,.pdf">
+                                    <label class="custom-file-label" for="paymentProof">Choose file...</label>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Upload receipt, screenshot, or any payment proof (JPG, PNG, PDF)
+                                </small>
+                            </div>
+                            
+                            
+                            
+                            <!-- Confirmation Notice -->
+                            <div class="alert alert-info mt-3" role="alert">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                By clicking "Confirm Payment", you confirm that the payment has been made and received.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                <i class="fas fa-times mr-1"></i> Cancel
+                            </button>
+                            <button type="submit" class="btn btn-success" id="confirmPaymentBtn">
+                                <i class="fas fa-check-circle mr-1"></i> Confirm Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('body').append(modalHtml);
+    
+    // Initialize custom file input
+    $('#paymentProof').on('change', function() {
+        let fileName = $(this).val().split('\\').pop();
+        if (fileName) {
+            $(this).next('.custom-file-label').html(fileName);
+        } else {
+            $(this).next('.custom-file-label').html('Choose file...');
+        }
+    });
+    
+    // Handle form submission
+    $('#manualPaymentForm').on('submit', function(e) {
+        e.preventDefault();
+        processManualPayment(attendanceId);
+    });
+    
+    // Show modal
+    $('#manualPaymentModal').modal('show');
+}
 
-    let btn = $("#manualBtn-" + attendanceId);
-
+function processManualPayment(attendanceId) {
+    let btn = $("#confirmPaymentBtn");
+    let formData = new FormData($('#manualPaymentForm')[0]);
+    
     btn.prop("disabled", true);
     btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Processing...');
-
-    let formData = new FormData();
-
-    formData.append('attendance_id', attendanceId);
-    formData.append('_token', "{{ csrf_token() }}");
-
-    // append proof file if selected
-    let fileInput = $("#proofInput-" + attendanceId)[0];
-
-    if (fromFile && fileInput.files.length > 0) {
-        formData.append('proof', fileInput.files[0]);
-    }
-
+    
     $.ajax({
         url: "{{ route('admin.attendance.manual.pay') }}",
         type: "POST",
         data: formData,
         processData: false,
         contentType: false,
-
+        
         success: function(response) {
-
             if (response.success) {
-                window.location.href = response.payment_url;
+                $('#manualPaymentModal').modal('hide');
+                toastr.success('Payment marked as successful!');
+                
+                // Reload the page or update the UI
+                setTimeout(function() {
+                    window.location.reload();
+                }, 1500);
             } else {
-                toastr.error(response.message);
+                toastr.error(response.message || 'Payment processing failed');
                 resetButton();
             }
         },
-
+        
         error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Payment initiation failed');
+            let errorMsg = xhr.responseJSON?.message || 'Payment processing failed';
+            toastr.error(errorMsg);
             resetButton();
         }
     });
-
+    
     function resetButton() {
         btn.prop("disabled", false);
-        btn.html('<i class="fas fa-money-bill mr-2"></i> Manual Paid(Cash)');
+        btn.html('<i class="fas fa-check-circle mr-1"></i> Confirm Payment');
     }
 }
+
+
 
 
 function payByEsewa(attendanceId) {
