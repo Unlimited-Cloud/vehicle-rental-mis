@@ -219,8 +219,14 @@
             <tbody id="bookingTableBody">
                 @forelse($bookings as $i => $booking)
                     @php
-                        $statusColor = $booking->status == 'confirmed' ? '#28a745' : 
-                                      ($booking->status == 'pending' ? '#ffc107' : '#dc3545');
+                       $statusColors = [
+                            'confirmed' => '#28a745',
+                            'pending'   => '#ffc107',
+                            'completed' => '#17a2b8',
+                            'cancelled' => '#dc3545',
+                        ];
+
+                        $statusColor = $statusColors[$booking->status] ?? '#6c757d';
                         $fileNo = $booking->file_no ?? 'N/A';
                         $passengerName = $booking->passenger_name ?? ($booking->customer->name ?? 'N/A');
                     @endphp
