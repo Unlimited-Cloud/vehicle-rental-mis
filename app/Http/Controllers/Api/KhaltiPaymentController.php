@@ -223,7 +223,6 @@ class KhaltiPaymentController extends Controller
                 ]
             ];
 
-
             $url = rtrim(
                 env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/'),
                 '/'
