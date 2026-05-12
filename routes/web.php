@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AgentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\VehicleController;
@@ -37,6 +38,7 @@ use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CouponController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
@@ -192,6 +194,8 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('brand', BrandController::class);
         Route::resource('banner', BannerController::class);
         Route::resource('splashscreen', SplashScreenController::class);
+        Route::resource('faq', FaqController::class);
+        Route::resource('agents', AgentController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
         Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])

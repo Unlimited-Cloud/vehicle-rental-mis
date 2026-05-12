@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Models\Faq;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
@@ -152,5 +153,25 @@ class VehicleController extends Controller
         return response()->json(
             $query->paginate($pageSize)
         );
+    }
+
+
+
+    public function faq()
+    {
+        $faqs = Faq::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->latest()
+            ->get([
+                'id',
+                'question',
+                'answer',
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FAQ list fetched successfully',
+            'data' => $faqs
+        ]);
     }
 }
