@@ -33,7 +33,9 @@ class VehicleReceipt extends Model
         'bank_account',
         'remarks',
         'paid',
-        'invoice_due_date'
+        'invoice_due_date',
+        'wallet_type',
+        'wallet_number'
     ];
 
     // In VehicleReceipt.php model

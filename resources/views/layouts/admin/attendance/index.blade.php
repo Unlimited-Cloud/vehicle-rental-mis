@@ -20,11 +20,11 @@
             </button>
             @endif
 
-            @if(auth()->user()->can('create_attendance'))
+            {{-- @if(auth()->user()->can('create_attendance'))
             <button class="btn btn-primary btn-sm" onclick="openCreateAttendance()">
                 <i class="fa fa-plus"></i> Mark Attendance
             </button>
-            @endif
+            @endif --}}
 
             @if(auth()->user()->can('export_attendance'))
             <a id="exportBtn"
