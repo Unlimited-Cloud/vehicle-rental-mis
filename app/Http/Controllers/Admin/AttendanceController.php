@@ -440,14 +440,20 @@ class AttendanceController extends Controller
 
         // Get crew_id from vehicle_moment
         $crewId = $vehicleMoment->driver_id;
+        $helperId = $vehicleMoment->helper_id;
 
         // Check if attendance already exists for today
+        // Check if attendance already exists for today
         $today = Carbon::now()->format('Y-m-d');
-        $existingAttendance = Attendance::where('crew_id', $crewId)
+        $existingDriverAttendance = Attendance::where('crew_id', $crewId)
             ->where('attendance_date', $today)
             ->first();
 
-        return view('layouts.admin.attendance.allowance_form', compact('vehicleMoment', 'crewId', 'today', 'existingAttendance'));
+        $existingHelperAttendance = $helperId ? Attendance::where('crew_id', $helperId)
+            ->where('attendance_date', $today)
+            ->first() : null;
+
+        return view('layouts.admin.attendance.allowance_form', compact('vehicleMoment', 'crewId', 'helperId', 'today', 'existingDriverAttendance', 'existingHelperAttendance'));
     }
 
     public function storeAllowance(Request $request)
@@ -455,43 +461,74 @@ class AttendanceController extends Controller
         Gate::authorize('create_attendance');
 
         $request->validate([
-            'crew_id' => 'required|exists:crew_profiles,id',
+            'driver_id' => 'required|exists:crew_profiles,id',
+            'driver_allowance' => 'nullable|numeric|min:0',
+            'helper_id' => 'nullable|exists:crew_profiles,id',
+            'helper_allowance' => 'nullable|numeric|min:0',
             'vehicle_moment_id' => 'required|exists:vehicle_moments,id',
             'attendance_date' => 'required|date',
-            'allowances' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string',
         ]);
 
-        $allowances = $request->allowances ?? 0;
+        $attendanceRecords = [];
 
-        // Calculate net amount
-        $attendance = Attendance::updateOrCreate(
-            [
-                'crew_id' => $request->crew_id,
-                'attendance_date' => $request->attendance_date,
-            ],
-            [
-                'vehicle_moment_id' => $request->vehicle_moment_id,
-                'booking_id' => $request->booking_id,
-                'status' => 'present', // Default to present
-                'allowances' => $allowances,
-                'remarks' => $request->remarks,
-                'salary_amount' => $request->salary_amount ?? 0,
-                'bonus' => $request->bonus ?? 0,
-                'deduction' => $request->deduction ?? 0,
-                'net_amount' => ($request->salary_amount ?? 0) + ($request->bonus ?? 0) - ($request->deduction ?? 0) + $allowances,
-            ]
-        );
+        // Store driver allowance
+        $driverAllowance = $request->driver_allowance ?? 0;
+        if ($driverAllowance > 0 || $request->driver_id) {
+            $driverAttendance = Attendance::updateOrCreate(
+                [
+                    'crew_id' => $request->driver_id,
+                    'attendance_date' => $request->attendance_date,
+                ],
+                [
+                    'helper_id' => null,
+                    'vehicle_moment_id' => $request->vehicle_moment_id,
+                    'booking_id' => $request->booking_id,
+                    'status' => 'present',
+                    'allowances' => $driverAllowance,
+                    'remarks' => $request->remarks . ' (Driver)',
+                    'salary_amount' => $request->driver_salary_amount ?? 0,
+                    'bonus' => $request->driver_bonus ?? 0,
+                    'deduction' => $request->driver_deduction ?? 0,
+                    'net_amount' => ($request->driver_salary_amount ?? 0) + ($request->driver_bonus ?? 0) - ($request->driver_deduction ?? 0) + $driverAllowance,
+                ]
+            );
+            $attendanceRecords[] = $driverAttendance;
+        }
+
+        // Store helper allowance
+        $helperAllowance = $request->helper_allowance ?? 0;
+        if ($request->helper_id && ($helperAllowance > 0 || $request->helper_id)) {
+            $helperAttendance = Attendance::updateOrCreate(
+                [
+                    'crew_id' => $request->helper_id,
+                    'attendance_date' => $request->attendance_date,
+                ],
+                [
+                    'helper_id' => null,
+                    'vehicle_moment_id' => $request->vehicle_moment_id,
+                    'booking_id' => $request->booking_id,
+                    'status' => 'present',
+                    'allowances' => $helperAllowance,
+                    'remarks' => $request->remarks . ' (Helper)',
+                    'salary_amount' => $request->helper_salary_amount ?? 0,
+                    'bonus' => $request->helper_bonus ?? 0,
+                    'deduction' => $request->helper_deduction ?? 0,
+                    'net_amount' => ($request->helper_salary_amount ?? 0) + ($request->helper_bonus ?? 0) - ($request->helper_deduction ?? 0) + $helperAllowance,
+                ]
+            );
+            $attendanceRecords[] = $helperAttendance;
+        }
 
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'attendance' => $attendance,
-                'message' => 'Allowance added successfully!'
+                'attendance' => $attendanceRecords,
+                'message' => 'Allowances added successfully!'
             ]);
         }
 
         return redirect()->route('admin.attendance.index')
-            ->with('success', 'Allowance/Bhatta added successfully.');
+            ->with('success', 'Allowances/Bhatta added successfully.');
     }
 }

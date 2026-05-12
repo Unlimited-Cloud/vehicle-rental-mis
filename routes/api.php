@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
 
@@ -103,11 +104,21 @@ Route::middleware('auth:sanctum')->group(function () {
         '/booking/khalti/initiate',
         [KhaltiPaymentController::class, 'initiatePayment']
     )->name('booking.khalti.initiate');
+
+    Route::post(
+        '/booking/esewa/initiate',
+        [EsewaPaymentController::class, 'generateSignature']
+    )->name('booking.esewa.initiate');
 });
 Route::get(
     '/khalti/confirm',
     [KhaltiPaymentController::class, 'confirmPayment']
 )->name('khalti.confirm');
+
+Route::get(
+    '/esewa/success',
+    [EsewaPaymentController::class, 'success']
+)->name('esewa.success');
 
 Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
 

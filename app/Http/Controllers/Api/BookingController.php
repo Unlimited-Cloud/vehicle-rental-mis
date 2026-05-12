@@ -259,6 +259,9 @@ class BookingController extends Controller
                 $startDateTime->format('Ymd') . '-' .
                 strtoupper(Str::random(4));
 
+
+
+
             //  Create booking
             $booking = VehicleBooking::create([
                 'customer_id' => $customerId,
@@ -291,8 +294,9 @@ class BookingController extends Controller
                 'file_no' => $file_no ?? null,
             ]);
 
+
+
             //  Generate Proforma
-            // $this->service->createProforma($booking);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response

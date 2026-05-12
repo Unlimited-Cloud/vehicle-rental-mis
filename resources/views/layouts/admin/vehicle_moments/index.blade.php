@@ -34,14 +34,13 @@
     <thead class="bg-primary text-white">
         <tr>
             <th width="50">SN</th>
+            <th>File No</th>
+            <th>Booking Start Date</th>
+            <th>Movement Start Date</th>
             <th>Vehicle</th>
             <th>Driver</th>
             <th>Helper</th>
             <th>Start KM</th>
-            <th>End KM</th>
-            <th>Distance</th>
-            <th>Images</th>
-            <th>Incident</th>
             <th>Status</th>
             <th width="120">Actions</th>
         </tr>
@@ -50,8 +49,9 @@
         @foreach($moments as $moment)
         <tr>
             <td>{{ $loop->iteration }}</td>
-            
-            
+            <td>{{ $moment->file_no }}</td>
+            <td>{{ $moment->start_date }}</td>
+            <td>{{ $moment->start_datetime }}</td>
             <!-- Vehicle -->
             <td>
                 <strong>{{ $moment->vehicle_name }}</strong>
@@ -75,41 +75,10 @@
             <td>
                 <span class="badge badge-info">{{ number_format($moment->start_km) }} km</span>
             </td>
-            
-            <!-- End KM -->
-            <td>
-                <span class="badge badge-warning">{{ number_format($moment->end_km) }} km</span>
-            </td>
-            
-            <!-- Distance -->
-            <td>
-                <span class="badge badge-success">{{ number_format($moment->end_km - $moment->start_km) }} km</span>
-            </td>
-            
-            <!-- Images -->
-<td>
-                     @if($moment->start_image)
-                        <button class="btn btn-sm btn-info image-btn"
-                            data-src="{{ asset($moment->start_image) }}"
-                            data-title="Start Image"
-                            data-file="{{ basename($moment->start_image) }}">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    @endif
-
-                    <!-- END -->
-                    @if($moment->end_image)
-                        <button class="btn btn-sm btn-warning image-btn"
-                            data-src="{{ asset($moment->end_image) }}"
-                            data-title="End Image"
-                            data-file="{{ basename($moment->end_image) }}">
-                            <i class="fas fa-stop"></i>
-                        </button>
-                    @endif
-</td>
+        
             
             <!-- Incident -->
-            <td class="text-center">
+            {{-- <td class="text-center">
                 @if($moment->has_incident)
                     <span class="badge bg-danger" data-toggle="tooltip" title="{{ $moment->incident_report }}">
                         <i class="fas fa-exclamation-triangle"></i> Yes
@@ -119,7 +88,7 @@
                         <i class="fas fa-check-circle"></i> No
                     </span>
                 @endif
-            </td>
+            </td> --}}
             <td class="text-center">
     @if($moment->end_datetime)
         <span class="badge bg-success">
