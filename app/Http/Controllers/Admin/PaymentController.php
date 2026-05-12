@@ -152,6 +152,7 @@ class PaymentController extends Controller
         $request->validate([
             'attendance_id' => 'required|exists:attendance,id',
             'proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'notes' => 'nullable',
         ]);
 
 
@@ -203,6 +204,7 @@ class PaymentController extends Controller
                 'payment_date' => now(),
                 'payment_type' => "attendance",
                 'proof' => $proofPath,
+                'notes' => $request->notes,
                 'status' => 'completed',
                 'created_by' => Auth::id(),
             ]);
