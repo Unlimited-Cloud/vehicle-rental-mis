@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
 
 Route::get('/user', function (Request $request) {
@@ -96,7 +97,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
+
+    Route::post(
+        '/booking/khalti/initiate',
+        [KhaltiPaymentController::class, 'initiatePayment']
+    )->name('booking.khalti.initiate');
 });
+Route::get(
+    '/khalti/confirm',
+    [KhaltiPaymentController::class, 'confirmPayment']
+)->name('khalti.confirm');
 
 Route::get('/splashscreens', [BookingController::class, 'splashscreens']);
 
@@ -111,3 +121,4 @@ Route::post('/estimate/regenerate', [BookingController::class, 'apiRegenerateEst
 
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
 Route::get('/basic-setup', [CustomerController::class, 'BasicSetup']);
+Route::get('/faq', [VehicleController::class, 'faq']);

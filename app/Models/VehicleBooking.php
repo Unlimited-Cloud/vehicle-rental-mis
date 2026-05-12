@@ -41,6 +41,7 @@ class VehicleBooking extends Model
         'vat',
         'passenger',
         'file_no',
+        'agent_code',
         'remaining_balance',
         'deleted_at',
         'deleted_by'
