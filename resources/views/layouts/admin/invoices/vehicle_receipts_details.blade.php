@@ -179,6 +179,8 @@
                                                 <span class="badge badge-info">Cheque</span>
                                             @elseif($receipt->payment_method == 'bank')
                                                 <span class="badge badge-primary">Bank Transfer</span>
+                                            @elseif($receipt->payment_method == 'wallet')
+                                                <span class="badge badge-primary">Wallet Transfer</span>
                                             @else
                                                 <span class="text-muted">Not specified</span>
                                             @endif
@@ -202,6 +204,17 @@
                                     <tr>
                                         <th>Bank Account:</th>
                                         <td>{{ $receipt->bank_account ?? 'N/A' }}</td>
+                                    </tr>
+                                    @endif
+
+                                    @if($receipt->payment_method == 'wallet')
+                                    <tr>
+                                        <th>Wallet Type:</th>
+                                        <td>{{ $receipt->wallet_type ?? 'N/A' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Wallet Number:</th>
+                                        <td>{{ $receipt->wallet_number ?? 'N/A' }}</td>
                                     </tr>
                                     @endif
                                     <tr>

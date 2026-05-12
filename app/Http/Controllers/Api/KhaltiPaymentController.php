@@ -10,6 +10,7 @@ use App\Models\KhaltiPayment;
 use App\Models\Payment;
 use App\Models\VehicleBooking;
 use App\Models\VehicleReceipt;
+use App\Services\ProformaService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -19,6 +20,13 @@ use Illuminate\Support\Facades\Log;
 
 class KhaltiPaymentController extends Controller
 {
+
+    protected $service;
+
+    public function __construct(ProformaService $service)
+    {
+        $this->service = $service;
+    }
 
     public function initiateAttendancePayment(Request $request)
     {
@@ -283,7 +291,7 @@ class KhaltiPaymentController extends Controller
 
             DB::rollBack();
 
-            Log::error("KhaltiPaymentController initiatePayment error",[
+            Log::error("KhaltiPaymentController initiatePayment error", [
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
@@ -386,19 +394,7 @@ class KhaltiPaymentController extends Controller
                     );
 
                     // Create Receipt
-                    VehicleReceipt::create([
-                        'vehicle_booking_id' => $booking->id,
-                        'vehicle_id' => $booking->vehicle_id,
-                        'customer_id' => $booking->customer_id,
-                        'total_amount' => $booking->total_amount,
-                        'rate_per_day' => $booking->rate_per_day,
-                        'tax' => $booking->tax ?? '0',
-                        'payment_method' => 'Khalti',
-                        'remarks' => 'Paid via Khalti',
-                        'paid' => 1,
-                        'receipt_number' => 'ASB-' . strtoupper(Str::random(6)),
-                        'file_no' => $booking->file_no
-                    ]);
+                    $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
                 }
             } else {
 
