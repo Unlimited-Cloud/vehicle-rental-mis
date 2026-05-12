@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 
 class EsewaPaymentController extends Controller
 {
@@ -81,10 +82,18 @@ class EsewaPaymentController extends Controller
 
     public function generateSignature(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'booking_id' => 'required|exists:vehicle_bookings,id',
             'customer_id' => 'required|exists:customers,customer_uuid'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $booking = VehicleBooking::find($request->booking_id);
 
