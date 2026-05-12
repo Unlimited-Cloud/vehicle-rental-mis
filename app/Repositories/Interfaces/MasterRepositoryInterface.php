@@ -17,4 +17,6 @@ interface MasterRepositoryInterface
     public function getPasscodeByEmailByUserId($email,$userId);
     public function getOtpByMobileNumberByUserId($mobileNumber,$userId);
     public function getAllOtps();
+    public function getStateById($id);
+    public function getStateByName($name);
 }

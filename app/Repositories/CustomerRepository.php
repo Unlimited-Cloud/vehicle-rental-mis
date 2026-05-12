@@ -28,6 +28,9 @@ class CustomerRepository implements CustomerRepositoryInterface
     public function getCustomerByUuid($uuid){
         $data = Customer::select(
             'customers.*',
+            'customers.country_id as customerCountryId',
+            'customers.district_id as customerDistrictId',
+            'customers.vdc_id as customerVdcId',
             'countries.name as countryname',
             'district.name as districtname',
             'vdc.name as vdcname',
