@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Repositories\Interfaces\CustomerRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Repositories\Interfaces\MasterRepositoryInterface;
 use App\Utilities\VehicleRentalUtilities;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -19,15 +20,19 @@ class CustomerService
 {
     protected $customerRepository;
     protected $userRepository;
+    protected $masterRepository;
+    
     /**
      * Create a new class instance.
      */
     public function __construct(
         CustomerRepositoryInterface $customerRepository,
-        UserRepositoryInterface $userRepository
+        UserRepositoryInterface $userRepository,
+        MasterRepositoryInterface $masterRepository
     ) {
         $this->customerRepository = $customerRepository;
         $this->userRepository = $userRepository;
+        $this->masterRepository = $masterRepository;
     }
 
     public function saveCustomer($request){
@@ -157,14 +162,6 @@ class CustomerService
                     'required',
                     Rule::unique('customers', 'phone')->ignore($request->customer_uuid, 'customer_uuid'),
                 ],
-                'password' => [
-                    'required',
-                    'string',
-                    'min:12', // at least 12 characters
-                    'regex:/[A-Z]/', // at least 1 capital letter
-                    'regex:/[!@#$%^&*(),.?":{}|<>]/', // at least 1 special character
-                    'max:255',
-                ],
                 'country_id' => 'nullable|exists:countries,id',
                 'district_id' => 'nullable|exists:district,id',
                 'vdc_id' => 'nullable|exists:vdc,id',
@@ -196,7 +193,6 @@ class CustomerService
                 'state' => $request->state,
                 'pan_number' => $request->pan_number,
                 'status' => 1,
-                'password' => Hash::make($request->password),
                 'updated_at' => $updated_at,
             ];
 
@@ -222,7 +218,6 @@ class CustomerService
             $userData = [
                 'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
                 'user_type' => 'customer_app',
                 'customer_id' => $customerId,
                 'created_at' => now()
@@ -278,17 +273,43 @@ class CustomerService
                     'statusCode' => 422
                 );
             }
+
+            $stateId = $stateName = null;
+            
+            $state = $customerDetail->state;
+            if(is_numeric($state)){
+                $stateDetail = $this->masterRepository->getStateById($state);
+                if($stateDetail){
+                    $stateId = $stateDetail->id;
+                    $stateName = $stateDetail->pname;
+                }
+            }else{
+                $stateDetail = $this->masterRepository->getStateByName($state);
+                if($stateDetail){
+                    $stateId = $stateDetail->id;
+                    $stateName = $stateDetail->pname;
+                } 
+            }
+            
             $details = [
                 'id' => $customerDetail->customer_uuid,
                 'customer_type' => $customerDetail->customer_type,
                 'name' => $customerDetail->name,
+                'first_name' => $customerDetail->first_name,
+                'middle_name' => $customerDetail->middle_name,
+                'last_name' => $customerDetail->last_name,
                 'email' => $customerDetail->email,
+                'mobile_number_country_code' => $customerDetail->mobile_number_country_code,
                 'phone' => $customerDetail->phone,
+                'address' => $customerDetail->address,
                 'country' => $customerDetail->countryname,
-                'state' => $customerDetail->state,
+                'stateId' => $stateId,
+                'state' => $stateName,
                 'district' => $customerDetail->districtname,
                 'vdc' => $customerDetail->vdcname,
                 'profile_image' => asset($customerDetail->profile_image),
+                'district_id' => $customerDetail->customerDistrictId,
+                'vdc_id' => $customerDetail->customerVdcId,
             ];
             return array(
                 'status' => 'success',

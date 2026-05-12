@@ -4,46 +4,26 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\Customer;
 use App\Models\EsewaPayment;
 use App\Models\Payment;
+use App\Models\VehicleBooking;
 use App\Models\VehicleReceipt;
+use App\Services\ProformaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EsewaPaymentController extends Controller
 {
-    public function generateSignature(Request $request)
+    protected $service;
+
+    public function __construct(ProformaService $service)
     {
-        $request->validate([
-            'total_amount' => 'required|numeric',
-            'booking_id' => 'required|exists:vehicle_bookings,id'
-        ]);
-
-        $secret = env('ESEWA_SECRET');
-
-        $transaction_uuid = uniqid();
-
-        $data = "total_amount={$request->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
-
-        $hash = base64_encode(hash_hmac('sha256', $data, $secret, true));
-
-        // Save payment
-        EsewaPayment::create([
-            'transaction_uuid' => $transaction_uuid,
-            'amount' => $request->total_amount,
-            'status' => 'PENDING',
-            'booking_id' => $request->booking_id
-        ]);
-
-        return [
-            'signature' => $hash,
-            'transaction_uuid' => $transaction_uuid
-        ];
+        $this->service = $service;
     }
-
-
     public function generateAttendanceSignature(Request $request)
     {
         $request->validate([
@@ -99,10 +79,80 @@ class EsewaPaymentController extends Controller
         ]);
     }
 
+    public function generateSignature(Request $request)
+    {
+        $request->validate([
+            'booking_id' => 'required|exists:vehicle_bookings,id',
+            'customer_id' => 'required|exists:customers,customer_uuid'
+        ]);
+
+        $booking = VehicleBooking::find($request->booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found.'
+            ], 422);
+        }
+
+
+        $customers = Customer::where('customer_uuid', $request->customer_id)->first();
+
+        if (!$customers) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found.'
+            ], 422);
+        }
+        $secret = env('ESEWA_SECRET');
+
+        $transaction_uuid = uniqid();
+
+        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
+
+
+        // Create payment record
+        $payment = Payment::create([
+            'vehicle_booking_id' => $request->booking_id,
+            'amount' => $booking->total_amount,
+            'payment_method' => 'online',
+            'payment_type' => 'booking',
+            'payment_date' => now(),
+            'status' => 'pending',
+            'created_by' => $customers->id,
+            'created_user_type' => 'customer',
+            'notes' => 'Vehicle rental payment via Esewa'
+        ]);
+
+        $hash = base64_encode(hash_hmac('sha256', $data, $secret, true));
+
+        // Save payment
+        EsewaPayment::create([
+            'transaction_uuid' => $transaction_uuid,
+            'amount' => $booking->total_amount,
+            'status' => 'PENDING',
+            'booking_id' => $booking->id,
+            'payment_id' => $payment->id,
+            'payment_type' => 'booking',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'signature' => $hash,
+            'transaction_uuid' => $transaction_uuid,
+            'amount' => $booking->total_amount,
+            'success_url' => route('esewa.success'),
+            'failure_url' => '',
+        ]);
+    }
+
+
+
     public function success(Request $request)
     {
         $data = json_decode(base64_decode($request->data), true);
 
+        Log::info('Esewa Payment Response', $data);
         $payment = EsewaPayment::where('transaction_uuid', $data['transaction_uuid'])->first();
 
         if (!$payment) {
@@ -151,23 +201,29 @@ class EsewaPaymentController extends Controller
 
                 if ($data['status'] === 'COMPLETE') {
 
+                    $mainPayment = Payment::updateOrCreate(
+                        [
+                            'id' => $payment->payment_id
+                        ],
+                        [
+                            'vehicle_booking_id' => $payment->booking_id,
+                            'amount' => $payment->amount,
+                            'payment_method' => 'online',
+                            'payment_type' => 'booking',
+                            'notes' => 'Vehicle rental payment via Esewa',
+                            'transaction_reference' => $payment->transaction_uuid,
+                            'payment_date' => now(),
+                            'status' => 'completed',
+                        ]
+                    );
+
                     // Update booking
                     $booking->update([
                         'payment_status' => 1
                     ]);
 
-                    // Create receipt
-                    VehicleReceipt::create([
-                        'vehicle_booking_id' => $booking->id,
-                        'vehicle_id' => $booking->vehicle_id,
-                        'customer_id' => $booking->customer_id,
-                        'amount' => $payment->amount,
-                        'payment_method' => 'Esewa',
-                        'remarks' => 'Paid via Esewa',
-                        'paid' => 1,
-                        'receipt_number' => 'RCPT-' . strtoupper(Str::random(6)),
-                        'file_no' => $booking->file_no
-                    ]);
+                    // Create Receipt
+                    $this->service->finalizeReceipt($booking->file_no, 'wallet', "esewa", $booking->customer->name);
                 } else {
 
                     $booking->update([
@@ -188,13 +244,15 @@ class EsewaPaymentController extends Controller
                 $redirectUrl
                 ? redirect($redirectUrl)->with('success', 'Payment Successful')
                 : response()->json([
-                    'message' => 'Payment Successful'
-                ])
+                    'status' => 'success',
+                    'message' => 'Payment Successful',
+                ], 200)
             )
             : (
                 $redirectUrl
                 ? redirect($redirectUrl)->with('error', 'Payment Failed')
                 : response()->json([
+                    'status' => 'error',
                     'message' => 'Payment Failed'
                 ], 400)
             );

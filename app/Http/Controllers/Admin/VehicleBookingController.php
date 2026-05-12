@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\VehicleBooking;
@@ -308,6 +309,14 @@ class VehicleBookingController extends Controller
         $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
+
+        //generate invoice
+        if ($vehicleBooking->status === 'confirmed') {
+            $this->service->generateFinalInvoice($request->file_no);
+        }
+
+        $customers = Customer::where('id', $request->customer_id)->first();
+        event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');

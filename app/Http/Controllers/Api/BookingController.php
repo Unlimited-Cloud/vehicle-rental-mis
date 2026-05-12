@@ -30,6 +30,7 @@ use App\Models\Splashscreen;
 use App\Models\VDC;
 use App\Models\VehicleAssignment;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class BookingController extends Controller
 {
@@ -166,6 +167,7 @@ class BookingController extends Controller
                 'contact_person' => 'nullable|string',
                 'contact_email' => 'nullable|string',
                 'contact_number' => 'nullable|string',
+                'agent_code' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -246,6 +248,20 @@ class BookingController extends Controller
 
             $customers = Customer::where('customer_uuid', $request->customer_id)->first();
             $customerId = $customers->id;
+
+            $customerName = strtoupper(
+                preg_replace('/[^A-Za-z0-9]/', '', $customers->name)
+            );
+
+            $customerName = substr($customerName, 0, 5);
+            $file_no = 'FILE-' .
+                $customerName . '-' .
+                $startDateTime->format('Ymd') . '-' .
+                strtoupper(Str::random(4));
+
+
+
+
             //  Create booking
             $booking = VehicleBooking::create([
                 'customer_id' => $customerId,
@@ -274,11 +290,13 @@ class BookingController extends Controller
                 'contact_person' => $request->contact_person,
                 'contact_email' => $request->contact_email,
                 'contact_number' => $request->contact_number,
-
+                'agent_code' => $request->agent_code ?? null,
+                'file_no' => $file_no ?? null,
             ]);
 
+
+
             //  Generate Proforma
-            // $this->service->createProforma($booking);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response

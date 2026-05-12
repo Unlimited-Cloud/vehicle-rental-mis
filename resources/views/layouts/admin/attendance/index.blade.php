@@ -20,11 +20,11 @@
             </button>
             @endif
 
-            @if(auth()->user()->can('create_attendance'))
+            {{-- @if(auth()->user()->can('create_attendance'))
             <button class="btn btn-primary btn-sm" onclick="openCreateAttendance()">
                 <i class="fa fa-plus"></i> Mark Attendance
             </button>
-            @endif
+            @endif --}}
 
             @if(auth()->user()->can('export_attendance'))
             <a id="exportBtn"
@@ -655,6 +655,16 @@ async function loadNepaliDatesForTable() {
         }
     });
 }
+
+$(document).ready(function () {
+    let table = $('#dataTable').DataTable();
+    // Initial load
+    loadNepaliDatesForTable();
+    // 🔥 IMPORTANT: Run after every redraw
+    table.on('draw', function () {
+        loadNepaliDatesForTable();
+    });
+});
 
 function showTable() {
     $('#tableView').show();
@@ -1330,6 +1340,20 @@ function showManualPaymentModal(attendanceId) {
                                 </div>
                                 <small class="form-text text-muted">
                                     <i class="fas fa-info-circle"></i> Upload receipt, screenshot, or any payment proof (JPG, PNG, PDF)
+                                </small>
+                            </div>
+
+                             <div class="form-group">
+                                <label for="paymentRemarks">
+                                    <i class="fas fa-comment mr-1"></i> Remarks (Optional)
+                                </label>
+                                <textarea class="form-control" 
+                                          id="paymentRemarks" 
+                                          name="notes" 
+                                          rows="3" 
+                                          placeholder="Add any notes about this payment..."></textarea>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-edit"></i> e.g., Cash received from crew, payment date, etc.
                                 </small>
                             </div>
                             

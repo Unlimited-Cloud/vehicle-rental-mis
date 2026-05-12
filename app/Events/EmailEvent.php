@@ -69,7 +69,7 @@ class EmailEvent
                 $this->PersonalDetails = Customer::where('email', $email)->first();
             }
             //
-            if ($this->activity == 'create_booking') {
+            if ($this->activity == 'create_booking' || $this->activity == 'confirmed_booking') {
                 $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
                     ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
                     ->join('trip_routes', 'vehicle_bookings.trip_route_id', '=', 'trip_routes.id')
@@ -117,7 +117,7 @@ class EmailEvent
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }
                 $emailBody = VehicleRentalUtilities::searchForEmailVar($emailTemplateSend->success_email_content, $personalDetailsSend, $sendPasscode);
-                
+
                 $emailCc = $this->emailTemplates->email_cc;
             } else {
                 $emailTemplateId = $emailSubject = $emailBody = $emailCc = NULL;

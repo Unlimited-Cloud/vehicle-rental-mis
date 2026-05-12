@@ -9,6 +9,7 @@ use App\Models\Permission;
 use App\Models\ProformaInvoice;
 use App\Models\Passcode;
 use App\Models\Otp;
+use App\Models\Province;
 
 class MasterRepository implements MasterRepositoryInterface
 {
@@ -57,5 +58,13 @@ class MasterRepository implements MasterRepositoryInterface
 
     public function getAllOtps(){
         return Otp::get();
+    }
+
+    public function getStateById($id){
+        return Province::where('id',$id)->first();
+    }
+
+    public function getStateByName($name){
+        return Province::where('pname',$name)->first();
     }
 }
