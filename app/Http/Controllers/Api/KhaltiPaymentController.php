@@ -283,8 +283,10 @@ class KhaltiPaymentController extends Controller
 
             DB::rollBack();
 
-            Log::error('Khalti initiate payment failed', [
-                'error' => $e->getMessage()
+            Log::error("KhaltiPaymentController initiatePayment error",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
             ]);
 
             return response()->json([
