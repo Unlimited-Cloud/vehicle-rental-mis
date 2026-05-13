@@ -83,7 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //seaters
     Route::get('/seaters', [BookingController::class, 'seaters']);
-    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeater']);
+    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeaters']);
 
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
 

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Seater extends Model
 {
     protected $fillable = [
-        'name'
+        'name',
+        'logo'
     ];
 }

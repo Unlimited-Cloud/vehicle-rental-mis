@@ -80,12 +80,12 @@
     <option value="">Select Role</option>
 
     <option value="agent"
-        {{ old('role',$agent->role ?? '') == 'agent' ? 'selected' : '' }}>
+        {{ old('role', $agent->role ?? 'agent') == 'agent' ? 'selected' : '' }}>
         Agent
     </option>
 
     <option value="sub-agent"
-        {{ old('role',$agent->role ?? '') == 'sub-agent' ? 'selected' : '' }}>
+        {{ old('role', $agent->role ?? 'agent') == 'sub-agent' ? 'selected' : '' }}>
         Sub Agent
     </option>
 </select>
@@ -180,15 +180,21 @@
 </div>
 
 <div class="col-md-6">
-<div class="form-group">
-<label>Wallet Name</label>
+    <div class="form-group">
+        <label>Wallet Name</label>
 
-<input type="text"
-       name="wallet_name"
-       class="form-control"
-       placeholder="eSewa / Khalti"
-       value="{{ old('wallet_name',$agent->wallet_name ?? '') }}">
-</div>
+        <select name="wallet_name" class="form-control">
+            <option value="">Select Wallet</option>
+            <option value="eSewa"
+                {{ old('wallet_name', $agent->wallet_name ?? '') == 'eSewa' ? 'selected' : '' }}>
+                eSewa
+            </option>
+            <option value="Khalti"
+                {{ old('wallet_name', $agent->wallet_name ?? '') == 'Khalti' ? 'selected' : '' }}>
+                Khalti
+            </option>
+        </select>
+    </div>
 </div>
 
 <div class="col-md-6">
