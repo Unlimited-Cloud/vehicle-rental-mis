@@ -37,6 +37,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\SeaterController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -192,6 +193,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
+        Route::resource('seater', SeaterController::class);
         Route::resource('banner', BannerController::class);
         Route::resource('splashscreen', SplashScreenController::class);
         Route::resource('faq', FaqController::class);

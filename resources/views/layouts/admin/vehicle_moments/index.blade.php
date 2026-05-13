@@ -40,6 +40,7 @@
             <th>Vehicle</th>
             <th>Driver</th>
             <th>Helper</th>
+            {{-- <th>Total Amount</th> --}}
             <th>Start KM</th>
             <th>Status</th>
             <th width="120">Actions</th>
@@ -70,6 +71,11 @@
                     <span class="text-muted">N/A</span>
                 @endif
             </td>
+
+            <!-- Start KM -->
+            {{-- <td>
+                <span class="text-dark">Rs. {{ number_format($moment->total_amount) }}</span>
+            </td> --}}
             
             <!-- Start KM -->
             <td>
