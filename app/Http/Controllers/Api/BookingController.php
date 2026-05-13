@@ -26,6 +26,7 @@ use App\Models\EstimateBill;
 use App\Models\FuelType;
 use App\Models\ProformaInvoice;
 use App\Models\Province;
+use App\Models\Seater;
 use App\Models\Splashscreen;
 use App\Models\VDC;
 use App\Models\VehicleAssignment;
@@ -1022,6 +1023,64 @@ class BookingController extends Controller
 
 
 
+    public function seaters()
+    {
+        $seaters = Seater::select('id', 'name', 'logo')->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'logo' => $b->logo
+                        ? asset('uploads/seaters/' . $b->logo)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $seaters
+        ]);
+    }
+
+
+    public function vehiclesBySeaters(Request $request)
+    {
+        $request->validate([
+            'seater' => 'required'
+        ]);
+
+        // get seater
+        $seater = Seater::where('name', $request->seater)->first();
+
+        if (!$seater) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Seater not found'
+            ], 404);
+        }
+
+        // match with vehicle.brand (string)
+        $vehicles = Vehicle::whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
+            ->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this seater'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'seater_name' => $seater->name,
+            'logo' => $seater->logo ? asset('uploads/seaters/' . $seater->logo) : null,
+            'vehicles' => $vehicles
+        ]);
+    }
+
+
+
+
     public function transmission()
     {
         $transmission = FuelType::select('id', 'name', 'status')->where('status', 1)->get()
@@ -1075,34 +1134,34 @@ class BookingController extends Controller
     }
 
 
-    public function seaters()
-    {
-        $seaters = Vehicle::select('seater')
-            ->whereNotNull('seater')
-            ->distinct()
-            ->orderBy('seater')
-            ->get()
-            ->map(function ($s) {
+    // public function seaters()
+    // {
+    //     $seaters = Vehicle::select('seater')
+    //         ->whereNotNull('seater')
+    //         ->distinct()
+    //         ->orderBy('seater')
+    //         ->get()
+    //         ->map(function ($s) {
 
-                // get one random vehicle for this seater
-                $vehicle = Vehicle::where('seater', $s->seater)
-                    ->whereNotNull('image')
-                    ->inRandomOrder()
-                    ->first();
+    //             // get one random vehicle for this seater
+    //             $vehicle = Vehicle::where('seater', $s->seater)
+    //                 ->whereNotNull('image')
+    //                 ->inRandomOrder()
+    //                 ->first();
 
-                return [
-                    'seater' => $s->seater,
-                    'image' => $vehicle && $vehicle->image
-                        ? asset($vehicle->image)
-                        : null,
-                ];
-            });
+    //             return [
+    //                 'seater' => $s->seater,
+    //                 'image' => $vehicle && $vehicle->image
+    //                     ? asset($vehicle->image)
+    //                     : null,
+    //             ];
+    //         });
 
-        return response()->json([
-            'status' => true,
-            'data' => $seaters
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $seaters
+    //     ]);
+    // }
 
     public function vehiclesBySeater(Request $request)
     {
