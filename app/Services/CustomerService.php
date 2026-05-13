@@ -146,12 +146,13 @@ class CustomerService
     }
 
     public function updateProfile($request){
+        Log::info("update profile body",["payload" => $request->all()]);
         try{
             $validator = Validator::make($request->all(), [
                 'customer_uuid' => 'nullable|exists:customers,customer_uuid',
                 'first_name' => 'required_if:customerType,individual|string',
                 'last_name'  => 'required_if:customerType,individual|string',
-                'institutionName'  => 'required_if:customerType,institution|string',
+                'institutionName'  => 'required_if:customerType,institution',
                 'email' => [
                     'required',
                     'email',
@@ -203,9 +204,9 @@ class CustomerService
                 $updateData['license_number'] = $request->licenseNumber;
                 $updateData['license_expiry'] = VehicleRentalUtilities::covertDateToYmd($request->licenseExpiry);
             }else{
-                $updateData['first_name'] = $request->firstName;
-                $updateData['middle_name'] = $request->middleName;
-                $updateData['last_name'] = $request->lastName;
+                $updateData['first_name'] = $request->first_name;
+                $updateData['middle_name'] = $request->middle_name;
+                $updateData['last_name'] = $request->last_name;
                 $updateData['name'] = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name);
             }
             
@@ -217,6 +218,7 @@ class CustomerService
 
             $userData = [
                 'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
+                'password' => $customer->password,
                 'email' => $request->email,
                 'user_type' => 'customer_app',
                 'customer_id' => $customerId,

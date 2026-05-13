@@ -268,9 +268,16 @@ class CustomerController extends Controller
     {
         $customer = Customer::where('customer_uuid', $id)->first();
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ],422);
+        }
 
         // Delete old image
         if ($customer->profile_image && file_exists(public_path($customer->profile_image))) {
