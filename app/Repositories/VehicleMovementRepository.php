@@ -43,6 +43,7 @@ class VehicleMovementRepository implements VehicleMovementRepositoryInterface
             'vb.start_date',
             'vb.end_date',
             'vb.file_no',
+            'vb.total_amount',
         ])
             ->leftJoin('vehicle_bookings as vb', 'vb.id', '=', 'vehicle_moments.booking_id')
             ->leftJoin('vehicles as v', 'v.id', '=', 'vb.vehicle_id')
@@ -82,6 +83,8 @@ class VehicleMovementRepository implements VehicleMovementRepositoryInterface
             'c.name as customer_name',
             'vb.start_date',
             'vb.end_date',
+            'vb.file_no',
+            'vb.total_amount',
         ])
             ->leftJoin('vehicle_bookings as vb', 'vb.id', '=', 'vehicle_moments.booking_id')
             ->leftJoin('vehicles as v', 'v.id', '=', 'vb.vehicle_id')
