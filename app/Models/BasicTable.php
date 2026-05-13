@@ -13,5 +13,6 @@ class BasicTable extends Model
         'login_logo',
         'company_name',
         'footer_text',
+        'tds'
     ];
 }
