@@ -34,7 +34,7 @@ class SeaterController extends Controller
         if ($request->hasFile('logo')) {
             $logo = $request->file('logo');
             $logoName = time() . '.' . $logo->getClientOriginalExtension();
-            $logo->move(public_path('uploads/brands'), $logoName);
+            $logo->move(public_path('uploads/seaters'), $logoName);
         }
 
         Seater::create([
