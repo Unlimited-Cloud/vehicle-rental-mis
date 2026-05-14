@@ -13,5 +13,9 @@ class BasicTable extends Model
         'login_logo',
         'company_name',
         'footer_text',
+        'terms_and_conditions',
+        'privacy_policy',
+        'about_us',
+        'contact_us',
     ];
 }

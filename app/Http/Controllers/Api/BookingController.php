@@ -32,6 +32,8 @@ use App\Models\VDC;
 use App\Models\VehicleAssignment;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use App\Models\BasicTable;
 
 class BookingController extends Controller
 {
@@ -1499,5 +1501,58 @@ class BookingController extends Controller
         });
 
         return response()->json($bookings);
+    }
+
+
+    public function getBasicSetting(Request $request)
+    {
+        $field = $request->query('field');
+        $basic = BasicTable::first();
+        if (!$basic) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No data found.'
+            ], 404);
+        }
+
+        $imageFields = [
+            'login_logo',
+            'logo',
+        ];
+
+        if (!$field) {
+
+            $data = $basic->toArray();
+
+            foreach ($imageFields as $imgField) {
+                if (!empty($data[$imgField])) {
+                    $data[$imgField] = asset($data[$imgField]);
+                }
+            }
+
+            return response()->json([
+                'status' => true,
+                'data' => $data
+            ]);
+        }
+
+        // Check if field exists in table
+        if (!Schema::hasColumn('basic_tables', $field)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid field name.'
+            ], 400);
+        }
+
+        $value = $basic->$field;
+        if (in_array($field, $imageFields) && !empty($value)) {
+            $value = asset($value);
+        }
+
+        return response()->json([
+            'status' => true,
+            'field' => $field,
+            'value' => $basic->$field
+        ]);
     }
 }
