@@ -132,7 +132,12 @@
     </div>
 </div>
 
-<!-- Privacy Policy -->
+
+@php
+    $privacyPreview = Str::limit(strip_tags($item->privacy_policy), 180);
+    $termsPreview = Str::limit(strip_tags($item->terms_and_conditions), 180);
+@endphp
+
 <div class="col-md-6">
     <div class="card card-info card-outline">
         <div class="card-header">
@@ -142,18 +147,17 @@
         </div>
 
         <div class="card-body">
-            @if(!empty($item->privacy_policy))
-                <a href="{{ $item->privacy_policy }}" target="_blank" class="btn btn-primary btn-sm">
-                    Open Privacy Policy
-                </a>
-            @else
-                <p class="text-muted">N/A</p>
-            @endif
+            <p class="text-muted">
+                {{ $privacyPreview ?? 'N/A' }}
+            </p>
+
+            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#privacyModal">
+                View Full
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Terms & Conditions -->
 <div class="col-md-6">
     <div class="card card-danger card-outline">
         <div class="card-header">
@@ -163,19 +167,50 @@
         </div>
 
         <div class="card-body">
-            @if(!empty($item->terms_and_conditions))
-                <a href="{{ $item->terms_and_conditions }}" target="_blank" class="btn btn-primary btn-sm">
-                    Open Terms & Conditions
-                </a>
-            @else
-                <p class="text-muted">N/A</p>
-            @endif
+            <p class="text-muted">
+                {{ $termsPreview ?? 'N/A' }}
+            </p>
+
+            <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#termsModal">
+                View Full
+            </button>
         </div>
     </div>
 </div>
 
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Privacy Policy</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                {!! $item->privacy_policy !!}
+            </div>
+
+        </div>
+    </div>
 </div>
 
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Terms & Conditions</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                {!! $item->terms_and_conditions !!}
+            </div>
+
+        </div>
+    </div>
+</div>
 <!-- Action Buttons -->
 <div class="row mt-3">
     <div class="col-12 text-right">
