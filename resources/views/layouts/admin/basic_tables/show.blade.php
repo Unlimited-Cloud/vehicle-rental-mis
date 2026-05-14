@@ -93,6 +93,87 @@
         </div>
     </div>
 
+    <!-- Content Sections -->
+<!-- About Us -->
+<div class="col-md-6">
+    <div class="card card-success card-outline">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-info-circle"></i> About Us
+            </h3>
+        </div>
+
+        <div class="card-body">
+            @if(!empty($item->about_us))
+                {!! $item->about_us !!}
+            @else
+                <p class="text-muted">N/A</p>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Contact Us -->
+<div class="col-md-6">
+    <div class="card card-warning card-outline">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-phone"></i> Contact Us
+            </h3>
+        </div>
+
+        <div class="card-body">
+            @if(!empty($item->contact_us))
+                {!! $item->contact_us !!}
+            @else
+                <p class="text-muted">N/A</p>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Policy -->
+<div class="col-md-6">
+    <div class="card card-info card-outline">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-user-shield"></i> Privacy Policy
+            </h3>
+        </div>
+
+        <div class="card-body">
+            @if(!empty($item->privacy_policy))
+                <a href="{{ $item->privacy_policy }}" target="_blank" class="btn btn-primary btn-sm">
+                    Open Privacy Policy
+                </a>
+            @else
+                <p class="text-muted">N/A</p>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Terms & Conditions -->
+<div class="col-md-6">
+    <div class="card card-danger card-outline">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-file-contract"></i> Terms & Conditions
+            </h3>
+        </div>
+
+        <div class="card-body">
+            @if(!empty($item->terms_and_conditions))
+                <a href="{{ $item->terms_and_conditions }}" target="_blank" class="btn btn-primary btn-sm">
+                    Open Terms & Conditions
+                </a>
+            @else
+                <p class="text-muted">N/A</p>
+            @endif
+        </div>
+    </div>
+</div>
+
 </div>
 
 <!-- Action Buttons -->

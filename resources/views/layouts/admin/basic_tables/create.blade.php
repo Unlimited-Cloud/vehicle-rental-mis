@@ -93,8 +93,7 @@ value="{{ old('company_name',$item->company_name ?? '') }}">
     <div class="col-md-6">
         <div class="form-group">
             <label>Privacy Policy</label>
-            <input type="text" name="privacy_policy" class="form-control"
-                value="{{ old('privacy_policy', $item->privacy_policy ?? '') }}">
+            <textarea name="privacy_policy" class="form-control ckeditor" rows="5">{{ old('privacy_policy', $item->privacy_policy ?? '') }}</textarea>
         </div>
     </div>
 
@@ -102,8 +101,7 @@ value="{{ old('company_name',$item->company_name ?? '') }}">
     <div class="col-md-6">
         <div class="form-group">
             <label>Terms and Conditions</label>
-            <input type="text" name="terms_and_conditions" class="form-control"
-                value="{{ old('terms_and_conditions', $item->terms_and_conditions ?? '') }}">
+            <textarea name="terms_and_conditions" class="form-control ckeditor" rows="5">{{ old('terms_and_conditions', $item->terms_and_conditions ?? '') }}</textarea>
         </div>
     </div>
 
