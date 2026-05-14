@@ -29,6 +29,10 @@ class BasicTableController extends Controller
             'login_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'company_name' => 'nullable|string',
             'footer_text' => 'nullable|string',
+            'terms_and_conditions' => 'nullable|string',
+            'privacy_policy' => 'nullable|string',
+            'about_us' => 'nullable|string',
+            'contact_us' => 'nullable|string',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -72,8 +76,13 @@ class BasicTableController extends Controller
 
         $data = $request->validate([
             'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'login_logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'company_name' => 'nullable|string',
             'footer_text' => 'nullable|string',
+            'terms_and_conditions' => 'nullable|string',
+            'privacy_policy' => 'nullable|string',
+            'about_us' => 'nullable|string',
+            'contact_us' => 'nullable|string',
         ]);
 
         if ($request->hasFile('logo')) {

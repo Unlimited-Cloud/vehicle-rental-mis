@@ -99,6 +99,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
+    Route::get('basic-setting', [BookingController::class, 'getBasicSetting']);
+
+
 
     Route::post(
         '/booking/khalti/initiate',
