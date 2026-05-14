@@ -101,8 +101,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
     Route::get('basic-setting', [BookingController::class, 'getBasicSetting']);
 
-
-
+    Route::get(
+        '/vehicles/{vehicle_id}/insurance-download',
+        [VehicleController::class, 'downloadInsuranceDocument']
+    );
     Route::post(
         '/booking/khalti/initiate',
         [KhaltiPaymentController::class, 'initiatePayment']

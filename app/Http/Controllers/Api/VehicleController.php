@@ -9,6 +9,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\File;
 
 class VehicleController extends Controller
 {
@@ -173,5 +174,37 @@ class VehicleController extends Controller
             'message' => 'FAQ list fetched successfully',
             'data' => $faqs
         ]);
+    }
+
+    public function downloadInsuranceDocument($vehicle_id)
+    {
+        $vehicle = Vehicle::where('id', $vehicle_id)->first();
+
+        if (!$vehicle) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vehicle not found.'
+            ], 404);
+        }
+
+        if (empty($vehicle->insurance_policy_document)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Insurance document not found.'
+            ], 404);
+        }
+
+        $path = public_path($vehicle->insurance_policy_document);
+
+        if (!File::exists($path)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'File does not exist.'
+            ], 404);
+        }
+
+        $fileName = basename($path);
+
+        return response()->download($path, $fileName);
     }
 }
