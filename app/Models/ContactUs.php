@@ -19,6 +19,8 @@ class ContactUs extends Model
         'whatsapp_number',
         'twitter_url',
         'youtube_url',
+        'address',
+        'website_url',
         'subject',
         'message',
         'status'

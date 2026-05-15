@@ -47,6 +47,14 @@ value="{{ old('mobile_number',$contact->mobile_number ?? '') }}" required>
 
 <div class="col-md-6">
 <div class="form-group">
+<label>Address *</label>
+<input type="text" name="address" class="form-control"
+value="{{ old('address',$contact->address ?? '') }}" required>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="form-group">
 <label>WhatsApp Number</label>
 <input type="text" name="whatsapp_number" class="form-control"
 value="{{ old('whatsapp_number',$contact->whatsapp_number ?? '') }}">
@@ -98,6 +106,14 @@ value="{{ old('twitter_url',$contact->twitter_url ?? '') }}">
 <label>YouTube URL</label>
 <input type="url" name="youtube_url" class="form-control"
 value="{{ old('youtube_url',$contact->youtube_url ?? '') }}">
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="form-group">
+<label>Website URL</label>
+<input type="url" name="website_url" class="form-control"
+value="{{ old('website_url',$contact->website_url ?? '') }}">
 </div>
 </div>
 
