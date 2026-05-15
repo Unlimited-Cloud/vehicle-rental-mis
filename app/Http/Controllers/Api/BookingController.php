@@ -34,6 +34,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
+use App\Models\ContactUs;
 
 class BookingController extends Controller
 {
@@ -1553,6 +1554,36 @@ class BookingController extends Controller
             'status' => true,
             'field' => $field,
             'value' => $basic->$field
+        ]);
+    }
+
+
+    public function contactus()
+    {
+        $contact = ContactUs::where('status', 'active')->first();
+
+        if (!$contact) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active contact found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $contact->id,
+                'full_name' => $contact->full_name,
+                'email' => $contact->email,
+                'mobile_number' => $contact->mobile_number,
+                'whatsapp_number' => $contact->whatsapp_number,
+                'facebook_url' => $contact->facebook_url,
+                'instagram_url' => $contact->instagram_url,
+                'linkedin_url' => $contact->linkedin_url,
+                'tiktok_url' => $contact->tiktok_url,
+                'twitter_url' => $contact->twitter_url,
+                'youtube_url' => $contact->youtube_url
+            ]
         ]);
     }
 }

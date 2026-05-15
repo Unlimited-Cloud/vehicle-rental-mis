@@ -80,11 +80,11 @@ value="{{ old('company_name',$item->company_name ?? '') }}">
 
 
 <!-- Contact Us -->
-<div class="col-md-12">
+{{-- <div class="col-md-12">
 <div class="form-group">
 <label>Contact Us</label>
 <textarea name="contact_us" class="form-control ckeditor" rows="5">{{ old('contact_us',$item->contact_us ?? '') }}</textarea>
-</div>
+</div> --}}
 
 
 <div class="row">

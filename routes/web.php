@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
+use App\Http\Controllers\Admin\ContactUsController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -195,6 +196,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('brand', BrandController::class);
         Route::resource('seater', SeaterController::class);
         Route::resource('banner', BannerController::class);
+        Route::resource('contact-us', ContactUsController::class);
         Route::resource('splashscreen', SplashScreenController::class);
         Route::resource('faq', FaqController::class);
         Route::resource('agents', AgentController::class);
