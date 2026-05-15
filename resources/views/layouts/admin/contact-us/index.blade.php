@@ -28,6 +28,7 @@
     <th>Full Name</th>
     <th>Email</th>
     <th>Mobile Number</th>
+    <th>Address</th>
     <th>WhatsApp</th>
     <th>Status</th>
     <th>Actions</th>
@@ -46,6 +47,8 @@
 
     <td>{{ $c->mobile_number }}</td>
 
+    <td>{{ $c->address }}</td>
+
     <td>{{ $c->whatsapp_number ?? 'N/A' }}</td>
 
     <td>
@@ -63,10 +66,10 @@
             <i class="fas fa-edit"></i>
         </a>
 
-        {{-- <a href="{{ route('admin.contact-us.show', $c->id) }}"
+        <a href="{{ route('admin.contact-us.show', $c->id) }}"
            class="btn btn-info btn-sm">
             <i class="fas fa-eye"></i>
-        </a> --}}
+        </a>
 
         <form action="{{ route('admin.contact-us.destroy', $c->id) }}"
               method="POST"

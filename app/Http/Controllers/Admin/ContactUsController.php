@@ -41,6 +41,8 @@ class ContactUsController extends Controller
             'whatsapp_number' => 'nullable',
             'subject' => 'nullable',
             'message' => 'nullable',
+            'address' => 'nullable',
+            'website_url' => 'nullable|url',
         ]);
 
         ContactUs::create([
@@ -57,6 +59,8 @@ class ContactUsController extends Controller
             'subject' => $request->subject,
             'message' => $request->message,
             'status' => $request->status ?? 'active',
+            'address' => $request->address,
+            'website_url' => $request->website_url,
         ]);
 
         return redirect()->route('admin.contact-us.index')
@@ -103,6 +107,8 @@ class ContactUsController extends Controller
             'whatsapp_number' => 'nullable',
             'subject' => 'nullable',
             'message' => 'nullable',
+            'address' => 'nullable',
+            'website_url' => 'nullable|url',
         ]);
 
         $contact->update([
@@ -119,6 +125,8 @@ class ContactUsController extends Controller
             'subject' => $request->subject,
             'message' => $request->message,
             'status' => $request->status ?? 'active',
+            'address' => $request->address,
+            'website_url' => $request->website_url,
         ]);
 
         return redirect()->route('admin.contact-us.index')
