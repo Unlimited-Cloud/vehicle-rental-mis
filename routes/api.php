@@ -139,3 +139,4 @@ Route::post('/estimate/regenerate', [BookingController::class, 'apiRegenerateEst
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
 Route::get('/basic-setup', [CustomerController::class, 'BasicSetup']);
 Route::get('/faq', [VehicleController::class, 'faq']);
+Route::get('/contact-us', [BookingController::class, 'contactus']);
