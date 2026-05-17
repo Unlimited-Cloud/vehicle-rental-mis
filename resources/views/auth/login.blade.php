@@ -152,19 +152,6 @@
         <div class="card-body text-center">
 
             
-         @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
             @php
                use App\Helpers\MenuHelper;
                $basic = MenuHelper::showBasicSetup();
@@ -175,6 +162,13 @@
             @else
                <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> 
             @endif
+
+
+            @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+     @endif
 
             @if ($errors->any())
             <div class="alert alert-danger">
