@@ -26,11 +26,15 @@ use App\Models\EstimateBill;
 use App\Models\FuelType;
 use App\Models\ProformaInvoice;
 use App\Models\Province;
+use App\Models\Seater;
 use App\Models\Splashscreen;
 use App\Models\VDC;
 use App\Models\VehicleAssignment;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use App\Models\BasicTable;
+use App\Models\ContactUs;
 
 class BookingController extends Controller
 {
@@ -1022,6 +1026,64 @@ class BookingController extends Controller
 
 
 
+    public function seaters()
+    {
+        $seaters = Seater::select('id', 'name', 'logo')->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'logo' => $b->logo
+                        ? asset('uploads/seaters/' . $b->logo)
+                        : null,
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $seaters
+        ]);
+    }
+
+
+    public function vehiclesBySeaters(Request $request)
+    {
+        $request->validate([
+            'seater' => 'required'
+        ]);
+
+        // get seater
+        $seater = Seater::where('name', $request->seater)->first();
+
+        if (!$seater) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Seater not found'
+            ], 404);
+        }
+
+        // match with vehicle.brand (string)
+        $vehicles = Vehicle::whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
+            ->get();
+
+        if ($vehicles->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No vehicles found for this seater'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'seater_name' => $seater->name,
+            'logo' => $seater->logo ? asset('uploads/seaters/' . $seater->logo) : null,
+            'vehicles' => $vehicles
+        ]);
+    }
+
+
+
+
     public function transmission()
     {
         $transmission = FuelType::select('id', 'name', 'status')->where('status', 1)->get()
@@ -1075,34 +1137,34 @@ class BookingController extends Controller
     }
 
 
-    public function seaters()
-    {
-        $seaters = Vehicle::select('seater')
-            ->whereNotNull('seater')
-            ->distinct()
-            ->orderBy('seater')
-            ->get()
-            ->map(function ($s) {
+    // public function seaters()
+    // {
+    //     $seaters = Vehicle::select('seater')
+    //         ->whereNotNull('seater')
+    //         ->distinct()
+    //         ->orderBy('seater')
+    //         ->get()
+    //         ->map(function ($s) {
 
-                // get one random vehicle for this seater
-                $vehicle = Vehicle::where('seater', $s->seater)
-                    ->whereNotNull('image')
-                    ->inRandomOrder()
-                    ->first();
+    //             // get one random vehicle for this seater
+    //             $vehicle = Vehicle::where('seater', $s->seater)
+    //                 ->whereNotNull('image')
+    //                 ->inRandomOrder()
+    //                 ->first();
 
-                return [
-                    'seater' => $s->seater,
-                    'image' => $vehicle && $vehicle->image
-                        ? asset($vehicle->image)
-                        : null,
-                ];
-            });
+    //             return [
+    //                 'seater' => $s->seater,
+    //                 'image' => $vehicle && $vehicle->image
+    //                     ? asset($vehicle->image)
+    //                     : null,
+    //             ];
+    //         });
 
-        return response()->json([
-            'status' => true,
-            'data' => $seaters
-        ]);
-    }
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $seaters
+    //     ]);
+    // }
 
     public function vehiclesBySeater(Request $request)
     {
@@ -1440,5 +1502,88 @@ class BookingController extends Controller
         });
 
         return response()->json($bookings);
+    }
+
+
+    public function getBasicSetting(Request $request)
+    {
+        $field = $request->query('field');
+        $basic = BasicTable::first();
+        if (!$basic) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No data found.'
+            ], 404);
+        }
+
+        $imageFields = [
+            'login_logo',
+            'logo',
+        ];
+
+        if (!$field) {
+
+            $data = $basic->toArray();
+
+            foreach ($imageFields as $imgField) {
+                if (!empty($data[$imgField])) {
+                    $data[$imgField] = asset($data[$imgField]);
+                }
+            }
+
+            return response()->json([
+                'status' => true,
+                'data' => $data
+            ]);
+        }
+
+        // Check if field exists in table
+        if (!Schema::hasColumn('basic_tables', $field)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid field name.'
+            ], 400);
+        }
+
+        $value = $basic->$field;
+        if (in_array($field, $imageFields) && !empty($value)) {
+            $value = asset($value);
+        }
+
+        return response()->json([
+            'status' => true,
+            'field' => $field,
+            'value' => $basic->$field
+        ]);
+    }
+
+
+    public function contactus()
+    {
+        $contact = ContactUs::where('status', 'active')->first();
+
+        if (!$contact) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No active contact found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $contact->id,
+                'full_name' => $contact->full_name,
+                'email' => $contact->email,
+                'mobile_number' => $contact->mobile_number,
+                'whatsapp_number' => $contact->whatsapp_number,
+                'facebook_url' => $contact->facebook_url,
+                'instagram_url' => $contact->instagram_url,
+                'linkedin_url' => $contact->linkedin_url,
+                'tiktok_url' => $contact->tiktok_url,
+                'twitter_url' => $contact->twitter_url,
+                'youtube_url' => $contact->youtube_url
+            ]
+        ]);
     }
 }

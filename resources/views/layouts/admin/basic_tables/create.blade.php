@@ -52,17 +52,17 @@
 </div>
 
 
-@if(isset($item) && $item->login_logo)
+{{-- @if(isset($item) && $item->login_logo)
     <div class="mt-2">
         <img src="{{ asset($item->login_logo) }}" width="80">
     </div>
-@endif
-</div>
-</div>
+@endif --}}
+{{-- </div>
+</div> --}}
 
 
 <!-- Company Name -->
-<div class="col-md-6">
+<div class="col-md-12">
 <div class="form-group">
 <label>Company Name</label>
 <input type="text" name="company_name" class="form-control"
@@ -70,6 +70,42 @@ value="{{ old('company_name',$item->company_name ?? '') }}">
 </div>
 </div>
 
+<!-- About  us -->
+<div class="col-md-12">
+<div class="form-group">
+<label>About Us</label>
+<textarea name="about_us" class="form-control ckeditor" rows="5">{{ old('about_us',$item->about_us ?? '') }}</textarea>
+</div>
+</div>
+
+
+<!-- Contact Us -->
+{{-- <div class="col-md-12">
+<div class="form-group">
+<label>Contact Us</label>
+<textarea name="contact_us" class="form-control ckeditor" rows="5">{{ old('contact_us',$item->contact_us ?? '') }}</textarea>
+</div> --}}
+
+
+<div class="row">
+    
+    <!-- Privacy Policy -->
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Privacy Policy</label>
+            <textarea name="privacy_policy" class="form-control ckeditor" rows="5">{{ old('privacy_policy', $item->privacy_policy ?? '') }}</textarea>
+        </div>
+    </div>
+
+    <!-- Terms and Conditions -->
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Terms and Conditions</label>
+            <textarea name="terms_and_conditions" class="form-control ckeditor" rows="5">{{ old('terms_and_conditions', $item->terms_and_conditions ?? '') }}</textarea>
+        </div>
+    </div>
+
+</div>
 <!-- Footer Text -->
 <div class="col-md-12">
 <div class="form-group">
@@ -94,4 +130,26 @@ value="{{ old('company_name',$item->company_name ?? '') }}">
 </div>
 </div>
 </section>
+@endsection
+
+@section('scripts')
+
+<script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll('.ckeditor').forEach(function (textarea) {
+
+        ClassicEditor
+            .create(textarea)
+            .catch(error => {
+                console.error(error);
+            });
+
+    });
+
+});
+</script>
+
 @endsection

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\FuelType;
+use App\Models\Seater;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,8 +30,9 @@ class VehicleController extends Controller
     {
         Gate::authorize('create_vehicles');
         $brands = Brand::latest()->get();
+        $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
-        return view('layouts.admin.vehicles.create', compact('brands', 'fuel_type'));
+        return view('layouts.admin.vehicles.create', compact('brands', 'seaters', 'fuel_type'));
     }
 
     public function store(Request $request)
@@ -87,9 +89,9 @@ class VehicleController extends Controller
 
             $data['image'] = 'uploads/vehicle/' . $imageName;
         }
-        
+
         if ($request->hasFile('car_images')) {
-           
+
             $images = [];
 
             foreach ($request->file('car_images') as $file) {
@@ -103,7 +105,7 @@ class VehicleController extends Controller
 
             $data['car_images'] = !empty($images) ? $images : null;
         } else {
-           
+
             $data['car_images'] = null;
         }
 
@@ -122,7 +124,7 @@ class VehicleController extends Controller
             $file->move(public_path('uploads/vehicle'), $fileName);
             $data['insurance_policy_document'] = 'uploads/vehicle/' . $fileName;
         }
-    
+
         Vehicle::create($data);
 
         return redirect()->route('admin.vehicles.index')
@@ -141,8 +143,9 @@ class VehicleController extends Controller
     {
         Gate::authorize('update_vehicles');
         $brands = Brand::latest()->get();
+        $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
-        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'fuel_type'));
+        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'seaters', 'fuel_type'));
     }
 
     public function update(Request $request, Vehicle $vehicle)

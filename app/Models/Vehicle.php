@@ -43,13 +43,13 @@ class Vehicle extends Model
         'insurance_policy_document',
     ];
 
-    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url'];
+    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url'];
     protected $casts = [
         'images' => 'array',
         'car_images' => 'array',
     ];
 
-    protected $hidden = ['image', 'car_images'];
+    protected $hidden = ['image', 'car_images', 'insurance_policy_document'];
 
     public function vehicleDetail()
     {
@@ -85,6 +85,10 @@ class Vehicle extends Model
         return $this->image ? asset($this->image) : null;
     }
 
+    public function getVehicleInsuranceUrlAttribute()
+    {
+        return $this->insurance_policy_document ? asset($this->insurance_policy_document) : null;
+    }
     public function getVehicleDescriptionImageUrlAttribute()
     {
         if (!empty($this->car_images) && is_array($this->car_images)) {
@@ -96,7 +100,6 @@ class Vehicle extends Model
                 }
 
                 return asset($image);
-
             }, $this->car_images);
         }
 

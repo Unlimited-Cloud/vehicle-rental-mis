@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BasicTable;
 use App\Models\Customer;
 use App\Models\Passcode;
+use App\Models\User;
 use App\Services\CustomerService;
 use App\Utilities\VehicleRentalUtilities;
 use Illuminate\Http\Request;
@@ -84,7 +85,7 @@ class CustomerController extends Controller
 
         $otp = rand(100000, 999999);
 
-        $passcode = Passcode::where('email', $request->email)->where('requested_at','>=',now())->orderBy('id', 'desc')->first();
+        $passcode = Passcode::where('email', $request->email)->where('requested_at', '>=', now())->orderBy('id', 'desc')->first();
 
         $customerId = Customer::where('email', $request->email)->first()->id;
 
@@ -237,30 +238,50 @@ class CustomerController extends Controller
 
     public function changePassword(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email|exists:customers,email',
-            'password' => 'required|min:6|confirmed'
+        $validator = Validator::make($request->all(), [
+            'customer_id'   => 'required|exists:customers,customer_uuid',
+            'old_password'  => 'required',
+            'password'      => 'required|min:6|confirmed',
         ]);
 
-        // Get token from Bearer header
-        $token = $request->bearerToken();
 
-        if (!$token) {
+        if ($validator->fails()) {
             return response()->json([
-                'status' => false,
-                'message' => 'Token not provided'
-            ], 401);
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 422);
         }
 
+        $customer = Customer::where('customer_uuid', $request->customer_id)->first();
 
-        // Update password
-        Customer::where('email', $request->email)->update([
-            'password' => Hash::make($request->password)
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found'
+            ], 404);
+        }
+
+        if (!Hash::check($request->old_password, $customer->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Old password is incorrect'
+            ], 400);
+        }
+
+        $newPassword = Hash::make($request->password);
+
+        $customer->update([
+            'password' => Hash::make($newPassword)
+        ]);
+
+        // Update users table if customer_id exists
+        User::where('customer_id', $customer->id)->update([
+            'password' => $newPassword
         ]);
 
         return response()->json([
             'status' => true,
-            'message' => 'Password reset successful'
+            'message' => 'Password changed successfully'
         ]);
     }
 
@@ -268,9 +289,16 @@ class CustomerController extends Controller
     {
         $customer = Customer::where('customer_uuid', $id)->first();
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'profile_image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors(),
+            ], 422);
+        }
 
         // Delete old image
         if ($customer->profile_image && file_exists(public_path($customer->profile_image))) {
