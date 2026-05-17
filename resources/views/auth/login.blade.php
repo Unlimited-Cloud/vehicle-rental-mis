@@ -152,19 +152,6 @@
         <div class="card-body text-center">
 
             
-         @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
             @php
                use App\Helpers\MenuHelper;
                $basic = MenuHelper::showBasicSetup();
@@ -175,6 +162,13 @@
             @else
                <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> 
             @endif
+
+
+            @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+     @endif
 
             @if ($errors->any())
             <div class="alert alert-danger">
@@ -205,17 +199,19 @@
                     </div>
                 </div>
 
-                <div class="text-right mb-3">
-                    <a href="#" id="forgotPasswordLink">Forgot Password?</a>
-                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
 
-                <div class="form-row mr-0 ml-0">
-                    <div class="form-group col-6">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember" name="remember" checked>
-                            <label for="remember">Remember me</label>
-                        </div>
+                    <div class="icheck-primary">
+                        <input type="checkbox" id="remember" name="remember" checked>
+                        <label for="remember">Remember me</label>
                     </div>
+
+                    <div>
+                        <a href="#" id="forgotPasswordLink">
+                            Forgot Password?
+                        </a>
+                    </div>
+
                 </div>
 
                 <button type="submit" class="btn btn-primary shadow-primary btn-round btn-block">
@@ -257,11 +253,17 @@
                     @endfor
                 </div>
                 <input type="hidden" name="otp" id="adminOtpHidden">
-                <div class="form-group mt-3">
-                    <input type="password" name="password" class="form-control" placeholder="New Password" required>
+                <div class="form-group position-relative mt-3">
+                    <input type="password" name="password" id="resetNewPassword" class="form-control" placeholder="New Password" required>
+                     <span class="toggleResetPassword" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer; color: #6c757d;">
+                    <i class="fa fa-eye"></i>
+                </span>
                 </div>
-                <div class="form-group">
-                    <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm Password" required>
+                <div class="form-group position-relative">
+                    <input type="password" name="password_confirmation" id="resetConfirmPassword" class="form-control" placeholder="Confirm Password" required>
+                     <span class="toggleResetConfirmPassword" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer; color: #6c757d;">
+                    <i class="fa fa-eye"></i>
+                </span>
                 </div>
                 <button type="button" class="btn-validate" id="adminValidateBtn">Reset Password</button>
             </form>
@@ -352,6 +354,36 @@
                     icon.removeClass('fa-eye-slash').addClass('fa-eye');
                 }
             });
+
+
+            // Toggle password visibility for RESET NEW PASSWORD
+        $('.toggleResetPassword').on('click', function() {
+            const input = $('#resetNewPassword');
+            const icon = $(this).find('i');
+
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+
+        // Toggle password visibility for RESET CONFIRM PASSWORD
+        $('.toggleResetConfirmPassword').on('click', function() {
+            const input = $('#resetConfirmPassword');
+            const icon = $(this).find('i');
+
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
+
 
             // Forgot password modal handlers
             $('#forgotPasswordLink').click(function(e) {
