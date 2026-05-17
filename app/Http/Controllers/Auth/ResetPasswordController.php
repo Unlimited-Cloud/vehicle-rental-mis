@@ -82,6 +82,9 @@ class ResetPasswordController extends Controller
             $request->password
         );
 
+        session()->forget('otp_email');
+        session()->forget('otp_verified');
+
         // return response()->json($result, $result['status'] === 'success' ? 200 : 400);
         return redirect()->route('login')->with($result['status'], $result['message']);
     }
