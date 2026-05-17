@@ -235,7 +235,7 @@
                 <div class="form-group">
                     <input type="email" name="email" id="resetEmail" class="form-control" placeholder="Enter your email" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Send OTP</button>
+                <button type="submit" id="sendOtpBtn"  class="btn btn-primary btn-block">Send OTP</button>
             </form>
             <div id="forgotMessage" class="mt-3"></div>
         </div>
@@ -373,43 +373,81 @@
             });
 
             // Send OTP for password reset
-            $('#sendOtpForm').submit(function(e) {
-                e.preventDefault();
-                
-                $.ajax({
-                    url: "{{ route('admin.password.reset.otp.send') }}",
-                    type: "POST",
-                    data: {
-                        _token: "{{ csrf_token() }}",
-                        email: $('#resetEmail').val()
-                    },
-                    success: function(response) {
-                        $('#forgotMessage').html(
-                            '<div class="alert alert-success">' + response.message + '</div>'
-                        );
-                        
-                        // Close forgot modal after 2 seconds
-                        setTimeout(function() {
-                            $('#forgotPasswordModal').removeClass('active').hide();
-                            $('#forgotMessage').html('');
-                            
-                            // Open admin OTP modal
-                            $('#adminOtpEmail').val($('#resetEmail').val());
-                            $('#adminOtpModal').addClass('active').show();
-                            $('#adminOtpError').html('');
-                            
-                            // Clear OTP inputs
-                            $('.admin-otp-input').val('');
-                        }, 2000);
-                    },
-                    error: function(xhr) {
-                        let error = xhr.responseJSON?.message || 'Something went wrong';
-                        $('#forgotMessage').html(
-                            '<div class="alert alert-danger">' + error + '</div>'
-                        );
-                    }
-                });
-            });
+          $('#sendOtpForm').submit(function(e) {
+
+    e.preventDefault();
+
+    let btn = $('#sendOtpBtn');
+
+    // Disable button
+    btn.prop('disabled', true);
+
+    // Change text
+    btn.html(`
+        <span class="spinner-border spinner-border-sm mr-1"></span>
+        Sending...
+    `);
+
+    $.ajax({
+        url: "{{ route('admin.password.reset.otp.send') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            email: $('#resetEmail').val()
+        },
+
+        success: function(response) {
+
+            $('#forgotMessage').html(
+                '<div class="alert alert-success">' +
+                response.message +
+                '</div>'
+            );
+
+            setTimeout(function() {
+
+                $('#forgotPasswordModal')
+                    .removeClass('active')
+                    .hide();
+
+                $('#forgotMessage').html('');
+
+                $('#adminOtpEmail')
+                    .val($('#resetEmail').val());
+
+                $('#adminOtpModal')
+                    .addClass('active')
+                    .show();
+
+                $('#adminOtpError').html('');
+
+                $('.admin-otp-input').val('');
+
+            }, 1500);
+
+        },
+
+        error: function(xhr) {
+
+            let error = xhr.responseJSON?.message || 'Something went wrong';
+
+            $('#forgotMessage').html(
+                '<div class="alert alert-danger">' +
+                error +
+                '</div>'
+            );
+        },
+
+        complete: function() {
+
+            // Re-enable button
+            btn.prop('disabled', false);
+
+            // Restore text
+            btn.html('Send OTP');
+        }
+    });
+});
 
             // Close admin OTP modal
             $('#closeAdminOtpModal').click(function() {
