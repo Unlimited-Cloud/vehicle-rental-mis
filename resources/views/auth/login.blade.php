@@ -366,11 +366,11 @@
             });
 
             // Close modals when clicking outside
-            $('.otp-modal').click(function(e) {
-                if (e.target === this) {
-                    $(this).removeClass('active').hide();
-                }
-            });
+            // $('.otp-modal').click(function(e) {
+            //     if (e.target === this) {
+            //         $(this).removeClass('active').hide();
+            //     }
+            // });
 
             // Send OTP for password reset
           $('#sendOtpForm').submit(function(e) {
@@ -471,8 +471,8 @@
                 $('#adminOtpHidden').val(otp);
                 
                 // Validate password fields
-                let newPassword = $('input[name="password"]').val();
-                let confirmPassword = $('input[name="password_confirmation"]').val();
+                let newPassword = $('#adminOtpForm input[name="password"]').val();
+                let confirmPassword = $('#adminOtpForm input[name="password_confirmation"]').val();
                 
                 if (newPassword !== confirmPassword) {
                     $('#adminOtpError').html('<div class="alert alert-danger">Passwords do not match</div>');
