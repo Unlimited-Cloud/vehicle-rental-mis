@@ -71,9 +71,9 @@ class CrewProfilesController extends Controller
             'license_expiry' => 'nullable|date',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
-            'experience' => 'nullable|integer',
-            'age' => 'nullable|integer',
-            'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'experience' => 'required_if:role,driver|nullable|integer',
+            'age' => 'required_if:role,driver|nullable|integer',
+            'img' => 'required_if:role,driver|nullable|image|mimes:jpg,jpeg,png|max:2048',
 
         ]);
 

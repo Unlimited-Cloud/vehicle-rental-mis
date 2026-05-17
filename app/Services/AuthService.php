@@ -17,7 +17,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Events\SmsEvent;
 use App\Events\EmailEvent;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AuthService
 {
@@ -112,7 +115,7 @@ class AuthService
                     'attempt_count' => 0,
                     'locked_until'  => null,
                 ]);
-                event(new EmailEvent($user->email,'passcode','success','customer'));
+                event(new EmailEvent($user->email, 'passcode', 'success', 'customer'));
                 $message = 'Login Passcode sent to email ' . $email;
             } else {
                 $mobileNumberCountryCode = $customer->mobile_number_country_code;
@@ -231,5 +234,92 @@ class AuthService
             'data' => ['profile' => $details],
             'statusCode' => 200
         );
+    }
+
+
+
+
+    public function sendResetOtp($email)
+    {
+        try {
+            $user = User::where('email', $email)->first();
+
+            if (!$user) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Email not found in our records.'
+                ];
+            }
+
+            $otp = random_int(100000, 999999);
+
+            DB::table('passcodes')->insert(
+                [
+                    'user_id'     => $user->id,
+                    'email' => $email,
+                    'passcode' => $otp,
+                    'requested_at' => now(),
+                    'request_count' => 1,
+                    'attempt_count' => 0,
+                    'locked_until' => null,
+                    'created_at' =>  now(),
+                ]
+            );
+
+            // Send OTP via email
+            event(new EmailEvent($email, 'password_reset_otp', 'success', 'User'));
+
+            return [
+                'status' => 'success',
+                'message' => 'Password reset OTP has been sent to your email.',
+                'otp_sent' => true
+            ];
+        } catch (\Exception $e) {
+            Log::error("OTP send error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Failed to send OTP. Please try again.'
+            ];
+        }
+    }
+
+    public function resetWithOtp($email, $otp, $newPassword)
+    {
+        try {
+            $resetRecord = DB::table('passcodes')
+                ->where('email', $email)
+                ->latest()
+                ->first();
+
+            if (!$resetRecord || !($otp === $resetRecord->passcode)) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Invalid OTP code.'
+                ];
+            }
+
+            $otpCreatedAt = Carbon::parse($resetRecord->created_at);
+            if ($otpCreatedAt->diffInMinutes(Carbon::now()) > 15) {
+                return [
+                    'status' => 'error',
+                    'message' => 'OTP has expired. Please request a new one.'
+                ];
+            }
+
+            // Update password
+            $user = User::where('email', $email)->first();
+            $user->password = Hash::make($newPassword);
+            $user->save();
+            return [
+                'status' => 'success',
+                'message' => 'Password reset successful!'
+            ];
+        } catch (\Exception $e) {
+            Log::error("OTP reset error: " . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => 'Failed to reset password. Please try again.'
+            ];
+        }
     }
 }

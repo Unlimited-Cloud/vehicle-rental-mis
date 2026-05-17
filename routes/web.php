@@ -46,6 +46,7 @@ use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -216,6 +217,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('/payments/{method}/{id}', [PaymentController::class, 'show'])->name('payments.show');
         Route::delete('/payments/{method}/{id}', [PaymentController::class, 'destroy'])->name('payments.destroy');
     });
+
+    Route::post('/password/reset-otp/send', [ResetPasswordController::class, 'sendResetOtp'])->name('password.reset.otp.send');
+    Route::post('/password/reset-otp/verify', [ResetPasswordController::class, 'resetWithOtp'])->name('password.reset.otp.verify');
 
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
