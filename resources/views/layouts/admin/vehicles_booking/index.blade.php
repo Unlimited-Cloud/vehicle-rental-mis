@@ -387,12 +387,17 @@
     <div class="mb-3">
         <small class="text-muted">Click on any empty cell to create a new booking. Click on booking block to view details.</small>
     </div>
-    <div style="overflow-x:auto; max-height: 600px; overflow-y: auto;">
-        <table class="table table-bordered booking-grid" style="min-width: 1200px;">
-            <thead id="bookingGridHead" style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;"></thead>
-            <tbody id="bookingGridBody"></tbody>
-        </table>
-    </div>
+   <div id="topScroll" style="overflow-x:auto; overflow-y:hidden; height:20px;">
+    <div id="topScrollInner" style="height:1px;"></div>
+</div>
+
+<!-- ORIGINAL CALENDAR -->
+<div id="calendarScroll" style="overflow-x:auto; max-height: 600px; overflow-y: auto;">
+    <table class="table table-bordered booking-grid" style="min-width: 1200px;">
+        <thead id="bookingGridHead" style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;"></thead>
+        <tbody id="bookingGridBody"></tbody>
+    </table>
+</div>
 </div>
 
 </div>
@@ -1424,6 +1429,32 @@ function deleteBooking(id) {
         });
     }
 }
+
+    function syncTopScrollbar() {
+        let tableWidth = $('#calendarScroll table').outerWidth();
+        $('#topScrollInner').width(tableWidth);
+    }
+
+    // Sync scrolling
+    $('#topScroll').on('scroll', function () {
+        $('#calendarScroll').scrollLeft($(this).scrollLeft());
+    });
+
+    $('#calendarScroll').on('scroll', function () {
+        $('#topScroll').scrollLeft($(this).scrollLeft());
+    });
+
+    // Initial sync
+    syncTopScrollbar();
+
+    // Re-sync after calendar reload
+    $(document).ajaxComplete(function () {
+        syncTopScrollbar();
+    });
+
+    $(window).on('resize', function () {
+        syncTopScrollbar();
+    });
 </script>
 @endsection
 
