@@ -23,7 +23,7 @@
         }
 
         /* OTP Modal overlay - hidden by default */
-        #otpModal {
+        .otp-modal {
             display: none;
             position: fixed;
             top: 0;
@@ -36,12 +36,12 @@
             z-index: 9999;
         }
 
-        #otpModal.active {
+        .otp-modal.active {
             display: flex;
         }
 
         /* OTP card style */
-        #otpModal .otp-card {
+        .otp-card {
             background: #1a3b8e;
             padding: 30px 20px;
             border-radius: 12px;
@@ -49,14 +49,15 @@
             max-width: 400px;
             text-align: center;
             color: white;
+            position: relative;
         }
 
-        #otpModal h6 {
+        .otp-card h6 {
             font-weight: normal;
             margin-bottom: 10px;
         }
 
-        #otpModal small {
+        .otp-card small {
             color: #cfd8dc;
             display: block;
             margin-bottom: 20px;
@@ -104,9 +105,42 @@
             border: none;
         }
 
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: none;
+            background: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        .close-btn:hover {
+            color: #ff3b30;
+        }
+
         #otpError {
             color: #ffcccb;
             margin-top: 10px;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
     </style>
 </head>
@@ -114,18 +148,27 @@
 <body>
 
     <div class="card card-authentication1">
+
         <div class="card-body text-center">
-            {{-- <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> --}}
+
+            
             @php
                use App\Helpers\MenuHelper;
                $basic = MenuHelper::showBasicSetup();
             @endphp
 
-            @if($basic->login_logo)
+            @if($basic && $basic->login_logo)
                <img src="{{ asset($basic->login_logo) }}" class="img-fluid rounded" width="100" alt="Company Logo">
             @else
                <img src="{{ asset('adminlte/logo3.png') }}" style="width:150px; margin-bottom:20px;"> 
             @endif
+
+
+            @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+     @endif
 
             @if ($errors->any())
             <div class="alert alert-danger">
@@ -140,7 +183,7 @@
 
                 <div class="form-group">
                     <div class="position-relative has-icon-right">
-                        <input type="text" class="form-control form-control-rounded" placeholder="E-Mail Address" name="email">
+                        <input type="text" class="form-control form-control-rounded" placeholder="E-Mail Address" name="email" value="{{ old('email') }}">
                         <span style="position:absolute; top:50%; right:15px; transform:translateY(-50%); cursor:pointer; color:#6c757d;">
                             <i class="fa fa-envelope"></i>
                         </span>
@@ -156,45 +199,103 @@
                     </div>
                 </div>
 
-                <div class="form-row mr-0 ml-0">
-                    <div class="form-group col-6">
-                        <div class="icheck-primary">
-                            <input type="checkbox" id="remember" name="remember" checked>
-                            <label for="remember">Remember me</label>
-                        </div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                    <div class="icheck-primary">
+                        <input type="checkbox" id="remember" name="remember" checked>
+                        <label for="remember">Remember me</label>
                     </div>
+
+                    <div>
+                        <a href="#" id="forgotPasswordLink">
+                            Forgot Password?
+                        </a>
+                    </div>
+
                 </div>
 
                 <button type="submit" class="btn btn-primary shadow-primary btn-round btn-block">
-                    Send Passcode
+                    Login
                 </button>
             </form>
         </div>
     </div>
 
-    {{-- OTP Modal --}}
-    @if(session('otp_email') || $errors->has('otp') || session('success'))
-    <div id="otpModal" class="active">
+    <!-- FORGOT PASSWORD MODAL -->
+    <div id="forgotPasswordModal" class="otp-modal">
         <div class="otp-card">
-            <button id="closeOtpModal" class="close-btn">&times;</button>
+            <button type="button" id="closeForgotModal" class="close-btn">&times;</button>
+            <h5 class="mb-3">Reset Password</h5>
+            <form id="sendOtpForm">
+                @csrf
+                <div class="form-group">
+                    <input type="email" name="email" id="resetEmail" class="form-control" placeholder="Enter your email" required>
+                </div>
+                <button type="submit" id="sendOtpBtn"  class="btn btn-primary btn-block">Send OTP</button>
+            </form>
+            <div id="forgotMessage" class="mt-3"></div>
+        </div>
+    </div>
+
+    <!-- ADMIN PASSWORD RESET OTP MODAL -->
+    <div id="adminOtpModal" class="otp-modal">
+        <div class="otp-card">
+            <button type="button" id="closeAdminOtpModal" class="close-btn">&times;</button>
+            <h6>Please enter the Passcode to reset your password</h6>
+            <small>Passcode has been sent to your email</small>
+            
+            <form id="adminOtpForm" method="POST" action="{{ route('admin.password.reset.otp.verify') }}">
+                @csrf
+                <input type="hidden" name="email" id="adminOtpEmail">
+                <div class="d-flex justify-content-center mt-3">
+                    @for($i = 0; $i < 6; $i++)
+                        <input type="text" class="otp-input admin-otp-input" maxlength="1" data-index="{{ $i }}">
+                    @endfor
+                </div>
+                <input type="hidden" name="otp" id="adminOtpHidden">
+                <div class="form-group position-relative mt-3">
+                    <input type="password" name="password" id="resetNewPassword" class="form-control" placeholder="New Password" required>
+                     <span class="toggleResetPassword" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer; color: #6c757d;">
+                    <i class="fa fa-eye"></i>
+                </span>
+                </div>
+                <div class="form-group position-relative">
+                    <input type="password" name="password_confirmation" id="resetConfirmPassword" class="form-control" placeholder="Confirm Password" required>
+                     <span class="toggleResetConfirmPassword" style="position: absolute; top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer; color: #6c757d;">
+                    <i class="fa fa-eye"></i>
+                </span>
+                </div>
+                <button type="button" class="btn-validate" id="adminValidateBtn">Reset Password</button>
+            </form>
+            <div id="adminOtpError" class="mt-2 text-danger"></div>
+        </div>
+    </div>
+
+    <!-- REGULAR LOGIN OTP MODAL -->
+    @if(session('otp_email') || $errors->has('otp'))
+    <div id="loginOtpModal" class="otp-modal active">
+        <div class="otp-card">
+            <button id="closeLoginOtpModal" class="close-btn">&times;</button>
             <h6>Please enter the Passcode to verify your account</h6>
             <small>Passcode has been sent to <br>{{ session('otp_email') }}</small>
-
             <div id="otpError">
-                @if($errors->has('otp')) {{ $errors->first('otp') }} @endif
-                @if(session('success')) {{ session('success') }} @endif
+                @if($errors->has('otp')) 
+                    {{ $errors->first('otp') }} 
+                @endif
+                @if(session('success')) 
+                    {{ session('success') }} 
+                @endif
             </div>
-
-            <form id="otpForm" method="POST" action="{{ route('otp.verify') }}" class="d-flex justify-content-center mt-3">
+            <form id="loginOtpForm" method="POST" action="{{ route('otp.verify') }}">
                 @csrf
-                @for($i=0; $i<6; $i++)
-                    <input type="text" class="otp-input" maxlength="1">
+                <div class="d-flex justify-content-center mt-3">
+                    @for($i = 0; $i < 6; $i++)
+                        <input type="text" class="otp-input login-otp-input" maxlength="1" data-index="{{ $i }}">
                     @endfor
-                    <input type="hidden" name="otp" id="otpHidden">
+                </div>
+                <input type="hidden" name="otp" id="loginOtpHidden">
             </form>
-
-            <button class="btn-validate" id="validateBtn">Validate</button>
-
+            <button class="btn-validate" id="loginValidateBtn">Validate</button>
             <form method="POST" action="{{ route('otp.send') }}">
                 @csrf
                 <button type="submit" class="btn-resend">Resend OTP</button>
@@ -204,48 +305,61 @@
     @endif
 
     <script src="{{ asset('adminlte/js/jquery.min.js') }}"></script>
+    
     <script>
         $(document).ready(function() {
-            // Show OTP modal only if active
-            if ($('#otpModal').hasClass('active')) {
-                $('#otpModal').show();
+            // Show login OTP modal if active
+            if ($('#loginOtpModal').hasClass('active')) {
+                $('#loginOtpModal').show();
             }
 
-            // OTP input auto-focus & backspace
-            $('.otp-input').on('input', function() {
-                this.value = this.value.replace(/\D/g, '');
-                if (this.value && $(this).next('.otp-input').length) $(this).next('.otp-input').focus();
-            });
-
-            $('.otp-input').on('keydown', function(e) {
-                if (e.key === 'Backspace' && !this.value) $(this).prev('.otp-input').focus();
-            });
-
-            $('.otp-input').on('paste', function(e) {
-                e.preventDefault();
-                let paste = e.originalEvent.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-                $('.otp-input').each(function(i) {
-                    this.value = paste[i] || '';
+            // Generic OTP input handler for all OTP inputs
+            function initializeOtpInputs(inputsClass) {
+                $(inputsClass).on('input', function() {
+                    this.value = this.value.replace(/\D/g, '');
+                    if (this.value && $(this).next(inputsClass).length) {
+                        $(this).next(inputsClass).focus();
+                    }
                 });
-            });
 
-            // Combine 6 inputs into hidden input before submitting OTP form
-            $('#validateBtn').on('click', function(e) {
-                e.preventDefault();
-                let otp = '';
-                $('.otp-input').each(function() {
-                    otp += this.value;
+                $(inputsClass).on('keydown', function(e) {
+                    if (e.key === 'Backspace' && !this.value) {
+                        $(this).prev(inputsClass).focus();
+                    }
                 });
-                $('#otpHidden').val(otp);
-                $('#otpForm').submit();
-            });
-        });
-    </script>
 
-    <script>
-        $('#togglePassword').on('click', function() {
-            const input = $('#password');
-            const icon = $('#eyeIcon');
+                $(inputsClass).on('paste', function(e) {
+                    e.preventDefault();
+                    let paste = e.originalEvent.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                    $(inputsClass).each(function(i) {
+                        this.value = paste[i] || '';
+                    });
+                });
+            }
+
+            // Initialize both OTP input types
+            initializeOtpInputs('.login-otp-input');
+            initializeOtpInputs('.admin-otp-input');
+
+            // Toggle password visibility
+            $('#togglePassword').on('click', function() {
+                const input = $('#password');
+                const icon = $('#eyeIcon');
+
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            });
+
+
+            // Toggle password visibility for RESET NEW PASSWORD
+        $('.toggleResetPassword').on('click', function() {
+            const input = $('#resetNewPassword');
+            const icon = $(this).find('i');
 
             if (input.attr('type') === 'password') {
                 input.attr('type', 'text');
@@ -255,57 +369,180 @@
                 icon.removeClass('fa-eye-slash').addClass('fa-eye');
             }
         });
-    </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const modal = document.getElementById('otpModal');
-    const closeBtn = document.getElementById('closeOtpModal');
+        // Toggle password visibility for RESET CONFIRM PASSWORD
+        $('.toggleResetConfirmPassword').on('click', function() {
+            const input = $('#resetConfirmPassword');
+            const icon = $(this).find('i');
 
-    // Close when clicking the button
-    closeBtn.addEventListener('click', function() {
-        modal.classList.remove('active');
-    });
+            if (input.attr('type') === 'password') {
+                input.attr('type', 'text');
+                icon.removeClass('fa-eye').addClass('fa-eye-slash');
+            } else {
+                input.attr('type', 'password');
+                icon.removeClass('fa-eye-slash').addClass('fa-eye');
+            }
+        });
 
-    // Optional: close when clicking outside the card
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.classList.remove('active');
+
+            // Forgot password modal handlers
+            $('#forgotPasswordLink').click(function(e) {
+                e.preventDefault();
+                $('#forgotPasswordModal').addClass('active').show();
+            });
+
+            $('#closeForgotModal').click(function() {
+                $('#forgotPasswordModal').removeClass('active').hide();
+                $('#forgotMessage').html('');
+                $('#resetEmail').val('');
+            });
+
+            // Close modals when clicking outside
+            // $('.otp-modal').click(function(e) {
+            //     if (e.target === this) {
+            //         $(this).removeClass('active').hide();
+            //     }
+            // });
+
+            // Send OTP for password reset
+          $('#sendOtpForm').submit(function(e) {
+
+    e.preventDefault();
+
+    let btn = $('#sendOtpBtn');
+
+    // Disable button
+    btn.prop('disabled', true);
+
+    // Change text
+    btn.html(`
+        <span class="spinner-border spinner-border-sm mr-1"></span>
+        Sending...
+    `);
+
+    $.ajax({
+        url: "{{ route('admin.password.reset.otp.send') }}",
+        type: "POST",
+        data: {
+            _token: "{{ csrf_token() }}",
+            email: $('#resetEmail').val()
+        },
+
+        success: function(response) {
+
+            $('#forgotMessage').html(
+                '<div class="alert alert-success">' +
+                response.message +
+                '</div>'
+            );
+
+            setTimeout(function() {
+
+                $('#forgotPasswordModal')
+                    .removeClass('active')
+                    .hide();
+
+                $('#forgotMessage').html('');
+
+                $('#adminOtpEmail')
+                    .val($('#resetEmail').val());
+
+                $('#adminOtpModal')
+                    .addClass('active')
+                    .show();
+
+                $('#adminOtpError').html('');
+
+                $('.admin-otp-input').val('');
+
+            }, 1500);
+
+        },
+
+        error: function(xhr) {
+
+            let error = xhr.responseJSON?.message || 'Something went wrong';
+
+            $('#forgotMessage').html(
+                '<div class="alert alert-danger">' +
+                error +
+                '</div>'
+            );
+        },
+
+        complete: function() {
+
+            // Re-enable button
+            btn.prop('disabled', false);
+
+            // Restore text
+            btn.html('Send OTP');
         }
     });
 });
-</script>
+
+            // Close admin OTP modal
+            $('#closeAdminOtpModal').click(function() {
+                $('#adminOtpModal').removeClass('active').hide();
+            });
+
+            // Admin OTP validation (password reset)
+            $('#adminValidateBtn').click(function(e) {
+                e.preventDefault();
+                
+                let otp = '';
+                $('.admin-otp-input').each(function() {
+                    otp += $(this).val();
+                });
+                
+                if (otp.length !== 6) {
+                    $('#adminOtpError').html('<div class="alert alert-danger">Please enter complete 6-digit OTP</div>');
+                    return;
+                }
+                
+                $('#adminOtpHidden').val(otp);
+                
+                // Validate password fields
+                let newPassword = $('#adminOtpForm input[name="password"]').val();
+                let confirmPassword = $('#adminOtpForm input[name="password_confirmation"]').val();
+                
+                if (newPassword !== confirmPassword) {
+                    $('#adminOtpError').html('<div class="alert alert-danger">Passwords do not match</div>');
+                    return;
+                }
+                
+                if (newPassword.length < 6) {
+                    $('#adminOtpError').html('<div class="alert alert-danger">Password must be at least 6 characters</div>');
+                    return;
+                }
+                
+                $('#adminOtpForm').submit();
+            });
+
+            // Login OTP validation
+            $('#loginValidateBtn').click(function(e) {
+                e.preventDefault();
+                
+                let otp = '';
+                $('.login-otp-input').each(function() {
+                    otp += $(this).val();
+                });
+                
+                if (otp.length !== 6) {
+                    $('#otpError').html('<div class="alert alert-danger">Please enter complete 6-digit OTP</div>');
+                    return;
+                }
+                
+                $('#loginOtpHidden').val(otp);
+                $('#loginOtpForm').submit();
+            });
+
+            // Close login OTP modal
+            $('#closeLoginOtpModal').click(function() {
+                $('#loginOtpModal').removeClass('active').hide();
+            });
+        });
+    </script>
 </body>
-<style>
-#otpModal.active {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 1000;
-}
-
-.otp-card {
-    position: relative;
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-}
-
-.close-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    border: none;
-    background: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-</style>
 
 </html>
