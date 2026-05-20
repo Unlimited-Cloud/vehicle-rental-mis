@@ -296,6 +296,8 @@ class BookingController extends Controller
                 'contact_number' => $request->contact_number,
                 'agent_code' => $request->agent_code ?? null,
                 'file_no' => $file_no ?? null,
+                'pickup_latitude' => $request->pickup_latitude ?? null,
+                'pickup_longitude' => $request->pickup_longitude ?? null,
             ]);
 
 
