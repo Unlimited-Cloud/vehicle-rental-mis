@@ -1642,57 +1642,74 @@ class BookingController extends Controller
     {
         $validated = $request->validate([
             'customer_uuid' => 'required|uuid',
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
+            'lat'           => 'required|numeric',
+            'lng'           => 'required|numeric',
         ]);
 
-        $apiKey = env('GOOGLE_MAPS_KEY');
-
-        $address = null;
+        $apiKey  = env('GOOGLE_MAPS_KEY');
+        $lat     = $validated['lat'];
+        $lng     = $validated['lng'];
+        $address   = null;
+        $placeName = null;
 
         try {
-            $response = Http::get(
-                'https://maps.googleapis.com/maps/api/geocode/json',
-                [
-                    'latlng' => $validated['lat'] . ',' . $validated['lng'],
-                    'key' => $apiKey,
-                ]
-            );
-
-            \Log::info('Reverse Geocoding Response', [
-                'response' => $response->json()
+            // Reverse Geocoding (street address)
+            $geoResponse = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'latlng' => "$lat,$lng",
+                'key'    => $apiKey,
             ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
+            \Log::info('Geocoding Response', ['response' => $geoResponse->json()]);
 
-                if (
-                    isset($data['status']) &&
-                    $data['status'] === 'OK' &&
-                    !empty($data['results'])
-                ) {
-                    $address = $data['results'][0]['formatted_address'] ?? null;
+            if (
+                $geoResponse->successful() &&
+                ($geoData = $geoResponse->json()) &&
+                ($geoData['status'] ?? '') === 'OK' &&
+                !empty($geoData['results'])
+            ) {
+                $address = $geoData['results'][0]['formatted_address'] ?? null;
+            }
+
+            //  Nearby Places Search
+            $placesResponse = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', [
+                'location' => "$lat,$lng",
+                'rankby'   => 'distance',
+                'key'      => $apiKey,
+            ]);
+
+            \Log::info('Places Response', ['response' => $placesResponse->json()]);
+
+            if (
+                $placesResponse->successful() &&
+                ($placesData = $placesResponse->json()) &&
+                ($placesData['status'] ?? '') === 'OK' &&
+                !empty($placesData['results'])
+            ) {
+                $nearest   = $placesData['results'][0];
+                $placeName = $nearest['name'] ?? null;
+
+                if (empty($address)) {
+                    $address = $nearest['vicinity'] ?? null;
                 }
             }
         } catch (\Exception $e) {
-            \Log::error('Geocoding Error', [
-                'message' => $e->getMessage()
-            ]);
+            \Log::error('Location API Error', ['message' => $e->getMessage()]);
         }
 
         $location = CustomerLocation::updateOrCreate(
             ['customer_uuid' => $validated['customer_uuid']],
             [
-                'lat' => $validated['lat'],
-                'lng' => $validated['lng'],
-                'address' => $address,
+                'lat'        => $lat,
+                'lng'        => $lng,
+                'address'    => $address,
+                'place_name' => $placeName,
             ]
         );
 
         return response()->json([
             'success' => true,
             'message' => 'Customer location saved successfully',
-            'data' => $location,
+            'data'    => $location,
         ]);
     }
 
@@ -1708,9 +1725,16 @@ class BookingController extends Controller
             ], 404);
         }
 
+        $data = $location->toArray();
+
+        $data['full_address'] = trim(
+            ($location->place_name ?? '') . ', ' . ($location->address ?? ''),
+            ', '
+        );
+
         return response()->json([
             'success' => true,
-            'data' => $location,
+            'data' => $data,
         ]);
     }
 }
