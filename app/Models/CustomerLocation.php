@@ -13,6 +13,7 @@ class CustomerLocation extends Model
         'lat',
         'lng',
         'address',
+        'place_name'
     ];
 
     protected $casts = [
