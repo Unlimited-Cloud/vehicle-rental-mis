@@ -393,6 +393,10 @@ class VehicleBookingController extends Controller
     {
         $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user']);
 
+        if($this->currentUserIsCustomer == 'Y'){
+            $query->where('customer_id', $this->currentUserCustomerId);
+        }
+
         if ($request->vehicle_id) {
             $query->where('vehicle_id', $request->vehicle_id);
         }

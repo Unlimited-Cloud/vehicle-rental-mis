@@ -1497,7 +1497,8 @@ class BookingController extends Controller
                 'rate_per_day',
                 'tax',
                 'discount',
-                'total_amount'
+                'total_amount',
+                'payment_status'
             ]);
 
         $bookings->each(function ($booking) {
@@ -1581,6 +1582,8 @@ class BookingController extends Controller
                 'full_name' => $contact->full_name,
                 'email' => $contact->email,
                 'mobile_number' => $contact->mobile_number,
+                'address' => $contact->address,
+                'website_url' => $contact->website_url,
                 'whatsapp_number' => $contact->whatsapp_number,
                 'facebook_url' => $contact->facebook_url,
                 'instagram_url' => $contact->instagram_url,
