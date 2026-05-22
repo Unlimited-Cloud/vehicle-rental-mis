@@ -44,7 +44,9 @@ class VehicleBooking extends Model
         'agent_code',
         'remaining_balance',
         'deleted_at',
-        'deleted_by'
+        'deleted_by',
+        'pickup_latitude',
+        'pickup_longitude',
     ];
 
     protected $dates = ['start_date', 'end_date'];

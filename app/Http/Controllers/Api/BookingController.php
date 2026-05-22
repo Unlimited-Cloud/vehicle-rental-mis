@@ -35,6 +35,8 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
 use App\Models\ContactUs;
+use App\Models\CustomerLocation;
+use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
 {
@@ -296,6 +298,8 @@ class BookingController extends Controller
                 'contact_number' => $request->contact_number,
                 'agent_code' => $request->agent_code ?? null,
                 'file_no' => $file_no ?? null,
+                'pickup_latitude' => $request->pickup_latitude ?? null,
+                'pickup_longitude' => $request->pickup_longitude ?? null,
             ]);
 
 
@@ -1584,6 +1588,151 @@ class BookingController extends Controller
                 'twitter_url' => $contact->twitter_url,
                 'youtube_url' => $contact->youtube_url
             ]
+        ]);
+    }
+
+
+    // public function storeLatLng(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'customer_uuid' => 'required|uuid',
+    //         'lat' => 'required|numeric',
+    //         'lng' => 'required|numeric',
+    //     ]);
+
+
+    //     // Reverse Geocoding API
+    //     $response = Http::withHeaders([
+    //         'User-Agent' => 'LaravelApp/1.0'
+    //     ])->get('https://nominatim.openstreetmap.org/reverse', [
+    //         'format' => 'json',
+    //         'lat' => $validated['lat'],
+    //         'lon' => $validated['lng'],
+    //     ]);
+
+    //     \Log::info('Reverse Geocoding Response', ['response' => $response->body()]);
+
+    //     $address = null;
+
+    //     if ($response->successful()) {
+    //         $data = $response->json();
+    //         $address = $data['display_name'] ?? null;
+    //     }
+
+    //     $location = CustomerLocation::updateOrCreate(
+    //         ['customer_uuid' => $validated['customer_uuid']],
+    //         [
+    //             'lat' => $validated['lat'],
+    //             'lng' => $validated['lng'],
+    //             'address' => $address,
+    //         ]
+    //     );
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Customer location saved successfully',
+    //         'data' => $location,
+    //     ]);
+    // }
+
+
+    public function storeLatLng(Request $request)
+    {
+        $validated = $request->validate([
+            'customer_uuid' => 'required|uuid',
+            'lat'           => 'required|numeric',
+            'lng'           => 'required|numeric',
+        ]);
+
+        $apiKey  = env('GOOGLE_MAPS_KEY');
+        $lat     = $validated['lat'];
+        $lng     = $validated['lng'];
+        $address   = null;
+        $placeName = null;
+
+        try {
+            // Reverse Geocoding (street address)
+            $geoResponse = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'latlng' => "$lat,$lng",
+                'key'    => $apiKey,
+            ]);
+
+            \Log::info('Geocoding Response', ['response' => $geoResponse->json()]);
+
+            if (
+                $geoResponse->successful() &&
+                ($geoData = $geoResponse->json()) &&
+                ($geoData['status'] ?? '') === 'OK' &&
+                !empty($geoData['results'])
+            ) {
+                $address = $geoData['results'][0]['formatted_address'] ?? null;
+            }
+
+            //  Nearby Places Search
+            $placesResponse = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', [
+                'location' => "$lat,$lng",
+                'rankby'   => 'distance',
+                'key'      => $apiKey,
+            ]);
+
+            \Log::info('Places Response', ['response' => $placesResponse->json()]);
+
+            if (
+                $placesResponse->successful() &&
+                ($placesData = $placesResponse->json()) &&
+                ($placesData['status'] ?? '') === 'OK' &&
+                !empty($placesData['results'])
+            ) {
+                $nearest   = $placesData['results'][0];
+                $placeName = $nearest['name'] ?? null;
+
+                if (empty($address)) {
+                    $address = $nearest['vicinity'] ?? null;
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Location API Error', ['message' => $e->getMessage()]);
+        }
+
+        $location = CustomerLocation::updateOrCreate(
+            ['customer_uuid' => $validated['customer_uuid']],
+            [
+                'lat'        => $lat,
+                'lng'        => $lng,
+                'address'    => $address,
+                'place_name' => $placeName,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Customer location saved successfully',
+            'data'    => $location,
+        ]);
+    }
+
+
+    public function showLatlng($customer_uuid)
+    {
+        $location = CustomerLocation::where('customer_uuid', $customer_uuid)->latest()->first();
+
+        if (!$location) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Customer location not found',
+            ], 404);
+        }
+
+        $data = $location->toArray();
+
+        $data['full_address'] = trim(
+            ($location->place_name ?? '') . ', ' . ($location->address ?? ''),
+            ', '
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
         ]);
     }
 }

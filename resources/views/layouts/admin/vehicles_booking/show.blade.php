@@ -160,6 +160,22 @@
                                     </div>
                                 </div>
                             </div>
+
+ <div class="col-md-6">
+                            @if($vehicleBooking->pickup_latitude && $vehicleBooking->pickup_longitude)
+                <small class="d-block text-muted mt-1">
+                    <i class="fas fa-globe-asia mr-1"></i>
+                    {{ $vehicleBooking->pickup_latitude }},
+                    {{ $vehicleBooking->pickup_longitude }}
+                </small>
+
+                <a href="https://www.google.com/maps?q={{ $vehicleBooking->pickup_latitude }},{{ $vehicleBooking->pickup_longitude }}"
+                   target="_blank"
+                   class="btn btn-xs btn-outline-primary mt-2">
+                    <i class="fas fa-map"></i> Open in Map
+                </a>
+            @endif
+        </div>
                         </div>
 
                         <div class="row mt-3">
