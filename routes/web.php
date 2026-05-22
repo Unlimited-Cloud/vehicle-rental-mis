@@ -47,6 +47,7 @@ use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Admin\PaymentModeController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/', function () {
@@ -202,6 +203,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('splashscreen', SplashScreenController::class);
         Route::resource('faq', FaqController::class);
         Route::resource('agents', AgentController::class);
+        Route::resource('payment-modes', PaymentModeController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
         Route::post('coupons/store-from-booking', [CouponController::class, 'storeFromBooking'])

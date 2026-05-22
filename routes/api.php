@@ -143,3 +143,5 @@ Route::get('/contact-us', [BookingController::class, 'contactus']);
 
 Route::post('/customer-location', [BookingController::class, 'storeLatLng']);
 Route::get('/customer-location/{customer_uuid}', [BookingController::class, 'showLatlng']);
+
+Route::get('/payment-modes', [BookingController::class, 'paymentModes']);
