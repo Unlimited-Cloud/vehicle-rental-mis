@@ -1496,7 +1496,8 @@ class BookingController extends Controller
                 'rate_per_day',
                 'tax',
                 'discount',
-                'total_amount'
+                'total_amount',
+                'payment_status'
             ]);
 
         $bookings->each(function ($booking) {

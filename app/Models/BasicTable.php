@@ -13,6 +13,7 @@ class BasicTable extends Model
         'login_logo',
         'company_name',
         'footer_text',
+        'tds',
         'terms_and_conditions',
         'privacy_policy',
         'about_us',
