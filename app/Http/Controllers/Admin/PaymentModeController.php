@@ -11,7 +11,7 @@ class PaymentModeController extends Controller
     public function index()
     {
         $paymentModes = PaymentMode::latest()->get();
-        return view('layouts.admin.payment_mode.index', compact('paymentModes'));
+        return view('layouts.admin.payment-modes.index', compact('paymentModes'));
     }
 
     /**
@@ -19,7 +19,7 @@ class PaymentModeController extends Controller
      */
     public function create()
     {
-        return view('layouts.admin.payment_mode.create');
+        return view('layouts.admin.payment-modes.create');
     }
 
     /**
@@ -50,7 +50,7 @@ class PaymentModeController extends Controller
             'status' => $request->status
         ]);
 
-        return redirect()->route('admin.payment-mode.index')
+        return redirect()->route('admin.payment-modes.index')
             ->with('success', 'Payment Mode created successfully');
     }
 
@@ -61,7 +61,7 @@ class PaymentModeController extends Controller
     {
         $paymentMode = PaymentMode::findOrFail($id);
 
-        return view('layouts.admin.payment_mode.show', compact('paymentMode'));
+        return view('layouts.admin.payment-modes.show', compact('paymentMode'));
     }
 
     /**
@@ -71,7 +71,7 @@ class PaymentModeController extends Controller
     {
         $paymentMode = PaymentMode::findOrFail($id);
 
-        return view('layouts.admin.payment_mode.create', compact('paymentMode'));
+        return view('layouts.admin.payment-modes.create', compact('paymentMode'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PaymentModeController extends Controller
             'status' => $request->status
         ]);
 
-        return redirect()->route('admin.payment-mode.index')
+        return redirect()->route('admin.payment-modes.index')
             ->with('success', 'Payment Mode updated successfully');
     }
 
@@ -132,7 +132,7 @@ class PaymentModeController extends Controller
 
         $paymentMode->delete();
 
-        return redirect()->route('admin.payment-mode.index')
+        return redirect()->route('admin.payment-modes.index')
             ->with('success', 'Payment Mode deleted successfully');
     }
 }

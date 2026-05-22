@@ -17,7 +17,7 @@
 @include('layouts.admin_theme.alert')
 
 <div class="d-flex justify-content-between mb-3">
-    <a href="{{ route('admin.payment-mode.create') }}"
+    <a href="{{ route('admin.payment-modes.create') }}"
        class="btn btn-sm btn-primary">
 
         <i class="fa fa-plus"></i> Add Payment Mode
@@ -69,7 +69,7 @@
 
 <td>
 
-<a href="{{ route('admin.payment-mode.edit', $pm->id) }}"
+<a href="{{ route('admin.payment-modes.edit', $pm->id) }}"
    class="btn btn-primary btn-sm">
     <i class="fas fa-edit"></i>
 </a>
@@ -81,7 +81,7 @@
 </a>
 --}}
 
-<form action="{{ route('admin.payment-mode.destroy', $pm->id) }}"
+<form action="{{ route('admin.payment-modes.destroy', $pm->id) }}"
       method="POST"
       style="display:inline-block;"
       onsubmit="return confirm('Delete this payment mode?');">

@@ -11,7 +11,7 @@
 <div class="container-fluid">
 <div class="card card-primary card-outline">
 
-<form action="{{ isset($paymentMode) ? route('admin.payment-mode.update',$paymentMode->id) : route('admin.payment-mode.store') }}"
+<form action="{{ isset($paymentMode) ? route('admin.payment-modes.update',$paymentMode->id) : route('admin.payment-modes.store') }}"
       method="POST" enctype="multipart/form-data">
 
 @csrf
