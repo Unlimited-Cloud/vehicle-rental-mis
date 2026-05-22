@@ -41,6 +41,7 @@ use App\Http\Controllers\Admin\SeaterController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\PaymentController;
+use App\Http\Controllers\Admin\PaymentReceiptController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
@@ -216,6 +217,19 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{method}/{id}', [PaymentController::class, 'show'])->name('payments.show');
         Route::delete('/payments/{method}/{id}', [PaymentController::class, 'destroy'])->name('payments.destroy');
+
+
+
+
+
+        Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payment_receipt.index');
+        Route::get('/payment-receipts/create', [PaymentReceiptController::class, 'create'])->name('payment_receipt.create');
+        Route::get('/payment-receipts/show/{id}', [PaymentReceiptController::class, 'show'])->name('payment_receipt.show');
+        Route::post('/payment-receipts/get-unpaid', [PaymentReceiptController::class, 'getUnpaidInvoices'])->name('payment_receipt.get_unpaid');
+        Route::post('/payment-receipts/store', [PaymentReceiptController::class, 'store'])->name('payment_receipt.store');
+        Route::get('/payment-receipts/download/{id}', [PaymentReceiptController::class, 'download'])->name('payment_receipt.download');
+        // TDS Report Route
+        Route::get('/tds-report', [PaymentReceiptController::class, 'getTDSReport'])->name('tds.report');
     });
 
     Route::post('/password/reset-otp/send', [ResetPasswordController::class, 'sendResetOtp'])->name('password.reset.otp.send');
