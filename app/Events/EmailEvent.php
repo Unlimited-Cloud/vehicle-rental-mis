@@ -65,6 +65,7 @@ class EmailEvent
                 $this->PersonalDetails = User::where('email', $email)->first();
             }
 
+
             if ($this->activity == 'forgot_password') {
                 $this->PersonalDetails = Customer::where('email', $email)->first();
             }
@@ -96,6 +97,10 @@ class EmailEvent
 
             $this->PersonalDetails = $userDetail = User::where('email', $email)->first();
             $userDetailId = $userDetail->id;
+            if ($this->activity == 'password_reset_otp') {
+                $this->PersonalDetails = User::where('email', $email)->first();
+            }
+
 
             $this->emailTemplates = EmailTemplate::where('activity',  $this->activity)->where('email_template_triggered', 1)
                 ->first();
@@ -112,7 +117,7 @@ class EmailEvent
                 $personalDetailsSend = $this->PersonalDetails;
                 $emailTemplateActivity = $this->activity;
                 $sendPasscode = null;
-                if ($emailTemplateActivity == 'passcode' || $emailTemplateActivity == 'forgot_password') {
+                if ($emailTemplateActivity == 'passcode' || $emailTemplateActivity == 'forgot_password' || $emailTemplateActivity == 'password_reset_otp') {
 
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }
@@ -142,7 +147,7 @@ class EmailEvent
                 $personalDetailsSend = $this->PersonalDetails;
                 $emailTemplateActivity = $this->activity;
                 $sendPasscode = null;
-                if ($emailTemplateActivity == 'passcode') {
+                if ($emailTemplateActivity == 'passcode' || $emailTemplateActivity == 'password_reset_otp') {
 
                     $sendPasscode  = Passcode::where('email', $personalDetailsSend['email'])->latest()->first();
                 }

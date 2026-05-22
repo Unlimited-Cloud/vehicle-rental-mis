@@ -83,7 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //seaters
     Route::get('/seaters', [BookingController::class, 'seaters']);
-    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeater']);
+    Route::post('/vehicles-by-seater', [BookingController::class, 'vehiclesBySeaters']);
 
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
 
@@ -99,7 +99,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
+    Route::get('basic-setting', [BookingController::class, 'getBasicSetting']);
 
+    Route::get(
+        '/vehicles/{vehicle_id}/insurance-download',
+        [VehicleController::class, 'downloadInsuranceDocument']
+    );
     Route::post(
         '/booking/khalti/initiate',
         [KhaltiPaymentController::class, 'initiatePayment']
@@ -134,3 +139,7 @@ Route::post('/estimate/regenerate', [BookingController::class, 'apiRegenerateEst
 Route::post('/prof-invoice', [VehicleMomentController::class, 'generateFromBooking']);
 Route::get('/basic-setup', [CustomerController::class, 'BasicSetup']);
 Route::get('/faq', [VehicleController::class, 'faq']);
+Route::get('/contact-us', [BookingController::class, 'contactus']);
+
+Route::post('/customer-location', [BookingController::class, 'storeLatLng']);
+Route::get('/customer-location/{customer_uuid}', [BookingController::class, 'showLatlng']);

@@ -78,11 +78,20 @@
                 </div>
             </div>
 
-             <div class="col-md-6">
+              <div class="col-md-6">
                 <div class="form-group">
-                    <label>Seater</label>
-                    <input type="number" name="seater" class="form-control"
-                           value="{{ old('seater',$vehicle->seater ?? '') }}" required>
+                    <label>Seater *</label>
+                    <select name="seater" class="form-control" required>
+                        <option value="">Select Seater</option>
+
+                        @foreach($seaters as $b)
+                            <option value="{{ $b->name }}"
+                                {{ old('seater', $vehicle->seater ?? '') == $b->name ? 'selected' : '' }}>
+                                {{ $b->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
                 </div>
             </div>
 

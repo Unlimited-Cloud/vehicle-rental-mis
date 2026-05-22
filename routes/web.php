@@ -37,6 +37,7 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BasicTableController;
 use App\Http\Controllers\Admin\BrandController;
+use App\Http\Controllers\Admin\SeaterController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\PaymentController;
@@ -45,6 +46,8 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
+use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -193,7 +196,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('vehicle_assignments', VehicleAssignmentController::class);
         Route::resource('basic_tables', BasicTableController::class);
         Route::resource('brand', BrandController::class);
+        Route::resource('seater', SeaterController::class);
         Route::resource('banner', BannerController::class);
+        Route::resource('contact-us', ContactUsController::class);
         Route::resource('splashscreen', SplashScreenController::class);
         Route::resource('faq', FaqController::class);
         Route::resource('agents', AgentController::class);
@@ -226,6 +231,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         // TDS Report Route
         Route::get('/tds-report', [PaymentReceiptController::class, 'getTDSReport'])->name('tds.report');
     });
+
+    Route::post('/password/reset-otp/send', [ResetPasswordController::class, 'sendResetOtp'])->name('password.reset.otp.send');
+    Route::post('/password/reset-otp/verify', [ResetPasswordController::class, 'resetWithOtp'])->name('password.reset.otp.verify');
 
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
