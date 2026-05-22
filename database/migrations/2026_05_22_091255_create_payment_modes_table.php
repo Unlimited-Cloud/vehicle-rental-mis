@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('customer_location', function (Blueprint $table) {
-            $table->string('place_name')->nullable()->after('address');
+        Schema::create('payment_modes', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('logo')->nullable();
+            $table->boolean('status')->default(1);
+            $table->timestamps();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('customer_location', function (Blueprint $table) {
-            $table->dropColumn('place_name');
-        });
+        Schema::dropIfExists('payment_modes');
     }
 };

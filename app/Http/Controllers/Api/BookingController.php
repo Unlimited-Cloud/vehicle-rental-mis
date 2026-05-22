@@ -35,6 +35,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
 use App\Models\ContactUs;
+use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
 use Illuminate\Support\Facades\Http;
 
@@ -1733,6 +1734,27 @@ class BookingController extends Controller
         return response()->json([
             'success' => true,
             'data' => $data,
+        ]);
+    }
+
+
+    public function paymentModes()
+    {
+        $paymentmodes = PaymentMode::select('id', 'name', 'logo', 'status')
+            ->where('status', 1)
+            ->get()
+            ->map(function ($item) {
+
+                $item->logo = $item->logo
+                    ? asset('uploads/payment_modes/' . $item->logo)
+                    : null;
+
+                return $item;
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $paymentmodes
         ]);
     }
 }
