@@ -167,7 +167,6 @@ class KhaltiPaymentController extends Controller
     public function initiatePayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mobile' => 'required',
             'booking_id' => 'required|exists:vehicle_bookings,id',
             'customer_id' => 'required|exists:customers,customer_uuid',
         ]);
