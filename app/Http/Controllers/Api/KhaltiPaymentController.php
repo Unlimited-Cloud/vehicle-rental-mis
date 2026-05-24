@@ -378,8 +378,10 @@ class KhaltiPaymentController extends Controller
                         'payment_remarks' => 'By Khalti',
                     ]);
                 } else {
+                    
 
                     $paymentId = $payment->payment_id;
+                    
 
                     Payment::updateOrCreate(
                         [
@@ -393,7 +395,7 @@ class KhaltiPaymentController extends Controller
                     );
 
                     // Create Receipt
-                    $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
+                    //$this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
                 }
             } else {
 
