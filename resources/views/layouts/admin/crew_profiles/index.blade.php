@@ -52,6 +52,11 @@
          <a href="{{ route('admin.crew_profiles.show', $c->id) }}" class="btn btn-info btn-sm">
             <i class="fas fa-eye"></i>
         </a>
+         <a href="{{ route('admin.bank-details.create', $c->id) }}"
+            class="btn btn-success btn-sm"
+            title="Add Bank">
+                <i class="fas fa-university"></i>
+            </a>
 
         <form action="{{ route('admin.crew_profiles.destroy', $c->id) }}"
               method="POST"

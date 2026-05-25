@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\EsewaIbftController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -145,3 +146,15 @@ Route::post('/customer-location', [BookingController::class, 'storeLatLng']);
 Route::get('/customer-location/{customer_uuid}', [BookingController::class, 'showLatlng']);
 
 Route::get('/payment-modes', [BookingController::class, 'paymentModes']);
+
+
+
+Route::prefix('esewa')->group(function () {
+    Route::controller(EsewaIbftController::class)->group(function () {
+        Route::get('get-banks', 'getBanks');
+        Route::post('validate-account', 'validateAccount');
+        Route::post('send-direct-transaction', 'transfer');
+        Route::post('transaction-status',  'getTransactionStatus');
+        Route::post('transaction-report',  'getTransactionReport');
+    });
+});

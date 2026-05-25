@@ -306,6 +306,7 @@ class BookingController extends Controller
 
 
             //  Generate Proforma
+            // $this->service->generateFinalInvoice($file_no);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
