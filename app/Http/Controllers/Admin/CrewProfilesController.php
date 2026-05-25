@@ -213,7 +213,12 @@ class CrewProfilesController extends Controller
     public function show(CrewProfile $crew_profile)
     {
         Gate::authorize('read_crew_profiles');
-        $crew_profile->load('user');
+
+        $crew_profile->load([
+            'user',
+            'bankDetails'
+        ]);
+
         return view('layouts.admin.crew_profiles.show', compact('crew_profile'));
     }
 

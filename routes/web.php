@@ -45,8 +45,10 @@ use App\Http\Controllers\Admin\PaymentReceiptController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SplashScreenController;
 use App\Http\Controllers\Api\EsewaPaymentController;
+use App\Http\Controllers\Api\EsewaIbftController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Admin\ContactUsController;
+use App\Http\Controllers\Admin\CrewBankDetailsController;
 use App\Http\Controllers\Admin\PaymentModeController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 
@@ -223,6 +225,20 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
 
 
+        Route::get('crew/{crewId}/bank-details', [CrewBankDetailsController::class, 'index'])
+            ->name('bank-details.index');
+        Route::get('crew/{crewId}/bank-details/create', [CrewBankDetailsController::class, 'create'])
+            ->name('bank-details.create');
+        Route::post('crew/{crewId}/bank-details/store', [CrewBankDetailsController::class, 'store'])
+            ->name('bank-details.store');
+        Route::get('crew/{crewId}/bank-details/{id}/edit', [CrewBankDetailsController::class, 'edit'])
+            ->name('bank-details.edit');
+        Route::put('crew/{crewId}/bank-details/{id}', [CrewBankDetailsController::class, 'update'])
+            ->name('bank-details.update');
+        Route::delete('crew/{crewId}/bank-details/{id}', [CrewBankDetailsController::class, 'destroy'])
+            ->name('bank-details.destroy');
+
+
 
         Route::get('/payment-receipts', [PaymentReceiptController::class, 'index'])->name('payment_receipt.index');
         Route::get('/payment-receipts/create', [PaymentReceiptController::class, 'create'])->name('payment_receipt.create');
@@ -300,5 +316,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             '/esewa/success',
             [EsewaPaymentController::class, 'success']
         )->name('esewa.success');
+
+
+        Route::post(
+            '/attendance/esewa/transfer-dashboard',
+            [EsewaIbftController::class, 'transferDashboard']
+        )->name('attendance.esewa.transfer-dashboard');
+        Route::get(
+            '/attendance/esewa/get-bank-details',
+            [EsewaIbftController::class, 'getBankDetails']
+        )->name('esewa.get_bank_details');
     });
 });

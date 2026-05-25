@@ -10,6 +10,7 @@ class Payment extends Model
         'vehicle_booking_id',
         'amount',
         'payment_method',
+        'unique_id',
         'transaction_reference',
         'payment_date',
         'notes',
