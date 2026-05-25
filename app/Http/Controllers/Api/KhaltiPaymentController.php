@@ -392,7 +392,7 @@ class KhaltiPaymentController extends Controller
                             'payment_date' => now(),
                             'status' => 'completed',
                         ]
-                    );
+                    );  
 
                     // Create Receipt
                     //$this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
@@ -415,6 +415,14 @@ class KhaltiPaymentController extends Controller
         if ($payment->payment_type == 'attendance') {
             $redirectUrl = route('admin.attendance.index');
         }
+
+        echo "
+            <script>
+                // Sends an event alert up to the parent FlutterFlow application container
+                window.parent.postMessage('Transaction updated', '*');
+            </script>
+            ";
+        exit;
 
         return $redirectUrl
             ? redirect($redirectUrl)->with('success', 'Payment completed successfully')

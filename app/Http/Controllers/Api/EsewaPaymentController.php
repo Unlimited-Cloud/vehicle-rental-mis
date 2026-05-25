@@ -149,7 +149,7 @@ class EsewaPaymentController extends Controller
             'success' => true,
             'signature' => $hash,
             'transaction_uuid' => $transaction_uuid,
-            'amount' => $booking->total_amount,
+            'amount' => (int) $booking->total_amount,
             'success_url' => route('esewa.success'),
             'failure_url' => '',
         ]);
