@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\Attendance;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -124,11 +125,10 @@ class EsewaIbftService
     public function directSingleTransaction(array $params): Payment
     {
         $uniqueId = $params['unique_id'] ?? $this->generateUniqueId();
-        $identityString = $this->generateIdentityStringT(
+        $identityString = $this->generateIdentityString(
             $params['source_account_number'],
             $params['destination_account_number'],
-            number_format((float) $params['amount'], 2, '.', ''),
-            $uniqueId
+            $params['destination_account_name']
         );
 
         $payload = [
@@ -158,6 +158,12 @@ class EsewaIbftService
             $this->baseUrl . '/api/fonegateway/ibft/v1/transaction/direct_single_transaction',
             $payload
         );
+        Log::info('eSewa IBFT: transaction response received', [
+            'unique_id' => $uniqueId,
+            'response' => $response,
+            'response_code' => $response['Code'] ?? null,
+            'response_message' => $response['Message'] ?? null,
+        ]);
 
         return $this->persistPayment($response, $params, $uniqueId, $payload);
     }
@@ -168,47 +174,123 @@ class EsewaIbftService
 
     protected function persistPayment(array $response, array $params, string $uniqueId, array $payload): Payment
     {
-        $txn = $response['Data']['ibft_corporate_transaction_response'] ?? [];
-        $code = $response['Code'] ?? 'XXXX';
-        $status = $this->mapTransactionStatus($txn['status'] ?? '', $code);
+        $txn      = $response['Data']['ibft_corporate_transaction_response'] ?? [];
+        $code     = $response['Code'] ?? 'XXXX';
+        $mapped   = $this->mapTransactionStatus($txn['status'] ?? '', $code);
 
         $payment = Payment::create([
-            'vehicle_booking_id' => $params['vehicle_booking_id'] ?? null,
-            'crew_id' => $params['crew_id'] ?? null,
-            'attendance_id' => $params['attendance_id'] ?? null,
-            'amount' => $payload['amount'],
-            'payment_method' => 'esewa_ibft',
-            'payment_type' => $params['payment_type'] ?? 'debit',
-            'transaction_reference' => $txn['transaction_code'] ?? $uniqueId,
-            'payment_date' => now(),
-            'status' => $status,
-            'notes' => json_encode([
-                'unique_id' => $uniqueId,
-                'request_id' => $txn['request_id'] ?? null,
-                'esewa_status' => $txn['status'] ?? null,
-                'source_account' => $txn['source_account'] ?? null,
-                'destination_account' => $txn['destination_account'] ?? null,
-                'source_account_status' => $txn['source_account_status'] ?? null,
-                'destination_account_status' => $txn['destination_account_status'] ?? null,
-                'transaction_date' => $txn['transaction_date'] ?? null,
-                'message' => $response['Message'] ?? null,
-                'error_message' => $txn['error_message'] ?? null,
-                'raw_response_code' => $code,
-                'destination_bank_code' => $params['destination_bank_code'],
-                'destination_account_name' => $params['destination_account_name'],
+            'vehicle_booking_id'    => $params['vehicle_booking_id']  ?? null,
+            'crew_id'               => $params['crew_id']             ?? null,
+            'attendance_id'         => $params['attendance_id']       ?? null,
+            'amount'                => $payload['amount'],
+            'payment_method'        => 'bank_transfer',
+            'payment_type'          => $params['payment_type']        ?? 'booking',
+            'transaction_reference' => $txn['transaction_code']       ?? $uniqueId,
+            'payment_date'          => now(),
+            'unique_id'              => $uniqueId,
+            'status'                => $mapped['status'],
+            'notes'                 => json_encode([
+                'unique_id'                  => $uniqueId,
+                'request_id'                 => $txn['request_id']                  ?? null,
+                'esewa_status'               => $txn['status']                      ?? null,
+                'esewa_status_message'       => $mapped['message'],
+                'source_account'             => $txn['source_account']              ?? null,
+                'destination_account'        => $txn['destination_account']         ?? null,
+                'source_account_status'      => $txn['source_account_status']       ?? null,
+                'destination_account_status' => $txn['destination_account_status']  ?? null,
+                'transaction_date'           => $txn['transaction_date']            ?? null,
+                'message'                    => $response['Message']                ?? null,
+                'error_message'              => $txn['error_message']               ?? null,
+                'raw_response_code'          => $code,
+                'destination_bank_code'      => $params['destination_bank_code'],
+                'destination_account_name'   => $params['destination_account_name'],
             ]),
-            'created_by' => auth()->id(),
-            'created_user_type' => $params['created_user_type'] ?? 'system',
+            'created_by'            => auth()->id(),
+            'created_user_type'     => $params['created_user_type']   ?? 'system',
         ]);
+
+
+
+        if (
+            ($params['payment_type'] ?? null) === 'attendance' &&
+            !empty($params['attendance_id']) &&
+            $mapped['status'] === 'completed'
+        ) {
+            Attendance::where('id', $params['attendance_id'])
+                ->update([
+                    'payment_status' => 'paid',
+                    'payment_remarks' => 'IBFT Bank Pay',
+                    'remarks' => $params['remarks'] ?? null,
+                ]);
+        }
 
         Log::info('eSewa IBFT: payment saved', [
             'payment_id' => $payment->id,
-            'status' => $status,
-            'txn_code' => $txn['transaction_code'] ?? null,
+            'status'     => $mapped['status'],
+            'message'    => $mapped['message'],
+            'txn_code'   => $txn['transaction_code'] ?? null,
         ]);
 
         return $payment;
     }
+
+
+
+
+
+    public function getTransactionStatus(string $uniqueId)
+    {
+        $identityString = $this->generateIdentityString($uniqueId, $this->clientId);
+
+        $payload = [
+            'identity_string' => $identityString,
+            'unique_id'       => $uniqueId,
+            'client_id'       => $this->clientId,
+        ];
+
+        $response = $this->makeRequest(
+            'POST',
+            $this->baseUrl . '/api/fonegateway/ibft/v1/transaction/get_direct_transaction_status_by_client_id_and_unique_id',
+            $payload
+        );
+
+        if (($response['Code'] ?? '') !== '0000') {
+            throw new Exception('eSewa get transaction status failed: ' . ($response['Message'] ?? 'Unknown error'));
+        }
+
+        return $response['Data'];
+    }
+
+
+
+
+    public function getTransactionReport(string $fromDate, string $toDate, string $transactionCode = '', string $uniqueId = '')
+    {
+        $identityString = $this->generateIdentityString($this->clientId, $fromDate, $toDate);
+
+        $payload = [
+            'client_id'            => $this->clientId,
+            'transaction_from_date' => $fromDate,
+            'transaction_to_date'  => $toDate,
+            'transaction_code'     => $transactionCode,
+            'batch_id'             => '',
+            'unique_id'            => $uniqueId,
+            'identity_string'      => $identityString,
+        ];
+
+        $response = $this->makeRequest(
+            'POST',
+            $this->baseUrl . '/api/fonegateway/ibft/v1/transaction_report',
+            $payload
+        );
+
+        if (($response['Code'] ?? '') !== '0000') {
+            throw new Exception('eSewa transaction report failed: ' . ($response['Message'] ?? 'Unknown error'));
+        }
+
+        return $response['Data'];
+    }
+
 
     // ─────────────────────────────────────────────────────────────
     // HELPERS
@@ -234,15 +316,30 @@ class EsewaIbftService
         return strtoupper(uniqid('TXN', true));
     }
 
-    protected function mapTransactionStatus(string $esewaStatus, string $code): string
+    protected function mapTransactionStatus(string $esewaStatus, string $code): array
     {
+        $messages = [
+            'RESP000' => 'Transaction completed successfully.',
+            'RESP010' => 'Transaction failed due to insufficient balance.',
+            'RESP011' => 'Invalid source or destination account.',
+            'RESP012' => 'Account is blocked or inactive.',
+            'RESP013' => 'Transaction limit exceeded.',
+            'RESP014' => 'Duplicate transaction.',
+            'PENDING'    => 'Transaction is pending.',
+            'PROCESSING' => 'Transaction is being processed.',
+        ];
+
         if ($code === '0000' && $esewaStatus === 'RESP000') {
-            return 'completed';
+            return ['status' => 'completed', 'message' => $messages['RESP000']];
         }
         if (in_array($esewaStatus, ['PENDING', 'PROCESSING'])) {
-            return 'pending';
+            return ['status' => 'pending', 'message' => $messages[$esewaStatus]];
         }
-        return 'failed';
+
+        return [
+            'status'  => 'failed',
+            'message' => $messages[$esewaStatus] ?? 'Transaction failed. Please try again.',
+        ];
     }
 
     /**

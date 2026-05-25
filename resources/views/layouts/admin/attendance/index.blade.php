@@ -219,9 +219,13 @@
                                     Paid
                                 </span>
                             @else
-                                <button id="khaltiBtn-{{ $attendance->id }}" class="btn btn-sm btn-primary"
+                                {{-- <button id="khaltiBtn-{{ $attendance->id }}" class="btn btn-sm btn-primary"
                                     onclick="payByKhalti({{ $attendance->id }})">
                                     <i class="fas fa-credit-card mr-2"></i>Khalti
+                                </button> --}}
+                                 <button id="bankBtn-{{ $attendance->id }}" class="btn btn-sm btn-info mb-1"
+                                    onclick="payByBank({{ $attendance->id }})">
+                                    <i class="fas fa-university mr-1"></i> Bank
                                 </button>
                                 {{-- <button class="btn btn-sm btn-success"
                                     onclick="payByEsewa({{ $attendance->id }})">
@@ -324,6 +328,97 @@
                     <i class="fa fa-edit"></i> Edit Attendance
                 </a>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bank Payment Modal -->
+<div class="modal fade" id="bankPaymentModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-university mr-2"></i> Bank Transfer Payment
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="bankPaymentForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="attendance_id" id="bank_attendance_id" value="">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                    
+                    <!-- Bank Details Dropdown -->
+                    <div class="form-group">
+                        <label for="bankDetailSelect">
+                            <i class="fas fa-building mr-1"></i> Select Bank Account
+                        </label>
+                        <select class="form-control" id="bankDetailSelect" name="crew_bank_detail_id" required>
+                            <option value="">-- Select Bank Account --</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Select the crew member's bank account for transfer
+                        </small>
+                    </div>
+                    
+                    <!-- Amount Display -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-money-bill-wave mr-1"></i> Amount to Transfer
+                        </label>
+                        <div class="alert alert-info" id="amountDisplay">
+                            <strong>Rs. 0.00</strong>
+                        </div>
+                    </div>
+                    
+                    <!-- Remarks -->
+                    <div class="form-group">
+                        <label for="bankRemarks">
+                            <i class="fas fa-comment mr-1"></i> Remarks
+                        </label>
+                        <textarea class="form-control" 
+                                  id="bankRemarks" 
+                                  name="remarks" 
+                                  rows="3" 
+                                  placeholder="Enter transfer remarks..."></textarea>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-edit"></i> e.g., Allowance payment for January 2024
+                        </small>
+                    </div>
+                    
+                    <!-- Narration Fields (Optional) -->
+                    {{-- <div class="form-group">
+                        <label for="narrationOne">
+                            <i class="fas fa-tag mr-1"></i> Narration 1 (Optional)
+                        </label>
+                        <input type="text" class="form-control" id="narrationOne" name="narration_one" 
+                               placeholder="Additional narration for bank transfer">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="narrationTwo">
+                            <i class="fas fa-tag mr-1"></i> Narration 2 (Optional)
+                        </label>
+                        <input type="text" class="form-control" id="narrationTwo" name="narration_two" 
+                               placeholder="Additional narration for bank transfer">
+                    </div> --}}
+                    
+                    <!-- Confirmation Notice -->
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <strong>Confirmation Required:</strong> Please verify the bank details before proceeding. This action will initiate a bank transfer to the selected account.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="confirmBankPaymentBtn">
+                        <i class="fas fa-paper-plane mr-1"></i> Initiate Transfer
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1295,6 +1390,155 @@ function payByKhalti(attendanceId) {
 }
 
 
+// Pay by Bank function
+let currentAttendanceAmount = 0;
+let currentCrewId = null;
+
+function payByBank(attendanceId) {
+    // Reset form
+    $('#bankPaymentForm')[0].reset();
+    $('#bankDetailSelect').html('<option value="">-- Select Bank Account --</option>');
+    $('#bank_attendance_id').val(attendanceId);
+    
+    // Get attendance details first to get crew_id and amount
+    $.ajax({
+        url: `/dashboard/attendance/${attendanceId}`,
+        type: "GET",
+        success: function(attendance) {
+            currentAttendanceAmount = attendance.allowances || 0;
+            currentCrewId = attendance.crew_id;
+            $('#amountDisplay').html(`<strong>Rs. ${parseFloat(currentAttendanceAmount).toFixed(2)}</strong>`);
+            
+            // Fetch bank details for the crew - FIXED: Use currentCrewId here
+            fetchBankDetails(currentCrewId);
+            
+            // Show modal
+            $('#bankPaymentModal').modal('show');
+        },
+        error: function(xhr) {
+            console.error('Error fetching attendance:', xhr);
+            toastr.error('Could not fetch attendance details');
+        }
+    });
+}
+
+// Fetch bank details for crew - FIXED: Accept crewId as parameter
+function fetchBankDetails(crewId) {
+    $.ajax({
+        url: "{{ route('admin.esewa.get_bank_details') }}",
+        type: "GET",
+        data: { crew_id: crewId }, // Use the passed crewId
+        success: function(response) {
+            if (response.success && response.data.length > 0) {
+                let bankSelect = $('#bankDetailSelect');
+                bankSelect.empty();
+                bankSelect.append('<option value="">-- Select Bank Account --</option>');
+                response.data.forEach(function(bank) {
+                    let optionText = `${bank.bank_name} - ${bank.account_number} (${bank.account_holder_name})`;
+                    bankSelect.append(`<option value="${bank.id}">${escapeHtml(optionText)}</option>`);
+                });
+            } else {
+                $('#bankDetailSelect').html('<option value="">No bank accounts found</option>');
+                toastr.warning('No bank accounts found for this crew member');
+            }
+        },
+        error: function(xhr) {
+            console.error('Bank details error:', xhr);
+            let errorMsg = xhr.responseJSON?.message || 'Failed to fetch bank details';
+            toastr.error(errorMsg);
+            $('#bankDetailSelect').html('<option value="">Error loading bank accounts</option>');
+        }
+    });
+}
+
+// Handle bank payment form submission
+$(document).ready(function() {
+    $('#bankPaymentForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        let attendanceId = $('#bank_attendance_id').val();
+        let bankDetailId = $('#bankDetailSelect').val();
+        
+        if (!bankDetailId) {
+            toastr.error('Please select a bank account');
+            return;
+        }
+        
+        // Confirmation dialog with details
+        let selectedBankText = $('#bankDetailSelect option:selected').text();
+        let amount = $('#amountDisplay').text();
+        
+        if (!confirm(`Are you sure you want to initiate this bank transfer?\n\n` +
+                     `Bank Account: ${selectedBankText}\n` +
+                     `Amount: ${amount}\n\n` +
+                     `Please verify all details are correct.\n` +
+                     `This action cannot be undone.`)) {
+            return;
+        }
+        
+        let btn = $("#confirmBankPaymentBtn");
+        btn.prop("disabled", true);
+        btn.html('<i class="fas fa-spinner fa-spin mr-2"></i> Processing...');
+        
+        let formData = {
+            attendance_id: attendanceId,
+            crew_bank_detail_id: bankDetailId,
+            remarks: $('#bankRemarks').val(),
+            // narration_one: $('#narrationOne').val(),
+            // narration_two: $('#narrationTwo').val(),
+            _token: "{{ csrf_token() }}"
+        };
+        
+        $.ajax({
+            url: "{{ route('admin.attendance.esewa.transfer-dashboard') }}",
+            type: "POST",
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#bankPaymentModal').modal('hide');
+                    toastr.success(response.message || 'Bank transfer initiated successfully!');
+                    
+                    // Update the button to show paid status
+                    let btn = $(`#bankBtn-${attendanceId}`);
+                    btn.closest('td').html('<span class="badge badge-success">Paid</span>');
+                    
+                    // Optional: Reload after 2 seconds
+                    setTimeout(function() {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    toastr.error(response.message || 'Transfer failed');
+                    resetBankButton();
+                }
+            },
+            error: function(xhr) {
+                console.error('Transfer error:', xhr);
+                let errorMsg = xhr.responseJSON?.message || 'Bank transfer failed';
+                if (xhr.responseJSON?.errors) {
+                    let errors = xhr.responseJSON.errors;
+                    errorMsg = Object.values(errors).flat().join(', ');
+                }
+                toastr.error(errorMsg);
+                resetBankButton();
+            }
+        });
+        
+        function resetBankButton() {
+            btn.prop("disabled", false);
+            btn.html('<i class="fas fa-paper-plane mr-1"></i> Initiate Transfer');
+        }
+    });
+    
+    // Close modal cleanup
+    $('#bankPaymentModal').on('hidden.bs.modal', function() {
+        $('#bankPaymentForm')[0].reset();
+        $('#bankDetailSelect').html('<option value="">-- Select Bank Account --</option>');
+        $('#bank_attendance_id').val('');
+        currentAttendanceAmount = 0;
+        currentCrewId = null;
+    });
+});
+
 // Replace the existing selectProof, payManual functions with these updated versions:
 
 function selectProof(attendanceId) {
@@ -1445,81 +1689,6 @@ function processManualPayment(attendanceId) {
 
 
 
-
-function payByEsewa(attendanceId) {
-
-    if (!confirm("Are you sure you want to pay via eSewa?")) {
-        return;
-    }
-
-    $.ajax({
-        url: "{{ route('admin.attendance.esewa.initiate') }}",
-        type: "POST",
-        data: {
-            attendance_id: attendanceId,
-            _token: "{{ csrf_token() }}"
-        },
-        success: function(response) {
-
-            if (!response.success) {
-                toastr.error(response.message);
-                return;
-            }
-
-            let form = `
-                <form id="esewaForm" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
-
-                    <input type="hidden" name="amount" value="${response.amount}">
-                    <input type="hidden" name="tax_amount" value="0">
-                    <input type="hidden" name="total_amount" value="${response.amount}">
-                    <input type="hidden" name="transaction_uuid" value="${response.transaction_uuid}">
-                    <input type="hidden" name="product_code" value="EPAYTEST">
-                    <input type="hidden" name="product_service_charge" value="0">
-                    <input type="hidden" name="product_delivery_charge" value="0">
-                    <input type="hidden" name="success_url" value="${response.success_url}">
-                    <input type="hidden" name="failure_url" value="${response.failure_url}">
-                    <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
-                    <input type="hidden" name="signature" value="${response.signature}">
-
-                </form>
-            `;
-
-            $('body').append(form);
-
-            $('#esewaForm').submit();
-        },
-        error: function(xhr) {
-            toastr.error(xhr.responseJSON?.message || 'Payment failed');
-        }
-    });
-}
-
-
-function submitEsewaForm(data) {
-
-    let form = `
-        <form id="esewaForm"
-            action="https://rc-epay.esewa.com.np/api/epay/main/v2/form"
-            method="POST">
-
-            <input type="hidden" name="amount" value="${data.amount}">
-            <input type="hidden" name="tax_amount" value="0">
-            <input type="hidden" name="total_amount" value="${data.amount}">
-            <input type="hidden" name="transaction_uuid" value="${data.transaction_uuid}">
-            <input type="hidden" name="product_code" value="EPAYTEST">
-            <input type="hidden" name="product_service_charge" value="0">
-            <input type="hidden" name="product_delivery_charge" value="0">
-            <input type="hidden" name="success_url" value="${data.success_url}">
-            <input type="hidden" name="failure_url" value="${data.failure_url}">
-            <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
-            <input type="hidden" name="signature" value="${data.signature}">
-        </form>
-    `;
-
-    $('body').append(form);
-
-    $('#esewaForm').submit();
-}
 
 
 </script>

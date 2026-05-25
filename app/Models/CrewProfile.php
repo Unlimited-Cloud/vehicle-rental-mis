@@ -30,4 +30,9 @@ class CrewProfile extends Model
     {
         return $this->hasMany(VehicleRepair::class);
     }
+
+    public function bankDetails()
+    {
+        return $this->hasMany(CrewBankDetail::class, 'crew_id');
+    }
 }
