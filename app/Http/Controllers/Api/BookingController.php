@@ -1761,4 +1761,72 @@ class BookingController extends Controller
             'data' => $paymentmodes
         ]);
     }
+
+
+
+    public function getReceipt($booking_id)
+    {
+        $booking = VehicleBooking::find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        $receipt = VehicleReceipt::where('file_no', $booking->file_no)->first();
+
+        if (!$receipt) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Receipt not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'booking_id' => $booking->id,
+            'file_no' => $booking->file_no,
+            'pdf_url' => asset($receipt->pdf_path)
+        ]);
+    }
+
+    public function getReceiptBlob($booking_id)
+    {
+        $booking = VehicleBooking::find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        $receipt = VehicleReceipt::where('file_no', $booking->file_no)->first();
+
+        if (!$receipt) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Receipt not found'
+            ], 404);
+        }
+
+        // Full file path from public folder
+        $filePath = public_path($receipt->pdf_path);
+
+        // Check file exists
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'PDF file not found'
+            ], 404);
+        }
+
+        // Open PDF directly in browser
+        return response()->file($filePath);
+
+        // OR force download
+        // return response()->download($filePath);
+    }
 }
