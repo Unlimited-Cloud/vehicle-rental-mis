@@ -1788,7 +1788,7 @@ class BookingController extends Controller
             'status' => true,
             'booking_id' => $booking->id,
             'file_no' => $booking->file_no,
-            'pdf_url' => asset($receipt->pdf_path)
+            'pdf_url' => asset($receipt->receipt_path)
         ]);
     }
 
@@ -1813,7 +1813,7 @@ class BookingController extends Controller
         }
 
         // Full file path from public folder
-        $filePath = public_path($receipt->pdf_path);
+        $filePath = public_path($receipt->receipt_path);
 
         // Check file exists
         if (!file_exists($filePath)) {
