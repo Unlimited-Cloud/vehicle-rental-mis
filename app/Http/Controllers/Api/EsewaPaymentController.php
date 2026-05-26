@@ -51,7 +51,7 @@ class EsewaPaymentController extends Controller
 
         $transaction_uuid = 'ATTE-' . strtoupper(Str::random(10));
 
-        $secret = env('ESEWA_SECRET');
+        $secret = "8gBm/:&EnhH.1/q";
 
         $data = "total_amount={$amount},transaction_uuid={$transaction_uuid},product_code=EPAYTEST";
 
@@ -113,7 +113,7 @@ class EsewaPaymentController extends Controller
                 'message' => 'Customer not found.'
             ], 422);
         }
-        $secret = env('ESEWA_SECRET');
+        $secret = "8gBm/:&EnhH.1/q";
 
         $transaction_uuid = uniqid();
 
@@ -149,7 +149,7 @@ class EsewaPaymentController extends Controller
             'success' => true,
             'signature' => $hash,
             'transaction_uuid' => $transaction_uuid,
-            'amount' => (int) $booking->total_amount,
+            'amount' => $booking->total_amount,
             'success_url' => route('esewa.success'),
             'failure_url' => '',
         ]);

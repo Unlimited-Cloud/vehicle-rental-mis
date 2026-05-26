@@ -417,11 +417,16 @@ class KhaltiPaymentController extends Controller
         }
 
         echo "
-            <script>
-                // Sends an event alert up to the parent FlutterFlow application container
-                window.parent.postMessage('Transaction updated', '*');
-            </script>
-            ";
+        <script>
+            // 1. Send to FlutterFlow Web Preview Container
+            window.parent.postMessage('Transaction updated', '*');
+            
+            // 2. Send directly to your Mobile APK App Handler
+            if (typeof FlutterPaymentChannel !== 'undefined') {
+                FlutterPaymentChannel.postMessage('Transaction updated');
+            }
+        </script>
+        ";
         exit;
 
         return $redirectUrl
