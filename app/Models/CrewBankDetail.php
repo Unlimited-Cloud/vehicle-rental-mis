@@ -12,7 +12,8 @@ class CrewBankDetail extends Model
         'bank_code',
         'account_holder_name',
         'account_number',
-        'is_default',
+        'is_active',
+        'is_verified'
     ];
 
     public function crew()

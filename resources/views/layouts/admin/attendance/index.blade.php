@@ -227,12 +227,12 @@
                                     onclick="payByBank({{ $attendance->id }})">
                                     <i class="fas fa-university mr-1"></i> Bank
                                 </button>
-                                {{-- <button class="btn btn-sm btn-success"
+                                <button class="btn btn-sm btn-success"
                                     onclick="payByEsewa({{ $attendance->id }})">
 
                                     <i class="fas fa-wallet mr-2"></i>
                                     ESewa
-                                </button> --}}
+                                </button>
                                 <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
                                     onclick="selectProof({{ $attendance->id }})">
                                     <i class="fas fa-money-bill mr-2"></i> Cash Payment
@@ -1685,6 +1685,81 @@ function processManualPayment(attendanceId) {
         btn.prop("disabled", false);
         btn.html('<i class="fas fa-check-circle mr-1"></i> Confirm Payment');
     }
+}
+
+function payByEsewa(attendanceId) {
+
+    if (!confirm("Are you sure you want to pay via eSewa?")) {
+        return;
+    }
+
+    $.ajax({
+        url: "{{ route('admin.attendance.esewa.initiate') }}",
+        type: "POST",
+        data: {
+            attendance_id: attendanceId,
+            _token: "{{ csrf_token() }}"
+        },
+        success: function(response) {
+
+            if (!response.success) {
+                toastr.error(response.message);
+                return;
+            }
+
+            let form = `
+                <form id="esewaForm" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
+
+                    <input type="hidden" name="amount" value="${response.amount}">
+                    <input type="hidden" name="tax_amount" value="0">
+                    <input type="hidden" name="total_amount" value="${response.amount}">
+                    <input type="hidden" name="transaction_uuid" value="${response.transaction_uuid}">
+                    <input type="hidden" name="product_code" value="EPAYTEST">
+                    <input type="hidden" name="product_service_charge" value="0">
+                    <input type="hidden" name="product_delivery_charge" value="0">
+                    <input type="hidden" name="success_url" value="${response.success_url}">
+                    <input type="hidden" name="failure_url" value="${response.failure_url}">
+                    <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+                    <input type="hidden" name="signature" value="${response.signature}">
+
+                </form>
+            `;
+
+            $('body').append(form);
+
+            $('#esewaForm').submit();
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Payment failed');
+        }
+    });
+}
+
+
+function submitEsewaForm(data) {
+
+    let form = `
+        <form id="esewaForm"
+            action="https://rc-epay.esewa.com.np/api/epay/main/v2/form"
+            method="POST">
+
+            <input type="hidden" name="amount" value="${data.amount}">
+            <input type="hidden" name="tax_amount" value="0">
+            <input type="hidden" name="total_amount" value="${data.amount}">
+            <input type="hidden" name="transaction_uuid" value="${data.transaction_uuid}">
+            <input type="hidden" name="product_code" value="EPAYTEST">
+            <input type="hidden" name="product_service_charge" value="0">
+            <input type="hidden" name="product_delivery_charge" value="0">
+            <input type="hidden" name="success_url" value="${data.success_url}">
+            <input type="hidden" name="failure_url" value="${data.failure_url}">
+            <input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+            <input type="hidden" name="signature" value="${data.signature}">
+        </form>
+    `;
+
+    $('body').append(form);
+
+    $('#esewaForm').submit();
 }
 
 
