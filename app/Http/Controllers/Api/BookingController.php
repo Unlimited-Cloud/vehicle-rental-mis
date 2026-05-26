@@ -1649,7 +1649,7 @@ class BookingController extends Controller
             'lng'           => 'required|numeric',
         ]);
 
-        $apiKey  = env('GOOGLE_MAPS_KEY');
+        $apiKey  = "AIzaSyDjTXcdHBg0C2XEdVFP8R7sFDz2o0RzIYw";
         $lat     = $validated['lat'];
         $lng     = $validated['lng'];
         $address   = null;
