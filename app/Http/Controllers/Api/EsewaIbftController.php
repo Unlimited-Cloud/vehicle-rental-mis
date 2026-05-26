@@ -352,6 +352,77 @@ class EsewaIbftController extends Controller
         }
     }
 
+
+
+    public function validateBankAccount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'bank_detail_id'      => 'required|exists:crew_bank_details,id',
+            'account_number'      => 'required|string',
+            'swift_code'          => 'required|string',
+            'account_holder_name' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Call your existing validation method
+            $response = $this->esewa->validateAccount(
+                $request->account_number,
+                $request->swift_code,
+                $request->account_holder_name ?? ''
+            );
+
+            // Check if validation was successful based on the response structure
+            $isValidated = false;
+            $validationMessage = '';
+            $validationData = null;
+
+            // Check the response structure
+            if (isset($response['Data']['ibft_corporate_account_validation_response'])) {
+                $validationResponse = $response['Data']['ibft_corporate_account_validation_response'];
+
+                // Success code is "0" (string) according to your response
+                if ($validationResponse['code'] === '0' || $validationResponse['code'] == 0) {
+                    $isValidated = true;
+                    $validationMessage = $validationResponse['message'] ?? 'Validation successful';
+                    $validationData = $validationResponse;
+                } else {
+                    $validationMessage = $validationResponse['message'] ?? 'Validation failed';
+                }
+            } else {
+                $validationMessage = 'Invalid response format from validation service';
+            }
+
+            // If validation successful, update the database
+            if ($isValidated) {
+                $bankDetail = CrewBankDetail::find($request->bank_detail_id);
+                $bankDetail->is_verified = true; // or is_validated based on your column name
+                $bankDetail->save();
+
+                return response()->json([
+                    'success' => true,
+                    'data' => $validationData,
+                    'message' => $validationMessage
+                ]);
+            } else {
+                // Validation failed
+                return response()->json([
+                    'success' => false,
+                    'message' => $validationMessage
+                ], 400);
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to validate account: ' . $e->getMessage() . ' file ' . $e->getFile() . ' line ' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during validation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function getBankDetails(Request $request)
     {
         $crew_id = $request->crew_id;

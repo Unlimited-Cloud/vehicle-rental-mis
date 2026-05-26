@@ -52,11 +52,17 @@
          <a href="{{ route('admin.crew_profiles.show', $c->id) }}" class="btn btn-info btn-sm">
             <i class="fas fa-eye"></i>
         </a>
-         <a href="{{ route('admin.bank-details.create', $c->id) }}"
+        <a href="{{ route('admin.bank-details.create', $c->id) }}"
             class="btn btn-success btn-sm"
             title="Add Bank">
                 <i class="fas fa-university"></i>
-            </a>
+        </a>
+
+       <a href="{{ route('admin.bank-details.index', $c->id) }}"
+   class="btn btn-primary btn-sm"
+   title="View Banks">
+    <i class="fas fa-landmark"></i>
+</a>
 
         <form action="{{ route('admin.crew_profiles.destroy', $c->id) }}"
               method="POST"
