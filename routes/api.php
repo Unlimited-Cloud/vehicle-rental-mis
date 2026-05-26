@@ -147,6 +147,10 @@ Route::get('/customer-location/{customer_uuid}', [BookingController::class, 'sho
 
 Route::get('/payment-modes', [BookingController::class, 'paymentModes']);
 
+Route::get('/vehicle-receipt/{booking_id}', [BookingController::class, 'getReceipt']);
+Route::get('/vehicle-receipt-blob/{booking_id}', [BookingController::class, 'getReceiptBlob']);
+
+
 
 
 Route::prefix('esewa')->group(function () {
