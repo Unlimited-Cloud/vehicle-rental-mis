@@ -227,12 +227,12 @@
                                     onclick="payByBank({{ $attendance->id }})">
                                     <i class="fas fa-university mr-1"></i> Bank
                                 </button>
-                                <button class="btn btn-sm btn-success"
+                                {{-- <button class="btn btn-sm btn-success"
                                     onclick="payByEsewa({{ $attendance->id }})">
 
                                     <i class="fas fa-wallet mr-2"></i>
                                     ESewa
-                                </button>
+                                </button> --}}
                                 <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
                                     onclick="selectProof({{ $attendance->id }})">
                                     <i class="fas fa-money-bill mr-2"></i> Cash Payment
