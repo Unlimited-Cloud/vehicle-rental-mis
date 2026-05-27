@@ -318,10 +318,14 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         )->name('esewa.success');
 
 
+        Route::post('bank-details/validate', [EsewaIbftController::class, 'validateBankAccount'])
+            ->name('bank-details.validate');
+
         Route::post(
             '/attendance/esewa/transfer-dashboard',
             [EsewaIbftController::class, 'transferDashboard']
         )->name('attendance.esewa.transfer-dashboard');
+
         Route::get(
             '/attendance/esewa/get-bank-details',
             [EsewaIbftController::class, 'getBankDetails']
