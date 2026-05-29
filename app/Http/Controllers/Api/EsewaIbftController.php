@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Exception;
 use Illuminate\Support\Facades\Log;
 use App\Models\Attendance;
+use App\Models\Bank;
 use App\Models\CrewBankDetail;
 use App\Models\CrewProfile;
 
@@ -19,20 +20,43 @@ class EsewaIbftController extends Controller
 
     public function getBanks()
     {
-
         try {
+
             $banks = $this->esewa->getAvailableBanks();
-            $sourceBanks = collect($banks)->filter(fn($b) => $b['source_account'])->values();
-            $payeeBanks  = collect($banks)->filter(fn($b) => $b['payee_account'])->values();
+
+            foreach ($banks as $bank) {
+
+                Bank::updateOrCreate(
+                    [
+                        'bank_name'  => $bank['bank_name'],
+                        'swift_code' => $bank['swift_code'],
+                    ],
+                    [
+                        'normalized_name'   => $bank['normalized_name'] ?? strtoupper($bank['bank_name']),
+                        'bank_code'         => $bank['bank_code'],
+                        'configuration_id'  => $bank['configuration_id'],
+                        'is_source_account' => $bank['source_account'],
+                        'is_payee_account'  => $bank['payee_account'],
+                        'encrypted_id'      => $bank['encrypted_id'],
+                    ]
+                );
+            }
 
             return response()->json([
                 'success'      => true,
-                'all_banks'    => $banks,
-                'source_banks' => $sourceBanks,
-                'payee_banks'  => $payeeBanks,
+                'all_banks'    => Bank::all(),
+                'source_banks' => Bank::where('is_source_account', true)->get(),
+                'payee_banks'  => Bank::where('is_payee_account', true)->get(),
             ]);
         } catch (Exception $e) {
-            Log::error('Failed to fetch eSewa banks: ' . $e->getMessage() . 'file ' . $e->getFile() . ' line ' . $e->getLine());
+
+            Log::error(
+                'Failed to fetch eSewa banks: '
+                    . $e->getMessage()
+                    . ' file ' . $e->getFile()
+                    . ' line ' . $e->getLine()
+            );
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch available banks.'

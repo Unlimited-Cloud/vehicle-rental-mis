@@ -33,15 +33,19 @@
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Bank Name *</label>
-                    <input type="text"
-                           name="bank_name"
-                           class="form-control"
-                           value="{{ old('bank_name', $bankDetail->bank_name ?? '') }}"
-                           required>
+                    <select name="bank_name" class="form-control" required>
+                        <option value="">Select Bank</option>
+                        @foreach($banks as $bank)
+                            <option value="{{ $bank->bank_name }}"
+                                    {{ old('bank_name', $bankDetail->bank_name ?? '') == $bank->bank_name ? 'selected' : '' }}>
+                                {{ $bank->bank_name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
-            <div class="col-md-6">
+            {{-- <div class="col-md-6">
                 <div class="form-group">
                     <label>Bank Code *</label>
                     <input type="text"
@@ -50,7 +54,7 @@
                            value="{{ old('bank_code', $bankDetail->bank_code ?? '') }}"
                            required>
                 </div>
-            </div>
+            </div> --}}
 
             <div class="col-md-6">
                 <div class="form-group">
