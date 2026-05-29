@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\EsewaIbftController;
+use App\Http\Controllers\Api\ResourceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -89,9 +90,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
 
     //addres
-    Route::get('/province', [BookingController::class, 'provinces']);
-    Route::post('/districts-by-province', [BookingController::class, 'districtsByProvince']);
-    Route::post('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
+    Route::controller(ResourceController::class)->group(function () {
+        Route::get('/countries', 'getCountries');
+        Route::get('/province', 'provinces');
+        Route::post('/districts-by-province', 'districtsByProvince');
+        Route::post('/vdcs-by-district', 'vdcsByDistrict');
+    });
 
     Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 

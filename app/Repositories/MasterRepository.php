@@ -10,6 +10,7 @@ use App\Models\ProformaInvoice;
 use App\Models\Passcode;
 use App\Models\Otp;
 use App\Models\Province;
+use App\Models\Country;
 
 class MasterRepository implements MasterRepositoryInterface
 {
@@ -58,6 +59,12 @@ class MasterRepository implements MasterRepositoryInterface
 
     public function getAllOtps(){
         return Otp::get();
+    }
+
+    public function getCountries(){
+        return Country::select('id', 'name', 'country_code', 'phone_code', 'flag_url')
+            ->orderBy('name', 'asc')
+            ->get();
     }
 
     public function getStateById($id){
