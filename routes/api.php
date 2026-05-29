@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\EsewaPaymentController;
 use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
+use App\Http\Controllers\Api\EsewaIbftController;
+use App\Http\Controllers\Api\ResourceController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -88,9 +90,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/popular-vehicles', [BookingController::class, 'mostPopularVehicles']);
 
     //addres
-    Route::get('/province', [BookingController::class, 'provinces']);
-    Route::post('/districts-by-province', [BookingController::class, 'districtsByProvince']);
-    Route::post('/vdcs-by-district', [BookingController::class, 'vdcsByDistrict']);
+    Route::controller(ResourceController::class)->group(function () {
+        Route::get('/countries', 'getCountries');
+        Route::get('/province', 'provinces');
+        Route::post('/districts-by-province', 'districtsByProvince');
+        Route::post('/vdcs-by-district', 'vdcsByDistrict');
+    });
 
     Route::get('/vehicle/{id}', [BookingController::class, 'VehicleDetailById']);
 
@@ -143,3 +148,21 @@ Route::get('/contact-us', [BookingController::class, 'contactus']);
 
 Route::post('/customer-location', [BookingController::class, 'storeLatLng']);
 Route::get('/customer-location/{customer_uuid}', [BookingController::class, 'showLatlng']);
+
+Route::get('/payment-modes', [BookingController::class, 'paymentModes']);
+
+Route::get('/vehicle-receipt/{booking_id}', [BookingController::class, 'getReceipt']);
+Route::get('/vehicle-receipt-blob/{booking_id}', [BookingController::class, 'getReceiptBlob']);
+
+
+
+
+Route::prefix('esewa')->group(function () {
+    Route::controller(EsewaIbftController::class)->group(function () {
+        Route::get('get-banks', 'getBanks');
+        Route::post('validate-account', 'validateAccount');
+        Route::post('send-direct-transaction', 'transfer');
+        Route::post('transaction-status',  'getTransactionStatus');
+        Route::post('transaction-report',  'getTransactionReport');
+    });
+});

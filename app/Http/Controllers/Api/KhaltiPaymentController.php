@@ -167,7 +167,6 @@ class KhaltiPaymentController extends Controller
     public function initiatePayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mobile' => 'required',
             'booking_id' => 'required|exists:vehicle_bookings,id',
             'customer_id' => 'required|exists:customers,customer_uuid',
         ]);
@@ -380,7 +379,9 @@ class KhaltiPaymentController extends Controller
                     ]);
                 } else {
 
+
                     $paymentId = $payment->payment_id;
+
 
                     Payment::updateOrCreate(
                         [
@@ -391,7 +392,7 @@ class KhaltiPaymentController extends Controller
                             'payment_date' => now(),
                             'status' => 'completed',
                         ]
-                    );
+                    );  
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
@@ -414,6 +415,19 @@ class KhaltiPaymentController extends Controller
         if ($payment->payment_type == 'attendance') {
             $redirectUrl = route('admin.attendance.index');
         }
+
+        echo "
+        <script>
+            // 1. Send to FlutterFlow Web Preview Container
+            window.parent.postMessage('Transaction updated', '*');
+            
+            // 2. Send directly to your Mobile APK App Handler
+            if (typeof FlutterPaymentChannel !== 'undefined') {
+                FlutterPaymentChannel.postMessage('Transaction updated');
+            }
+        </script>
+        ";
+        exit;
 
         return $redirectUrl
             ? redirect($redirectUrl)->with('success', 'Payment completed successfully')

@@ -51,7 +51,7 @@ class EsewaPaymentController extends Controller
 
         $transaction_uuid = 'ATTE-' . strtoupper(Str::random(10));
 
-        $secret = env('ESEWA_SECRET');
+        $secret = "8gBm/:&EnhH.1/q";
 
         $data = "total_amount={$amount},transaction_uuid={$transaction_uuid},product_code=EPAYTEST";
 
@@ -113,11 +113,11 @@ class EsewaPaymentController extends Controller
                 'message' => 'Customer not found.'
             ], 422);
         }
-        $secret = env('ESEWA_SECRET');
+        $secret = "8gBm/:&EnhH.1/q";
 
         $transaction_uuid = uniqid();
 
-        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
+        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=EPAYTEST";
 
 
         // Create payment record

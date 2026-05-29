@@ -2,14 +2,19 @@
 
 @section('dynamicdata')
 <div class="content-header">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <div>
-            <h1 class="m-0 text-dark">Crew Profile Details</h1>
-            <p class="text-muted mt-1 mb-0">Complete information and credentials</p>
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1 class="m-0">Crew Profile</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('admin.crew_profiles.index') }}">Crew Profiles</a></li>
+                    <li class="breadcrumb-item active">Profile Details</li>
+                </ol>
+            </div>
         </div>
-        <a href="{{ route('admin.crew_profiles.index') }}" class="btn btn-secondary btn-sm">
-            <i class="fa fa-arrow-left"></i> Back to List
-        </a>
     </div>
 </div>
 
@@ -17,198 +22,216 @@
 <div class="container-fluid">
 
 <div class="row">
-    <!-- Left Column: User Information -->
-    <div class="col-md-6">
-        <div class="card card-primary card-outline shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title"><i class="fas fa-user-circle"></i> User Information</h3>
-                <div class="card-tools">
-                    <span class="badge bg-light text-primary">{{ ucfirst($crew_profile->role) }}</span>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-4">
+    <div class="col-md-4">
+        <!-- Profile Image -->
+        <div class="card card-primary card-outline">
+            <div class="card-body box-profile">
+                <div class="text-center">
                     @if(!empty($crew_profile->user->img))
-                        <img src="{{ asset('uploads/users/' . $crew_profile->user->img) }}" 
-                             alt="Profile Image" 
-                             class="profile-user-img img-fluid img-circle"
-                             style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #adb5bd;">
+                        <img class="profile-user-img img-fluid img-circle" 
+                             src="{{ asset('uploads/users/' . $crew_profile->user->img) }}" 
+                             alt="Profile picture"
+                             style="width: 150px; height: 150px; object-fit: cover;">
                     @else
                         <div class="profile-user-img img-fluid img-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" 
-                             style="width: 120px; height: 120px;">
-                            <i class="fas fa-user fa-3x text-white"></i>
+                             style="width: 150px; height: 150px;">
+                            <i class="fas fa-user fa-4x text-white"></i>
                         </div>
                     @endif
                 </div>
-                
-                <table class="table table-bordered table-hover">
-                    <tbody>
-                        <tr class="bg-light">
-                            <th style="width: 40%">Full Name</th>
-                            <td style="width: 60%">{{ $crew_profile->user->name ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Email Address</th>
-                            <td>{{ $crew_profile->user->email ?? 'N/A' }}</td>
-                        </tr>
-                        <tr class="bg-light">
-                            <th>Contact Number</th>
-                            <td>{{ $crew_profile->contact_number ?? 'N/A' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Years of Experience</th>
-                            <td>
-                                @if($crew_profile->experience)
-                                    <span class="badge bg-success">{{ $crew_profile->experience }} years</span>
-                                @else
-                                    <span class="text-muted">N/A</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr class="bg-light">
-                            <th>Member Since</th>
-                            <td>{{ $crew_profile->created_at ? $crew_profile->created_at->format('M d, Y') : 'N/A' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+                <h3 class="profile-username text-center mt-3">{{ $crew_profile->user->name ?? 'N/A' }}</h3>
+                <p class="text-muted text-center">
+                    <span class="badge badge-primary">{{ ucfirst($crew_profile->role) }}</span>
+                </p>
+
+                <ul class="list-group list-group-unbordered mb-3">
+                    <li class="list-group-item">
+                        <b>Experience</b> 
+                        <a class="float-right">{{ $crew_profile->experience ?? '0' }} years</a>
+                    </li>
+                    <li class="list-group-item">
+                        <b>Member Since</b> 
+                        <a class="float-right">{{ $crew_profile->created_at ? $crew_profile->created_at->format('M d, Y') : 'N/A' }}</a>
+                    </li>
+                    <li class="list-group-item">
+                        <b>Status</b> 
+                        <a class="float-right"><span class="badge badge-success">Active</span></a>
+                    </li>
+                </ul>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ route('admin.crew_profiles.edit', $crew_profile->id) }}" class="btn btn-primary btn-block mr-1">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-danger btn-block ml-1" onclick="confirmDelete({{ $crew_profile->id }})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info -->
+        <div class="card card-info card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Contact Information</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <strong><i class="fas fa-envelope mr-1"></i> Email</strong>
+                        <p class="text-muted mt-1">{{ $crew_profile->user->email ?? 'N/A' }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <strong><i class="fas fa-phone mr-1"></i> Phone</strong>
+                        <p class="text-muted mt-1">{{ $crew_profile->contact_number ?? 'N/A' }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Right Column: License & Documents -->
-    <div class="col-md-6">
-        <div class="card card-info card-outline shadow-sm">
-            <div class="card-header bg-info text-white">
-                <h3 class="card-title"><i class="fas fa-id-card"></i> License & Documents</h3>
-                <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
+    <div class="col-md-8">
+        <!-- License Information -->
+        <div class="card card-warning card-outline">
+            <div class="card-header">
+                <h3 class="card-title">License Information</h3>
             </div>
             <div class="card-body">
-                <table class="table table-bordered table-hover">
-                    <tbody>
-                        <tr class="bg-light">
-                            <th style="width: 40%">License Number</th>
-                            <td style="width: 60%">
-                                @if($crew_profile->license_number)
-                                    <code>{{ $crew_profile->license_number }}</code>
-                                @else
-                                    <span class="text-muted">N/A</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>License Expiry Date</th>
-                            <td>
-                                @if($crew_profile->license_expiry)
-                                    @php
-                                        $expiryDate = \Carbon\Carbon::parse($crew_profile->license_expiry);
-                                        $isExpired = $expiryDate->isPast();
-                                    @endphp
-                                    <span class="badge {{ $isExpired ? 'bg-danger' : 'bg-warning' }}">
-                                        {{ $expiryDate->format('M d, Y') }}
-                                        @if($isExpired) (Expired) @endif
-                                    </span>
-                                @else
-                                    <span class="text-muted">N/A</span>
-                                @endif
-                            </td>
-                        </tr>
-                        <tr class="bg-light">
-                            <th>Citizenship Document</th>
-                            <td>
-                                @if($crew_profile->citizenship_doc)
-                                    @php
-                                        $ext = strtolower(pathinfo($crew_profile->citizenship_doc, PATHINFO_EXTENSION));
-                                        $filePath = asset($crew_profile->citizenship_doc);
-                                    @endphp
-                                    @if(in_array($ext, ['jpg','jpeg','png']))
-                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                            <i class="fas fa-image"></i> Preview Image
-                                        </a>
-                                    @elseif($ext === 'pdf')
-                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-danger">
-                                            <i class="fas fa-file-pdf"></i> View PDF
-                                        </a>
-                                    @else
-                                        <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-file"></i> View Document
-                                        </a>
-                                    @endif
-                                @else
-                                    <span class="text-muted">Not uploaded</span>
-                                @endif
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                @if($crew_profile->citizenship_doc && in_array(strtolower(pathinfo($crew_profile->citizenship_doc, PATHINFO_EXTENSION)), ['jpg','jpeg','png']))
-                    <div class="mt-3 text-center border rounded p-2 bg-light">
-                        <small class="text-muted">Document Preview</small>
-                        <img src="{{ asset($crew_profile->citizenship_doc) }}" alt="Citizenship Document" class="img-fluid mt-1" style="max-height: 180px;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted">License Number</span>
+                                <span class="info-box-number">{{ $crew_profile->license_number ?? 'N/A' }}</span>
+                            </div>
+                        </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted">Expiry Date</span>
+                                <span class="info-box-number">
+                                    @if($crew_profile->license_expiry)
+                                        @php $isExpired = \Carbon\Carbon::parse($crew_profile->license_expiry)->isPast(); @endphp
+                                        <span class="{{ $isExpired ? 'text-danger' : 'text-warning' }}">
+                                            {{ \Carbon\Carbon::parse($crew_profile->license_expiry)->format('M d, Y') }}
+                                            @if($isExpired) <small>(Expired)</small> @endif
+                                        </span>
+                                    @else
+                                        N/A
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Citizenship Document -->
+        <div class="card card-secondary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">Citizenship Document</h3>
+            </div>
+            <div class="card-body">
+                @if($crew_profile->citizenship_doc)
+                    @php
+                        $ext = strtolower(pathinfo($crew_profile->citizenship_doc, PATHINFO_EXTENSION));
+                        $filePath = asset($crew_profile->citizenship_doc);
+                    @endphp
+                    <div class="text-center">
+                        @if(in_array($ext, ['jpg','jpeg','png']))
+                            <img src="{{ $filePath }}" alt="Citizenship Document" class="img-fluid mb-2" style="max-height: 200px;">
+                            <br>
+                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="fas fa-eye"></i> View Full Size
+                            </a>
+                        @elseif($ext === 'pdf')
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-pdf fa-4x text-danger mb-2"></i>
+                                <p>PDF Document Available</p>
+                                <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-download"></i> View PDF
+                                </a>
+                            </div>
+                        @else
+                            <a href="{{ $filePath }}" target="_blank" class="btn btn-sm btn-info">
+                                <i class="fas fa-file"></i> View Document
+                            </a>
+                        @endif
+                    </div>
+                @else
+                    <p class="text-muted text-center mb-0">No citizenship document uploaded</p>
                 @endif
             </div>
         </div>
 
-        <!-- Additional Credentials Card (Optional) -->
-        <div class="card card-secondary card-outline shadow-sm mt-3">
+        <!-- Bank Details -->
+        <div class="card card-success card-outline">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-shield-alt"></i> Credentials</h3>
+                <h3 class="card-title">Bank Account Details</h3>
+                <div class="card-tools">
+                    <span class="badge badge-success">{{ $crew_profile->bankDetails->count() }} Account(s)</span>
+                </div>
             </div>
             <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6 border-right">
-                        <strong>Status</strong><br>
-                        <span class="badge bg-success mt-1 p-2">Active</span>
+                @if($crew_profile->bankDetails->count())
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Bank Name</th>
+                                    <th>Account Holder</th>
+                                    <th>Account Number</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($crew_profile->bankDetails as $bank)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td><strong>{{ $bank->bank_name }}</strong> <br><small class="text-muted">Code: {{ $bank->bank_code }}</small></td>
+                                        <td>{{ $bank->account_holder_name }}</td>
+                                        <td><code>{{ $bank->account_number }}</code></td>
+                                        <td class="text-center">
+                                            @if($bank->is_active)
+                                                <span class="badge badge-success">Active</span>
+                                            @else
+                                                <span class="badge badge-secondary">Inactive</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="col-6">
-                        <strong>Verification</strong><br>
-                        <span class="badge bg-info mt-1 p-2">Verified</span>
-                    </div>
-                </div>
+                @else
+                    <p class="text-muted text-center mb-0">No bank details available</p>
+                @endif
             </div>
         </div>
     </div>
 </div>
 
-<!-- Action Footer -->
-<div class="row mt-3">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <small class="text-muted">
-                        <i class="fas fa-clock"></i> Last updated: {{ $crew_profile->updated_at ? $crew_profile->updated_at->diffForHumans() : 'N/A' }}
-                    </small>
-                </div>
-                <div>
-                    <a href="{{ route('admin.crew_profiles.edit', $crew_profile->id) }}" class="btn btn-primary px-4">
-                        <i class="fas fa-edit"></i> Edit Profile
-                    </a>
-                    <button type="button" class="btn btn-danger ml-2" onclick="confirmDelete({{ $crew_profile->id }})">
-                        <i class="fas fa-trash-alt"></i> Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<form id="delete-form-{{ $crew_profile->id }}" action="{{ route('admin.crew_profiles.destroy', $crew_profile->id) }}" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
 
 </div>
 </section>
 
 @push('scripts')
 <script>
-    function confirmDelete(id) {
-        if (confirm('Are you sure you want to delete this crew profile? This action cannot be undone.')) {
-            // Submit delete form or AJAX call
-            document.getElementById('delete-form-' + id).submit();
-        }
+function confirmDelete(id) {
+    if (confirm('Are you sure you want to delete this crew profile? This action cannot be undone.')) {
+        document.getElementById('delete-form-' + id).submit();
     }
+}
 </script>
 @endpush
 

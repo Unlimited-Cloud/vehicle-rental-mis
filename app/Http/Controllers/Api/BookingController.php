@@ -35,6 +35,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
 use App\Models\ContactUs;
+use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
 use Illuminate\Support\Facades\Http;
 
@@ -305,6 +306,7 @@ class BookingController extends Controller
 
 
             //  Generate Proforma
+            // $this->service->generateFinalInvoice($file_no);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
@@ -1317,83 +1319,6 @@ class BookingController extends Controller
         ]);
     }
 
-    public function provinces()
-    {
-        $provinces = Province::select('id', 'pname', 'pnumber', 'headquarter', 'pname_np', 'status', 'map_index')
-            ->orderBy('pnumber', 'asc')
-            ->get();
-
-        return response()->json([
-            'status' => true,
-            'data' => $provinces
-        ]);
-    }
-
-    public function districtsByProvince(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'province_id' => 'required|exists:province,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $districts = District::where('province_id', $request->province_id)
-            ->select('id', 'name', 'province_id', 'name_np', 'district_index')
-            ->orderBy('name', 'asc')
-            ->get();
-
-        if ($districts->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No districts found for this province'
-            ]);
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => $districts
-        ]);
-    }
-
-    public function vdcsByDistrict(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'district_id' => 'required|exists:district,id'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $vdcs = VDC::where('DISTRICT_ID', $request->district_id)
-            ->select('id', 'NAME')
-            ->orderBy('NAME', 'asc')
-            ->get();
-
-        if ($vdcs->isEmpty()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No VDC found for this district'
-            ]);
-        }
-
-        return response()->json([
-            'status' => true,
-            'data' => $vdcs
-        ]);
-    }
-
-
     public function getVehicleDrivers($vehicle_id)
     {
         $assignments = VehicleAssignment::with(['driver.user'])
@@ -1496,7 +1421,8 @@ class BookingController extends Controller
                 'rate_per_day',
                 'tax',
                 'discount',
-                'total_amount'
+                'total_amount',
+                'payment_status'
             ]);
 
         $bookings->each(function ($booking) {
@@ -1580,6 +1506,8 @@ class BookingController extends Controller
                 'full_name' => $contact->full_name,
                 'email' => $contact->email,
                 'mobile_number' => $contact->mobile_number,
+                'address' => $contact->address,
+                'website_url' => $contact->website_url,
                 'whatsapp_number' => $contact->whatsapp_number,
                 'facebook_url' => $contact->facebook_url,
                 'instagram_url' => $contact->instagram_url,
@@ -1644,7 +1572,7 @@ class BookingController extends Controller
             'lng'           => 'required|numeric',
         ]);
 
-        $apiKey  = env('GOOGLE_MAPS_KEY');
+        $apiKey  = "AIzaSyDjTXcdHBg0C2XEdVFP8R7sFDz2o0RzIYw";
         $lat     = $validated['lat'];
         $lng     = $validated['lng'];
         $address   = null;
@@ -1734,5 +1662,94 @@ class BookingController extends Controller
             'success' => true,
             'data' => $data,
         ]);
+    }
+
+
+    public function paymentModes()
+    {
+        $paymentmodes = PaymentMode::select('id', 'name', 'logo', 'status')
+            ->where('status', 1)
+            ->get()
+            ->map(function ($item) {
+
+                $item->logo = $item->logo
+                    ? asset('uploads/payment_modes/' . $item->logo)
+                    : null;
+
+                return $item;
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $paymentmodes
+        ]);
+    }
+
+
+
+    public function getReceipt($booking_id)
+    {
+        $booking = VehicleBooking::find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        $receipt = VehicleReceipt::where('file_no', $booking->file_no)->first();
+
+        if (!$receipt) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Receipt not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'booking_id' => $booking->id,
+            'file_no' => $booking->file_no,
+            'pdf_url' => asset($receipt->receipt_path)
+        ]);
+    }
+
+    public function getReceiptBlob($booking_id)
+    {
+        $booking = VehicleBooking::find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        $receipt = VehicleReceipt::where('file_no', $booking->file_no)->first();
+
+        if (!$receipt) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Receipt not found'
+            ], 404);
+        }
+
+        // Full file path from public folder
+        $filePath = public_path($receipt->receipt_path);
+
+        // Check file exists
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'PDF file not found'
+            ], 404);
+        }
+
+        // Open PDF directly in browser
+        return response()->file($filePath);
+
+        // OR force download
+        // return response()->download($filePath);
     }
 }
