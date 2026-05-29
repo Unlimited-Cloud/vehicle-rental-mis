@@ -19,4 +19,5 @@ interface MasterRepositoryInterface
     public function getAllOtps();
     public function getStateById($id);
     public function getStateByName($name);
+    public function getCountries();
 }
