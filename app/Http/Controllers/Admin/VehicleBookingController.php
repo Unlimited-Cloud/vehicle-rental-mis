@@ -311,9 +311,9 @@ class VehicleBookingController extends Controller
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
 
         //generate invoice
-        if ($vehicleBooking->status === 'confirmed') {
-            $this->service->generateFinalInvoice($request->file_no);
-        }
+        // if ($vehicleBooking->status === 'confirmed') {
+        //     $this->service->generateFinalInvoice($request->file_no);
+        // }
 
         $customers = Customer::where('id', $request->customer_id)->first();
         event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
