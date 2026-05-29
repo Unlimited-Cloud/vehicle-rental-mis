@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\CrewBankDetail;
 use App\Models\CrewProfile;
 use Illuminate\Http\Request;
@@ -23,15 +24,18 @@ class CrewBankDetailsController extends Controller
     public function create($crewId)
     {
         $crew = CrewProfile::findOrFail($crewId);
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
 
-        return view('layouts.admin.bank_details.create', compact('crew'));
+        return view('layouts.admin.bank_details.create', compact('crew', 'banks'));
     }
 
     public function store(Request $request, $crewId)
     {
         $request->validate([
             'bank_name' => 'required|string',
-            'bank_code' => 'required|string',
+            // 'bank_code' => 'required|string',
             'account_holder_name' => 'required|string',
             'account_number' => 'required|string',
             'is_active' => 'nullable|boolean',
@@ -42,10 +46,18 @@ class CrewBankDetailsController extends Controller
                 ->update(['is_default' => 0]);
         }
 
+        $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+        if (!$bank) {
+            return back()->withErrors([
+                'bank_name' => 'Selected bank not found.'
+            ])->withInput();
+        }
+
         CrewBankDetail::create([
             'crew_id' => $crewId,
-            'bank_name' => $request->bank_name,
-            'bank_code' => $request->bank_code,
+            'bank_name' => $bank->bank_name,
+            'bank_code' => $bank->swift_code,
             'account_holder_name' => $request->account_holder_name,
             'account_number' => $request->account_number,
             'is_active' => $request->is_active ?? 1,
@@ -61,15 +73,18 @@ class CrewBankDetailsController extends Controller
         $crew = CrewProfile::findOrFail($crewId);
 
         $bankDetail = CrewBankDetail::findOrFail($id);
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
 
-        return view('layouts.admin.bank_details.create', compact('crew', 'bankDetail'));
+        return view('layouts.admin.bank_details.create', compact('crew', 'bankDetail', 'banks'));
     }
 
     public function update(Request $request, $crewId, $id)
     {
         $request->validate([
             'bank_name' => 'required|string',
-            'bank_code' => 'required|string',
+            // 'bank_code' => 'required|string',
             'account_holder_name' => 'required|string',
             'account_number' => 'required|string',
             'is_active' => 'nullable|boolean',
@@ -77,14 +92,22 @@ class CrewBankDetailsController extends Controller
 
         $bankDetail = CrewBankDetail::findOrFail($id);
 
+        $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+        if (!$bank) {
+            return back()->withErrors([
+                'bank_name' => 'Selected bank not found.'
+            ])->withInput();
+        }
+
         // if ($request->is_active == 1) {
         //     CrewBankDetail::where('crew_id', $crewId)
         //         ->update(['is_active' => 0]);
         // }
 
         $bankDetail->update([
-            'bank_name' => $request->bank_name,
-            'bank_code' => $request->bank_code,
+            'bank_name' => $bank->bank_name,
+            'bank_code' => $bank->swift_code,
             'account_holder_name' => $request->account_holder_name,
             'account_number' => $request->account_number,
             'is_active' => $request->is_active ?? 1,
