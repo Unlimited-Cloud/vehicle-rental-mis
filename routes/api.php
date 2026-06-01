@@ -119,6 +119,11 @@ Route::middleware('auth:sanctum')->group(function () {
         '/booking/esewa/initiate',
         [EsewaPaymentController::class, 'generateSignature']
     )->name('booking.esewa.initiate');
+
+    Route::get(
+        '/booking/cash/inititate',
+        [BookingController::class, 'codPayment']
+    );
 });
 Route::get(
     '/khalti/confirm',

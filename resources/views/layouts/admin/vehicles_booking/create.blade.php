@@ -529,28 +529,47 @@ $(document).ready(function() {
     });
 
     // Function to calculate days from hours
-   function calculateDays() {
+        // function calculateDays() {
+        //     var start_date = $("#start_date").val();
+        //     var end_date = $("#end_date").val();
+        //     var no_of_hours = $("#no_of_hours").val();
+        //     var days = 0;
+
+        //     if (no_of_hours !== '' && no_of_hours > 0) {
+        //         days = parseFloat(no_of_hours) / 24;
+        //     } else if (start_date && end_date) {
+        //         var start = new Date(start_date);
+        //         var end = new Date(end_date);
+                
+        //         var diffTime = end - start;
+        //         days = diffTime / (1000 * 60 * 60 * 24);
+        //         if (days < 0) days = 0;
+        //         // If same day, at least 1 day
+        //         if (days === 0 && start_date === end_date) {
+        //             days = 1;
+        //         }
+        //     }
+            
+        //     return days;
+        // }
+
+        function calculateDays() {
             var start_date = $("#start_date").val();
             var end_date = $("#end_date").val();
-            var no_of_hours = $("#no_of_hours").val();
-            var days = 0;
 
-            if (no_of_hours !== '' && no_of_hours > 0) {
-                days = parseFloat(no_of_hours) / 24;
-            } else if (start_date && end_date) {
+            if (start_date && end_date) {
                 var start = new Date(start_date);
                 var end = new Date(end_date);
-                
+
                 var diffTime = end - start;
-                days = diffTime / (1000 * 60 * 60 * 24);
+                var days = diffTime / (1000 * 60 * 60 * 24);
+
                 if (days < 0) days = 0;
-                // If same day, at least 1 day
-                if (days === 0 && start_date === end_date) {
-                    days = 1;
-                }
+
+                return days + 1; 
             }
-            
-            return days;
+
+            return 1; // Default to 1 day minimum
         }
 
     // Main calculation function
