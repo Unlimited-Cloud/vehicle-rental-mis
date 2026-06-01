@@ -37,6 +37,7 @@ use App\Models\BasicTable;
 use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -275,6 +276,7 @@ class BookingController extends Controller
                 'vehicle_id' => $request->vehicle_id,
                 'trip_category_id' => $request->trip_category_id,
                 'trip_route_id' => $request->trip_route_id,
+                'driver_id' => $request->driver_id ?? null,
 
                 'start_date' => $start_date,
                 'start_time' => $start_time,
@@ -293,6 +295,7 @@ class BookingController extends Controller
                 'total_amount' => $total_amount,
 
                 'status' => 'pending',
+                'call_type' => 'api',
 
                 'contact_person' => $request->contact_person,
                 'contact_email' => $request->contact_email,
@@ -1751,5 +1754,65 @@ class BookingController extends Controller
 
         // OR force download
         // return response()->download($filePath);
+    }
+
+
+    public function codPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|exists:vehicle_bookings,id',
+            'customer_id' => 'required|exists:customers,customer_uuid',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $booking = VehicleBooking::findOrFail($request->booking_id);
+
+            $customer = Customer::where(
+                'customer_uuid',
+                $request->customer_id
+            )->firstOrFail();
+
+            $payment = Payment::create([
+                'vehicle_booking_id'    => $booking->id,
+                'amount'                => $booking->total_amount,
+                'payment_method'        => 'cash',
+                'payment_type'          => 'booking',
+                'transaction_reference' => 'CASH-' . strtoupper(uniqid()),
+                'payment_date'          => now(),
+                'direction' => 'in',
+                'gateway' => "cash",
+                'status'                => 'pending',
+                'created_by'            => $customer->id,
+                'created_user_type'     => 'customer',
+                'notes'                 => 'Vehicle rental payment via Cash',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cash booking completed successfully.',
+                'payment_id' => $payment->id,
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

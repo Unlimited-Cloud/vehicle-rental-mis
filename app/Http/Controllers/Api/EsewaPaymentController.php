@@ -187,6 +187,8 @@ class EsewaPaymentController extends Controller
                         'vehicle_booking_id' => $payment->booking_id,
                         'amount' => $payment->amount,
                         'payment_method' => 'online',
+                        'direction' => 'in',
+                        'gateway' => "esewa",
                         'payment_type' => 'attendance',
                         'notes' => 'Attendance allowance payment via Esewa',
                         'transaction_reference' => $payment->transaction_uuid,

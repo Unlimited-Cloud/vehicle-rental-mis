@@ -51,8 +51,8 @@ class EsewaIbftService
             'cert_exists' => file_exists($this->certPath),
         ]);
 
-        try{
-       
+        try {
+
             $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
                 'client_id' => $this->clientId,
                 "client_secret" => "esewa",
@@ -61,9 +61,9 @@ class EsewaIbftService
                 'grant_type' => 'password',
 
             ], withAuth: false);
-            
+
             $token = $response['data']['token'] ?? $response['Data']['token'] ?? null;
-            
+
 
             if (empty($token)) {
                 throw new Exception('eSewa token response missing access_token: ' . json_encode($response));
@@ -72,8 +72,8 @@ class EsewaIbftService
             Log::info('eSewa: new access token fetched', ['client_id' => $this->clientId]);
 
             return $token;
-        }catch ( \Exception $e){
-            Log::error("esewaibft fetch token error",[
+        } catch (\Exception $e) {
+            Log::error("esewaibft fetch token error", [
                 "file" => $e->getFile(),
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
@@ -197,6 +197,7 @@ class EsewaIbftService
             'attendance_id'         => $params['attendance_id']       ?? null,
             'amount'                => $payload['amount'],
             'payment_method'        => 'bank_transfer',
+            'gateway' => "bank",
             'payment_type'          => $params['payment_type']        ?? 'booking',
             'transaction_reference' => $txn['transaction_code']       ?? $uniqueId,
             'payment_date'          => now(),
