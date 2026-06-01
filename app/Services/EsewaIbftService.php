@@ -22,14 +22,14 @@ class EsewaIbftService
 
     public function __construct()
     {
-        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL');
-        $this->baseUrl = env('ESEWA_BASE_URL');
-        $this->hmacKey = env('ESEWA_HMAC_KEY');
-        $this->clientId = env('ESEWA_CLIENT_ID');
-        $this->username = env('ESEWA_USERNAME');
-        $this->password = env('ESEWA_PASSWORD');
-        $this->certPath = env('ESEWA_CERT_PATH');
-        $this->certPassword = env('ESEWA_CERT_PASSWORD');
+        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? "https://ceapi-uat.esewa.com.np";
+        $this->baseUrl = env('ESEWA_BASE_URL') ?? "https://ceapp-uat.esewa.com.np";
+        $this->hmacKey = env('ESEWA_HMAC_KEY') ?? "esewa";
+        $this->clientId = env('ESEWA_CLIENT_ID') ?? "CP0002006";
+        $this->username = env('ESEWA_USERNAME') ?? "esewadirect";
+        $this->password = env('ESEWA_PASSWORD') ?? "Hello@123";
+        $this->certPath = env('ESEWA_CERT_PATH') ?? "C:/xampp/htdocs/vehicle-rental-mis-sandbox/certs/esewa.pem";
+        $this->certPassword = env('ESEWA_CERT_PASSWORD') ?? "Test@123";
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -50,24 +50,37 @@ class EsewaIbftService
             'cert_path' => $this->certPath,
             'cert_exists' => file_exists($this->certPath),
         ]);
-        $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
-            'client_id' => $this->clientId,
-            "client_secret" => "esewa",
-            'username' => $this->username,
-            'password' => $this->password,
-            'grant_type' => 'password',
 
-        ], withAuth: false);
+        try{
+       
+            $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
+                'client_id' => $this->clientId,
+                "client_secret" => "esewa",
+                'username' => $this->username,
+                'password' => $this->password,
+                'grant_type' => 'password',
 
-        $token = $response['data']['token'] ?? $response['Data']['token'] ?? null;
+            ], withAuth: false);
+            
+            $token = $response['data']['token'] ?? $response['Data']['token'] ?? null;
+            
 
-        if (empty($token)) {
-            throw new Exception('eSewa token response missing access_token: ' . json_encode($response));
+            if (empty($token)) {
+                throw new Exception('eSewa token response missing access_token: ' . json_encode($response));
+            }
+
+            Log::info('eSewa: new access token fetched', ['client_id' => $this->clientId]);
+
+            return $token;
+        }catch ( \Exception $e){
+            Log::error("esewaibft fetch token error",[
+                "file" => $e->getFile(),
+                "line" => $e->getLine(),
+                "message" => $e->getMessage(),
+            ]);
+            dd(123);
+            throw new Exception('eSewa token response missing access_token: ');
         }
-
-        Log::info('eSewa: new access token fetched', ['client_id' => $this->clientId]);
-
-        return $token;
     }
 
     // ─────────────────────────────────────────────────────────────
