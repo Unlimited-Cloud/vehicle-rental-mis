@@ -212,6 +212,8 @@ class KhaltiPaymentController extends Controller
                 'payment_type' => 'booking',
                 'payment_date' => now(),
                 'status' => 'pending',
+                'direction' => 'in',
+                'gateway' => "khalti",
                 'created_by' => $customers->id,
                 'created_user_type' => 'customer',
                 'notes' => 'Vehicle rental payment via Khalti'
@@ -392,7 +394,7 @@ class KhaltiPaymentController extends Controller
                             'payment_date' => now(),
                             'status' => 'completed',
                         ]
-                    );  
+                    );
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
@@ -405,7 +407,7 @@ class KhaltiPaymentController extends Controller
                 ]);
 
                 $payment->booking->update([
-                    'payment_status' => 'canceled'
+                    'payment_status' => '0'
                 ]);
             }
         });

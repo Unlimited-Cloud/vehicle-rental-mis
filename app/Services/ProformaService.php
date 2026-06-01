@@ -289,64 +289,85 @@ class ProformaService
     }
     public function finalizeReceipt($file_no, $payment_method, $wallet_type, $wallet_number)
     {
-        $receipt = VehicleReceipt::where('file_no', $file_no)->first();
+        try {
+            $receipt = VehicleReceipt::where('file_no', $file_no)->firstOrFail();
 
-        // Update payment details
-        $receipt->update([
-            'payment_method' => $payment_method,
-            'wallet_type'       => $wallet_type,
-            'wallet_number'     => $wallet_number,
-            'amount'         => $receipt->total_amount,
-            'paid'           => "1",
-        ]);
+            // Update payment details
+            $receipt->update([
+                'payment_method' => $payment_method,
+                'wallet_type'    => $wallet_type,
+                'wallet_number'  => $wallet_number,
+                'amount'         => $receipt->total_amount,
+                'paid'           => "1",
+            ]);
 
-        // Load bookings
-        $bookings = collect(); // safer default
+            // Load bookings
+            $bookings = collect();
 
-        if ($receipt->file_no) {
-            $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
-                ->where('file_no', $receipt->file_no)
-                ->where('status', 'confirmed')
-                ->orderBy('start_date', 'asc')
-                ->orderBy('start_time', 'asc')
-                ->get();
+            if ($receipt->file_no) {
+                $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
+                    ->where('file_no', $receipt->file_no)
+                    ->where('status', 'confirmed')
+                    ->orderBy('start_date', 'asc')
+                    ->orderBy('start_time', 'asc')
+                    ->get();
+            }
+
+            $items = $this->prepareInvoiceItems($bookings);
+
+            // Prepare data for PDF
+            $data = [
+                'receipt'      => $receipt,
+                'items'        => $items,
+                'customer'     => $receipt->customer,
+                'invoice_date' => now(),
+                'miti_date'    => $this->convertToNepaliDate(now()),
+            ];
+
+            // Generate FINAL RECEIPT PDF
+            $pdf = Pdf::loadView('layouts.admin.invoices.final-receipt', $data);
+
+            // Ensure folder exists
+            $folderPath = public_path('uploads/finalinvoice');
+
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0755, true);
+            }
+
+            $pdfFileName = 'final-' . $receipt->receipt_number . '.pdf';
+            $pdfFullPath = $folderPath . '/' . $pdfFileName;
+
+            $pdf->save($pdfFullPath);
+
+            // Save path
+            $receipt->update([
+                'receipt_path' => 'uploads/finalinvoice/' . $pdfFileName
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Receipt finalized successfully',
+                'path'    => asset($receipt->receipt_path)
+            ]);
+        } catch (\Exception $e) {
+
+            Log::error('Receipt finalization failed', [
+                'file_no'        => $file_no,
+                'payment_method' => $payment_method,
+                'wallet_type'    => $wallet_type,
+                'wallet_number'  => $wallet_number,
+                'message'        => $e->getMessage(),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
+                'trace'          => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to finalize receipt.',
+                'error'   => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
         }
-
-        $items = $this->prepareInvoiceItems($bookings);
-
-        // Prepare data for PDF
-        $data = [
-            'receipt'      => $receipt,
-            'items'        => $items, // ✅ USE THIS
-            'customer'     => $receipt->customer,
-            'invoice_date' => now(),
-            'miti_date' => $this->convertToNepaliDate(now()),
-        ];
-
-        // Generate FINAL RECEIPT PDF
-        $pdf = Pdf::loadView('layouts.admin.invoices.final-receipt', $data);
-
-        // Ensure folder exists
-        $folderPath = public_path('uploads/finalinvoice');
-        if (!file_exists($folderPath)) {
-            mkdir($folderPath, 0755, true);
-        }
-
-        $pdfFileName = 'final-' . $receipt->receipt_number . '.pdf';
-        $pdfFullPath = $folderPath . '/' . $pdfFileName;
-
-        $pdf->save($pdfFullPath);
-
-        // Save path
-        $receipt->update([
-            'receipt_path' => 'uploads/finalinvoice/' . $pdfFileName
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Receipt finalized successfully',
-            'path'    => asset($receipt->receipt_path)
-        ]);
     }
 
 
