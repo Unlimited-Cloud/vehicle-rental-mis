@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Admin\ContactUsController;
 use App\Http\Controllers\Admin\CrewBankDetailsController;
 use App\Http\Controllers\Admin\PaymentModeController;
+use App\Http\Controllers\Admin\VehicleSecurityFeatureController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 
 Route::get('/', function () {
@@ -204,6 +205,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('contact-us', ContactUsController::class);
         Route::resource('splashscreen', SplashScreenController::class);
         Route::resource('faq', FaqController::class);
+        Route::resource('vehicle-security-features', VehicleSecurityFeatureController::class);
         Route::resource('agents', AgentController::class);
         Route::resource('payment-modes', PaymentModeController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
