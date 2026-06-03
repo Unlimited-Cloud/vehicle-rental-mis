@@ -48,7 +48,7 @@ class VehicleController extends Controller
             'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
             'is_helper_needed' => 'nullable',
 
@@ -74,7 +74,7 @@ class VehicleController extends Controller
             'description' => 'nullable|string',
 
             // multiple images
-            'car_images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'car_images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -161,7 +161,7 @@ class VehicleController extends Controller
             'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
             'is_helper_needed' => 'nullable',
 
@@ -187,7 +187,7 @@ class VehicleController extends Controller
             'description' => 'nullable|string',
 
             // multiple images
-            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();

@@ -1250,7 +1250,8 @@ class BookingController extends Controller
 
     public function VehicleDetailById($id)
     {
-        $vehicle = Vehicle::where('id', $id)
+        $vehicle = Vehicle::with('securityFeature')
+            ->where('id', $id)
             ->where('status', 1)
             ->first();
 
@@ -1263,15 +1264,36 @@ class BookingController extends Controller
 
         $data = $vehicle->toArray();
 
-        $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
-            ->map(function ($url, $index) {
-                return [
-                    'id' => $index + 1,
-                    'image_url' => $url,
-                ];
-            })
-            ->values()
-            ->toArray();
+        $imageFields = [
+            'dash_cam_image',
+            'ebs_image',
+            'air_conditioning_image',
+            'reverse_camera_image',
+            'camera_360_image',
+            'emergency_braking_system_image',
+            'hillside_braking_system_image',
+            'hill_descent_control_image',
+        ];
+
+        if (!empty($data['security_feature'])) {
+            foreach ($imageFields as $field) {
+                if (!empty($data['security_feature'][$field])) {
+                    $data['security_feature'][$field] = asset(
+                        'uploads/vehicle-security-features/' . $data['security_feature'][$field]
+                    );
+                }
+            }
+        }
+
+        // $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
+        //     ->map(function ($url, $index) {
+        //         return [
+        //             'id' => $index + 1,
+        //             'image_url' => $url,
+        //         ];
+        //     })
+        //     ->values()
+        //     ->toArray();
 
         return response()->json([
             'status' => 'success',

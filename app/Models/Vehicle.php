@@ -80,6 +80,11 @@ class Vehicle extends Model
         return $this->hasMany(VehicleTyreChange::class);
     }
 
+    public function securityFeature()
+    {
+        return $this->hasOne(VehicleFeature::class, 'vehicle_id');
+    }
+
     public function getVehicleImageUrlAttribute()
     {
         return $this->image ? asset($this->image) : null;
