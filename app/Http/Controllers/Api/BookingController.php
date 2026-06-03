@@ -1266,15 +1266,15 @@ class BookingController extends Controller
 
         $data = $vehicle->toArray();
 
-        $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
-            ->map(function ($url, $index) {
-                return [
-                    'id' => $index + 1,
-                    'image_url' => $url,
-                ];
-            })
-            ->values()
-            ->toArray();
+        // $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
+        //     ->map(function ($url, $index) {
+        //         return [
+        //             'id' => $index + 1,
+        //             'image_url' => $url,
+        //         ];
+        //     })
+        //     ->values()
+        //     ->toArray();
 
         return response()->json([
             'status' => 'success',
