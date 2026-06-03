@@ -194,16 +194,39 @@
                 </div>
             </div>
 
-            <div class="col-md-12">
-                <div class="form-group">
-                    <label>Vehicle Gallery Images</label>
-                    <input type="file" name="car_images[]" class="form-control" multiple>
+           <div class="col-md-12">
+    <div class="form-group">
+        <label>Vehicle Gallery Images</label>
+        <input type="file" name="car_images[]" id="carImagesInput" 
+               class="form-control" multiple accept="image/*">
 
-                    {{-- Preview existing images --}}
-    
-      
-                </div>
-            </div>
+        {{-- Preview for newly selected images --}}
+        <div id="newImagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+
+        {{-- Preview existing images (edit mode) --}}
+       @php
+    $carImages = $vehicle->car_images ?? null;
+    if (is_string($carImages)) {
+        $carImages = json_decode($carImages, true);
+    }
+    if (!is_array($carImages)) {
+        $carImages = [];
+    }
+@endphp
+
+@if(isset($vehicle) && !empty($carImages))
+    <div class="mt-2">
+        <small class="text-muted">Current Images:</small>
+        <div class="d-flex flex-wrap gap-2 mt-1">
+            @foreach($carImages as $img)
+                <img src="{{ asset($img) }}" width="100"
+                     class="img-thumbnail" style="height:80px;object-fit:cover;">
+            @endforeach
+        </div>
+    </div>
+@endif
+    </div>
+</div>
 
         </div>
     </div>
@@ -365,6 +388,34 @@ document.addEventListener("DOMContentLoaded", function () {
 
     });
 
+});
+// Gallery image live preview
+document.getElementById('carImagesInput').addEventListener('change', function () {
+    const preview = document.getElementById('newImagePreview');
+    preview.innerHTML = '';
+
+    Array.from(this.files).forEach(function (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-thumbnail';
+            img.style.cssText = 'width:100px;height:80px;object-fit:cover;';
+
+            const label = document.createElement('small');
+            label.className = 'd-block text-muted text-truncate';
+            label.style.maxWidth = '100px';
+            label.textContent = file.name;
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(label);
+            preview.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+    });
 });
 </script>
 
