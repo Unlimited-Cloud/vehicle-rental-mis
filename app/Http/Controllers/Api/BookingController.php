@@ -218,6 +218,16 @@ class BookingController extends Controller
             $vehicle = Vehicle::findOrFail($request->vehicle_id);
             $tripRoute = TripRoute::findOrFail($request->trip_route_id);
 
+            if (
+                $request->filled('no_of_people') &&
+                (int) $request->no_of_people > (int) $vehicle->seater
+            ) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Selected vehicle capacity is {$vehicle->seater} passengers. You entered {$request->no_of_people} passengers."
+                ], 422);
+            }
+
             $vehicle_type = strtolower($vehicle->vehicle_type);
             $rate_field = $vehicle_type . '_price';
 
@@ -246,7 +256,19 @@ class BookingController extends Controller
                 }
             }
 
-            $total_amount = max(0, $sub_total - $discount_amount);
+            // Taxable amount after discount
+            $taxable_amount = max(0, $sub_total - $discount_amount);
+
+            // VAT calculation (13%)
+            $tax_amount = 0;
+            $tax_amount_type = null;
+
+
+            $tax_amount_type = 'percentage';
+            $tax_amount = ($taxable_amount * 13) / 100;
+
+            // Final total
+            $total_amount = $taxable_amount + $tax_amount;
 
             // Extract separate date & time for DB
             $start_date = $startDateTime->format('Y-m-d');
@@ -292,7 +314,11 @@ class BookingController extends Controller
                 'rate_per_day' => $rate_per_day,
                 'sub_total' => $sub_total,
                 'discount' => $discount_amount,
+                'tax_amount_type' => $tax_amount_type,
+                'tax' => $tax_amount,
+                'vat' => '1',
                 'total_amount' => $total_amount,
+
 
                 'status' => 'pending',
                 'call_type' => 'api',
@@ -1235,13 +1261,24 @@ class BookingController extends Controller
             ], 404);
         }
 
+        $data = $vehicle->toArray();
+
+        $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
+            ->map(function ($url, $index) {
+                return [
+                    'id' => $index + 1,
+                    'image_url' => $url,
+                ];
+            })
+            ->values()
+            ->toArray();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Vehicle Fetched Successfully',
-            'data' => $vehicle
+            'data' => $data
         ]);
     }
-
     public function getTripPrice(Request $request)
     {
         $validator = Validator::make(
