@@ -48,7 +48,7 @@ class VehicleController extends Controller
             'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
-            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
             'is_helper_needed' => 'nullable',
 
@@ -74,7 +74,7 @@ class VehicleController extends Controller
             'description' => 'nullable|string',
 
             // multiple images
-            'car_images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'car_images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -161,7 +161,7 @@ class VehicleController extends Controller
             'rent_price_per_day' => 'nullable|numeric',
             'fuel_type' => 'required',
             'transmission' => 'required',
-            'image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'status' => 'required',
             'is_helper_needed' => 'nullable',
 
@@ -187,7 +187,7 @@ class VehicleController extends Controller
             'description' => 'nullable|string',
 
             // multiple images
-            'images.*' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $data = $request->all();
@@ -213,7 +213,7 @@ class VehicleController extends Controller
 
             // delete old images
             if ($vehicle->car_images) {
-                foreach (json_decode($vehicle->car_images) as $oldImage) {
+                foreach ($vehicle->car_images as $oldImage) {
                     if (file_exists(public_path($oldImage))) {
                         unlink(public_path($oldImage));
                     }
@@ -225,11 +225,10 @@ class VehicleController extends Controller
             foreach ($request->file('car_images') as $file) {
                 $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
                 $file->move(public_path('uploads/vehicle'), $fileName);
-
                 $images[] = 'uploads/vehicle/' . $fileName;
             }
 
-            $data['car_images'] = json_encode($images);
+            $data['car_images'] = $images;
         }
 
         // Bill Book Image
