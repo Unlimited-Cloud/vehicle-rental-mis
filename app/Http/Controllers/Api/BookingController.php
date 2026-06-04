@@ -152,7 +152,7 @@ class BookingController extends Controller
     public function createBooking(Request $request)
     {
         try {
-            Log::info("Vehicle Bokking Request",["body" => $request->all()]);
+            Log::info("Vehicle Bokking Request", ["body" => $request->all()]);
             //  Validation
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
@@ -292,7 +292,7 @@ class BookingController extends Controller
 
             $driver_id = $request->driver_id ?? null;
 
-            Log::info("Vehicle Bokking Request Start end",["start_time" => $start_time,"end_time" => $end_time,"driver_id" => $driver_id]);
+            Log::info("Vehicle Bokking Request Start end", ["start_time" => $start_time, "end_time" => $end_time, "driver_id" => $driver_id]);
 
 
             //  Create booking
@@ -1124,12 +1124,17 @@ class BookingController extends Controller
 
     public function transmission()
     {
-        $transmission = FuelType::select('id', 'name', 'status')->where('status', 1)->get()
-            ->map(function ($b) {
+        $transmission = FuelType::where('status', 1)
+            ->select('id', 'name', 'status', 'logo')
+            ->get()
+            ->map(function ($item) {
                 return [
-                    'id' => $b->id,
-                    'name' => $b->name,
-                    'status' => $b->status
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'status' => $item->status,
+                    'logo' => $item->logo
+                        ? asset('uploads/fuel-types/' . $item->logo)
+                        : null,
                 ];
             });
 
@@ -1170,6 +1175,7 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'transmission_name' => $transmission->name,
+            'transmission_logo' => $transmission->logo ? asset('uploads/fuel-types/' . $transmission->logo) : null,
             'vehicles' => $vehicles
         ]);
     }
