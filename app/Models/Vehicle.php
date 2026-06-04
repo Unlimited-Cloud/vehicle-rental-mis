@@ -41,6 +41,9 @@ class Vehicle extends Model
         'insurance_till',
         'insurance_cost_per_annum',
         'insurance_policy_document',
+        'passenger_insured',
+        'passenger_insured_amount',
+        'passenger_insurance_company',
     ];
 
     protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url'];
