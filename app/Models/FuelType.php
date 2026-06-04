@@ -11,5 +11,6 @@ class FuelType extends Model
     protected $fillable = [
         'name',
         'status',
+        'logo',
     ];
 }
