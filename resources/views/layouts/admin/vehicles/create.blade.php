@@ -301,6 +301,7 @@
     </div>
 
     <div class="card-body">
+        
         <div class="row">
 
             <div class="col-md-6">
@@ -348,6 +349,62 @@
 
         </div>
     </div>
+    <!-- Passenger Insurance Details -->
+<div class="card card-primary card-outline mb-4">
+    <div class="card-header bg-primary">
+        <h3 class="card-title text-white">
+            <i class="fas fa-user-shield"></i> Passenger Insurance Details
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+
+            <!-- Passenger Insured -->
+            <div class="col-md-4">
+                <label class="form-label">Passenger Insured</label>
+
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="passenger_insured"
+                           name="passenger_insured"
+                           value="1"
+                           {{ old('passenger_insured', $vehicle->passenger_insured ?? false) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="passenger_insured">
+                        Yes
+                    </label>
+                </div>
+            </div>
+
+            <!-- Passenger Insured Amount -->
+            <div class="col-md-4">
+                <label>Passenger Insured Amount</label>
+                <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number"
+                           step="0.01"
+                           min="0"
+                           name="passenger_insured_amount"
+                           class="form-control"
+                           value="{{ old('passenger_insured_amount', $vehicle->passenger_insured_amount ?? '') }}"
+                           placeholder="Enter insured amount">
+                </div>
+            </div>
+
+            <!-- Passenger Insurance Company -->
+            <div class="col-md-4">
+                <label>Passenger Insurance Company</label>
+                <input type="text"
+                       name="passenger_insurance_company"
+                       class="form-control"
+                       value="{{ old('passenger_insurance_company', $vehicle->passenger_insurance_company ?? '') }}"
+                       placeholder="Enter insurance company">
+            </div>
+
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- ================= SUBMIT ================= -->
@@ -416,6 +473,22 @@ document.getElementById('carImagesInput').addEventListener('change', function ()
         };
         reader.readAsDataURL(file);
     });
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const insuredCheckbox = document.getElementById('passenger_insured');
+    const amountField = document.querySelector('[name="passenger_insured_amount"]').closest('.col-md-4');
+    const companyField = document.querySelector('[name="passenger_insurance_company"]').closest('.col-md-4');
+
+    function toggleFields() {
+        const show = insuredCheckbox.checked;
+        amountField.style.display = show ? '' : 'none';
+        companyField.style.display = show ? '' : 'none';
+    }
+
+    insuredCheckbox.addEventListener('change', toggleFields);
+    toggleFields();
 });
 </script>
 
