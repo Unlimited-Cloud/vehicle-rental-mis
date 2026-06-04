@@ -290,7 +290,7 @@
             <div class="col-md-6">
                 <div class="card card-outline card-success">
                     <div class="card-header bg-success text-white">
-                        <h3 class="card-title"><i class="fas fa-shield-alt"></i> Insurance Details</h3>
+                        <h3 class="card-title"><i class="fas fa-shield-alt"></i>Vehicle Insurance Details</h3>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -326,6 +326,47 @@
                                     @endif
                                 </p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card card-outline card-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title">
+                            <i class="fas fa-user-shield"></i> Passenger Insurance Details
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+
+                            <div class="col-sm-6 mb-3">
+                                <strong>Passenger Insured:</strong>
+                                <p class="text-muted">
+                                    @if($vehicle->passenger_insured)
+                                        <span class="badge bg-success">Yes</span>
+                                    @else
+                                        <span class="badge bg-danger">No</span>
+                                    @endif
+                                </p>
+                            </div>
+
+                            <div class="col-sm-6 mb-3">
+                                <strong>Insured Amount:</strong>
+                                <p class="text-muted">
+                                    {{ $vehicle->passenger_insured_amount
+                                        ? 'Rs '.number_format($vehicle->passenger_insured_amount, 2)
+                                        : 'N/A' }}
+                                </p>
+                            </div>
+
+                            <div class="col-sm-12 mb-3">
+                                <strong>Insurance Company:</strong>
+                                <p class="text-muted">
+                                    {{ $vehicle->passenger_insurance_company ?? 'N/A' }}
+                                </p>
+                            </div>
+
                         </div>
                     </div>
                 </div>

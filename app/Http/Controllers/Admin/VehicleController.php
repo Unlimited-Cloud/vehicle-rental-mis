@@ -75,6 +75,10 @@ class VehicleController extends Controller
 
             // multiple images
             'car_images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            'passenger_insured' => 'nullable|boolean',
+            'passenger_insured_amount' => 'nullable|numeric|min:0',
+            'passenger_insurance_company' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();
@@ -188,6 +192,11 @@ class VehicleController extends Controller
 
             // multiple images
             'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+
+            'passenger_insured' => 'nullable|boolean',
+            'passenger_insured_amount' => 'nullable|numeric|min:0',
+            'passenger_insurance_company' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();
