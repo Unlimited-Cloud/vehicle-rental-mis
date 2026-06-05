@@ -1283,6 +1283,17 @@ class BookingController extends Controller
             'hillside_braking_system_image',
             'hill_descent_control_image',
         ];
+        $booleanFields = [
+            'dash_cam',
+            'ebs',
+            'air_conditioning',
+            'reverse_camera',
+            'camera_360',
+            'emergency_braking_system',
+            'hillside_braking_system',
+            'hill_descent_control',
+        ];
+
 
         if (!empty($data['security_feature'])) {
             foreach ($imageFields as $field) {
@@ -1293,16 +1304,13 @@ class BookingController extends Controller
                 }
             }
         }
+        foreach ($booleanFields as $field) {
+            if (isset($data['security_feature'][$field])) {
+                $data['security_feature'][$field] =
+                    $data['security_feature'][$field] ? 'Yes' : 'No';
+            }
+        }
 
-        // $data['vehicle_description_image_url'] = collect($data['vehicle_description_image_url'] ?? [])
-        //     ->map(function ($url, $index) {
-        //         return [
-        //             'id' => $index + 1,
-        //             'image_url' => $url,
-        //         ];
-        //     })
-        //     ->values()
-        //     ->toArray();
 
         return response()->json([
             'status' => 'success',
