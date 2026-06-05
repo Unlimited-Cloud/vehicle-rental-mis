@@ -31,7 +31,7 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
      */
     public function collection()
     {
-        $query = VehicleBooking::with([
+        $query = VehicleBooking::whereNull('deleted_at')->with([
             'vehicle',
             'customer',
             'driver.user',

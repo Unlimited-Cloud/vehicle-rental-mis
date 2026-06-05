@@ -75,6 +75,10 @@ class VehicleController extends Controller
 
             // multiple images
             'car_images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            'passenger_insured' => 'nullable|boolean',
+            'passenger_insured_amount' => 'nullable|numeric|min:0',
+            'passenger_insurance_company' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();
@@ -188,6 +192,11 @@ class VehicleController extends Controller
 
             // multiple images
             'images.*' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+
+            'passenger_insured' => 'nullable|boolean',
+            'passenger_insured_amount' => 'nullable|numeric|min:0',
+            'passenger_insurance_company' => 'nullable|string|max:255',
         ]);
 
         $data = $request->all();
@@ -213,7 +222,7 @@ class VehicleController extends Controller
 
             // delete old images
             if ($vehicle->car_images) {
-                foreach (json_decode($vehicle->car_images) as $oldImage) {
+                foreach ($vehicle->car_images as $oldImage) {
                     if (file_exists(public_path($oldImage))) {
                         unlink(public_path($oldImage));
                     }
@@ -225,11 +234,10 @@ class VehicleController extends Controller
             foreach ($request->file('car_images') as $file) {
                 $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
                 $file->move(public_path('uploads/vehicle'), $fileName);
-
                 $images[] = 'uploads/vehicle/' . $fileName;
             }
 
-            $data['car_images'] = json_encode($images);
+            $data['car_images'] = $images;
         }
 
         // Bill Book Image

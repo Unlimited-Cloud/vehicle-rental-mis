@@ -47,6 +47,7 @@ class VehicleBooking extends Model
         'deleted_by',
         'pickup_latitude',
         'pickup_longitude',
+        'call_type'
     ];
 
     protected $dates = ['start_date', 'end_date'];

@@ -16,7 +16,7 @@ use App\Models\Customer;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Events\EmailEvent;
 use App\Models\VehicleReceipt;
-
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
 use App\Helpers\NepaliDateHelper;
@@ -37,6 +37,7 @@ use App\Models\BasicTable;
 use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
+use App\Models\Payment;
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -151,6 +152,7 @@ class BookingController extends Controller
     public function createBooking(Request $request)
     {
         try {
+            Log::info("Vehicle Bokking Request", ["body" => $request->all()]);
             //  Validation
             $validator = Validator::make($request->all(), [
                 'customer_id' => 'required|exists:customers,customer_uuid',
@@ -217,6 +219,16 @@ class BookingController extends Controller
             $vehicle = Vehicle::findOrFail($request->vehicle_id);
             $tripRoute = TripRoute::findOrFail($request->trip_route_id);
 
+            if (
+                $request->filled('no_of_people') &&
+                (int) $request->no_of_people > (int) $vehicle->seater
+            ) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Selected vehicle capacity is {$vehicle->seater} passengers. You entered {$request->no_of_people} passengers."
+                ], 422);
+            }
+
             $vehicle_type = strtolower($vehicle->vehicle_type);
             $rate_field = $vehicle_type . '_price';
 
@@ -245,7 +257,19 @@ class BookingController extends Controller
                 }
             }
 
-            $total_amount = max(0, $sub_total - $discount_amount);
+            // Taxable amount after discount
+            $taxable_amount = max(0, $sub_total - $discount_amount);
+
+            // VAT calculation (13%)
+            $tax_amount = 0;
+            $tax_amount_type = null;
+
+
+            $tax_amount_type = 'percentage';
+            $tax_amount = ($taxable_amount * 13) / 100;
+
+            // Final total
+            $total_amount = $taxable_amount + $tax_amount;
 
             // Extract separate date & time for DB
             $start_date = $startDateTime->format('Y-m-d');
@@ -266,7 +290,9 @@ class BookingController extends Controller
                 $startDateTime->format('Ymd') . '-' .
                 strtoupper(Str::random(4));
 
+            $driver_id = $request->driver_id ?? null;
 
+            Log::info("Vehicle Bokking Request Start end", ["start_time" => $start_time, "end_time" => $end_time, "driver_id" => $driver_id]);
 
 
             //  Create booking
@@ -275,6 +301,7 @@ class BookingController extends Controller
                 'vehicle_id' => $request->vehicle_id,
                 'trip_category_id' => $request->trip_category_id,
                 'trip_route_id' => $request->trip_route_id,
+                'driver_id' => $driver_id,
 
                 'start_date' => $start_date,
                 'start_time' => $start_time,
@@ -290,9 +317,14 @@ class BookingController extends Controller
                 'rate_per_day' => $rate_per_day,
                 'sub_total' => $sub_total,
                 'discount' => $discount_amount,
+                'tax_amount_type' => $tax_amount_type,
+                'tax' => $tax_amount,
+                'vat' => '1',
                 'total_amount' => $total_amount,
 
+
                 'status' => 'pending',
+                'call_type' => 'api',
 
                 'contact_person' => $request->contact_person,
                 'contact_email' => $request->contact_email,
@@ -1092,12 +1124,17 @@ class BookingController extends Controller
 
     public function transmission()
     {
-        $transmission = FuelType::select('id', 'name', 'status')->where('status', 1)->get()
-            ->map(function ($b) {
+        $transmission = FuelType::where('status', 1)
+            ->select('id', 'name', 'status', 'logo')
+            ->get()
+            ->map(function ($item) {
                 return [
-                    'id' => $b->id,
-                    'name' => $b->name,
-                    'status' => $b->status
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'status' => $item->status,
+                    'logo' => $item->logo
+                        ? asset('uploads/fuel-types/' . $item->logo)
+                        : null,
                 ];
             });
 
@@ -1138,6 +1175,7 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'transmission_name' => $transmission->name,
+            'transmission_logo' => $transmission->logo ? asset('uploads/fuel-types/' . $transmission->logo) : null,
             'vehicles' => $vehicles
         ]);
     }
@@ -1221,7 +1259,8 @@ class BookingController extends Controller
 
     public function VehicleDetailById($id)
     {
-        $vehicle = Vehicle::where('id', $id)
+        $vehicle = Vehicle::with('securityFeature')
+            ->where('id', $id)
             ->where('status', 1)
             ->first();
 
@@ -1232,13 +1271,53 @@ class BookingController extends Controller
             ], 404);
         }
 
+        $data = $vehicle->toArray();
+
+        $imageFields = [
+            'dash_cam_image',
+            'ebs_image',
+            'air_conditioning_image',
+            'reverse_camera_image',
+            'camera_360_image',
+            'emergency_braking_system_image',
+            'hillside_braking_system_image',
+            'hill_descent_control_image',
+        ];
+        $booleanFields = [
+            'dash_cam',
+            'ebs',
+            'air_conditioning',
+            'reverse_camera',
+            'camera_360',
+            'emergency_braking_system',
+            'hillside_braking_system',
+            'hill_descent_control',
+        ];
+
+
+        if (!empty($data['security_feature'])) {
+            foreach ($imageFields as $field) {
+                if (!empty($data['security_feature'][$field])) {
+                    $data['security_feature'][$field] = asset(
+                        'uploads/vehicle-security-features/' . $data['security_feature'][$field]
+                    );
+                }
+            }
+        }
+        foreach ($booleanFields as $field) {
+            if (isset($data['security_feature'][$field])) {
+                $data['security_feature'][$field] =
+                    $data['security_feature'][$field] ? 'Yes' : 'No';
+            }
+        }
+
+
         return response()->json([
             'status' => 'success',
             'message' => 'Vehicle Fetched Successfully',
-            'data' => $vehicle
+            'data' => $data
         ]);
     }
-
     public function getTripPrice(Request $request)
     {
         $validator = Validator::make(
@@ -1751,5 +1830,65 @@ class BookingController extends Controller
 
         // OR force download
         // return response()->download($filePath);
+    }
+
+
+    public function codPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|exists:vehicle_bookings,id',
+            'customer_id' => 'required|exists:customers,customer_uuid',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $booking = VehicleBooking::findOrFail($request->booking_id);
+
+            $customer = Customer::where(
+                'customer_uuid',
+                $request->customer_id
+            )->firstOrFail();
+
+            $payment = Payment::create([
+                'vehicle_booking_id'    => $booking->id,
+                'amount'                => $booking->total_amount,
+                'payment_method'        => 'cash',
+                'payment_type'          => 'booking',
+                'transaction_reference' => 'CASH-' . strtoupper(uniqid()),
+                'payment_date'          => now(),
+                'direction' => 'in',
+                'gateway' => "cash",
+                'status'                => 'pending',
+                'created_by'            => $customer->id,
+                'created_user_type'     => 'customer',
+                'notes'                 => 'Vehicle rental payment via Cash',
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cash booking completed successfully.',
+                'payment_id' => $payment->id,
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

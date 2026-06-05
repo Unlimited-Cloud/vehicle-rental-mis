@@ -310,10 +310,10 @@ class VehicleBookingController extends Controller
         $paymentData['notes'] = $request->payment_note;
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
 
-        //generate invoice
-        // if ($vehicleBooking->status === 'confirmed') {
-        //     $this->service->generateFinalInvoice($request->file_no);
-        // }
+        //generate invoice 
+        if ($vehicleBooking->status === 'confirmed' && $vehicleBooking->call_type === 'api') {
+            $this->service->generateFinalInvoice($request->file_no);
+        }
 
         $customers = Customer::where('id', $request->customer_id)->first();
         event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
@@ -393,7 +393,7 @@ class VehicleBookingController extends Controller
     {
         $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user']);
 
-        if($this->currentUserIsCustomer == 'Y'){
+        if ($this->currentUserIsCustomer == 'Y') {
             $query->where('customer_id', $this->currentUserCustomerId);
         }
 

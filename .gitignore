@@ -18,6 +18,9 @@
 /public/adminlte
 /public/uploads
 /public/storage
+/certs/esewa.pem
+/certs/esewa_cert.pem
+/certs/esewa_key.pem
 /storage/*.key
 /storage/pail
 /vendor
