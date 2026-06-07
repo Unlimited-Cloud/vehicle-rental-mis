@@ -8,6 +8,8 @@ use App\Models\Faq;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
+use App\Models\Customer;
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 
@@ -22,10 +24,20 @@ class VehicleController extends Controller
             'description' => 'nullable|string',
         ]);
 
+        $customer = Customer::where('customer_uuid', $request->customer_id)->first();
 
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+
+        $customer_id = $customer->id;
         $review = Review::create([
             'vehicle_id' => $request->vehicle_id,
-            'customer_id' => $request->customer_id,
+            'customer_id' => $customer_id,
             'rating' => $request->rating,
             'description' => $request->description,
         ]);
