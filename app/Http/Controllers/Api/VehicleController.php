@@ -9,6 +9,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
 use App\Models\Customer;
+use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
@@ -17,12 +18,24 @@ class VehicleController extends Controller
 {
     public function storeReview(Request $request)
     {
-        $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'customer_id' => 'nullable',
-            'rating' => 'required|integer|min:1|max:5',
-            'description' => 'nullable|string',
-        ]);
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'customer_id' => 'required',
+                'rating' => 'required|integer|min:1|max:5',
+                'description' => 'nullable|string',
+            ]
+        );
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()
+            ], 422);
+        }
 
         $customer = Customer::where('customer_uuid', $request->customer_id)->first();
 
@@ -34,19 +47,24 @@ class VehicleController extends Controller
             ], 404);
         }
 
-        $customer_id = $customer->id;
-        $review = Review::create([
-            'vehicle_id' => $request->vehicle_id,
-            'customer_id' => $customer_id,
-            'rating' => $request->rating,
-            'description' => $request->description,
-        ]);
+        $review = Review::updateOrCreate(
+            [
+                'vehicle_id' => $request->vehicle_id,
+                'customer_id' => $customer->id,
+            ],
+            [
+                'rating' => $request->rating,
+                'description' => $request->description,
+            ]
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Review added successfully',
+            'message' => $review->wasRecentlyCreated
+                ? 'Review added successfully'
+                : 'Review updated successfully',
             'review' => $review
-        ], 201);
+        ], 200);
     }
 
     // Get all reviews for a vehicle
