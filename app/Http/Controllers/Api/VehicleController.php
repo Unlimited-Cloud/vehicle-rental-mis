@@ -79,6 +79,9 @@ class VehicleController extends Controller
             ], 404);
         }
 
+        $averageRating = Review::where('vehicle_id', $vehicle_id)
+            ->avg('rating');
+
         $reviews = Review::with('customer')
             ->where('vehicle_id', $vehicle_id)
             ->orderBy('created_at', 'desc')
@@ -101,7 +104,8 @@ class VehicleController extends Controller
             'success' => true,
             'vehicle' => [
                 'id' => $vehicle->id,
-                'name' => $vehicle->vehicle_name
+                'name' => $vehicle->vehicle_name,
+                'average_rating' => round($averageRating, 1)
             ],
             'reviews' => $reviews
         ]);
@@ -119,6 +123,9 @@ class VehicleController extends Controller
                 'message' => 'Vehicle not found'
             ], 404);
         }
+
+        $averageRating = Review::where('vehicle_id', $vehicle_id)
+            ->avg('rating');
 
         $reviews = Review::with('customer')
             ->where('vehicle_id', $vehicle_id)
@@ -143,7 +150,8 @@ class VehicleController extends Controller
             'success' => true,
             'vehicle' => [
                 'id' => $vehicle->id,
-                'name' => $vehicle->vehicle_name
+                'name' => $vehicle->vehicle_name,
+                'average_rating' => round($averageRating, 1)
             ],
             'reviews' => $reviews
         ]);
