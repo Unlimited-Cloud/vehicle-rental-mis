@@ -108,6 +108,48 @@ class VehicleController extends Controller
     }
 
 
+
+    public function getLimitReviews($vehicle_id)
+    {
+        $vehicle = Vehicle::find($vehicle_id);
+
+        if (!$vehicle) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+
+        $reviews = Review::with('customer')
+            ->where('vehicle_id', $vehicle_id)
+            ->limit(5)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($review) {
+
+                return [
+                    'id' => $review->id,
+                    'customer_id' => $review->customer_id,
+                    'vehicle_id' => $review->vehicle_id,
+                    'rating' => $review->rating,
+                    'description' => $review->description,
+                    'created_at' => $review->created_at->format('Y/n/j'),
+                    'updated_at' => $review->updated_at->format('Y/n/j'),
+                    'customer' => $review->customer,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'vehicle' => [
+                'id' => $vehicle->id,
+                'name' => $vehicle->vehicle_name
+            ],
+            'reviews' => $reviews
+        ]);
+    }
+
+
     public function getBanner()
     {
         $now = Carbon::now();
