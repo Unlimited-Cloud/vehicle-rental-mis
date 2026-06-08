@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('reviews', [VehicleController::class, 'storeReview']);
     Route::get('vehicles/{vehicle_id}/reviews', [VehicleController::class, 'getReviews']);
+    Route::get('vehicles/{vehicle_id}/limit-reviews', [VehicleController::class, 'getLimitReviews']);
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
