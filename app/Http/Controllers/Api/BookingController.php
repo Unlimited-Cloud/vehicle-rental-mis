@@ -1450,7 +1450,7 @@ class BookingController extends Controller
 
     public function BookingbyStatus($status, $customer_id)
     {
-        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'paid'];
 
         if (!in_array($status, $validStatuses)) {
             return response()->json([
@@ -1476,6 +1476,8 @@ class BookingController extends Controller
             $query->whereHas('vehicleMoment', function ($q) {
                 $q->whereNotNull('end_datetime');
             });
+        } elseif ($status === 'paid') {
+            $query->where('payment_status', 1);
         } else {
             $query->where('status', $status);
         }
@@ -1505,8 +1507,11 @@ class BookingController extends Controller
             ]);
 
         $bookings->each(function ($booking) {
-            if ($booking->vehicleMoment) {
+            if ($booking->vehicleMoment && $booking->vehicleMoment->end_datetime) {
                 $booking->status = 'completed';
+            }
+            if ($booking->payment_status == 1) {
+                $booking->status = 'paid';
             }
         });
 
