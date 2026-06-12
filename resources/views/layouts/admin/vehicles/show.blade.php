@@ -96,6 +96,16 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+
+                             <div class="col-md-6 mb-3">
+                                <div class="info-box bg-light">
+                                    <span class="info-box-icon bg-info"><i class="fas fa-car"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">Vehicle Owner</span>
+                                        <span class="info-box-number">{{ $vehicle->vehicleOwner->name ?? 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-6 mb-3">
                                 <div class="info-box bg-light">
                                     <span class="info-box-icon bg-info"><i class="fas fa-car"></i></span>

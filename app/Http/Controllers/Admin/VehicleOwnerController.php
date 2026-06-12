@@ -112,6 +112,8 @@ class VehicleOwnerController extends Controller
     public function show(VehicleOwner $vehicleowner)
     {
         Gate::authorize('read_vehicles_vehicle_owner');
+        $vehicleowner->load('vehicles');
+
         return view('layouts.admin.vehicleowner.show', compact('vehicleowner'));
     }
 

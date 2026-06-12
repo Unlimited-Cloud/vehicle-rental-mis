@@ -38,6 +38,9 @@ use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
 use App\Models\Payment;
+use App\Models\Passenger;
+
+
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -335,6 +338,13 @@ class BookingController extends Controller
                 'pickup_longitude' => $request->pickup_longitude ?? null,
             ]);
 
+            Passenger::create([
+                'contact_person' => $request->contact_person ?? null,
+                'contact_email' => $request->contact_email ?? null,
+                'contact_number' => $request->contact_number ?? null,
+                'customer_id' => $customerId,
+                'booking_id' => $booking->id,
+            ]);
 
 
             //  Generate Proforma
@@ -1895,5 +1905,59 @@ class BookingController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+
+    public function vehicleSorting(Request $request)
+    {
+        $sortBy = $request->get('sort_by');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        $vehicles = Vehicle::query();
+
+        switch ($sortBy) {
+
+            // Rating 
+            case 'rating':
+                $vehicles->withAvg('reviews', 'rating')
+                    ->orderBy('reviews_avg_rating', $sortOrder);
+                break;
+
+            // Seater
+            case 'seater':
+                $vehicles->orderBy('seater', $sortOrder);
+                break;
+
+            // Brand
+            case 'brand':
+                $vehicles->orderBy('brand', $sortOrder);
+                break;
+
+            // Vehicle Age
+            case 'age':
+                if ($sortOrder === 'asc') {
+                    $vehicles->orderBy('year', 'asc');
+                } else {
+                    $vehicles->orderBy('year', 'desc');
+                }
+                break;
+
+            // Plate Color
+            case 'plate_color':
+
+                $plateColor = $request->get('plate_color');
+
+                if ($plateColor) {
+                    $vehicles->where('number_plate_color', $plateColor);
+                }
+
+                break;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $vehicles->paginate(10)
+        ]);
     }
 }
