@@ -13,6 +13,7 @@ class Agent extends Model
         'contact_number',
         'address',
         'bank_name',
+        'bank_code',
         'bank_account_name',
         'bank_account_number',
         'wallet_name',

@@ -73,6 +73,42 @@
                 </div>
 
                 <div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Associated Vehicles</h4>
+
+        @if($vehicleowner->vehicles->count())
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Vehicle Name</th>
+                        <th>Brand</th>
+                        <th>Seater</th>
+                        <th>Fuel Type</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach($vehicleowner->vehicles as $vehicle)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $vehicle->vehicle_name ?? 'N/A' }}</td>
+                            <td>{{ $vehicle->brand ?? 'N/A' }}</td>
+                            <td>{{ $vehicle->seater ?? 'N/A' }}</td>
+                            <td>{{ $vehicle->fuel_type ?? 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <div class="alert alert-warning">
+                No vehicles found for this owner.
+            </div>
+        @endif
+    </div>
+</div>
+
+                <div class="row mt-4">
                     <div class="col-md-12">
                         <h4>Additional Information</h4>
                         <table class="table table-bordered">
@@ -87,6 +123,7 @@
                         </table>
                     </div>
                 </div>
+                
 
                 <div class="text-right mt-3">
                     <a href="{{ route('admin.vehicleowner.index') }}" class="btn btn-secondary">
@@ -98,8 +135,12 @@
                 </div>
             </div>
         </div>
+        
     </div>
+    
 </div>
+
+
 </div>
 </section>
 @endsection

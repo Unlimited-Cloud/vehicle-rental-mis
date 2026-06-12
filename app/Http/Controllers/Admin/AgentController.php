@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Agent;
 use App\Models\User;
+use App\Models\Bank;
+
+
+use App\Models\VehicleBooking;
+
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -34,8 +39,11 @@ class AgentController extends Controller
         Gate::authorize('create_agents');
 
         $users = User::all();
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
 
-        return view('layouts.admin.c-agents.create', compact('users'));
+        return view('layouts.admin.c-agents.create', compact('users', 'banks'));
     }
 
     /**
@@ -69,6 +77,16 @@ class AgentController extends Controller
         ]);
 
         $data = $request->all();
+
+        $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+        if (!$bank) {
+            return back()->withErrors([
+                'bank_name' => 'Selected bank not found.'
+            ])->withInput();
+        }
+
+        $data['bank_code'] = $bank->swift_code;
         if ($request->hasFile('citizenship_doc')) {
 
             $file = $request->file('citizenship_doc');
@@ -129,6 +147,9 @@ class AgentController extends Controller
 
         Agent::create($data);
 
+
+
+
         return redirect()->route('admin.agents.index')
             ->with('success', 'Agent created successfully');
     }
@@ -152,7 +173,11 @@ class AgentController extends Controller
             ->where('agents.id', $agent->id)
             ->first();
 
-        return view('layouts.admin.c-agents.create', compact('agent', 'users'));
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
+
+        return view('layouts.admin.c-agents.create', compact('agent', 'users', 'banks'));
     }
 
     /**
@@ -258,6 +283,19 @@ class AgentController extends Controller
             $userData['img'] = $imageName;
         }
 
+        if ($request->filled('bank_name')) {
+
+            $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+            if (!$bank) {
+                return back()->withErrors([
+                    'bank_name' => 'Selected bank not found.'
+                ])->withInput();
+            }
+
+            $data['bank_code'] = $bank->swift_code;
+        }
+
         DB::table('users')
             ->where('id', $agent->user_id)
             ->update($userData);
@@ -318,5 +356,132 @@ class AgentController extends Controller
 
         return redirect()->route('admin.agents.index')
             ->with('success', 'Agent deleted successfully');
+    }
+
+
+
+
+
+    //Agent Booking
+    public function agentBookingindex(Request $request)
+    {
+        Gate::authorize('index_agents');
+
+        $agents = Agent::with('user')->get();
+
+        $query = VehicleBooking::whereNotNull('agent_code')
+            ->where('agent_code', '!=', '');
+
+        if ($request->filled('agent_code')) {
+            $query->where('agent_code', $request->agent_code);
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $bookings = $query->latest()->get();
+
+        // Agent map keyed by agent_code for O(1) lookup
+        $agentMap = $agents->keyBy('agent_code');
+
+        // Plain array of booking IDs that already have commission paid
+        $paidBookingIds = DB::table('payments')
+            ->where('payment_type', 'agent_commission')
+            ->where('status', 'completed')
+            ->where('payment_method', 'bank_transfer')
+            ->pluck('vehicle_booking_id')
+            ->toArray();
+
+        $failBookingIds = DB::table('payments')
+            ->where('payment_type', 'agent_commission')
+            ->where('status', 'failed')
+            ->where('payment_method', 'bank_transfer')
+            ->pluck('vehicle_booking_id')
+            ->toArray();
+
+
+
+
+        // Single loop — attach agent, calculate commission, resolve paid flag
+        foreach ($bookings as $booking) {
+            $agent                   = $agentMap->get($booking->agent_code);
+            $booking->agent          = $agent;
+            $booking->commissionRate = $agent ? (float) $agent->commission_rate : 0;
+            if (
+                $booking->sub_total === null ||
+                $booking->sub_total === '' ||
+                (float) $booking->sub_total == 0
+            ) {
+                $baseAmount = $booking->rate_per_day;
+            } else {
+                $baseAmount = $booking->sub_total;
+            }
+            $discountAmount = 0;
+
+            if ($booking->discount > 0) {
+                if ($booking->discount_amount_type === 'percentage') {
+                    $discountAmount = ($baseAmount * $booking->discount) / 100;
+                } else {
+                    $discountAmount = $booking->discount;
+                }
+            }
+
+            // dd($baseAmount, $discountAmount);
+
+            // Net before VAT
+            $commissionBase = max(0, $baseAmount - $discountAmount);
+            $booking->commissionBase = $commissionBase;
+            $booking->commissionAmt = ($commissionBase * $booking->commissionRate) / 100;
+            $booking->isPaid         = in_array($booking->id, $paidBookingIds);
+        }
+
+        // Summary
+        $totalBookings     = $bookings->count();
+        $totalCommission   = $bookings->sum('commissionAmt');
+        $paidCommission    = $bookings->where('isPaid', true)->sum('commissionAmt');
+        $pendingCommission = $totalCommission - $paidCommission;
+
+        return view('layouts.admin.c-agents.agent-bookings', compact(
+            'bookings',
+            'agents',
+            'totalBookings',
+            'totalCommission',
+            'paidCommission',
+            'pendingCommission',
+            'paidBookingIds',
+            'failBookingIds'
+        ));
+    }
+
+    // Agent details for modal (will be used in payment step)
+    public function agentDetails(Request $request)
+    {
+        $request->validate(['agent_code' => 'required|string']);
+
+        $agent = Agent::with('user')
+            ->where('agent_code', $request->agent_code)
+            ->first();
+
+        if (!$agent) {
+            return response()->json(['success' => false, 'message' => 'Agent not found']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'agent'   => [
+                'name'                => $agent->user->name ?? 'N/A',
+                'wallet_name'         => $agent->wallet_name,
+                'wallet_number'       => $agent->wallet_number,
+                'bank_name'           => $agent->bank_name,
+                'bank_account_name'   => $agent->bank_account_name,
+                'bank_account_number' => $agent->bank_account_number,
+                'commission_rate'     => $agent->commission_rate,
+            ],
+        ]);
     }
 }
