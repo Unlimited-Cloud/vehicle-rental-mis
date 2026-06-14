@@ -1266,22 +1266,7 @@ class BookingController extends Controller
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
             ->limit(5)
-            ->get()
-            ->map(function ($item) {
-
-                if ($item->vehicle) {
-                    $item->vehicle->average_rating = round(
-                        $item->vehicle->reviews_avg_rating ?? 0,
-                        1
-                    );
-
-                    unset($item->vehicle->reviews_avg_rating);
-                }
-
-                return [
-                    'vehicle' => $item->vehicle
-                ];
-            });
+            ->get();
 
         return response()->json([
             'status' => 'success',
