@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\KhaltiPaymentController;
 use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\EsewaIbftController;
 use App\Http\Controllers\Api\ResourceController;
+use App\Http\Controllers\Api\GpsController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -78,6 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vehicles-and-brand', [BookingController::class, 'BrandWithVehicle']);
     Route::post('/vehicles-by-brand', [BookingController::class, 'vehiclesByBrand']);
 
+
+    Route::post('/check-vehicle-availability', [BookingController::class, 'checkAvailability']);
+
+
     //transmission
     Route::get('/transmission', [BookingController::class, 'transmission']);
     Route::post('/vehicles-by-transmission', [BookingController::class, 'vehiclesByTransmission']);
@@ -125,6 +130,32 @@ Route::middleware('auth:sanctum')->group(function () {
         '/booking/cash/inititate',
         [BookingController::class, 'codPayment']
     );
+
+
+
+    Route::prefix('gps')->group(function () {
+        Route::post('/add-user', [GpsController::class, 'addUser']);
+        Route::post('/add-vehicle', [GpsController::class, 'addVehicle']);
+        Route::post('/assign-vehicle', [GpsController::class, 'assignVehicle']);
+        //users
+        Route::post('/location', [GpsController::class, 'getLocation']);
+        Route::post('/route', [GpsController::class, 'getRoute']);
+        Route::get('/get-address', [GpsController::class, 'getAddress']);
+        Route::post('/objects', [GpsController::class, 'getUserObjects']);
+        Route::get('/object-commands', [GpsController::class, 'getObjectCommands']);
+        Route::get('/messages', [GpsController::class, 'getMessages']);
+        Route::get('/events', [GpsController::class, 'getEvents']);
+        Route::get('/last-events', [GpsController::class, 'getLastEvents']);
+        Route::get('/markers', [GpsController::class, 'getMarkers']);
+        Route::get('/saved-routes', [GpsController::class, 'getSavedRoutes']);
+        Route::get('/zones', [GpsController::class, 'getZones']);
+
+        Route::post('/send-gprs', [GpsController::class, 'sendGprs']);
+        Route::post('/send-sms', [GpsController::class, 'sendSms']);
+        Route::get('/fleet-locations', [GpsController::class, 'getFleetLocations']);
+        Route::post('/nearest-fleet', [GpsController::class, 'nearestFleet']);
+        Route::post('/vehicle-distance-from-gps', [GpsController::class, 'vehicleDistanceFromGps']);
+    });
 });
 Route::get(
     '/khalti/confirm',

@@ -44,10 +44,11 @@ class Vehicle extends Model
         'passenger_insured',
         'passenger_insured_amount',
         'passenger_insurance_company',
-        'vehicle_owner_id'
+        'vehicle_owner_id',
+        'imei'
     ];
 
-    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url'];
+    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url', 'average_rating'];
     protected $casts = [
         'images' => 'array',
         'car_images' => 'array',
@@ -122,5 +123,10 @@ class Vehicle extends Model
         }
 
         return null;
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return round($this->reviews_avg_rating ?? 0, 1);
     }
 }
