@@ -82,7 +82,7 @@ class VehicleController extends Controller
         $averageRating = Review::where('vehicle_id', $vehicle_id)
             ->avg('rating');
 
-        $reviews = Review::with('customer')
+        $reviews = Review::with('customer:id,name,email,phone,profile_image')
             ->where('vehicle_id', $vehicle_id)
             ->orderBy('created_at', 'desc')
             ->get()

@@ -78,7 +78,6 @@ class EsewaIbftService
                 "line" => $e->getLine(),
                 "message" => $e->getMessage(),
             ]);
-            dd(123);
             throw new Exception('eSewa token response missing access_token: ');
         }
     }

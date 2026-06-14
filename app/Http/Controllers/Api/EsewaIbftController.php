@@ -13,6 +13,12 @@ use App\Models\Attendance;
 use App\Models\Bank;
 use App\Models\CrewBankDetail;
 use App\Models\CrewProfile;
+use App\Models\Agent;
+use App\Models\VehicleBooking;
+
+
+
+
 
 class EsewaIbftController extends Controller
 {
@@ -376,6 +382,145 @@ class EsewaIbftController extends Controller
         }
     }
 
+
+
+    public function getCommissionDetails($agentCode)
+    {
+        $agent = Agent::with('user')
+            ->where('agent_code', $agentCode)
+            ->first();
+
+        if (!$agent) {
+            return response()->json(['success' => false, 'message' => 'Agent not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'agent_name'         => $agent->user->name ?? 'N/A',
+                'agent_code'         => $agent->agent_code,
+                'commission_rate'    => $agent->commission_rate ?? 0,
+                'has_bank_details'   => !empty($agent->bank_account_number) && !empty($agent->bank_name),
+                'bank_name'          => $agent->bank_name,
+                'bank_account_name'  => $agent->bank_account_name,
+                'bank_account_number' => $agent->bank_account_number,
+                'bank_code'          => $agent->bank_code ?? null,
+                'wallet_name'        => $agent->wallet_name,
+                'wallet_number'      => $agent->wallet_number,
+            ],
+        ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // TRANSFER COMMISSION (Pay by Bank)
+    // -------------------------------------------------------------------------
+
+    public function transferAgentsDashboard(Request $request)
+    {
+        // Gate::authorize('update_agents');
+
+        $validator = Validator::make($request->all(), [
+            'agent_code' => 'required|string|exists:agents,agent_code',
+            'booking_id' => 'required|integer|exists:vehicle_bookings,id',
+            'remarks'    => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $agent = Agent::where('agent_code', $request->agent_code)->first();
+
+            if (!$agent->bank_account_number || !$agent->bank_name) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Agent does not have bank details configured.',
+                ], 400);
+            }
+
+            $booking          = VehicleBooking::findOrFail($request->booking_id);
+            $discountAmount = 0;
+            $baseAmount = !empty($booking->sub_total)
+                ? $booking->sub_total
+                : $booking->rate_per_day;
+            if ($booking->discount > 0) {
+                if ($booking->discount_amount_type === 'percentage') {
+                    $discountAmount = ($baseAmount * $booking->discount) / 100;
+                } else {
+                    $discountAmount = $booking->discount;
+                }
+            }
+
+            // Net amount before VAT
+            $commissionBase = $baseAmount - $discountAmount;
+
+            $commissionAmount = ($commissionBase * $agent->commission_rate) / 100;
+
+            if ($commissionAmount <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Commission amount is zero. Check the agent commission rate.',
+                ], 400);
+            }
+
+            $payload = [
+                'source_bank_code'           => 'PRVUNPKA',
+                'source_account_number'      => '9100100008977000001',
+                'source_account_name'        => 'Test CE',
+                'destination_bank_code'      => $agent->bank_code,
+                'destination_account_number' => $agent->bank_account_number,
+                'destination_account_name'   => $agent->bank_account_name,
+                'amount'                     => $commissionAmount,
+                'remarks'                    => $request->remarks ?? "Commission payment for booking #{$booking->id}",
+                'narration_one'              => "Agent: {$agent->agent_code}",
+                'narration_two'              => "Booking: {$booking->file_no}",
+                'vehicle_booking_id'         => $booking->id,
+                'agent_code'                 => $agent->agent_code,
+                'payment_type'               => 'agent_commission',
+                'payment_method'             => 'bank_transfer',
+                'created_user_type'          => 'user',
+            ];
+
+            Log::info('Agent Commission Transfer Payload', $payload);
+
+            $payment = $this->esewa->directSingleTransaction($payload);
+
+            Log::info('Agent Commission Transfer Successful', ['payment' => $payment]);
+
+            $notes   = json_decode($payment->notes, true);
+            $message = $notes['esewa_status_message'] ?? 'Transaction processed successfully.';
+
+            if ($payment->status === 'failed') {
+                return response()->json([
+                    'success'    => false,
+                    'message'    => $message,
+                    'payment_id' => $payment->id,
+                    'status'     => $payment->status,
+                    'txn_ref'    => $payment->transaction_reference,
+                ], 400);
+            }
+
+            return response()->json([
+                'success'    => true,
+                'message'    => $message,
+                'payment_id' => $payment->id,
+                'status'     => $payment->status,
+                'txn_ref'    => $payment->transaction_reference,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Agent Commission Transfer Failed', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process transfer: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
     public function validateBankAccount(Request $request)

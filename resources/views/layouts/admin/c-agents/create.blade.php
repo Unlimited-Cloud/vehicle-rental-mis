@@ -143,10 +143,16 @@
 <div class="form-group">
 <label>Bank Name</label>
 
-<input type="text"
-       name="bank_name"
-       class="form-control"
-       value="{{ old('bank_name',$agent->bank_name ?? '') }}">
+ <select name="bank_name" class="form-control">
+    <option value="">Select Bank</option>
+
+    @foreach($banks as $bank)
+        <option value="{{ $bank->bank_name }}"
+            {{ old('bank_name', $agent->bank_name ?? '') == $bank->bank_name ? 'selected' : '' }}>
+            {{ $bank->bank_name }}
+        </option>
+    @endforeach
+</select>
 </div>
 </div>
 
