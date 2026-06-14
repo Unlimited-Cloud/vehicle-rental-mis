@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
+use App\Models\Review;
+
+
 use Maatwebsite\Excel\Facades\Excel;
 use App\Events\EmailEvent;
 use App\Models\VehicleReceipt;
@@ -60,7 +63,7 @@ class BookingController extends Controller
             'services',
             'repairs',
             'tyreChanges'
-        ])->where('status', 1)->get();
+        ])->withAvg('reviews', 'rating')->where('status', 1)->get();
 
         return response()->json([
             'status' => true,
@@ -179,7 +182,7 @@ class BookingController extends Controller
                 'contact_person' => 'nullable|string',
                 'contact_email' => 'nullable|string',
                 'contact_number' => 'nullable|string',
-                'agent_code' => 'nullable|string',
+                'agent_code' => 'nullable|exists:agents,agent_code',
             ]);
 
             if ($validator->fails()) {
@@ -1111,8 +1114,10 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
             ->get();
+
+
 
         if ($vehicles->isEmpty()) {
             return response()->json([
@@ -1121,11 +1126,14 @@ class BookingController extends Controller
             ]);
         }
 
+
+
+
         return response()->json([
             'status' => true,
             'seater_name' => $seater->name,
             'logo' => $seater->logo ? asset('uploads/seaters/' . $seater->logo) : null,
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -1172,7 +1180,7 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -1227,7 +1235,7 @@ class BookingController extends Controller
         ]);
 
         // get vehicles by seater
-        $vehicles = Vehicle::where('seater', $request->seater)->get();
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->where('seater', $request->seater)->get();
 
         if ($vehicles->isEmpty()) {
             return response()->json([
@@ -1239,7 +1247,7 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'seater' => $request->seater,
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -1250,12 +1258,26 @@ class BookingController extends Controller
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
-            ->with('vehicle')
+            ->with([
+                'vehicle' => function ($query) {
+                    $query->withAvg('reviews', 'rating');
+                }
+            ])
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
             ->limit(5)
             ->get()
             ->map(function ($item) {
+
+                if ($item->vehicle) {
+                    $item->vehicle->average_rating = round(
+                        $item->vehicle->reviews_avg_rating ?? 0,
+                        1
+                    );
+
+                    unset($item->vehicle->reviews_avg_rating);
+                }
+
                 return [
                     'vehicle' => $item->vehicle
                 ];
@@ -1270,6 +1292,7 @@ class BookingController extends Controller
     public function VehicleDetailById($id)
     {
         $vehicle = Vehicle::with('securityFeature')
+            ->withAvg('reviews', 'rating')
             ->where('id', $id)
             ->where('status', 1)
             ->first();
@@ -1280,6 +1303,8 @@ class BookingController extends Controller
                 'message' => 'Vehicle not found'
             ], 404);
         }
+
+
 
         $data = $vehicle->toArray();
 
@@ -1958,6 +1983,60 @@ class BookingController extends Controller
         return response()->json([
             'success' => true,
             'data' => $vehicles->paginate(10)
+        ]);
+    }
+
+
+
+
+    public function checkAvailability(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'required|date',
+            'booking_id' => 'nullable|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $start = Carbon::parse($request->start_datetime);
+        $end = Carbon::parse($request->end_datetime);
+
+        $query = VehicleBooking::where('vehicle_id', $request->vehicle_id)
+            ->whereNotIn('status', ['cancelled'])
+            ->when($request->booking_id, function ($q) use ($request) {
+                $q->where('id', '!=', $request->booking_id);
+            })
+
+            ->where(function ($q) use ($start, $end) {
+                $q->where(function ($sub) use ($start, $end) {
+                    $sub->whereRaw("TIMESTAMP(start_date, start_time) < ?", [$end])
+                        ->whereRaw("TIMESTAMP(end_date, end_time) > ?", [$start]);
+                });
+            });
+
+        $existingBooking = $query->first();
+
+        if ($existingBooking) {
+            return response()->json([
+                'success' => false,
+                'available' => false,
+                'message' => 'Vehicle is already booked for selected time range.',
+                'booking_id' => $existingBooking->id
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'available' => true,
+            'message' => 'Vehicle is available.'
         ]);
     }
 }
