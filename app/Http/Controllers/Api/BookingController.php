@@ -1057,7 +1057,7 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
             ->get();
 
         if ($vehicles->isEmpty()) {
