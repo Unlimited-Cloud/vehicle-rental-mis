@@ -53,6 +53,8 @@ use App\Http\Controllers\Admin\FuelTypeController;
 use App\Http\Controllers\Admin\PaymentModeController;
 use App\Http\Controllers\Admin\VehicleSecurityFeatureController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Admin\TripRouteVehiclePriceController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -208,6 +210,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('faq', FaqController::class);
         Route::resource('fuel-type', FuelTypeController::class);
         Route::resource('vehicle-security-features', VehicleSecurityFeatureController::class);
+        Route::resource('trip-routes-vehicle-prices', TripRouteVehiclePriceController::class);
         Route::resource('agents', AgentController::class);
 
         Route::prefix('agent-bookings')->name('agent-bookings.')->group(function () {
