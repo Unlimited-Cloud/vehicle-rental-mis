@@ -186,6 +186,7 @@ class BookingController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::info("booking validation failed",["errors" => $validator->errors()]);
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation Error',
