@@ -22,7 +22,14 @@ class VehicleOwner extends Model
         'license_number',
         'license_expiry',
         'status',
-        'password'
+        'password',
+        'bank_name',
+        'bank_code',
+        'bank_account_name',
+        'bank_account_number',
+        'wallet_name',
+        'wallet_number',
+        'commission_rate',
     ];
 
     protected $casts = [

@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\VehicleOwner;
+use App\Models\Agent;
+use App\Models\Bank;
+use App\Models\VehicleBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Repositories\Interfaces\VehicleOwnerRepositoryInterface;
 
@@ -48,7 +52,10 @@ class VehicleOwnerController extends Controller
     public function create()
     {
         Gate::authorize('create_vehicles_vehicle_owner');
-        return view('layouts.admin.vehicleowner.create');
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
+        return view('layouts.admin.vehicleowner.create', compact('banks'));
     }
 
     /**
@@ -70,7 +77,14 @@ class VehicleOwnerController extends Controller
             'pan_number' => 'nullable|string|max:20',
             'license_number' => 'nullable|string|max:50',
             'license_expiry' => 'nullable|date',
-            'status' => 'required|in:active,inactive'
+            'status' => 'required|in:active,inactive',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_code' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'wallet_name' => 'nullable|string|max:255',
+            'wallet_number' => 'nullable|string|max:255',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if (!empty($validated['name'])) {
@@ -99,6 +113,15 @@ class VehicleOwnerController extends Controller
                 }
             }
         }
+        $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+        if (!$bank) {
+            return back()->withErrors([
+                'bank_name' => 'Selected bank not found.'
+            ])->withInput();
+        }
+
+        $data['bank_code'] = $bank->swift_code;
 
         VehicleOwner::create($validated);
 
@@ -114,7 +137,29 @@ class VehicleOwnerController extends Controller
         Gate::authorize('read_vehicles_vehicle_owner');
         $vehicleowner->load('vehicles');
 
-        return view('layouts.admin.vehicleowner.show', compact('vehicleowner'));
+        // Get all vehicle IDs owned by this owner
+        $vehicleIds = $vehicleowner->vehicles->pluck('id')->toArray();
+
+        // Get payments for bookings that belong to these vehicles
+        $payments = collect(); // Empty collection as fallback
+
+        if (!empty($vehicleIds)) {
+            $payments = DB::table('payments')
+                ->join('vehicle_bookings', 'payments.vehicle_booking_id', '=', 'vehicle_bookings.id')
+                ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
+                ->whereIn('vehicles.id', $vehicleIds)
+                ->where('payments.payment_type', 'owner_payout')
+                ->orderBy('payments.created_at', 'desc')
+                ->select(
+                    'payments.*',
+                    'vehicle_bookings.file_no',
+                    'vehicle_bookings.id as booking_id',
+                    'vehicles.registration_number'
+                )
+                ->get();
+        }
+
+        return view('layouts.admin.vehicleowner.show', compact('vehicleowner', 'payments'));
     }
 
     /**
@@ -123,7 +168,10 @@ class VehicleOwnerController extends Controller
     public function edit(VehicleOwner $vehicleowner)
     {
         Gate::authorize('update_vehicles_vehicle_owner');
-        return view('layouts.admin.vehicleowner.create', compact('vehicleowner'));
+        $banks = Bank::where('is_payee_account', 1)
+            ->orderBy('bank_name')
+            ->get();
+        return view('layouts.admin.vehicleowner.create', compact('vehicleowner', 'banks'));
     }
 
     /**
@@ -145,7 +193,14 @@ class VehicleOwnerController extends Controller
             'pan_number' => 'nullable|string|max:20',
             'license_number' => 'nullable|string|max:50',
             'license_expiry' => 'nullable|date',
-            'status' => 'required|in:active,inactive'
+            'status' => 'required|in:active,inactive',
+            'bank_name' => 'nullable|string|max:255',
+            'bank_code' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'wallet_name' => 'nullable|string|max:255',
+            'wallet_number' => 'nullable|string|max:255',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if (!empty($validated['name'])) {
@@ -175,6 +230,19 @@ class VehicleOwnerController extends Controller
             }
         }
 
+        if ($request->filled('bank_name')) {
+
+            $bank = Bank::where('bank_name', $request->bank_name)->first();
+
+            if (!$bank) {
+                return back()->withErrors([
+                    'bank_name' => 'Selected bank not found.'
+                ])->withInput();
+            }
+
+            $data['bank_code'] = $bank->swift_code;
+        }
+
         $vehicleowner->update($validated);
 
         return redirect()->route('admin.vehicleowner.index')
@@ -191,5 +259,174 @@ class VehicleOwnerController extends Controller
 
         return redirect()->route('admin.vehicleowner.index')
             ->with('success', 'Vehicle Owner deleted successfully.');
+    }
+
+
+
+    public function ownerBookingIndex(Request $request)
+    {
+        Gate::authorize('index_vehicles_owner_bookings');
+
+        $query = VehicleBooking::with([
+            'vehicle.vehicleOwner'
+        ]);
+
+        if ($request->filled('owner_id')) {
+            $query->whereHas('vehicle', function ($q) use ($request) {
+                $q->where('vehicle_owner_id', $request->owner_id);
+            });
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
+        $bookings = $query->latest()->get();
+
+        // Plain array of booking IDs that already have commission paid
+        $paidBookingIds = DB::table('payments')
+            ->where('payment_type', 'owner_payout')
+            ->where('status', 'completed')
+            ->where('payment_method', 'bank_transfer')
+            ->pluck('vehicle_booking_id')
+            ->toArray();
+
+        $failBookingIds = DB::table('payments')
+            ->where('payment_type', 'owner_payout')
+            ->where('status', 'failed')
+            ->where('payment_method', 'bank_transfer')
+            ->pluck('vehicle_booking_id')
+            ->toArray();
+
+        $paidOwnerCommission = DB::table('payments')
+            ->where('payment_type', 'owner_payout')
+            ->where('status', 'completed')
+            ->where('payment_method', 'bank_transfer')
+            ->sum('amount');
+
+        foreach ($bookings as $booking) {
+
+            $owner = $booking->vehicle?->vehicleOwner;
+
+            $booking->vehicleOwner = $owner;
+
+            // Base amount
+            $baseAmount = (
+                $booking->sub_total === null ||
+                $booking->sub_total === '' ||
+                (float) $booking->sub_total == 0
+            )
+                ? $booking->rate_per_day
+                : $booking->sub_total;
+
+            // Discount
+            $discountAmount = 0;
+
+            if ($booking->discount > 0) {
+                if ($booking->discount_amount_type === 'percentage') {
+                    $discountAmount = ($baseAmount * $booking->discount) / 100;
+                } else {
+                    $discountAmount = $booking->discount;
+                }
+            }
+
+            $amountAfterDiscount = max(0, $baseAmount - $discountAmount);
+
+            /*
+         * Remove VAT/Tax
+         * Adjust according to your tax structure.
+         */
+            $taxAmount = $booking->tax_amount ?? 0;
+
+            $amountExcludingTax = max(
+                0,
+                $amountAfterDiscount - $taxAmount
+            );
+
+            /*
+         * Agent commission
+         */
+            $agentCommissionRate = 0;
+
+            if ($booking->agent_code) {
+                $agent = Agent::where(
+                    'agent_code',
+                    $booking->agent_code
+                )->first();
+
+                $agentCommissionRate = $agent?->commission_rate ?? 0;
+            }
+
+            $agentCommission =
+                ($amountExcludingTax * $agentCommissionRate) / 100;
+
+            /*
+         * Platform commission
+         */
+            $platformCommissionRate =
+                $owner?->commission_rate ?? 0;
+
+            $platformCommission =
+                ($amountExcludingTax * $platformCommissionRate) / 100;
+
+            /*
+         * Owner payable
+         */
+            $ownerPayable =
+                $amountExcludingTax
+                - $agentCommission
+                - $platformCommission;
+
+            $booking->amountExcludingTax = $amountExcludingTax;
+            $booking->agentCommission = $agentCommission;
+            $booking->platformCommission = $platformCommission;
+            $booking->ownerPayable = max(0, $ownerPayable);
+            $booking->isPaid         = in_array($booking->id, $paidBookingIds);
+        }
+
+        $totalOwnerPayable = $bookings->sum('ownerPayable');
+
+        return view(
+            'layouts.admin.vehicleowner.owner-bookings',
+            compact(
+                'bookings',
+                'totalOwnerPayable',
+                'paidBookingIds',
+                'failBookingIds',
+                'paidOwnerCommission'
+            )
+        );
+    }
+
+    public function ownerDetails(Request $request)
+    {
+        $request->validate([
+            'owner_id' => 'required|integer'
+        ]);
+
+        $owner = VehicleOwner::find($request->owner_id);
+
+        if (!$owner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Owner not found'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'owner' => [
+                'bank_name' => $owner->bank_name,
+                'bank_account_name' => $owner->bank_account_name,
+                'bank_account_number' => $owner->bank_account_number,
+                'wallet_name' => $owner->wallet_name,
+                'wallet_number' => $owner->wallet_number,
+                'commission_rate' => $owner->commission_rate,
+            ]
+        ]);
     }
 }
