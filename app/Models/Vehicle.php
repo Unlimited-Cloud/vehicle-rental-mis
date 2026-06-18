@@ -44,9 +44,11 @@ class Vehicle extends Model
         'passenger_insured',
         'passenger_insured_amount',
         'passenger_insurance_company',
+        'vehicle_owner_id',
+        'imei'
     ];
 
-    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url'];
+    protected $appends = ['vehicle_image_url', 'vehicle_description_image_url', 'vehicle_insurance_url', 'average_rating'];
     protected $casts = [
         'images' => 'array',
         'car_images' => 'array',
@@ -57,6 +59,11 @@ class Vehicle extends Model
     public function vehicleDetail()
     {
         return $this->hasOne(VehicleDetail::class);
+    }
+
+    public function vehicleOwner()
+    {
+        return $this->hasOne(VehicleOwner::class, 'id', 'vehicle_owner_id');
     }
 
     public function fuelPurchases()
@@ -88,6 +95,10 @@ class Vehicle extends Model
         return $this->hasOne(VehicleFeature::class, 'vehicle_id');
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
     public function getVehicleImageUrlAttribute()
     {
         return $this->image ? asset($this->image) : null;
@@ -112,5 +123,10 @@ class Vehicle extends Model
         }
 
         return null;
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return round($this->reviews_avg_rating ?? 0, 1);
     }
 }

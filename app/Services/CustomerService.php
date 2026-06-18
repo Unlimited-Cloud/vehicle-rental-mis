@@ -36,6 +36,7 @@ class CustomerService
     }
 
     public function saveCustomer($request){
+        Log::info("saveCustomer",["payload" => $request->all()]);
         try{
             $validator = Validator::make($request->all(), [
                 'customerType' => 'required|string',
@@ -92,9 +93,9 @@ class CustomerService
                 $addData['license_number'] = $request->licenseNumber;
                 $addData['license_expiry'] = VehicleRentalUtilities::covertDateToYmd($request->licenseExpiry);
             }else{
-                $addData['first_name'] = $request->firstName;
-                $addData['middle_name'] = $request->middleName;
-                $addData['last_name'] = $request->lastName;
+                $addData['first_name'] = $request->first_name;
+                $addData['middle_name'] = $request->middle_name;
+                $addData['last_name'] = $request->last_name;
                 $addData['name'] = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name);
             }
 

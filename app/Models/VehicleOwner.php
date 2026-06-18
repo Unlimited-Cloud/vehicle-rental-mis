@@ -49,4 +49,10 @@ class VehicleOwner extends Model
             ? '<span class="badge badge-success">Active</span>'
             : '<span class="badge badge-danger">Inactive</span>';
     }
+
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'vehicle_owner_id');
+    }
 }

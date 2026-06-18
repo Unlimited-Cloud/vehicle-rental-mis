@@ -209,6 +209,14 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('fuel-type', FuelTypeController::class);
         Route::resource('vehicle-security-features', VehicleSecurityFeatureController::class);
         Route::resource('agents', AgentController::class);
+
+        Route::prefix('agent-bookings')->name('agent-bookings.')->group(function () {
+            Route::get('/',              [AgentController::class, 'agentBookingindex'])->name('index');
+            Route::get('/agent-details', [AgentController::class, 'agentDetails'])->name('agent-details');
+            Route::get('/get-commission-details/{agentCode}', [EsewaIbftController::class, 'getCommissionDetails'])->name('get-commission-details');
+            Route::post('/transfer-commission',            [EsewaIbftController::class, 'transferAgentsDashboard'])->name('transfer-commission');
+        });
+
         Route::resource('payment-modes', PaymentModeController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');

@@ -44,6 +44,7 @@ class AuthService
     public function getOtpPasscodeAppLogin($request)
     {
         try {
+            Log::info("login request",["payload" => $request->all()]);
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',
                 'password' => 'required|string',

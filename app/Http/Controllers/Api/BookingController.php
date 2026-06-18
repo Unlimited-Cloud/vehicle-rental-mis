@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
+use App\Models\Review;
+
+
 use Maatwebsite\Excel\Facades\Excel;
 use App\Events\EmailEvent;
 use App\Models\VehicleReceipt;
@@ -38,6 +41,9 @@ use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
 use App\Models\Payment;
+use App\Models\Passenger;
+
+
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -57,7 +63,7 @@ class BookingController extends Controller
             'services',
             'repairs',
             'tyreChanges'
-        ])->where('status', 1)->get();
+        ])->withAvg('reviews', 'rating')->where('status', 1)->get();
 
         return response()->json([
             'status' => true,
@@ -176,10 +182,11 @@ class BookingController extends Controller
                 'contact_person' => 'nullable|string',
                 'contact_email' => 'nullable|string',
                 'contact_number' => 'nullable|string',
-                'agent_code' => 'nullable|string',
+                'agent_code' => 'nullable|exists:agents,agent_code',
             ]);
 
             if ($validator->fails()) {
+                Log::info("booking validation failed",["errors" => $validator->errors()]);
                 return response()->json([
                     'status' => false,
                     'message' => 'Validation Error',
@@ -335,6 +342,13 @@ class BookingController extends Controller
                 'pickup_longitude' => $request->pickup_longitude ?? null,
             ]);
 
+            Passenger::create([
+                'contact_person' => $request->contact_person ?? null,
+                'contact_email' => $request->contact_email ?? null,
+                'contact_number' => $request->contact_number ?? null,
+                'customer_id' => $customerId,
+                'booking_id' => $booking->id,
+            ]);
 
 
             //  Generate Proforma
@@ -1044,7 +1058,7 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -1101,8 +1115,10 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
             ->get();
+
+
 
         if ($vehicles->isEmpty()) {
             return response()->json([
@@ -1111,11 +1127,14 @@ class BookingController extends Controller
             ]);
         }
 
+
+
+
         return response()->json([
             'status' => true,
             'seater_name' => $seater->name,
             'logo' => $seater->logo ? asset('uploads/seaters/' . $seater->logo) : null,
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -1162,7 +1181,7 @@ class BookingController extends Controller
         }
 
         // match with vehicle.brand (string)
-        $vehicles = Vehicle::whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -1217,7 +1236,7 @@ class BookingController extends Controller
         ]);
 
         // get vehicles by seater
-        $vehicles = Vehicle::where('seater', $request->seater)->get();
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->where('seater', $request->seater)->get();
 
         if ($vehicles->isEmpty()) {
             return response()->json([
@@ -1229,7 +1248,7 @@ class BookingController extends Controller
         return response()->json([
             'status' => true,
             'seater' => $request->seater,
-            'vehicles' => $vehicles
+            'vehicles' => $vehicles,
         ]);
     }
 
@@ -1240,16 +1259,15 @@ class BookingController extends Controller
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
-            ->with('vehicle')
+            ->with([
+                'vehicle' => function ($query) {
+                    $query->withAvg('reviews', 'rating');
+                }
+            ])
             ->groupBy('vehicle_id')
             ->orderByDesc('total')
             ->limit(5)
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'vehicle' => $item->vehicle
-                ];
-            });
+            ->get();
 
         return response()->json([
             'status' => 'success',
@@ -1260,6 +1278,7 @@ class BookingController extends Controller
     public function VehicleDetailById($id)
     {
         $vehicle = Vehicle::with('securityFeature')
+            ->withAvg('reviews', 'rating')
             ->where('id', $id)
             ->where('status', 1)
             ->first();
@@ -1270,6 +1289,8 @@ class BookingController extends Controller
                 'message' => 'Vehicle not found'
             ], 404);
         }
+
+
 
         $data = $vehicle->toArray();
 
@@ -1450,7 +1471,7 @@ class BookingController extends Controller
 
     public function BookingbyStatus($status, $customer_id)
     {
-        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed'];
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'paid'];
 
         if (!in_array($status, $validStatuses)) {
             return response()->json([
@@ -1476,6 +1497,8 @@ class BookingController extends Controller
             $query->whereHas('vehicleMoment', function ($q) {
                 $q->whereNotNull('end_datetime');
             });
+        } elseif ($status === 'paid') {
+            $query->where('payment_status', 1);
         } else {
             $query->where('status', $status);
         }
@@ -1505,8 +1528,11 @@ class BookingController extends Controller
             ]);
 
         $bookings->each(function ($booking) {
-            if ($booking->vehicleMoment) {
+            if ($booking->vehicleMoment && $booking->vehicleMoment->end_datetime) {
                 $booking->status = 'completed';
+            }
+            if ($booking->payment_status == 1) {
+                $booking->status = 'paid';
             }
         });
 
@@ -1890,5 +1916,113 @@ class BookingController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+
+    public function vehicleSorting(Request $request)
+    {
+        $sortBy = $request->get('sort_by');
+        $sortOrder = $request->get('sort_order', 'asc');
+
+        $vehicles = Vehicle::query();
+
+        switch ($sortBy) {
+
+            // Rating 
+            case 'rating':
+                $vehicles->withAvg('reviews', 'rating')
+                    ->orderBy('reviews_avg_rating', $sortOrder);
+                break;
+
+            // Seater
+            case 'seater':
+                $vehicles->orderBy('seater', $sortOrder);
+                break;
+
+            // Brand
+            case 'brand':
+                $vehicles->orderBy('brand', $sortOrder);
+                break;
+
+            // Vehicle Age
+            case 'age':
+                if ($sortOrder === 'asc') {
+                    $vehicles->orderBy('year', 'asc');
+                } else {
+                    $vehicles->orderBy('year', 'desc');
+                }
+                break;
+
+            // Plate Color
+            case 'plate_color':
+
+                $plateColor = $request->get('plate_color');
+
+                if ($plateColor) {
+                    $vehicles->where('number_plate_color', $plateColor);
+                }
+
+                break;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $vehicles->paginate(10)
+        ]);
+    }
+
+
+
+
+    public function checkAvailability(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'start_datetime' => 'required|date',
+            'end_datetime' => 'required|date',
+            'booking_id' => 'nullable|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $start = Carbon::parse($request->start_datetime);
+        $end = Carbon::parse($request->end_datetime);
+
+        $query = VehicleBooking::where('vehicle_id', $request->vehicle_id)
+            ->whereNotIn('status', ['cancelled'])
+            ->when($request->booking_id, function ($q) use ($request) {
+                $q->where('id', '!=', $request->booking_id);
+            })
+
+            ->where(function ($q) use ($start, $end) {
+                $q->where(function ($sub) use ($start, $end) {
+                    $sub->whereRaw("TIMESTAMP(start_date, start_time) < ?", [$end])
+                        ->whereRaw("TIMESTAMP(end_date, end_time) > ?", [$start]);
+                });
+            });
+
+        $existingBooking = $query->first();
+
+        if ($existingBooking) {
+            return response()->json([
+                'success' => false,
+                'available' => false,
+                'message' => 'Vehicle is already booked for selected time range.',
+                'booking_id' => $existingBooking->id
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'available' => true,
+            'message' => 'Vehicle is available.'
+        ]);
     }
 }
