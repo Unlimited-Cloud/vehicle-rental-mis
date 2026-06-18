@@ -188,7 +188,7 @@ class BookingController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Validation Error',
+                    'message' => $validator->errors()->first(),
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -1190,6 +1190,18 @@ class BookingController extends Controller
             ]);
         }
 
+        $brands = Brand::pluck('logo', 'name');
+
+        $vehicles->transform(function ($vehicle) use ($brands) {
+            $logo = $brands[$vehicle->brand] ?? null;
+
+            $vehicle->brand_logo = $logo
+                ? asset('uploads/brands/' . $logo)
+                : null;
+
+            return $vehicle;
+        });
+
         return response()->json([
             'status' => true,
             'transmission_name' => $transmission->name,
@@ -1353,7 +1365,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error', // Name of the status
-                'message' => $validator->errors()
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -1385,6 +1397,9 @@ class BookingController extends Controller
         };
 
         $price = $route->$priceColumn;
+        $vatPercentage = 13;
+        $vatPrice = round(($price * $vatPercentage) / 100, 2);
+        $totalPrice = round($price + $vatPrice, 2);
 
 
 
@@ -1394,6 +1409,8 @@ class BookingController extends Controller
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
             'price' => $price,
+            'vat_price' => $vatPrice,
+            'total_price' => $totalPrice,
         ]);
     }
 
@@ -1994,14 +2011,16 @@ class BookingController extends Controller
         $validator = Validator::make($request->all(), [
             'vehicle_id' => 'required|exists:vehicles,id',
             'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after_or_equal:start_datetime',
             'booking_id' => 'nullable|integer'
+        ], [
+            'end_datetime.after_or_equal' => 'End datetime must be greater than or equal to start datetime.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
