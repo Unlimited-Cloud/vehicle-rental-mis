@@ -269,7 +269,10 @@ class VehicleOwnerController extends Controller
 
         $query = VehicleBooking::with([
             'vehicle.vehicleOwner'
-        ]);
+        ])->whereHas('vehicleMoment', function ($q) {
+            $q->whereNotNull('start_datetime')
+                ->whereNotNull('end_datetime');
+        })->where('payment_status', 1);
 
         if ($request->filled('owner_id')) {
             $query->whereHas('vehicle', function ($q) use ($request) {
