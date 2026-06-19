@@ -1396,7 +1396,7 @@ class BookingController extends Controller
             default => 'other_price',
         };
 
-        $price = $route->$priceColumn;
+        $price = round($route->$priceColumn, 2);
         $vatPercentage = 13;
         $vatPrice = round(($price * $vatPercentage) / 100, 2);
         $totalPrice = round($price + $vatPrice, 2);
