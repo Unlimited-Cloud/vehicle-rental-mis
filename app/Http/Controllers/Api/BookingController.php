@@ -189,7 +189,7 @@ class BookingController extends Controller
                 Log::info("booking validation failed",["errors" => $validator->errors()]);
                 return response()->json([
                     'status' => false,
-                    'message' => 'Validation Error',
+                    'message' => $validator->errors()->first(),
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -1191,6 +1191,18 @@ class BookingController extends Controller
             ]);
         }
 
+        $brands = Brand::pluck('logo', 'name');
+
+        $vehicles->transform(function ($vehicle) use ($brands) {
+            $logo = $brands[$vehicle->brand] ?? null;
+
+            $vehicle->brand_logo = $logo
+                ? asset('uploads/brands/' . $logo)
+                : null;
+
+            return $vehicle;
+        });
+
         return response()->json([
             'status' => true,
             'transmission_name' => $transmission->name,
@@ -1354,7 +1366,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error', // Name of the status
-                'message' => $validator->errors()
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -1386,6 +1398,9 @@ class BookingController extends Controller
         };
 
         $price = $route->$priceColumn;
+        $vatPercentage = 13;
+        $vatPrice = round(($price * $vatPercentage) / 100, 2);
+        $totalPrice = round($price + $vatPrice, 2);
 
 
 
@@ -1395,6 +1410,8 @@ class BookingController extends Controller
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
             'price' => $price,
+            'vat_price' => $vatPrice,
+            'total_price' => $totalPrice,
         ]);
     }
 
@@ -1471,7 +1488,7 @@ class BookingController extends Controller
 
     public function BookingbyStatus($status, $customer_id)
     {
-        $validStatuses = ['pending', 'confirmed', 'cancelled', 'completed', 'paid'];
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'started', 'completed', 'paid'];
 
         if (!in_array($status, $validStatuses)) {
             return response()->json([
@@ -1496,6 +1513,11 @@ class BookingController extends Controller
         if ($status === 'completed') {
             $query->whereHas('vehicleMoment', function ($q) {
                 $q->whereNotNull('end_datetime');
+            });
+        } elseif ($status === 'started') {
+            $query->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('start_datetime')
+                    ->whereNull('end_datetime');
             });
         } elseif ($status === 'paid') {
             $query->where('payment_status', 1);
@@ -1528,8 +1550,18 @@ class BookingController extends Controller
             ]);
 
         $bookings->each(function ($booking) {
-            if ($booking->vehicleMoment && $booking->vehicleMoment->end_datetime) {
-                $booking->status = 'completed';
+            if ($booking->vehicleMoment) {
+
+                if (
+                    !empty($booking->vehicleMoment->start_datetime) &&
+                    empty($booking->vehicleMoment->end_datetime)
+                ) {
+                    $booking->status = 'started';
+                }
+
+                if (!empty($booking->vehicleMoment->end_datetime)) {
+                    $booking->status = 'completed';
+                }
             }
             if ($booking->payment_status == 1) {
                 $booking->status = 'paid';
@@ -1980,14 +2012,16 @@ class BookingController extends Controller
         $validator = Validator::make($request->all(), [
             'vehicle_id' => 'required|exists:vehicles,id',
             'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after_or_equal:start_datetime',
             'booking_id' => 'nullable|integer'
+        ], [
+            'end_datetime.after_or_equal' => 'End datetime must be greater than or equal to start datetime.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }

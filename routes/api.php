@@ -126,7 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
         [EsewaPaymentController::class, 'generateSignature']
     )->name('booking.esewa.initiate');
 
-    Route::get(
+    Route::post(
         '/booking/cash/inititate',
         [BookingController::class, 'codPayment']
     );

@@ -217,6 +217,13 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             Route::post('/transfer-commission',            [EsewaIbftController::class, 'transferAgentsDashboard'])->name('transfer-commission');
         });
 
+        Route::prefix('owner-bookings')->name('owner-bookings.')->group(function () {
+            Route::get('/',              [VehicleOwnerController::class, 'ownerBookingIndex'])->name('index');
+            Route::get('/owner-details', [VehicleOwnerController::class, 'ownerDetails'])->name('owner-details');
+            Route::get('/get-owner-payment-details/{ownerId}', [EsewaIbftController::class, 'getOwnerPaymentDetails'])->name('get-owner-payment-details');
+            Route::post('/transfer-owner-commission', [EsewaIbftController::class, 'transferOwnersDashboard'])->name('owner-transfer-commission');
+        });
+
         Route::resource('payment-modes', PaymentModeController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
@@ -332,6 +339,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
         Route::post('bank-details/validate', [EsewaIbftController::class, 'validateBankAccount'])
             ->name('bank-details.validate');
+
+
+
 
         Route::post(
             '/attendance/esewa/transfer-dashboard',

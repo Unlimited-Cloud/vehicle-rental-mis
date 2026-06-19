@@ -14,11 +14,9 @@ use App\Models\Bank;
 use App\Models\CrewBankDetail;
 use App\Models\CrewProfile;
 use App\Models\Agent;
+use App\Models\Payment;
 use App\Models\VehicleBooking;
-
-
-
-
+use App\Models\VehicleOwner;
 
 class EsewaIbftController extends Controller
 {
@@ -523,6 +521,220 @@ class EsewaIbftController extends Controller
     }
 
 
+
+
+    public function getOwnerPaymentDetails($ownerId)
+    {
+        $owner = VehicleOwner::find($ownerId);
+
+        if (!$owner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Owner not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'owner_id'             => $owner->id,
+                'owner_name'           => $owner->name,
+                'commission_rate'      => $owner->commission_rate ?? 0,
+
+                'has_bank_details'     => !empty($owner->bank_account_number)
+                    && !empty($owner->bank_name),
+
+                'bank_name'            => $owner->bank_name,
+                'bank_account_name'    => $owner->bank_account_name,
+                'bank_account_number'  => $owner->bank_account_number,
+                'bank_code'            => $owner->bank_code,
+
+                'wallet_name'          => $owner->wallet_name,
+                'wallet_number'        => $owner->wallet_number,
+            ]
+        ]);
+    }
+
+
+
+    public function transferOwnersDashboard(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'owner_id'   => 'required|exists:vehicle_owners,id',
+            'booking_id' => 'required|exists:vehicle_bookings,id',
+            'remarks'    => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+
+            $owner = VehicleOwner::findOrFail($request->owner_id);
+
+            if (
+                empty($owner->bank_account_number) ||
+                empty($owner->bank_name)
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Owner bank details not configured.'
+                ], 400);
+            }
+
+            $booking = VehicleBooking::with('vehicle')
+                ->findOrFail($request->booking_id);
+
+
+            $baseAmount = !empty($booking->sub_total)
+                ? $booking->sub_total
+                : $booking->rate_per_day;
+
+            $discountAmount = 0;
+
+            if ($booking->discount > 0) {
+                if ($booking->discount_amount_type == 'percentage') {
+                    $discountAmount =
+                        ($baseAmount * $booking->discount) / 100;
+                } else {
+                    $discountAmount = $booking->discount;
+                }
+            }
+
+            $netAmount = max(
+                0,
+                $baseAmount - $discountAmount
+            );
+
+            $taxAmount = $booking->tax_amount ?? 0;
+
+            $amountExcludingTax = max(
+                0,
+                $netAmount - $taxAmount
+            );
+
+
+            $agentCommission = 0;
+
+            if (!empty($booking->agent_code)) {
+
+                $agent = Agent::where(
+                    'agent_code',
+                    $booking->agent_code
+                )->first();
+
+                if ($agent) {
+                    $agentCommission =
+                        ($amountExcludingTax * $agent->commission_rate) / 100;
+                }
+            }
+
+
+            $platformCommission =
+                ($amountExcludingTax * $owner->commission_rate) / 100;
+
+
+            $ownerPayable =
+                $amountExcludingTax
+                - $agentCommission
+                - $platformCommission;
+
+            if ($ownerPayable <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Owner payable amount is zero.'
+                ], 400);
+            }
+
+
+            $alreadyPaid = Payment::where(
+                'vehicle_booking_id',
+                $booking->id
+            )
+                ->where('payment_type', 'owner_payout')
+                ->where('status', 'completed')
+                ->exists();
+
+            if ($alreadyPaid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Owner payment already completed.'
+                ], 400);
+            }
+
+
+
+            $payload = [
+                'source_bank_code'           => 'PRVUNPKA',
+                'source_account_number'      => '9100100008977000001',
+                'source_account_name'        => 'Test CE',
+
+                'destination_bank_code'      => $owner->bank_code,
+                'destination_account_number' => $owner->bank_account_number,
+                'destination_account_name'   => $owner->bank_account_name,
+
+                'amount'                     => round($ownerPayable, 2),
+
+                'remarks' => $request->remarks
+                    ?? "Owner payout for booking #{$booking->id}",
+
+                'narration_one' => "Owner ID: {$owner->id}",
+                'narration_two' => "Booking: {$booking->file_no}",
+
+                'vehicle_booking_id' => $booking->id,
+                'vehicle_owner_id'   => $owner->id,
+
+                'payment_type'       => 'owner_payout',
+                'payment_method'     => 'bank_transfer',
+                'created_user_type'  => 'user',
+            ];
+
+            Log::info('Owner Payout Payload', $payload);
+
+            $payment = $this->esewa
+                ->directSingleTransaction($payload);
+
+            $notes = json_decode($payment->notes, true);
+
+            $message =
+                $notes['esewa_status_message']
+                ?? 'Transaction processed successfully';
+
+            if ($payment->status === 'failed') {
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'payment_id' => $payment->id,
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'payment_id' => $payment->id,
+                'status' => $payment->status,
+                'txn_ref' => $payment->transaction_reference,
+            ]);
+        } catch (Exception $e) {
+
+            Log::error('Owner Payout Failed', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function validateBankAccount(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -571,6 +783,71 @@ class EsewaIbftController extends Controller
                 $bankDetail->is_verified = true; // or is_validated based on your column name
                 $bankDetail->save();
 
+                return response()->json([
+                    'success' => true,
+                    'data' => $validationData,
+                    'message' => $validationMessage
+                ]);
+            } else {
+                // Validation failed
+                return response()->json([
+                    'success' => false,
+                    'message' => $validationMessage
+                ], 400);
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to validate account: ' . $e->getMessage() . ' file ' . $e->getFile() . ' line ' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred during validation: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function validateAllBankAccount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'account_number'      => 'required|string',
+            'swift_code'          => 'required|string',
+            'account_holder_name' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        try {
+            // Call your existing validation method
+            $response = $this->esewa->validateAccount(
+                $request->account_number,
+                $request->swift_code,
+                $request->account_holder_name ?? ''
+            );
+
+            // Check if validation was successful based on the response structure
+            $isValidated = false;
+            $validationMessage = '';
+            $validationData = null;
+
+            // Check the response structure
+            if (isset($response['Data']['ibft_corporate_account_validation_response'])) {
+                $validationResponse = $response['Data']['ibft_corporate_account_validation_response'];
+
+                // Success code is "0" (string) according to your response
+                if ($validationResponse['code'] === '0' || $validationResponse['code'] == 0) {
+                    $isValidated = true;
+                    $validationMessage = $validationResponse['message'] ?? 'Validation successful';
+                    $validationData = $validationResponse;
+                } else {
+                    $validationMessage = $validationResponse['message'] ?? 'Validation failed';
+                }
+            } else {
+                $validationMessage = 'Invalid response format from validation service';
+            }
+
+            // If validation successful, update the database
+            if ($isValidated) {
                 return response()->json([
                     'success' => true,
                     'data' => $validationData,
