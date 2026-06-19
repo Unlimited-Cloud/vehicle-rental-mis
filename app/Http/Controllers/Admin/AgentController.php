@@ -370,7 +370,8 @@ class AgentController extends Controller
         $agents = Agent::with('user')->get();
 
         $query = VehicleBooking::whereNotNull('agent_code')
-            ->where('agent_code', '!=', '');
+            ->where('agent_code', '!=', '')
+            ->where('payment_status', 1);
 
         if ($request->filled('agent_code')) {
             $query->where('agent_code', $request->agent_code);
