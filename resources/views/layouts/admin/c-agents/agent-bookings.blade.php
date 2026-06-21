@@ -95,6 +95,7 @@
     <th>Agent Code</th>
     <th>Agent Name</th>
     <th>Contact</th>
+    <th>Total Amount</th>
     <th>Booking Amount(Excl. VAT)</th>
     <th>Commission Rate</th>
     <th>Commission Amount</th>
@@ -117,6 +118,7 @@
     <td><span class="badge bg-info">{{ $booking->agent_code }}</span></td>
     <td>{{ $booking->agent->user->name ?? 'N/A' }}</td>
     <td>{{ $booking->agent->contact_number ?? 'N/A' }}</td>
+    <td>Rs. {{ number_format($booking->total_amount ?? 0, 2) }}</td>
     <td>Rs. {{ number_format($booking->commissionBase, 2) }}</td>
     <td>{{ $booking->agent->commission_rate ?? 0 }}%</td>
     <td><strong class="text-primary">Rs. {{ number_format($commissionAmount, 2) }}</strong></td>
