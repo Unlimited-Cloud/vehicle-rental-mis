@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\BookingLog;
 use App\Models\Customer;
 use App\Models\EsewaPayment;
 use App\Models\Payment;
@@ -231,6 +232,11 @@ class EsewaPaymentController extends Controller
                     // Update booking
                     $booking->update([
                         'payment_status' => 1
+                    ]);
+                    BookingLog::create([
+                        'booking_id' => $payment->booking_id,
+                        'status' => 'paid',
+                        'remarks' => 'Booking paid by customer via Esewa',
                     ]);
 
                     // Create Receipt
