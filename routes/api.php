@@ -110,6 +110,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
+    Route::get('vehicle-bookings/{vehicle_id}', [BookingController::class, 'vehicleBookings']);
+    Route::get('completed-vehicle-bookings/{vehicle_id}', [BookingController::class, 'completedVehicleBookings']);
     Route::get('basic-setting', [BookingController::class, 'getBasicSetting']);
 
     Route::get(
