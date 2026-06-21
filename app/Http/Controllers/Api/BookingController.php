@@ -14,6 +14,7 @@ use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
 use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 
 
 use Maatwebsite\Excel\Facades\Excel;
@@ -37,6 +38,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
+use App\Models\BookingLog;
 use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
@@ -343,13 +345,19 @@ class BookingController extends Controller
             ]);
 
             Passenger::create([
-                'contact_person' => $request->contact_person ?? null,
-                'contact_email' => $request->contact_email ?? null,
-                'contact_number' => $request->contact_number ?? null,
+                'contact_person' => $request->contact_person ?? $customerName,
+                'contact_email' => $request->contact_email ?? $customers->email,
+                'contact_number' => $request->contact_number ?? $customers->phone,
+                'contact_address' => $request->contact_address ?? "Kathmandu",
                 'customer_id' => $customerId,
                 'booking_id' => $booking->id,
             ]);
 
+            BookingLog::create([
+                'booking_id' => $booking->id,
+                'status' => 'pending',
+                'remarks' => 'Booking created by customer',
+            ]);
 
             //  Generate Proforma
             // $this->service->generateFinalInvoice($file_no);
@@ -1571,14 +1579,90 @@ class BookingController extends Controller
         return response()->json($bookings);
     }
 
+    public function BookingbyAllStatus($customer_id)
+    {
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+
+
+        $bookings = VehicleBooking::where(
+            'customer_id',
+            $customer->id
+        )
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,image,car_images',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,end_datetime,start_datetime'
+            ])
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'trip_route_id',
+                'vehicle_id',
+                'driver_id',
+                'start_date',
+                'start_time',
+                'end_date',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount',
+                'payment_status'
+            ]);
+
+
+        $bookings->each(function ($booking) {
+
+            // default booking status
+            $finalStatus = $booking->status;
+
+
+            if ($booking->vehicleMoment) {
+
+                if (
+                    $booking->vehicleMoment->start_datetime &&
+                    !$booking->vehicleMoment->end_datetime
+                ) {
+                    $finalStatus = 'started';
+                }
+
+
+                if ($booking->vehicleMoment->end_datetime) {
+                    $finalStatus = 'completed';
+                }
+            }
+
+
+            if ($booking->payment_status == 1) {
+                $finalStatus = 'paid';
+            }
+
+
+            $booking->status = $finalStatus;
+        });
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $bookings
+        ]);
+    }
+
 
 
     public function vehicleBookings($vehicle_id)
     {
         $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
-            ->whereDoesntHave('vehicleMoment', function ($q) {
-                $q->whereNotNull('end_datetime');
-            })
             ->with([
                 'tripRoute:id,title',
                 'vehicle:id,vehicle_name,image,car_images',
@@ -1596,6 +1680,9 @@ class BookingController extends Controller
                 ) {
                     $booking->status = 'started';
                 }
+                if (!empty($booking->vehicleMoment->end_datetime)) {
+                    $booking->status = 'completed';
+                }
             }
 
             if ($booking->payment_status == 1) {
@@ -1604,6 +1691,48 @@ class BookingController extends Controller
         });
 
         return response()->json($bookings);
+    }
+
+    public function bookingDetails($booking_id)
+    {
+        $booking = VehicleBooking::with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,image,car_images',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+        ])->find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        // Calculate status
+        if ($booking->vehicleMoment) {
+
+            if (
+                !empty($booking->vehicleMoment->start_datetime) &&
+                empty($booking->vehicleMoment->end_datetime)
+            ) {
+                $booking->status = 'started';
+            }
+
+            if (!empty($booking->vehicleMoment->end_datetime)) {
+                $booking->status = 'completed';
+            }
+        }
+
+        if ($booking->payment_status == 1) {
+            $booking->status = 'paid';
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $booking
+        ]);
     }
 
     public function completedVehicleBookings($vehicle_id)

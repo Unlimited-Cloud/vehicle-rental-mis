@@ -10,6 +10,7 @@ use App\Models\KhaltiPayment;
 use App\Models\Payment;
 use App\Models\VehicleBooking;
 use App\Models\VehicleReceipt;
+use App\Models\BookingLog;
 use App\Services\ProformaService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -358,6 +359,12 @@ class KhaltiPaymentController extends Controller
 
                 $booking->update([
                     'payment_status' => 1
+                ]);
+
+                BookingLog::create([
+                    'booking_id' => $payment->booking_id,
+                    'status' => 'paid',
+                    'remarks' => 'Booking paid by customer via Khalti',
                 ]);
 
                 if ($payment->payment_type == 'attendance') {
