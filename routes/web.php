@@ -278,6 +278,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
     Route::get('/agent-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewAgentCommissionStatement'])
         ->name('agent-bookings.commission-statement');
 
+    Route::get('/owner-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewOwnerCommissionStatement'])
+        ->name('owner-bookings.commission-statement');
+
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
         Route::resource('vehicle_details', VehicleDetailsController::class);

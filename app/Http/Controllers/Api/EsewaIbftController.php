@@ -485,7 +485,6 @@ class EsewaIbftController extends Controller
             ];
 
             Log::info('Agent Commission Transfer Payload', $payload);
-            $statement = $this->createAgentCommissionStatementRecord($booking, $agent, '2', $request->remarks);
 
             $payment = $this->esewa->directSingleTransaction($payload);
 
@@ -504,7 +503,7 @@ class EsewaIbftController extends Controller
                 ], 400);
             }
 
-            // $statement = $this->createAgentCommissionStatementRecord($booking, $agent, $payment->id, $request->remarks);
+            $statement = $this->createAgentCommissionStatementRecord($booking, $agent, $payment->id, $request->remarks);
 
             return response()->json([
                 'success'    => true,
@@ -865,6 +864,20 @@ class EsewaIbftController extends Controller
                 ], 400);
             }
 
+
+            $this->createOwnerCommissionStatementRecord(
+                $booking,
+                $owner,
+                $payment->id,
+                $netAmount,
+                $taxAmount,
+                $amountExcludingTax,
+                $agentCommission,
+                $platformCommission,
+                $ownerPayable,
+                $request->remarks
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => $message,
@@ -885,6 +898,110 @@ class EsewaIbftController extends Controller
                 'message' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    protected function createOwnerCommissionStatementRecord(
+        $booking,
+        $owner,
+        $paymentId,
+        $netAmount,
+        $taxAmount,
+        $amountExcludingTax,
+        $agentCommission,
+        $platformCommission,
+        $ownerPayable,
+        $remarks = null
+    ) {
+        $existing = CommissionStatement::where('vehicle_booking_id', $booking->id)
+            ->where('payee_type', 'owner')
+            ->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        $statement = CommissionStatement::create([
+            'statement_number'         => 'OS-' . date('Ymd') . '-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT),
+            'payee_type'               => 'owner',
+            'payee_code'               => 'OWN-' . $owner->id,
+            'payee_id'                 => $owner->id,
+            'payment_id'                => $paymentId,
+            'vehicle_booking_id'       => $booking->id,
+            'period_start'             => $booking->start_date,
+            'period_end'               => $booking->end_date ?? $booking->start_date,
+            'booking_amount'           => $amountExcludingTax,
+            'tax_amount'               => $taxAmount,
+            'commission_rate'          => (float) $owner->commission_rate,
+            'commission_amount'        => $platformCommission,
+            'agent_commission_amount'  => $agentCommission,
+            'agent_code_ref'           => $booking->agent_code,
+            'tds_rate'                 => 0,
+            'tds_amount'               => 0,
+            'net_paid_amount'          => $ownerPayable,
+            'payment_method'           => 'bank_transfer',
+            'bank_name'                => $owner->bank_name,
+            'bank_account_number'      => $owner->bank_account_number,
+            'transaction_reference'    => null,
+            'payment_date'             => now(),
+            'remarks'                  => $remarks,
+            'status'                   => 'generated',
+        ]);
+
+        $this->renderOwnerCommissionStatementPdf($statement);
+
+        return $statement;
+    }
+
+    protected function renderOwnerCommissionStatementPdf(CommissionStatement $statement)
+    {
+        $statement->load('booking.vehicle');
+
+        $owner = VehicleOwner::find($statement->payee_id);
+
+        $data = [
+            'statement'     => $statement,
+            'booking'       => $statement->booking,
+            'owner'         => $owner,
+            'invoice_date'  => now(),
+            'miti_date'     => $this->convertToNepaliDate(now()),
+            'printing_time' => now()->format('Y-m-d h:i A'),
+        ];
+
+        $pdf = Pdf::loadView('layouts.admin.invoices.owner-commission-statement-pdf', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        $folderPath = public_path('uploads/commission-statements');
+        if (!File::exists($folderPath)) {
+            File::makeDirectory($folderPath, 0755, true);
+        }
+
+        $fileName = 'statement-' . $statement->statement_number . '.pdf';
+        $fullPath = $folderPath . '/' . $fileName;
+
+        $pdf->save($fullPath);
+
+        $statement->update([
+            'pdf_path' => 'uploads/commission-statements/' . $fileName,
+        ]);
+
+        return view('layouts.admin.invoices.owner-commission-statement-pdf', $data);
+    }
+
+    public function viewOwnerCommissionStatement($bookingId)
+    {
+        $statement = CommissionStatement::where('vehicle_booking_id', $bookingId)
+            ->where('payee_type', 'owner')
+            ->firstOrFail();
+
+        if (!$statement->pdf_path) {
+            $this->renderOwnerCommissionStatementPdf($statement);
+            $statement->refresh();
+        }
+
+        return response()->download(
+            public_path($statement->pdf_path),
+            basename($statement->pdf_path)
+        );
     }
 
     public function validateBankAccount(Request $request)
