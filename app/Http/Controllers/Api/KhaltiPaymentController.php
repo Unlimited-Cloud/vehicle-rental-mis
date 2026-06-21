@@ -358,7 +358,8 @@ class KhaltiPaymentController extends Controller
                 $booking = $payment->booking;
 
                 $booking->update([
-                    'payment_status' => 1
+                    'payment_status' => 1,
+                    'status' => 'paid'
                 ]);
 
                 BookingLog::create([
