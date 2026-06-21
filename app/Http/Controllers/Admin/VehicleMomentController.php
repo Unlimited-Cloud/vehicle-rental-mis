@@ -168,7 +168,7 @@ class VehicleMomentController extends Controller
 
         // Vehicles
         $vehicles = DB::table('vehicles')
-            ->select('id', 'vehicle_name')
+            ->select('id', 'vehicle_name', 'vehicle_type')
             ->where('status', 1)
             ->get();
 
@@ -185,6 +185,20 @@ class VehicleMomentController extends Controller
             ->join('crew_profiles as cp', 'cp.user_id', '=', 'u.id')
             ->where('cp.role', 'helper')
             ->get();
+
+
+        // Get Trip Categories
+        $tripCategories = DB::table('trip_categories')
+            ->select('id', 'name')
+            ->where('status', 1)
+            ->get();
+
+        // Get Trip Routes
+        $tripRoutes = DB::table('trip_routes')
+            ->select('id', 'title')
+            ->where('status', 1)
+            ->get();
+
 
         // Questionnaires
         $questionnaires = DB::table('questionnaires')
@@ -205,7 +219,9 @@ class VehicleMomentController extends Controller
             'drivers',
             'helpers',
             'questionnaires',
-            'answers'
+            'answers',
+            'tripCategories',
+            'tripRoutes'
         ));
     }
 

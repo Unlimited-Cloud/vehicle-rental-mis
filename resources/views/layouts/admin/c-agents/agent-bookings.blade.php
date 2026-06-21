@@ -128,6 +128,11 @@
             <span class="badge bg-success">
                 <i class="fas fa-check mr-1"></i> Paid
             </span>
+            <a href="{{ route('admin.agent-bookings.commission-statement', $booking->id) }}"
+                target="_blank"
+                class="btn btn-sm btn-outline-primary ml-1">
+                <i class="fas fa-file-invoice"></i> Statement
+             </a>
         @elseif($isFailed)
             <span class="badge bg-danger">
                 <i class="fas fa-times mr-1"></i> Failed

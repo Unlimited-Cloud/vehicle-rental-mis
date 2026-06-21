@@ -14,9 +14,13 @@ use App\Models\Bank;
 use App\Models\CrewBankDetail;
 use App\Models\CrewProfile;
 use App\Models\Agent;
+use App\Models\CommissionStatement;
 use App\Models\Payment;
 use App\Models\VehicleBooking;
 use App\Models\VehicleOwner;
+use App\Helpers\NepaliDateHelper;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 
 class EsewaIbftController extends Controller
 {
@@ -481,6 +485,7 @@ class EsewaIbftController extends Controller
             ];
 
             Log::info('Agent Commission Transfer Payload', $payload);
+            $statement = $this->createAgentCommissionStatementRecord($booking, $agent, '2', $request->remarks);
 
             $payment = $this->esewa->directSingleTransaction($payload);
 
@@ -498,6 +503,8 @@ class EsewaIbftController extends Controller
                     'txn_ref'    => $payment->transaction_reference,
                 ], 400);
             }
+
+            // $statement = $this->createAgentCommissionStatementRecord($booking, $agent, $payment->id, $request->remarks);
 
             return response()->json([
                 'success'    => true,
@@ -518,6 +525,151 @@ class EsewaIbftController extends Controller
                 'message' => 'Failed to process transfer: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    protected function createAgentCommissionStatementRecord($booking, $agent, $paymentId, $remarks = null)
+    {
+        $existing = CommissionStatement::where('vehicle_booking_id', $booking->id)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $baseAmount = (!$booking->sub_total || (float) $booking->sub_total == 0)
+            ? $booking->rate_per_day
+            : $booking->sub_total;
+
+        $discountAmount = 0;
+        if ($booking->discount > 0) {
+            $discountAmount = $booking->discount_amount_type === 'percentage'
+                ? ($baseAmount * $booking->discount) / 100
+                : $booking->discount;
+        }
+
+        $commissionBase   = max(0, $baseAmount - $discountAmount);
+        $commissionRate   = (float) $agent->commission_rate;
+        $commissionAmount = ($commissionBase * $commissionRate) / 100;
+
+
+        $statement = CommissionStatement::create([
+            'statement_number'      => 'CS-' . date('Ymd') . '-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT),
+            'payee_type'            => 'agent',
+            'payee_code'            => $agent->agent_code,
+            'payee_id'              => $agent->id,
+            'payment_id'            => $paymentId,
+            'vehicle_booking_id'    => $booking->id,
+            'period_start'          => $booking->start_date,
+            'period_end'            => $booking->end_date ?? $booking->start_date,
+            'booking_amount'        => $commissionBase,
+            'commission_rate'       => $commissionRate,
+            'commission_amount'     => $commissionAmount,
+            'tds_rate'              => 0,
+            'tds_amount'            => 0,
+            'net_paid_amount'       => $commissionAmount,
+            'payment_method'        => 'bank_transfer',
+            'bank_name'             => $agent->bank_name,
+            'bank_account_number'   => $agent->bank_account_number,
+            'transaction_reference' => null,
+            'payment_date'          => now(),
+            'remarks'               => $remarks,
+            'status'                => 'generated',
+        ]);
+
+        $this->renderAgentCommissionStatementPdf($statement);
+
+        return $statement;
+    }
+
+
+    protected function renderAgentCommissionStatementPdf(CommissionStatement $statement)
+    {
+
+        $statement->load('booking.agent.user', 'booking.vehicle');
+
+        $data = [
+            'statement'     => $statement,
+            'booking'       => $statement->booking,
+            'agent'         => $statement->booking->agent ?? null,
+            'invoice_date'  => now(),
+            'miti_date'     => $this->convertToNepaliDate(now()),
+            'printing_time' => now()->format('Y-m-d h:i A'),
+        ];
+
+        $pdf = Pdf::loadView('layouts.admin.invoices.commission-statement-pdf', $data);
+
+        $pdf->setPaper('A4', 'portrait');
+
+        // Create folder if it doesn't exist
+        $folderPath = public_path('uploads/commission-statements');
+
+        if (!File::exists($folderPath)) {
+            File::makeDirectory($folderPath, 0755, true);
+        }
+
+        $fileName = 'statement-' . $statement->statement_number . '.pdf';
+        $fullPath = $folderPath . '/' . $fileName;
+
+        $pdf->save($fullPath);
+
+        $statement->update([
+            'pdf_path' => 'uploads/commission-statements/' . $fileName
+        ]);
+
+        return view('layouts.admin.invoices.commission-statement-pdf', $data);
+    }
+
+    public function viewAgentCommissionStatement($bookingId)
+    {
+        $statement = CommissionStatement::where('vehicle_booking_id', $bookingId)
+            ->firstOrFail();
+
+        if (!$statement->pdf_path) {
+            $this->renderAgentCommissionStatementPdf($statement);
+            $statement->refresh();
+        }
+
+        return response()->download(
+            public_path($statement->pdf_path),
+            basename($statement->pdf_path)
+        );
+    }
+
+    private function convertToNepaliDate($date)
+    {
+        if (!$date) {
+            return '';
+        }
+
+        // Ensure it's a string date (Y-m-d)
+        $englishDate = $date instanceof \Carbon\Carbon
+            ? $date->format('Y-m-d')
+            : $date;
+
+        $nepaliDate = NepaliDateHelper::convertToNepali($englishDate);
+        $devanagariNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        $englishNumbers   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        $day   = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['day'] ?? '');
+        $monthName = $nepaliDate['month'] ?? '';
+        $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
+        $monthMap = [
+            'वैशाख' => '01',
+            'जेठ'   => '02',
+            'असार'  => '03',
+            'साउन'  => '04',
+            'भदौ'  => '05',
+            'असोज'  => '06',
+            'कात्तिक' => '07',
+            'मंसिर' => '08',
+            'पुस'   => '09',
+            'माघ'   => '10',
+            'फागुन' => '11',
+            'चैत'   => '12',
+        ];
+
+        $month = $monthMap[$monthName] ?? '00';
+
+        return "{$day}/{$month}/{$year}";
     }
 
 

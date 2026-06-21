@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\BookingLog;
 use App\Models\VehicleMoment;
 use App\Models\VehicleQuestionnaireAnswer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class VehicleMomentService
 {
@@ -98,6 +100,34 @@ class VehicleMomentService
                             ->update($updateData);
                     }
                 }
+
+
+                if (!empty($vehicleMoment->start_datetime)) {
+                    BookingLog::firstOrCreate(
+                        [
+                            'booking_id' => $vehicleMoment->booking_id,
+                            'status'     => 'started',
+                        ],
+                        [
+                            'remarks' => 'Trip started',
+                            'created_by' => Auth::user() ? Auth::user()->id : 0,
+                        ]
+                    );
+                }
+
+                // Completed Log
+                if (!empty($vehicleMoment->end_datetime)) {
+                    BookingLog::firstOrCreate(
+                        [
+                            'booking_id' => $vehicleMoment->booking_id,
+                            'status'     => 'completed',
+                        ],
+                        [
+                            'remarks' => 'Trip completed',
+                            'created_by' => Auth::user() ? Auth::user()->id : 0,
+                        ]
+                    );
+                }
             }
 
 
@@ -187,6 +217,36 @@ class VehicleMomentService
             }
 
             $vehicleMoment->refresh();
+            if (!empty($vehicleMoment->booking_id)) {
+
+                // Started Log
+                if (!empty($vehicleMoment->start_datetime)) {
+                    BookingLog::firstOrCreate(
+                        [
+                            'booking_id' => $vehicleMoment->booking_id,
+                            'status'     => 'started',
+                        ],
+                        [
+                            'remarks' => 'Trip started',
+                            'created_by' => Auth::user() ? Auth::user()->id : 0,
+                        ]
+                    );
+                }
+
+                // Completed Log
+                if (!empty($vehicleMoment->end_datetime)) {
+                    BookingLog::firstOrCreate(
+                        [
+                            'booking_id' => $vehicleMoment->booking_id,
+                            'status'     => 'completed',
+                        ],
+                        [
+                            'remarks' => 'Trip completed',
+                            'created_by' => Auth::user() ? Auth::user()->id : 0,
+                        ]
+                    );
+                }
+            }
 
             // DB::table('attendance')
             //     ->where('vehicle_moment_id', $id)

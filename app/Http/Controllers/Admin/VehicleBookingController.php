@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VehicleBookingExport;
 use App\Helpers\NepaliDateHelper;
+use App\Models\BookingLog;
 use App\Models\TripCategory;
 use App\Models\TripRoute;
 use Illuminate\Support\Facades\Cache;
@@ -313,6 +314,21 @@ class VehicleBookingController extends Controller
         //generate invoice 
         if ($vehicleBooking->status === 'confirmed' && $vehicleBooking->call_type === 'api') {
             $this->service->generateFinalInvoice($request->file_no);
+            BookingLog::create([
+                'booking_id' => $vehicleBookingId,
+                'status' => 'confirmed',
+                'remarks' => 'Booking confirmed by admin',
+                'created_by' => Auth::user() ? Auth::user()->id : 0,
+            ]);
+        }
+
+        if ($vehicleBooking->status === 'cancelled' && $vehicleBooking->call_type === 'api') {
+            BookingLog::create([
+                'booking_id' => $vehicleBookingId,
+                'status' => 'cancelled',
+                'remarks' => 'Booking cancelled by admin',
+                'created_by' => Auth::user() ? Auth::user()->id : 0,
+            ]);
         }
 
         $customers = Customer::where('id', $request->customer_id)->first();
