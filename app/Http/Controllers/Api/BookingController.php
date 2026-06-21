@@ -1632,7 +1632,7 @@ class BookingController extends Controller
         $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
             ->with([
                 'tripRoute:id,title',
-                'vehicle:id,vehicle_name,image,car_images',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
                 'driver:id,user_id,experience,age',
                 'driver.user:id,name',
                 'vehicleMoment:id,booking_id,start_datetime,end_datetime'
