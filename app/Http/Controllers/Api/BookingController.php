@@ -1620,43 +1620,11 @@ class BookingController extends Controller
             ]);
 
 
-        $bookings->each(function ($booking) {
-
-            // default booking status
-            $finalStatus = $booking->status;
-
-
-            if ($booking->vehicleMoment) {
-
-                if (
-                    $booking->vehicleMoment->start_datetime &&
-                    !$booking->vehicleMoment->end_datetime
-                ) {
-                    $finalStatus = 'started';
-                }
-
-
-                if ($booking->vehicleMoment->end_datetime) {
-                    $finalStatus = 'completed';
-                }
-            }
-
-
-            if ($booking->payment_status == 1) {
-                $finalStatus = 'paid';
-            }
-
-
-            $booking->status = $finalStatus;
-        });
-
-
         return response()->json([
             'status' => true,
             'data' => $bookings
         ]);
     }
-
 
 
     public function vehicleBookings($vehicle_id)
@@ -1670,24 +1638,6 @@ class BookingController extends Controller
                 'vehicleMoment:id,booking_id,start_datetime,end_datetime'
             ])
             ->get();
-
-        $bookings->each(function ($booking) {
-            if ($booking->vehicleMoment) {
-                if (
-                    !empty($booking->vehicleMoment->start_datetime) &&
-                    empty($booking->vehicleMoment->end_datetime)
-                ) {
-                    $booking->status = 'started';
-                }
-                if (!empty($booking->vehicleMoment->end_datetime)) {
-                    $booking->status = 'completed';
-                }
-            }
-
-            if ($booking->payment_status == 1) {
-                $booking->status = 'paid';
-            }
-        });
 
         return response()->json($bookings);
     }
@@ -1709,24 +1659,48 @@ class BookingController extends Controller
             ], 404);
         }
 
-        // Calculate status
-        if ($booking->vehicleMoment) {
 
-            if (
-                !empty($booking->vehicleMoment->start_datetime) &&
-                empty($booking->vehicleMoment->end_datetime)
-            ) {
-                $booking->status = 'started';
-            }
+        return response()->json([
+            'status' => true,
+            'data' => $booking
+        ]);
+    }
 
-            if (!empty($booking->vehicleMoment->end_datetime)) {
-                $booking->status = 'completed';
-            }
+
+
+    public function bookingLogDetails($booking_id)
+    {
+        $booking = VehicleBooking::with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,image,car_images',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,start_datetime,end_datetime',
+
+            // add logs
+            'logs:id,booking_id,status,remarks,created_by,created_at'
+
+        ])->find($booking_id);
+
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
         }
 
-        if ($booking->payment_status == 1) {
-            $booking->status = 'paid';
+
+        // status already saved in booking_logs / booking table
+        $latestLog = $booking->logs
+            ->sortByDesc('created_at')
+            ->first();
+
+
+        if ($latestLog) {
+            $booking->status = $latestLog->status;
         }
+
 
         return response()->json([
             'status' => true,

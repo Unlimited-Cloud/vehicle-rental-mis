@@ -102,6 +102,19 @@ class VehicleMomentService
                 }
 
 
+                if (
+                    !empty($vehicleMoment->booking_id) &&
+                    !empty($vehicleMoment->start_datetime) &&
+                    empty($vehicleMoment->end_datetime)
+                ) {
+                    DB::table('vehicle_bookings')
+                        ->where('id', $vehicleMoment->booking_id)
+                        ->update([
+                            'status' => 'started',
+                            'updated_at' => now(),
+                        ]);
+                }
+
                 if (!empty($vehicleMoment->start_datetime)) {
                     BookingLog::firstOrCreate(
                         [
@@ -114,6 +127,19 @@ class VehicleMomentService
                         ]
                     );
                 }
+
+                if (
+                    !empty($vehicleMoment->booking_id) &&
+                    !empty($vehicleMoment->end_datetime)
+                ) {
+                    DB::table('vehicle_bookings')
+                        ->where('id', $vehicleMoment->booking_id)
+                        ->update([
+                            'status' => 'completed',
+                            'updated_at' => now(),
+                        ]);
+                }
+
 
                 // Completed Log
                 if (!empty($vehicleMoment->end_datetime)) {
@@ -131,17 +157,8 @@ class VehicleMomentService
             }
 
 
-            if (
-                !empty($vehicleMoment->booking_id) &&
-                !empty($vehicleMoment->end_datetime)
-            ) {
-                DB::table('vehicle_bookings')
-                    ->where('id', $vehicleMoment->booking_id)
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => now(),
-                    ]);
-            }
+
+
 
             // $this->storeAttendance($vehicleMoment, $data);
 
