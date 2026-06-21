@@ -231,7 +231,8 @@ class EsewaPaymentController extends Controller
 
                     // Update booking
                     $booking->update([
-                        'payment_status' => 1
+                        'payment_status' => 1,
+                        'status' => 'paid'
                     ]);
                     BookingLog::create([
                         'booking_id' => $payment->booking_id,
@@ -244,7 +245,7 @@ class EsewaPaymentController extends Controller
                 } else {
 
                     $booking->update([
-                        'payment_status' => 'canceled'
+                        'payment_status' => '0'
                     ]);
                 }
             }
