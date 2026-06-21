@@ -94,6 +94,7 @@
     <th>File No</th>
     <th>Owner Name</th>
     <th>Vehicle</th>
+    <th>Total Amount</th>
     <th>Amount (Excl. VAT)</th>
     <th>Platform Commission</th>
     <th>Agent Commission</th>
@@ -115,6 +116,7 @@
     <td>{{ $booking->file_no ?? 'N/A' }}</td>
     <td>{{ $booking->vehicle?->vehicleOwner?->name ?? 'N/A' }}</td>
     <td>{{ $booking->vehicle?->vehicle_name ?? 'N/A' }}</td>
+    <td>Rs. {{ number_format($booking->total_amount ?? 0, 2) }}</td>
     <td>Rs. {{ number_format($booking->amountExcludingTax ?? 0, 2) }}</td>
     <td>Rs. {{ number_format($booking->platformCommission ?? 0, 2) }}</td>
     <td>Rs. {{ number_format($booking->agentCommission ?? 0, 2) }}</td>

@@ -316,6 +316,7 @@ class VehicleOwnerController extends Controller
             $owner = $booking->vehicle?->vehicleOwner;
 
             $booking->vehicleOwner = $owner;
+            $total_amount = $booking->total_amount ?? 0;
 
             // Base amount
             $baseAmount = (
@@ -398,6 +399,7 @@ class VehicleOwnerController extends Controller
             compact(
                 'bookings',
                 'totalOwnerPayable',
+                'total_amount',
                 'paidBookingIds',
                 'failBookingIds',
                 'paidOwnerCommission'

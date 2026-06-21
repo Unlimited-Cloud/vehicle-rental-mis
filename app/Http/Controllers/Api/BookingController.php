@@ -1572,6 +1572,63 @@ class BookingController extends Controller
     }
 
 
+
+    public function vehicleBookings($vehicle_id)
+    {
+        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
+            ->whereDoesntHave('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            })
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,image,car_images',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+            ])
+            ->get();
+
+        $bookings->each(function ($booking) {
+            if ($booking->vehicleMoment) {
+                if (
+                    !empty($booking->vehicleMoment->start_datetime) &&
+                    empty($booking->vehicleMoment->end_datetime)
+                ) {
+                    $booking->status = 'started';
+                }
+            }
+
+            if ($booking->payment_status == 1) {
+                $booking->status = 'paid';
+            }
+        });
+
+        return response()->json($bookings);
+    }
+
+    public function completedVehicleBookings($vehicle_id)
+    {
+        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
+            ->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            })
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,image,car_images',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+            ])
+            ->get();
+
+        $bookings->each(function ($booking) {
+            $booking->status = 'completed';
+        });
+
+        return response()->json($bookings);
+    }
+
+
     public function getBasicSetting(Request $request)
     {
         $field = $request->query('field');
