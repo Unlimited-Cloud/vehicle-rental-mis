@@ -70,7 +70,7 @@ class EmailEvent
                 $this->PersonalDetails = Customer::where('email', $email)->first();
             }
             //
-            if ($this->activity == 'create_booking' || $this->activity == 'confirmed_booking') {
+            if ($this->activity == 'create_booking' || $this->activity == 'confirmed_booking' || $this->activity == 'paid_booking') {
                 $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
                     ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
                     ->join('trip_routes', 'vehicle_bookings.trip_route_id', '=', 'trip_routes.id')
