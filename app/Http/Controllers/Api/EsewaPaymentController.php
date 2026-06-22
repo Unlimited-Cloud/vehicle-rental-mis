@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\BookingLog;
@@ -210,6 +211,7 @@ class EsewaPaymentController extends Controller
             } else {
 
                 $booking = $payment->booking;
+                $customer = Customer::where('id', $booking->customer_id)->first();
 
                 if ($data['status'] === 'COMPLETE') {
 
@@ -239,6 +241,9 @@ class EsewaPaymentController extends Controller
                         'status' => 'paid',
                         'remarks' => 'Booking paid by customer via Esewa',
                     ]);
+
+                    // Dispatch email event
+                    event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "esewa", $booking->customer->name);

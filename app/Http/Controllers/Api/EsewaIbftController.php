@@ -714,6 +714,8 @@ class EsewaIbftController extends Controller
             'owner_id'   => 'required|exists:vehicle_owners,id',
             'booking_id' => 'required|exists:vehicle_bookings,id',
             'remarks'    => 'nullable|string|max:255',
+            'tds_applicable' => 'required|boolean',
+            'tds_rate'       => 'required_if:tds_applicable,1|nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -789,18 +791,33 @@ class EsewaIbftController extends Controller
                 ($amountExcludingTax * $owner->commission_rate) / 100;
 
 
-            $ownerPayable =
+            $ownerPayableBeforeTds =
                 $amountExcludingTax
                 - $agentCommission
                 - $platformCommission;
 
-            if ($ownerPayable <= 0) {
+            if ($ownerPayableBeforeTds <= 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Owner payable amount is zero.'
                 ], 400);
             }
 
+            $tdsApplicable = (bool) $request->tds_applicable;
+            $tdsRate = $tdsApplicable ? (float) $request->tds_rate : 0;
+
+            $tdsAmount = $tdsApplicable
+                ? round(($ownerPayableBeforeTds * $tdsRate) / 100, 2)
+                : 0;
+
+            $ownerPayable = max(0, $ownerPayableBeforeTds - $tdsAmount);
+
+            if ($ownerPayable <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Owner payable amount after TDS is zero.'
+                ], 400);
+            }
 
             $alreadyPaid = Payment::where(
                 'vehicle_booking_id',
@@ -875,7 +892,9 @@ class EsewaIbftController extends Controller
                 $agentCommission,
                 $platformCommission,
                 $ownerPayable,
-                $request->remarks
+                $request->remarks,
+                $tdsRate,
+                $tdsAmount
             );
 
             return response()->json([
@@ -884,6 +903,8 @@ class EsewaIbftController extends Controller
                 'payment_id' => $payment->id,
                 'status' => $payment->status,
                 'txn_ref' => $payment->transaction_reference,
+                'tds_amount' => $tdsAmount,
+                'final_amount' => $ownerPayable,
             ]);
         } catch (Exception $e) {
 
@@ -910,7 +931,9 @@ class EsewaIbftController extends Controller
         $agentCommission,
         $platformCommission,
         $ownerPayable,
-        $remarks = null
+        $remarks = null,
+        $tdsRate = 0,
+        $tdsAmount = 0
     ) {
         $existing = CommissionStatement::where('vehicle_booking_id', $booking->id)
             ->where('payee_type', 'owner')
@@ -935,8 +958,8 @@ class EsewaIbftController extends Controller
             'commission_amount'        => $platformCommission,
             'agent_commission_amount'  => $agentCommission,
             'agent_code_ref'           => $booking->agent_code,
-            'tds_rate'                 => 0,
-            'tds_amount'               => 0,
+            'tds_rate'                 => $tdsRate,
+            'tds_amount'               => $tdsAmount,
             'net_paid_amount'          => $ownerPayable,
             'payment_method'           => 'bank_transfer',
             'bank_name'                => $owner->bank_name,

@@ -1087,7 +1087,11 @@ class BookingController extends Controller
 
     public function seaters()
     {
-        $seaters = Seater::select('id', 'name', 'logo')->get()
+        $usedSeaters = Vehicle::distinct()->pluck('seater');
+
+        $seaters = Seater::select('id', 'name', 'logo')
+            ->whereIn('name', $usedSeaters)
+            ->get()
             ->map(function ($b) {
                 return [
                     'id' => $b->id,
@@ -1416,9 +1420,9 @@ class BookingController extends Controller
             'vehicle_type' => $vehicle->vehicle_type,
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
-            'price' => $price,
-            'vat_price' => $vatPrice,
-            'total_price' => $totalPrice,
+            'price' => number_format($price, 2, '.', ','),
+            'vat_price' => number_format($vatPrice, 2, '.', ','),
+            'total_price' => number_format($totalPrice, 2, '.', ','),
         ]);
     }
 
@@ -1597,11 +1601,12 @@ class BookingController extends Controller
         )
             ->with([
                 'tripRoute:id,title',
-                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color',
                 'driver:id,user_id,experience,age',
                 'driver.user:id,name',
                 'vehicleMoment:id,booking_id,end_datetime,start_datetime'
             ])
+            ->latest()
             ->get([
                 'id',
                 'file_no',
@@ -1632,7 +1637,7 @@ class BookingController extends Controller
         $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
             ->with([
                 'tripRoute:id,title',
-                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color',
                 'driver:id,user_id,experience,age',
                 'driver.user:id,name',
                 'vehicleMoment:id,booking_id,start_datetime,end_datetime'
@@ -1646,7 +1651,7 @@ class BookingController extends Controller
     {
         $booking = VehicleBooking::with([
             'tripRoute:id,title',
-            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
+            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color',
             'driver:id,user_id,experience,age',
             'driver.user:id,name',
             'vehicleMoment:id,booking_id,start_datetime,end_datetime'
@@ -1672,7 +1677,7 @@ class BookingController extends Controller
     {
         $booking = VehicleBooking::with([
             'tripRoute:id,title',
-            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
+            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color',
             'driver:id,user_id,experience,age',
             'driver.user:id,name',
             'vehicleMoment:id,booking_id,start_datetime,end_datetime',
@@ -1716,7 +1721,7 @@ class BookingController extends Controller
             })
             ->with([
                 'tripRoute:id,title',
-                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color',
                 'driver:id,user_id,experience,age',
                 'driver.user:id,name',
                 'vehicleMoment:id,booking_id,start_datetime,end_datetime'
