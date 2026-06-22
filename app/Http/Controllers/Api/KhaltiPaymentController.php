@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Events\EmailEvent;
 
 class KhaltiPaymentController extends Controller
 {
@@ -356,6 +357,7 @@ class KhaltiPaymentController extends Controller
 
                 // Update booking
                 $booking = $payment->booking;
+                $customer = Customer::where('id', $booking->customer_id)->first();
 
                 $booking->update([
                     'payment_status' => 1,
@@ -403,6 +405,7 @@ class KhaltiPaymentController extends Controller
                             'status' => 'completed',
                         ]
                     );
+                    event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
