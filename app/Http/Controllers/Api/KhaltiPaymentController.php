@@ -244,7 +244,10 @@ class KhaltiPaymentController extends Controller
                 'payload' => $payload
             ]);
 
-            $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+            // $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+            $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02"; //production key
+
+
 
             $response = Http::withHeaders([
                 'Authorization' => 'key ' . $khaltiKey,
