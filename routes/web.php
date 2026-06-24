@@ -272,6 +272,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
     Route::post('/password/reset-otp/send', [ResetPasswordController::class, 'sendResetOtp'])->name('password.reset.otp.send');
     Route::post('/password/reset-otp/verify', [ResetPasswordController::class, 'resetWithOtp'])->name('password.reset.otp.verify');
 
+    // Route::get('/agent-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'generateAgentCommissionStatement'])
+    //     ->name('agent-bookings.commission-statement');
+
+    Route::get('/agent-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewAgentCommissionStatement'])
+        ->name('agent-bookings.commission-statement');
+
+    Route::get('/owner-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewOwnerCommissionStatement'])
+        ->name('owner-bookings.commission-statement');
+
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
         Route::resource('vehicle_details', VehicleDetailsController::class);

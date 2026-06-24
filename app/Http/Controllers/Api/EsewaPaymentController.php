@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\BookingLog;
 use App\Models\Customer;
 use App\Models\EsewaPayment;
 use App\Models\Payment;
@@ -113,11 +115,12 @@ class EsewaPaymentController extends Controller
                 'message' => 'Customer not found.'
             ], 422);
         }
-        $secret = "8gBm/:&EnhH.1/q";
+        // $secret = "8gBm/:&EnhH.1/q";
+        $secret = "LhIRHwwSBQEMRSAMEAkHGAAcDB0CVzEFH0tZKQcBWVs9O0g8Nl42PiY7PzY8IDorMFs2OyQgOjImNCQgODoyICo";  //production secret key
 
         $transaction_uuid = uniqid();
 
-        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=EPAYTEST";
+        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
 
 
         // Create payment record
@@ -209,6 +212,7 @@ class EsewaPaymentController extends Controller
             } else {
 
                 $booking = $payment->booking;
+                $customer = Customer::where('id', $booking->customer_id)->first();
 
                 if ($data['status'] === 'COMPLETE') {
 
@@ -230,15 +234,24 @@ class EsewaPaymentController extends Controller
 
                     // Update booking
                     $booking->update([
-                        'payment_status' => 1
+                        'payment_status' => 1,
+                        'status' => 'paid'
                     ]);
+                    BookingLog::create([
+                        'booking_id' => $payment->booking_id,
+                        'status' => 'paid',
+                        'remarks' => 'Booking paid by customer via Esewa',
+                    ]);
+
+                    // Dispatch email event
+                    event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "esewa", $booking->customer->name);
                 } else {
 
                     $booking->update([
-                        'payment_status' => 'canceled'
+                        'payment_status' => '0'
                     ]);
                 }
             }

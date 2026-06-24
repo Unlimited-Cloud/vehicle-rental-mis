@@ -22,9 +22,9 @@ class EsewaIbftService
 
     public function __construct()
     {
-        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? "https://ceapi-uat.esewa.com.np";
-        $this->baseUrl = env('ESEWA_BASE_URL') ?? "https://ceapp-uat.esewa.com.np";
-        $this->hmacKey = env('ESEWA_HMAC_KEY') ?? "esewa";
+        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? " https://corporate-authentication.esewa.com.np";
+        $this->baseUrl = env('ESEWA_BASE_URL') ?? "https://corporateapi.esewa.com.np";
+        $this->hmacKey = env('ESEWA_HMAC_KEY') ?? "ZXNld2Fjb3";  // production HMAC key
         $this->clientId = env('ESEWA_CLIENT_ID') ?? "CP0002006";
         $this->username = env('ESEWA_USERNAME') ?? "esewadirect";
         $this->password = env('ESEWA_PASSWORD') ?? "Hello@123";
@@ -45,7 +45,7 @@ class EsewaIbftService
         Log::info('eSewa token request', [
             'url'       => $this->authBaseUrl . '/api/auth/v1/token',
             'client_id' => $this->clientId,
-            "client_secret" => "esewa",
+            "client_secret" => "ZXNld2Fjb3",
             'username'  => $this->username,
             'cert_path' => $this->certPath,
             'cert_exists' => file_exists($this->certPath),
@@ -55,7 +55,7 @@ class EsewaIbftService
 
             $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
                 'client_id' => $this->clientId,
-                "client_secret" => "esewa",
+                "client_secret" => "ZXNld2Fjb3",
                 'username' => $this->username,
                 'password' => $this->password,
                 'grant_type' => 'password',

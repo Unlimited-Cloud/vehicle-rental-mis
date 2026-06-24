@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\VehicleOwner;
 use App\Models\Agent;
 use App\Models\Bank;
+use App\Models\CommissionStatement;
 use App\Models\VehicleBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -269,7 +270,10 @@ class VehicleOwnerController extends Controller
 
         $query = VehicleBooking::with([
             'vehicle.vehicleOwner'
-        ]);
+        ])->whereHas('vehicleMoment', function ($q) {
+            $q->whereNotNull('start_datetime')
+                ->whereNotNull('end_datetime');
+        })->where('payment_status', 1);
 
         if ($request->filled('owner_id')) {
             $query->whereHas('vehicle', function ($q) use ($request) {
@@ -308,11 +312,21 @@ class VehicleOwnerController extends Controller
             ->where('payment_method', 'bank_transfer')
             ->sum('amount');
 
+        // Actual TDS / net paid figures for bookings already paid out,
+        // since TDS is chosen manually per-payment and can vary.
+        $ownerStatements = CommissionStatement::where('payee_type', 'owner')
+            ->whereIn('vehicle_booking_id', $bookings->pluck('id'))
+            ->get()
+            ->keyBy('vehicle_booking_id');
+
+        $defaultTdsRate = 1.5; // preview rate shown for unpaid bookings only
+
         foreach ($bookings as $booking) {
 
             $owner = $booking->vehicle?->vehicleOwner;
 
             $booking->vehicleOwner = $owner;
+            $total_amount = $booking->total_amount ?? 0;
 
             // Base amount
             $baseAmount = (
@@ -337,9 +351,9 @@ class VehicleOwnerController extends Controller
             $amountAfterDiscount = max(0, $baseAmount - $discountAmount);
 
             /*
-         * Remove VAT/Tax
-         * Adjust according to your tax structure.
-         */
+     * Remove VAT/Tax
+     * Adjust according to your tax structure.
+     */
             $taxAmount = $booking->tax_amount ?? 0;
 
             $amountExcludingTax = max(
@@ -348,8 +362,8 @@ class VehicleOwnerController extends Controller
             );
 
             /*
-         * Agent commission
-         */
+     * Agent commission
+     */
             $agentCommissionRate = 0;
 
             if ($booking->agent_code) {
@@ -365,8 +379,8 @@ class VehicleOwnerController extends Controller
                 ($amountExcludingTax * $agentCommissionRate) / 100;
 
             /*
-         * Platform commission
-         */
+     * Platform commission
+     */
             $platformCommissionRate =
                 $owner?->commission_rate ?? 0;
 
@@ -374,17 +388,36 @@ class VehicleOwnerController extends Controller
                 ($amountExcludingTax * $platformCommissionRate) / 100;
 
             /*
-         * Owner payable
-         */
+     * Owner payable (before TDS)
+     */
             $ownerPayable =
                 $amountExcludingTax
                 - $agentCommission
                 - $platformCommission;
 
+            $ownerPayable = max(0, $ownerPayable);
+
+            $statement = $ownerStatements->get($booking->id);
+
+            if ($statement) {
+                // Already paid — use the real TDS rate/amount that was applied
+                $booking->tdsRate       = (float) $statement->tds_rate;
+                $booking->tdsAmount     = (float) $statement->tds_amount;
+                $booking->netPayable    = (float) $statement->net_paid_amount;
+                $booking->tdsIsEstimate = false;
+            } else {
+                // Not paid yet — show an estimate at the default rate as a preview
+                $estimatedTdsAmount = round(($ownerPayable * $defaultTdsRate) / 100, 2);
+                $booking->tdsRate       = $defaultTdsRate;
+                $booking->tdsAmount     = $estimatedTdsAmount;
+                $booking->netPayable    = max(0, $ownerPayable - $estimatedTdsAmount);
+                $booking->tdsIsEstimate = true;
+            }
+
             $booking->amountExcludingTax = $amountExcludingTax;
             $booking->agentCommission = $agentCommission;
             $booking->platformCommission = $platformCommission;
-            $booking->ownerPayable = max(0, $ownerPayable);
+            $booking->ownerPayable = $ownerPayable; // pre-TDS, used for the actual payout call
             $booking->isPaid         = in_array($booking->id, $paidBookingIds);
         }
 
@@ -395,6 +428,7 @@ class VehicleOwnerController extends Controller
             compact(
                 'bookings',
                 'totalOwnerPayable',
+                'total_amount',
                 'paidBookingIds',
                 'failBookingIds',
                 'paidOwnerCommission'

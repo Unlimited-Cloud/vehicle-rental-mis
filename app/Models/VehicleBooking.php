@@ -57,6 +57,17 @@ class VehicleBooking extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function agent()
+    {
+        return $this->belongsTo(Agent::class, 'agent_code', 'agent_code');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(BookingLog::class, 'booking_id');
+    }
+
+
     public function driver()
     {
         return $this->belongsTo(CrewProfile::class, 'driver_id');

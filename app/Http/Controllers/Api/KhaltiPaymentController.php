@@ -10,6 +10,7 @@ use App\Models\KhaltiPayment;
 use App\Models\Payment;
 use App\Models\VehicleBooking;
 use App\Models\VehicleReceipt;
+use App\Models\BookingLog;
 use App\Services\ProformaService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Events\EmailEvent;
 
 class KhaltiPaymentController extends Controller
 {
@@ -242,7 +244,10 @@ class KhaltiPaymentController extends Controller
                 'payload' => $payload
             ]);
 
-            $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+            // $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+            $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02"; //production key
+
+
 
             $response = Http::withHeaders([
                 'Authorization' => 'key ' . $khaltiKey,
@@ -355,9 +360,17 @@ class KhaltiPaymentController extends Controller
 
                 // Update booking
                 $booking = $payment->booking;
+                $customer = Customer::where('id', $booking->customer_id)->first();
 
                 $booking->update([
-                    'payment_status' => 1
+                    'payment_status' => 1,
+                    'status' => 'paid'
+                ]);
+
+                BookingLog::create([
+                    'booking_id' => $payment->booking_id,
+                    'status' => 'paid',
+                    'remarks' => 'Booking paid by customer via Khalti',
                 ]);
 
                 if ($payment->payment_type == 'attendance') {
@@ -395,6 +408,7 @@ class KhaltiPaymentController extends Controller
                             'status' => 'completed',
                         ]
                     );
+                    event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
