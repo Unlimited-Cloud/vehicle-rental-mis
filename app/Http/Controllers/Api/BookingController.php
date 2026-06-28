@@ -1599,7 +1599,7 @@ class BookingController extends Controller
         $bookings = VehicleBooking::where(
             'customer_id',
             $customer->id
-        )
+        )->whereNull('vehicle_bookings.deleted_at')
             ->with([
                 'tripRoute:id,title',
                 'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
@@ -1635,7 +1635,7 @@ class BookingController extends Controller
 
     public function vehicleBookings($vehicle_id)
     {
-        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
+        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)->whereNull('vehicle_bookings.deleted_at')
             ->with([
                 'tripRoute:id,title',
                 'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
@@ -1650,7 +1650,7 @@ class BookingController extends Controller
 
     public function bookingDetails($booking_id)
     {
-        $booking = VehicleBooking::with([
+        $booking = VehicleBooking::whereNull('vehicle_bookings.deleted_at')->with([
             'tripRoute:id,title',
             'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
             'driver:id,user_id,experience,age',

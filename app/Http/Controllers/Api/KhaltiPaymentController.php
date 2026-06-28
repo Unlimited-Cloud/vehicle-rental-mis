@@ -98,6 +98,8 @@ class KhaltiPaymentController extends Controller
             ];
             Log::info('Initiating Khalti payment with payload: ', $payload);
 
+            Log::info("current url",["url" => url('/')]);
+
             $url = env('KHALTI_API_URL') ?? "https://dev.khalti.com/api/v2/" . 'epayment/initiate/';
 
             Log::info('Initiating Khalti payment with payload: ', ['url' => $url, 'payload' => $payload]);
@@ -234,8 +236,16 @@ class KhaltiPaymentController extends Controller
                 ]
             ];
 
+            Log::info("current url",["url" => url('/')]);
+            $currentUrl = url('/');
+            if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+                $khaltiApiUrl = env('KHALTI_API_URL', 'https://khalti.com/api/v2/');
+            }else{
+                $khaltiApiUrl = env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/');
+            }
+
             $url = rtrim(
-                env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/'),
+                $khaltiApiUrl,
                 '/'
             ) . '/epayment/initiate/';
 
@@ -244,10 +254,11 @@ class KhaltiPaymentController extends Controller
                 'payload' => $payload
             ]);
 
-            // $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
-            $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02"; //production key
-
-
+            if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+                $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02";
+            }else{
+                $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+            }
 
             $response = Http::withHeaders([
                 'Authorization' => 'key ' . $khaltiKey,
@@ -311,9 +322,6 @@ class KhaltiPaymentController extends Controller
         }
     }
 
-
-
-
     public function confirmPayment(Request $request)
     {
 
@@ -325,12 +333,23 @@ class KhaltiPaymentController extends Controller
 
         $payment = KhaltiPayment::where('pidx', $request->pidx)->firstOrFail();
 
+        $currentUrl = url('/');
+        if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+            $khaltiApiUrl = env('KHALTI_API_URL', 'https://khalti.com/api/v2/');
+        }else{
+            $khaltiApiUrl = env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/');
+        }
+
         $url = rtrim(
-            env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/'),
+            $khaltiApiUrl,
             '/'
         ) . '/epayment/lookup/';
 
-        $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+        if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+            $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02";
+        }else{
+            $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
+        }
 
         $response = Http::withHeaders([
             'Authorization' => 'key ' . $khaltiKey,
