@@ -188,7 +188,7 @@ class BookingController extends Controller
             ]);
 
             if ($validator->fails()) {
-                Log::info("booking validation failed",["errors" => $validator->errors()]);
+                Log::info("booking validation failed", ["errors" => $validator->errors()]);
                 return response()->json([
                     'status' => false,
                     'message' => $validator->errors()->first(),
@@ -1005,10 +1005,13 @@ class BookingController extends Controller
     }
 
 
-
     public function brands()
     {
-        $brands = Brand::select('id', 'name', 'logo')->get()
+        $usedBrands = Vehicle::distinct()->pluck('brand');
+
+        $brands = Brand::select('id', 'name', 'logo')
+            ->whereIn('name', $usedBrands)
+            ->get()
             ->map(function ($b) {
                 return [
                     'id' => $b->id,

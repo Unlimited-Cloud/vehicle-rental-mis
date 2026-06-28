@@ -85,7 +85,7 @@ class EsewaPaymentController extends Controller
     public function generateSignature(Request $request)
     {
         try {
-            Log::info("esewa generateSignature",["payload" => $request->all()]);
+            Log::info("esewa generateSignature", ["payload" => $request->all()]);
             $validator = Validator::make($request->all(), [
                 'booking_id' => 'required|exists:vehicle_bookings,id',
                 'customer_id' => 'required|exists:customers,customer_uuid'
@@ -139,7 +139,7 @@ class EsewaPaymentController extends Controller
             ]);
 
             $hash = base64_encode(hash_hmac('sha256', $data, $secret, true));
-            Log::info("esewa generateSignature hash",["hash" => $hash]);
+            Log::info("esewa generateSignature hash", ["hash" => $hash]);
 
             // Save payment
             EsewaPayment::create([
@@ -177,7 +177,7 @@ class EsewaPaymentController extends Controller
 
     public function success(Request $request)
     {
-        Log::info("esewa generateSignature success",["request" => $request->all()]);
+        Log::info("esewa generateSignature success", ["request" => $request->all()]);
         $data = json_decode(base64_decode($request->data), true);
 
         Log::info('Esewa Payment Response', $data);
