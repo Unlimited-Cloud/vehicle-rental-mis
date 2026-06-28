@@ -118,12 +118,11 @@ class EsewaPaymentController extends Controller
                 ], 422);
             }
             // $secret = "8gBm/:&EnhH.1/q";
-            $secret = "LhIRHwwSBQEMRSAMEAkHGAAcDB0CVzEFH0tZKQcBWVs9O0g8Nl42PiY7PzY8IDorMFs2OyQgOjImNCQgODoyICo";  //production secret key
+            $secret = "LhIRHwwSBQEMRSAMEAkHGAAcDB0CVzEFH0tZKQcBWVs9O0g8Nl42PiY7PzY8IDorMFs2OyQgOjImNCQgODoyICo=";  //production secret key
 
             $transaction_uuid = uniqid();
 
             $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
-
 
             // Create payment record
             $payment = Payment::create([

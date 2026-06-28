@@ -273,7 +273,7 @@ class VehicleOwnerController extends Controller
         ])->whereHas('vehicleMoment', function ($q) {
             $q->whereNotNull('start_datetime')
                 ->whereNotNull('end_datetime');
-        })->where('payment_status', 1);
+        })->where('payment_status', 1)->whereNull('vehicle_bookings.deleted_at');
 
         if ($request->filled('owner_id')) {
             $query->whereHas('vehicle', function ($q) use ($request) {
@@ -320,6 +320,7 @@ class VehicleOwnerController extends Controller
             ->keyBy('vehicle_booking_id');
 
         $defaultTdsRate = 1.5; // preview rate shown for unpaid bookings only
+        $total_amount = 0;
 
         foreach ($bookings as $booking) {
 
