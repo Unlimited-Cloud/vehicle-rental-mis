@@ -113,7 +113,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getAllRecentVehicleBookings($orderBy, $order)
     {
-        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
             ->whereNull('deleted_at')
             ->whereDate('start_date', now())
             ->orderBy($orderBy, $order)
@@ -122,7 +122,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $customerId)
     {
-        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
             ->whereNull('deleted_at')
             ->where('vehicle_bookings.customer_id', $customerId)
             ->whereDate('start_date', now()) // filter today's bookings
@@ -132,7 +132,7 @@ class VehicleRepository implements VehicleRepositoryInterface
 
     public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId)
     {
-        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
             ->whereNull('deleted_at')
             ->where('vehicle_bookings.driver_id', $driverId)
             ->whereDate('start_date', now()) // filter today's bookings
