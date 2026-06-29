@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\EmailEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Attendance;
+use App\Models\BookingLog;
 use App\Models\Customer;
 use App\Models\EsewaPayment;
 use App\Models\Payment;
@@ -82,83 +84,99 @@ class EsewaPaymentController extends Controller
 
     public function generateSignature(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'booking_id' => 'required|exists:vehicle_bookings,id',
-            'customer_id' => 'required|exists:customers,customer_uuid'
-        ]);
+        try {
+            Log::info("esewa generateSignature", ["payload" => $request->all()]);
+            $validator = Validator::make($request->all(), [
+                'booking_id' => 'required|exists:vehicle_bookings,id',
+                'customer_id' => 'required|exists:customers,customer_uuid'
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $booking = VehicleBooking::find($request->booking_id);
+
+            if (!$booking) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Booking not found.'
+                ], 422);
+            }
+
+
+            $customers = Customer::where('customer_uuid', $request->customer_id)->first();
+
+            if (!$customers) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Customer not found.'
+                ], 422);
+            }
+            // $secret = "8gBm/:&EnhH.1/q";
+            $secret = "LhIRHwwSBQEMRSAMEAkHGAAcDB0CVzEFH0tZKQcBWVs9O0g8Nl42PiY7PzY8IDorMFs2OyQgOjImNCQgODoyICo=";  //production secret key
+
+            $transaction_uuid = uniqid();
+
+            $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
+
+            // Create payment record
+            $payment = Payment::create([
+                'vehicle_booking_id' => $request->booking_id,
+                'amount' => $booking->total_amount,
+                'payment_method' => 'online',
+                'payment_type' => 'booking',
+                'payment_date' => now(),
+                'status' => 'pending',
+                'created_by' => $customers->id,
+                'created_user_type' => 'customer',
+                'notes' => 'Vehicle rental payment via Esewa'
+            ]);
+
+            $hash = base64_encode(hash_hmac('sha256', $data, $secret, true));
+            Log::info("esewa generateSignature hash", ["hash" => $hash]);
+
+            // Save payment
+            EsewaPayment::create([
+                'transaction_uuid' => $transaction_uuid,
+                'amount' => $booking->total_amount,
+                'status' => 'PENDING',
+                'booking_id' => $booking->id,
+                'payment_id' => $payment->id,
+                'payment_type' => 'booking',
+            ]);
+
             return response()->json([
-                'status' => false,
-                'message' => 'Validation Error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+                'success' => true,
+                'signature' => $hash,
+                'transaction_uuid' => $transaction_uuid,
+                'amount' => $booking->total_amount,
+                'success_url' => route('esewa.success'),
+                'failure_url' => '',
+            ]);
+        } catch (\Exception $e) {
 
-        $booking = VehicleBooking::find($request->booking_id);
+            Log::error('Generate Signature failed', [
+                'message'        => $e->getMessage(),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
+                'trace'          => $e->getTraceAsString(),
+            ]);
 
-        if (!$booking) {
             return response()->json([
-                'status' => false,
-                'message' => 'Booking not found.'
-            ], 422);
+                'success' => false,
+                'message' => 'Failed to Generate Signature.'
+            ], 500);
         }
-
-
-        $customers = Customer::where('customer_uuid', $request->customer_id)->first();
-
-        if (!$customers) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Customer not found.'
-            ], 422);
-        }
-        $secret = "8gBm/:&EnhH.1/q";
-
-        $transaction_uuid = uniqid();
-
-        $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=EPAYTEST";
-
-
-        // Create payment record
-        $payment = Payment::create([
-            'vehicle_booking_id' => $request->booking_id,
-            'amount' => $booking->total_amount,
-            'payment_method' => 'online',
-            'payment_type' => 'booking',
-            'payment_date' => now(),
-            'status' => 'pending',
-            'created_by' => $customers->id,
-            'created_user_type' => 'customer',
-            'notes' => 'Vehicle rental payment via Esewa'
-        ]);
-
-        $hash = base64_encode(hash_hmac('sha256', $data, $secret, true));
-
-        // Save payment
-        EsewaPayment::create([
-            'transaction_uuid' => $transaction_uuid,
-            'amount' => $booking->total_amount,
-            'status' => 'PENDING',
-            'booking_id' => $booking->id,
-            'payment_id' => $payment->id,
-            'payment_type' => 'booking',
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'signature' => $hash,
-            'transaction_uuid' => $transaction_uuid,
-            'amount' => $booking->total_amount,
-            'success_url' => route('esewa.success'),
-            'failure_url' => '',
-        ]);
     }
-
-
 
     public function success(Request $request)
     {
+        Log::info("esewa generateSignature success", ["request" => $request->all()]);
         $data = json_decode(base64_decode($request->data), true);
 
         Log::info('Esewa Payment Response', $data);
@@ -209,6 +227,7 @@ class EsewaPaymentController extends Controller
             } else {
 
                 $booking = $payment->booking;
+                $customer = Customer::where('id', $booking->customer_id)->first();
 
                 if ($data['status'] === 'COMPLETE') {
 
@@ -230,15 +249,24 @@ class EsewaPaymentController extends Controller
 
                     // Update booking
                     $booking->update([
-                        'payment_status' => 1
+                        'payment_status' => 1,
+                        'status' => 'paid'
                     ]);
+                    BookingLog::create([
+                        'booking_id' => $payment->booking_id,
+                        'status' => 'paid',
+                        'remarks' => 'Booking paid by customer via Esewa',
+                    ]);
+
+                    // Dispatch email event
+                    event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
                     // Create Receipt
                     $this->service->finalizeReceipt($booking->file_no, 'wallet', "esewa", $booking->customer->name);
                 } else {
 
                     $booking->update([
-                        'payment_status' => 'canceled'
+                        'payment_status' => '0'
                     ]);
                 }
             }

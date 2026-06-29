@@ -29,7 +29,7 @@ class PaymentModeController extends Controller
     {
         $request->validate([
             'name' => 'required',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
             'status' => 'required|boolean'
         ]);
 
@@ -83,7 +83,7 @@ class PaymentModeController extends Controller
 
         $request->validate([
             'name' => 'required',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
             'status' => 'required|boolean'
         ]);
 

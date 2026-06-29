@@ -7,15 +7,17 @@ use Illuminate\Http\Request;
 use App\Models\Agent;
 use App\Models\User;
 use App\Models\Bank;
-
-
+use App\Models\CommissionStatement;
 use App\Models\VehicleBooking;
+use Barryvdh\DomPDF\Facade\Pdf;
+
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Helpers\NepaliDateHelper;
 
 class AgentController extends Controller
 {
@@ -370,7 +372,8 @@ class AgentController extends Controller
         $agents = Agent::with('user')->get();
 
         $query = VehicleBooking::whereNotNull('agent_code')
-            ->where('agent_code', '!=', '');
+            ->where('agent_code', '!=', '')
+            ->where('payment_status', 1);
 
         if ($request->filled('agent_code')) {
             $query->where('agent_code', $request->agent_code);
@@ -483,5 +486,149 @@ class AgentController extends Controller
                 'commission_rate'     => $agent->commission_rate,
             ],
         ]);
+    }
+
+
+
+
+    public function generateCommissionStatement($bookingId, $paymentId = null)
+    {
+        $booking = VehicleBooking::with('agent.user')->find($bookingId);
+
+        if (!$booking) {
+            return response()->json(['error' => 'Booking not found'], 404);
+        }
+
+        // Don't regenerate if one already exists for this booking
+        $existing = CommissionStatement::where('vehicle_booking_id', $booking->id)->first();
+        if ($existing) {
+            return $this->renderCommissionStatementPdf($existing);
+        }
+
+        $agent = $booking->agent; // assuming relation exists, else load via agent_code
+
+        if (!$agent) {
+            return response()->json(['error' => 'Agent not found for this booking'], 404);
+        }
+
+        // Recompute the same commission base used in agentBookingindex()
+        $baseAmount = (!$booking->sub_total || (float) $booking->sub_total == 0)
+            ? $booking->rate_per_day
+            : $booking->sub_total;
+
+        $discountAmount = 0;
+        if ($booking->discount > 0) {
+            $discountAmount = $booking->discount_amount_type === 'percentage'
+                ? ($baseAmount * $booking->discount) / 100
+                : $booking->discount;
+        }
+
+        $commissionBase = max(0, $baseAmount - $discountAmount);
+        $commissionRate = (float) $agent->commission_rate;
+        $commissionAmount = ($commissionBase * $commissionRate) / 100;
+
+        // Pull payment record for method/reference/date, if available
+        $payment = $paymentId
+            ? DB::table('payments')->where('id', $paymentId)->first()
+            : DB::table('payments')
+            ->where('vehicle_booking_id', $booking->id)
+            ->where('payment_type', 'agent_commission')
+            ->where('status', 'completed')
+            ->latest('id')
+            ->first();
+
+        $tdsRate = 0;      // wire up if/when TDS applies to agent commission
+        $tdsAmount = 0;
+        $netPaid = $commissionAmount - $tdsAmount;
+
+        $statementNumber = 'CS-' . date('Ymd') . '-' . str_pad($booking->id, 5, '0', STR_PAD_LEFT);
+
+        $statement = CommissionStatement::create([
+            'statement_number'      => $statementNumber,
+            'payee_type'            => 'agent',
+            'payee_code'            => $agent->agent_code,
+            'payee_id'              => $agent->id,
+            'payment_id'            => $payment->id ?? null,
+            'vehicle_booking_id'    => $booking->id,
+            'period_start'          => $booking->start_date,
+            'period_end'            => $booking->end_date ?? $booking->start_date,
+            'booking_amount'        => $commissionBase,
+            'commission_rate'       => $commissionRate,
+            'commission_amount'     => $commissionAmount,
+            'tds_rate'              => $tdsRate,
+            'tds_amount'            => $tdsAmount,
+            'net_paid_amount'       => $netPaid,
+            'payment_method'        => $payment->payment_method ?? 'bank_transfer',
+            'bank_name'             => $agent->bank_name,
+            'bank_account_number'   => $agent->bank_account_number,
+            'transaction_reference' => $payment->transaction_id ?? null,
+            'payment_date'          => $payment->created_at ?? now(),
+            'status'                => 'generated',
+        ]);
+
+        return $this->renderCommissionStatementPdf($statement);
+    }
+
+    /**
+     * Render and save the PDF for a given statement, then return it.
+     */
+    protected function renderCommissionStatementPdf(CommissionStatement $statement)
+    {
+        $statement->load('booking.agent.user', 'booking.vehicle');
+
+        $data = [
+            'statement'     => $statement,
+            'booking'       => $statement->booking,
+            'agent'         => $statement->booking->agent ?? null,
+            'invoice_date'  => now(),
+            'miti_date'     => $this->convertToNepaliDate(now()),
+            'printing_time' => now()->format('Y-m-d h:i A'),
+        ];
+
+        $pdf = Pdf::loadView('layouts.admin.invoices.commission-statement-pdf', $data);
+        $pdfPath = 'commission-statements/statement-' . $statement->statement_number . '.pdf';
+        $pdf->save(storage_path('app/public/' . $pdfPath));
+
+        $statement->update(['pdf_path' => $pdfPath]);
+
+        return view('invoices.commission-statement-pdf', $data);
+    }
+
+    private function convertToNepaliDate($date)
+    {
+        if (!$date) {
+            return '';
+        }
+
+        // Ensure it's a string date (Y-m-d)
+        $englishDate = $date instanceof \Carbon\Carbon
+            ? $date->format('Y-m-d')
+            : $date;
+
+        $nepaliDate = NepaliDateHelper::convertToNepali($englishDate);
+        $devanagariNumbers = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+        $englishNumbers   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        $day   = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['day'] ?? '');
+        $monthName = $nepaliDate['month'] ?? '';
+        $year  = str_replace($devanagariNumbers, $englishNumbers, $nepaliDate['year'] ?? '');
+        $monthMap = [
+            'वैशाख' => '01',
+            'जेठ'   => '02',
+            'असार'  => '03',
+            'साउन'  => '04',
+            'भदौ'  => '05',
+            'असोज'  => '06',
+            'कात्तिक' => '07',
+            'मंसिर' => '08',
+            'पुस'   => '09',
+            'माघ'   => '10',
+            'फागुन' => '11',
+            'चैत'   => '12',
+        ];
+
+        $month = $monthMap[$monthName] ?? '00';
+
+        return "{$day}/{$month}/{$year}";
     }
 }

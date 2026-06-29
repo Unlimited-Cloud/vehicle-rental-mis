@@ -146,7 +146,7 @@ class ProformaService
                     'file_no' => $file_no,
                     'invoice_date' => Carbon::now('Asia/Kathmandu')->format('m/d/Y'),
                     'miti_date' => $this->convertToNepaliDate(now()),
-                    'amount_in_words' => $this->convertNumberToWords($total_amount),
+                    'amount_in_words' => $this->convertNumberToWords(round($total_amount,2)),
                     'items' => $this->prepareInvoiceItems($bookings),
                     'sub_total' => $sub_total,
                     'discount' => $discount,

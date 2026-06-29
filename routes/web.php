@@ -220,6 +220,13 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             Route::post('/transfer-commission',            [EsewaIbftController::class, 'transferAgentsDashboard'])->name('transfer-commission');
         });
 
+        Route::prefix('owner-bookings')->name('owner-bookings.')->group(function () {
+            Route::get('/',              [VehicleOwnerController::class, 'ownerBookingIndex'])->name('index');
+            Route::get('/owner-details', [VehicleOwnerController::class, 'ownerDetails'])->name('owner-details');
+            Route::get('/get-owner-payment-details/{ownerId}', [EsewaIbftController::class, 'getOwnerPaymentDetails'])->name('get-owner-payment-details');
+            Route::post('/transfer-owner-commission', [EsewaIbftController::class, 'transferOwnersDashboard'])->name('owner-transfer-commission');
+        });
+
         Route::resource('payment-modes', PaymentModeController::class);
         Route::get('coupons/{coupon}/pdf', [CouponController::class, 'downloadPdf'])
             ->name('coupons.pdf');
@@ -267,6 +274,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
     Route::post('/password/reset-otp/send', [ResetPasswordController::class, 'sendResetOtp'])->name('password.reset.otp.send');
     Route::post('/password/reset-otp/verify', [ResetPasswordController::class, 'resetWithOtp'])->name('password.reset.otp.verify');
+
+    // Route::get('/agent-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'generateAgentCommissionStatement'])
+    //     ->name('agent-bookings.commission-statement');
+
+    Route::get('/agent-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewAgentCommissionStatement'])
+        ->name('agent-bookings.commission-statement');
+
+    Route::get('/owner-bookings/{booking}/commission-statement', [EsewaIbftController::class, 'viewOwnerCommissionStatement'])
+        ->name('owner-bookings.commission-statement');
 
     Route::middleware(['auth'])->group(function () {
         //Roles Route is here
@@ -335,6 +351,9 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
         Route::post('bank-details/validate', [EsewaIbftController::class, 'validateBankAccount'])
             ->name('bank-details.validate');
+
+
+
 
         Route::post(
             '/attendance/esewa/transfer-dashboard',

@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TripRoutesExport;
 use App\Imports\TripRoutesImport;
+use App\Imports\TripRoutesPriceImport;
+
+
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 
@@ -112,6 +115,19 @@ class TripRouteController extends Controller
 
         return redirect()->back()->with('success', 'Trip routes uploaded successfully!');
     }
+
+
+    public function importRoutePrice(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        Excel::import(new TripRoutesPriceImport, $request->file('excel_file'));
+
+        return redirect()->back()->with('success', 'Trip routes price uploaded successfully!');
+    }
+
     public function upload()
     {
         return view('layouts.admin.trip_routes.upload'); // Blade file path

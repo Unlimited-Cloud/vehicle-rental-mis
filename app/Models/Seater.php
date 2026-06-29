@@ -10,4 +10,9 @@ class Seater extends Model
         'name',
         'logo'
     ];
+
+    public function vehicles()
+    {
+        return $this->hasMany(Vehicle::class, 'seater');
+    }
 }

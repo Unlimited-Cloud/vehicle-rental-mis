@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\TripRouteController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
@@ -110,6 +111,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('banners', [VehicleController::class, 'getBanner']);
     Route::get('search-vehicles', [VehicleController::class, 'SearchVehicle']);
     Route::get('booking-by-status/{status}/{customer_id}', [BookingController::class, 'BookingbyStatus']);
+    Route::get('booking-by-all-status/{customer_id}', [BookingController::class, 'BookingbyAllStatus']);
+
+
+    Route::get('vehicle-bookings/{vehicle_id}', [BookingController::class, 'vehicleBookings']);
+    Route::get('/booking-details/{booking_id}', [BookingController::class, 'bookingDetails']);
+    Route::get('/booking-log-details/{booking_id}', [BookingController::class, 'bookingLogDetails']);
+    Route::get('completed-vehicle-bookings/{vehicle_id}', [BookingController::class, 'completedVehicleBookings']);
     Route::get('basic-setting', [BookingController::class, 'getBasicSetting']);
 
     Route::get(
@@ -126,7 +134,7 @@ Route::middleware('auth:sanctum')->group(function () {
         [EsewaPaymentController::class, 'generateSignature']
     )->name('booking.esewa.initiate');
 
-    Route::get(
+    Route::post(
         '/booking/cash/inititate',
         [BookingController::class, 'codPayment']
     );
@@ -193,7 +201,7 @@ Route::get('/vehicle-receipt-blob/{booking_id}', [BookingController::class, 'get
 
 Route::get('/vehicle-sorting', [BookingController::class, 'vehicleSorting']);
 
-
+Route::post('/import-route-price', [TripRouteController::class, 'importRoutePrice']);
 
 
 Route::prefix('esewa')->group(function () {

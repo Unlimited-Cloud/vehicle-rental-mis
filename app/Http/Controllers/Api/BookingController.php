@@ -15,6 +15,7 @@ use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
 use App\Models\TripRouteVehiclePrice;
 use App\Models\Review;
+use Illuminate\Support\Facades\Auth;
 
 
 use Maatwebsite\Excel\Facades\Excel;
@@ -38,6 +39,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 use App\Models\BasicTable;
+use App\Models\BookingLog;
 use App\Models\ContactUs;
 use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
@@ -187,9 +189,10 @@ class BookingController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::info("booking validation failed", ["errors" => $validator->errors()]);
                 return response()->json([
                     'status' => false,
-                    'message' => 'Validation Error',
+                    'message' => $validator->errors()->first(),
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -343,13 +346,19 @@ class BookingController extends Controller
             ]);
 
             Passenger::create([
-                'contact_person' => $request->contact_person ?? null,
-                'contact_email' => $request->contact_email ?? null,
-                'contact_number' => $request->contact_number ?? null,
+                'contact_person' => $request->contact_person ?? $customerName,
+                'contact_email' => $request->contact_email ?? $customers->email,
+                'contact_number' => $request->contact_number ?? $customers->phone,
+                'contact_address' => $request->contact_address ?? "Kathmandu",
                 'customer_id' => $customerId,
                 'booking_id' => $booking->id,
             ]);
 
+            BookingLog::create([
+                'booking_id' => $booking->id,
+                'status' => 'pending',
+                'remarks' => 'Booking created by customer',
+            ]);
 
             //  Generate Proforma
             // $this->service->generateFinalInvoice($file_no);
@@ -997,10 +1006,13 @@ class BookingController extends Controller
     }
 
 
-
     public function brands()
     {
-        $brands = Brand::select('id', 'name', 'logo')->get()
+        $usedBrands = Vehicle::distinct()->pluck('brand');
+
+        $brands = Brand::select('id', 'name', 'logo')
+            ->whereIn('name', $usedBrands)
+            ->get()
             ->map(function ($b) {
                 return [
                     'id' => $b->id,
@@ -1080,7 +1092,11 @@ class BookingController extends Controller
 
     public function seaters()
     {
-        $seaters = Seater::select('id', 'name', 'logo')->get()
+        $usedSeaters = Vehicle::distinct()->pluck('seater');
+
+        $seaters = Seater::select('id', 'name', 'logo')
+            ->whereIn('name', $usedSeaters)
+            ->get()
             ->map(function ($b) {
                 return [
                     'id' => $b->id,
@@ -1190,6 +1206,18 @@ class BookingController extends Controller
                 'message' => 'No vehicles found for this transmission'
             ]);
         }
+
+        $brands = Brand::pluck('logo', 'name');
+
+        $vehicles->transform(function ($vehicle) use ($brands) {
+            $logo = $brands[$vehicle->brand] ?? null;
+
+            $vehicle->brand_logo = $logo
+                ? asset('uploads/brands/' . $logo)
+                : null;
+
+            return $vehicle;
+        });
 
         return response()->json([
             'status' => true,
@@ -1412,8 +1440,8 @@ class BookingController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'error',
-                'message' => $validator->errors()
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -1460,9 +1488,9 @@ class BookingController extends Controller
             'vehicle_type' => $vehicle->vehicle_type,
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
-            'price' => $tripPrice->price,
-            'vat_price' => $vatPrice,
-            'total_price' => $totalPrice,
+            'price' => number_format($tripPrice->price, 2),
+            'vat_price' => number_format($vatPrice, 2),
+            'total_price' => number_format($totalPrice, 2),
         ]);
     }
 
@@ -1617,6 +1645,159 @@ class BookingController extends Controller
             if ($booking->payment_status == 1) {
                 $booking->status = 'paid';
             }
+        });
+
+        return response()->json($bookings);
+    }
+
+    public function BookingbyAllStatus($customer_id)
+    {
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+
+
+        $bookings = VehicleBooking::where(
+            'customer_id',
+            $customer->id
+        )->whereNull('vehicle_bookings.deleted_at')
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,end_datetime,start_datetime'
+            ])
+            ->latest()
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'trip_route_id',
+                'vehicle_id',
+                'driver_id',
+                'start_date',
+                'start_time',
+                'end_date',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount',
+                'payment_status'
+            ]);
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $bookings
+        ]);
+    }
+
+
+    public function vehicleBookings($vehicle_id)
+    {
+        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)->whereNull('vehicle_bookings.deleted_at')
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+            ])
+            ->get();
+
+        return response()->json($bookings);
+    }
+
+    public function bookingDetails($booking_id)
+    {
+        $booking = VehicleBooking::whereNull('vehicle_bookings.deleted_at')->with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+        ])->find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $booking
+        ]);
+    }
+
+
+
+    public function bookingLogDetails($booking_id)
+    {
+        $booking = VehicleBooking::with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,start_datetime,end_datetime',
+
+            // add logs
+            'logs:id,booking_id,status,remarks,created_by,created_at'
+
+        ])->find($booking_id);
+
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+
+        // status already saved in booking_logs / booking table
+        $latestLog = $booking->logs
+            ->sortByDesc('created_at')
+            ->first();
+
+
+        if ($latestLog) {
+            $booking->status = $latestLog->status;
+        }
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $booking
+        ]);
+    }
+
+    public function completedVehicleBookings($vehicle_id)
+    {
+        $bookings = VehicleBooking::where('vehicle_id', $vehicle_id)
+            ->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            })
+            ->with([
+                'tripRoute:id,title',
+                'vehicle:id,vehicle_name,vehicle_type,image,car_images,brand,model,seater,year,fuel_type,transmission,car_color,number_plate_color',
+                'driver:id,user_id,experience,age',
+                'driver.user:id,name',
+                'vehicleMoment:id,booking_id,start_datetime,end_datetime'
+            ])
+            ->get();
+
+        $bookings->each(function ($booking) {
+            $booking->status = 'completed';
         });
 
         return response()->json($bookings);
@@ -2063,14 +2244,16 @@ class BookingController extends Controller
         $validator = Validator::make($request->all(), [
             'vehicle_id' => 'required|exists:vehicles,id',
             'start_datetime' => 'required|date',
-            'end_datetime' => 'required|date',
+            'end_datetime' => 'required|date|after_or_equal:start_datetime',
             'booking_id' => 'nullable|integer'
+        ], [
+            'end_datetime.after_or_equal' => 'End datetime must be greater than or equal to start datetime.'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation Error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }

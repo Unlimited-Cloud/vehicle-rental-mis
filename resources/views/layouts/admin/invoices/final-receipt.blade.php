@@ -289,7 +289,10 @@
                 <!-- LEFT COLUMN (colspan=4) contains printing time and amount in words -->
                 <td colspan="4" rowspan="5" style="padding: 6px 4px; vertical-align: top; border: 1px solid #000;">
                     <div><b>Printing Date & Time :</b> {{ $printing_time ?? date('Y-m-d h:i A') }}</div>
-                    <div style="margin-top:8px;"><b>In Words :</b> {{ $amount_in_words ?? 'Rupees ' . (new \App\Helpers\NumberHelper())->numberToWords($receipt->total_amount ?? 0) ?? 'Zero Only' }}</div>
+                    <div style="margin-top:8px;">
+                        <b>In Words :</b> 
+                        {{ $amount_in_words ?? 'Rupees ' . (new \App\Helpers\NumberHelper())->numberToWords(round($receipt->total_amount ?? 0),2) ?? 'Zero Only' }}
+                    </div>
                 </td>
                 <!-- Basic Amount -->
                 <td style="border: 1px solid #000; padding: 4px;">Basic Amount</td>
