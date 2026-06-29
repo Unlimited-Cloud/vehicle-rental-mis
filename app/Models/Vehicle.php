@@ -102,7 +102,7 @@ class Vehicle extends Model
 
     public function routePrices()
     {
-        return $this->hasMany(TripRouteVehiclePrice::class);
+        return $this->hasMany(TripRouteVehiclePrice::class, 'vehicle_id');
     }
     public function getVehicleImageUrlAttribute()
     {

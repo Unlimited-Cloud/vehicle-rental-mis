@@ -12,7 +12,10 @@ class TripRoutesPriceImport implements ToModel, WithHeadingRow
 {
     public function model(array $row)
     {
-        $tripRoute = TripRoute::where('title', trim($row['route_title']))->first();
+        $tripRoute = TripRoute::where('title', $row['route_title'])
+            ->whereNull('deleted_at')
+            ->first();
+
         $vehicle = Vehicle::where('vehicle_name', trim($row['vehicle_name']))->first();
 
         if (!$tripRoute || !$vehicle) {

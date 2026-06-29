@@ -210,6 +210,10 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('faq', FaqController::class);
         Route::resource('fuel-type', FuelTypeController::class);
         Route::resource('vehicle-security-features', VehicleSecurityFeatureController::class);
+        Route::get('trip-routes-vehicle-prices/vehicle-view', [TripRouteVehiclePriceController::class, 'vehicleView'])
+            ->name('trip-routes-vehicle-prices.vehicle-view');
+        Route::get('trip-routes-price-upload', [TripRouteController::class, 'uploadTripPrice'])->name('trip-routes-price.upload');
+        Route::post('trip-routes-price-import', [TripRouteController::class, 'importRoutePrice'])->name('trip-routes-price.import');
         Route::resource('trip-routes-vehicle-prices', TripRouteVehiclePriceController::class);
         Route::resource('agents', AgentController::class);
 

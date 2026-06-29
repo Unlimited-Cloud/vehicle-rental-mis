@@ -29,6 +29,32 @@ class TripRouteVehiclePriceController extends Controller
             compact('prices')
         );
     }
+    public function vehicleView()
+    {
+        // Gate::authorize('index_trip_route_vehicle_prices');
+
+        // Get ALL vehicles with their prices - DON'T FILTER
+        $vehicles = Vehicle::with([
+            'routePrices' => function ($query) {
+                $query->with(['tripRoute.category']);
+            }
+        ])->get();
+
+        // Get all categories for filter
+        $categories = TripCategory::where('deleted_at', null)->get();
+
+        // Get ALL prices - DON'T FILTER BY VEHICLE
+        $prices = TripRouteVehiclePrice::with([
+            'tripRoute.category',
+            'vehicle'
+        ])->get();
+
+
+        return view(
+            'layouts.admin.trip_route_vehicle_prices.vehicle-view',
+            compact('vehicles', 'categories', 'prices')
+        );
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -119,6 +145,14 @@ class TripRouteVehiclePriceController extends Controller
         return redirect()
             ->route('admin.trip-routes-vehicle-prices.index')
             ->with('success', 'Price updated successfully');
+    }
+
+    public function show()
+    {
+        $categories = TripCategory::with(['routes'])->get();
+        $vehicles = Vehicle::get();
+
+        return view('layouts.admin.trip_routes.show', compact('categories', 'vehicles'));
     }
 
     /**

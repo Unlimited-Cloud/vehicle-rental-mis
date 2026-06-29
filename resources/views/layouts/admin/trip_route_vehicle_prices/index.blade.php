@@ -21,6 +21,10 @@
                class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Price
             </a>
+            <a href="{{ route('admin.trip-routes-vehicle-prices.vehicle-view') }}"
+               class="btn btn-success">
+                <i class="fas fa-car"></i> Vehicle Wise Price View
+            </a>
         </div>
 
         <div class="card">
@@ -72,6 +76,8 @@
                                    class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
+
+                              
 
                                 <form
                                     action="{{ route('admin.trip-routes-vehicle-prices.destroy',$price->id) }}"

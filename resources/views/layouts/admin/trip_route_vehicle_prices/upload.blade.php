@@ -3,7 +3,7 @@
 @section('dynamicdata')
 <div class="content-header">
     <div class="container-fluid">
-        <h1>Upload Trip Routes</h1>
+        <h1>Upload Trip Routes Prices</h1>
     </div>
 </div>
 
@@ -14,11 +14,11 @@
         <div class="card-body">
             @include('layouts.admin_theme.alert')
 
-            <form action="{{ route('admin.trip-routes.import') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.trip-routes-price.import') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="form-group">
                     <label>Select Excel File</label>
-                    <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls" required>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Upload</button>
             </form>

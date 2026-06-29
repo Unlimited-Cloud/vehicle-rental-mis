@@ -116,22 +116,29 @@ class TripRouteController extends Controller
         return redirect()->back()->with('success', 'Trip routes uploaded successfully!');
     }
 
-
-    public function importRoutePrice(Request $request)
-    {
-        $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls'
-        ]);
-
-        Excel::import(new TripRoutesPriceImport, $request->file('excel_file'));
-
-        return redirect()->back()->with('success', 'Trip routes price uploaded successfully!');
-    }
-
     public function upload()
     {
         return view('layouts.admin.trip_routes.upload'); // Blade file path
     }
+
+
+    public function importRoutePrice(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        Excel::import(new TripRoutesPriceImport, $request->file('file'));
+
+        return redirect()->back()->with('success', 'Trip routes price uploaded successfully!');
+    }
+
+    public function uploadTripPrice()
+    {
+        return view('layouts.admin.trip_route_vehicle_prices.upload'); // Blade file path
+    }
+
+
 
     public function storeAjax(Request $request)
     {

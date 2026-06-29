@@ -1367,67 +1367,81 @@ class BookingController extends Controller
             'data' => $data
         ]);
     }
-    // public function getTripPrice(Request $request)
-    // {
-    //     $validator = Validator::make(
-    //         $request->all(),
-    //         [
-    //             'vehicle_id' => 'required|exists:vehicles,id',
-    //             'trip_category_id' => 'required|exists:trip_categories,id',
-    //             'trip_route_id' => 'required|exists:trip_routes,id',
-    //         ]
-    //     );
-
-    //     if ($validator->fails()) {
-
-    //         return response()->json([
-    //             'status' => 'error', // Name of the status
-    //             'message' => $validator->errors()
-    //         ], 422);
-    //     }
-
-    //     $vehicle = Vehicle::findOrFail($request->vehicle_id);
-    //     if (!$vehicle) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Vehicle not found'
-    //         ], 404);
-    //     }
-    //     $tripCategory = TripCategory::findOrFail($request->trip_category_id);
-    //     $route = TripRoute::findOrFail($request->trip_route_id);
-
-    //     if (!$route) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'route not found'
-    //         ], 404);
-    //     }
-
-    //     // Map vehicle_type to price column
-    //     $priceColumn = match (strtolower($vehicle->vehicle_type)) {
-    //         'car' => 'car_price',
-    //         'hiace' => 'hiace_price',
-    //         'coaster' => 'coaster_price',
-    //         'bus' => 'bus_price',
-    //         'van' => 'van_price',
-    //         default => 'other_price',
-    //     };
-
-    //     $price = $route->$priceColumn;
-
-
-
-    //     return response()->json([
-    //         'vehicle_name' => $vehicle->vehicle_name,
-    //         'vehicle_type' => $vehicle->vehicle_type,
-    //         'trip_category' => $tripCategory->name,
-    //         'route_name' => $route->title,
-    //         'price' => $price,
-    //     ]);
-    // }
-
-
     public function getTripPrice(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'trip_category_id' => 'required|exists:trip_categories,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
+            ]
+        );
+
+        if ($validator->fails()) {
+
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+        if (!$vehicle) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Vehicle not found'
+            ], 404);
+        }
+        $tripCategory = TripCategory::findOrFail($request->trip_category_id);
+        $route = TripRoute::findOrFail($request->trip_route_id);
+
+        if (!$route) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'route not found'
+            ], 404);
+        }
+
+        // Map vehicle_type to price column
+        $priceColumn = match (strtolower($vehicle->vehicle_type)) {
+            'car' => 'car_price',
+            'hiace' => 'hiace_price',
+            'coaster' => 'coaster_price',
+            'bus' => 'bus_price',
+            'van' => 'van_price',
+            default => 'other_price',
+        };
+
+        $price = $route->$priceColumn;
+        if (!$price) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Price not configured for selected route and vehicle'
+            ], 404);
+        }
+
+        $price = $price;
+        $vatPercentage = 13;
+        $vatPrice = round(($price * $vatPercentage) / 100, 2);
+        $totalPrice = round($price + $vatPrice, 2);
+
+
+
+        return response()->json([
+            'status' => 'success',
+            'vehicle_name' => $vehicle->vehicle_name,
+            'vehicle_type' => $vehicle->vehicle_type,
+            'trip_category' => $tripCategory->name,
+            'route_name' => $route->title,
+            'price' => $price,
+            'vat_price' => number_format($vatPrice, 2),
+            'total_price' => number_format($totalPrice, 2),
+        ]);
+    }
+
+
+    public function getTripPriceNew(Request $request)
     {
         $validator = Validator::make(
             $request->all(),
