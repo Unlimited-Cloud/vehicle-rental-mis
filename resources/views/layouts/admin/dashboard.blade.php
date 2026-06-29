@@ -206,9 +206,10 @@
                                         <th style="font-size: 0.9rem; font-weight: 600;">#</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Vehicle</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Customer</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Driver</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Route</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Start Date</th>
-                                        <th style="font-size: 0.9rem; font-weight: 600;">End Date</th>
+                                        <th style="font-size: 0.9rem; font-weight: 600;">Start Time</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Total Amount</th>
                                         <th style="font-size: 0.9rem; font-weight: 600;">Status</th>
                                     </tr>
@@ -223,9 +224,10 @@
                                         <td>{{ $index + 1 }}</td>
                                         <td>{{ $booking->vehicle->vehicle_name ?? 'N/A' }}</td>
                                         <td>{{ $booking->customer->name ?? 'N/A' }}</td>
+                                        <td>{{ $booking->driver->user->name ?? 'N/A' }}</td>
                                         <td>{{ $booking->tripRoute->title ?? 'N/A' }}</td>
                                         <td>{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($booking->start_time)->format('h:i A') }}</td>
                                         <td>{{ $booking->total_amount ?? 'N/A' }}</td>
                                         <td>
                                             <span class="badge badge-{{ $statusColor }}">
