@@ -139,7 +139,7 @@
                             <div class="input-group">
                                 <input type="number" name="commission_rate" class="form-control" 
                                        placeholder="0.00" step="0.01" min="0" max="100"
-                                       value="{{ old('commission_rate', $vehicleowner->commission_rate ?? '') }}">
+                                       value="{{ old('commission_rate', $vehicleowner->commission_rate ?? '15') }}">
                                 <div class="input-group-append">
                                     <span class="input-group-text"><i class="fas fa-percent"></i></span>
                                 </div>

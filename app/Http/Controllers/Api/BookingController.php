@@ -1007,7 +1007,7 @@ class BookingController extends Controller
 
     public function brands()
     {
-        $usedBrands = Vehicle::distinct()->pluck('brand');
+        $usedBrands = Vehicle::where('status', 1)->distinct()->pluck('brand');
 
         $brands = Brand::select('id', 'name', 'logo')
             ->whereIn('name', $usedBrands)
@@ -1037,7 +1037,7 @@ class BookingController extends Controller
 
         foreach ($brands as $brand) {
 
-            $vehicles = Vehicle::where('brand', $brand->name)->get();
+            $vehicles = Vehicle::where('brand', $brand->name)->where('status', 1)->get();
 
             $data[] = [
                 'brand' => $brand->name,
@@ -1070,6 +1070,7 @@ class BookingController extends Controller
 
         // match with vehicle.brand (string)
         $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(brand) = ?', [strtolower($brand->name)])
+            ->where('status', 1)
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -1131,6 +1132,7 @@ class BookingController extends Controller
 
         // match with vehicle.brand (string)
         $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(seater) = ?', [strtolower($seater->name)])
+            ->where('status', 1)
             ->get();
 
 
@@ -1197,6 +1199,7 @@ class BookingController extends Controller
 
         // match with vehicle.brand (string)
         $vehicles = Vehicle::withAvg('reviews', 'rating')->whereRaw('LOWER(fuel_type) = ?', [strtolower($transmission->name)])
+            ->where('status', 1)
             ->get();
 
         if ($vehicles->isEmpty()) {
@@ -1263,7 +1266,7 @@ class BookingController extends Controller
         ]);
 
         // get vehicles by seater
-        $vehicles = Vehicle::withAvg('reviews', 'rating')->where('seater', $request->seater)->get();
+        $vehicles = Vehicle::withAvg('reviews', 'rating')->where('seater', $request->seater)->where('status', 1)->get();
 
         if ($vehicles->isEmpty()) {
             return response()->json([
@@ -1406,6 +1409,7 @@ class BookingController extends Controller
         $priceColumn = match (strtolower($vehicle->vehicle_type)) {
             'car' => 'car_price',
             'hiace' => 'hiace_price',
+            'van' => 'hiace_price',
             'coaster' => 'coaster_price',
             'bus' => 'bus_price',
             'van' => 'van_price',
