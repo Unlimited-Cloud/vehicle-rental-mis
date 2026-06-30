@@ -2108,7 +2108,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => true,
-                'message' => 'Cash booking completed successfully.',
+                'message' => 'Cash onboard successfully. please pay while onboard. Thank you !.',
                 'payment_id' => $payment->id,
             ]);
         } catch (\Exception $e) {
@@ -2122,6 +2122,75 @@ class BookingController extends Controller
         }
     }
 
+    public function completeCodPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'booking_id' => 'required|exists:vehicle_bookings,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $booking = VehicleBooking::findOrFail($request->booking_id);
+
+            $payment = Payment::where('vehicle_booking_id', $booking->id)
+                ->where('payment_method', 'cash')
+                ->where('payment_type', 'booking')
+                ->first();
+
+            $customer = Customer::findOrFail($booking->customer_id);
+
+            if (!$payment) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Cash payment record not found.',
+                ], 404);
+            }
+
+            if ($payment->status === 'completed') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Cash payment has already been completed.',
+                ], 400);
+            }
+
+            // Complete payment
+            $payment->update([
+                'status' => 'completed',
+                'payment_date' => now(),
+            ]);
+
+            // Update booking payment status
+            $booking->update([
+                'payment_status' => 1,
+            ]);
+
+            event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Cash payment completed successfully.',
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
     public function vehicleSorting(Request $request)
