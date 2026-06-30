@@ -137,7 +137,7 @@
             <input type="datetime-local"
                    name="start_datetime"
                    class="form-control"
-                   value="{{ \Carbon\Carbon::parse($booking->start_date)->format('Y-m-d\TH:i') }}"
+                  value="{{ \Carbon\Carbon::parse($booking->start_date . ' ' . $booking->start_time)->format('Y-m-d\TH:i') }}"
                    required>
         </div>
     </div>
