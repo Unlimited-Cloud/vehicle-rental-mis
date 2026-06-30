@@ -30,6 +30,20 @@ class AuthController extends Controller
         return VehicleRentalUtilities::jsonResponse($data);
     }
 
+    public function resendOtpPasscode(Request $request)
+    {
+        $response = $this->authService->resendOtpPasscode($request);
+
+        return response()->json(
+            [
+                'status' => $response['status'],
+                'message' => $response['message'],
+                'data' => $response['data'] ?? []
+            ],
+            $response['statusCode']
+        );
+    }
+
     public function login(Request $request)
     {
         $data = $this->authService->appLogin($request);
