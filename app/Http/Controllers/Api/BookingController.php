@@ -2195,8 +2195,8 @@ class BookingController extends Controller
 
     public function vehicleSorting(Request $request)
     {
-        $sortBy = $request->get('sort_by');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->input('sort_by');
+        $sortOrder = $request->input('sort_order', 'asc');
 
         $vehicles = Vehicle::query();
 
@@ -2239,9 +2239,11 @@ class BookingController extends Controller
                 break;
         }
 
+        $vehicles = $vehicles->get();
+
         return response()->json([
             'success' => true,
-            'data' => $vehicles->paginate(10)
+            'data' => $vehicles
         ]);
     }
 
