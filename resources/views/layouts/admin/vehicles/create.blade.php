@@ -56,7 +56,7 @@
                     <label>Vehicle Type *</label>
                     <select name="vehicle_type" class="form-control">
                         <option value="car" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='car'?'selected':'' }}>Car</option>
-                        <option value="hiace" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='hiace'?'selected':'' }}>Hiace</option>
+                        <option value="van" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='van'?'selected':'' }}>Van</option>
                         <option value="coaster" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='coaster'?'selected':'' }}>Coaster</option>
                         <option value="bus" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='bus'?'selected':'' }}>Bus</option>
                         <option value="other" {{ old('vehicle_type',$vehicle->vehicle_type ?? '')=='other'?'selected':'' }}>Other</option>

@@ -138,6 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
         [BookingController::class, 'codPayment']
     );
 
+    Route::post('/complete-cod-payment', [BookingController::class, 'completeCodPayment']);
 
 
     Route::prefix('gps')->group(function () {
@@ -164,6 +165,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/vehicle-distance-from-gps', [GpsController::class, 'vehicleDistanceFromGps']);
     });
 });
+Route::post('/complete-cod-payment-dashboard', [BookingController::class, 'completeCodPayment']);
 Route::get(
     '/khalti/confirm',
     [KhaltiPaymentController::class, 'confirmPayment']
