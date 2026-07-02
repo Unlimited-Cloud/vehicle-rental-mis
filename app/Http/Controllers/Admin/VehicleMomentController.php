@@ -78,7 +78,6 @@ class VehicleMomentController extends Controller
             ->where('vb.id', $request->booking_id)
             ->first();
 
-
         if (!$booking) {
             abort(404, 'Booking not found');
         }
@@ -121,7 +120,37 @@ class VehicleMomentController extends Controller
             ->orderBy('sort_order')
             ->get();
 
-        return view('layouts.admin.vehicle_moments.create', compact('booking', 'vehicles', 'drivers', 'helpers', 'questionnaires', 'tripCategories', 'tripRoutes'));
+        // Initialize allowance variables
+        $driverAllowance = 0;
+        $driverSalary = 0;
+        $driverBonus = 0;
+        $driverDeduction = 0;
+        $driverRemarks = '';
+        $helperAllowance = 0;
+        $helperSalary = 0;
+        $helperBonus = 0;
+        $helperDeduction = 0;
+        $helperRemarks = '';
+
+        return view('layouts.admin.vehicle_moments.create', compact(
+            'booking',
+            'vehicles',
+            'drivers',
+            'helpers',
+            'questionnaires',
+            'tripCategories',
+            'tripRoutes',
+            'driverAllowance',
+            'driverSalary',
+            'driverBonus',
+            'driverDeduction',
+            'driverRemarks',
+            'helperAllowance',
+            'helperSalary',
+            'helperBonus',
+            'helperDeduction',
+            'helperRemarks'
+        ));
     }
 
     public function store(Request $request)
@@ -186,7 +215,6 @@ class VehicleMomentController extends Controller
             ->where('cp.role', 'helper')
             ->get();
 
-
         // Get Trip Categories
         $tripCategories = DB::table('trip_categories')
             ->select('id', 'name')
@@ -198,7 +226,6 @@ class VehicleMomentController extends Controller
             ->select('id', 'title')
             ->where('status', 1)
             ->get();
-
 
         // Questionnaires
         $questionnaires = DB::table('questionnaires')
@@ -212,6 +239,30 @@ class VehicleMomentController extends Controller
             ->where('vehicle_moment_id', $id)
             ->pluck('answer', 'questionnaire_id');
 
+        // Fetch existing attendance/allowance data for driver
+        $driverAttendance = DB::table('attendance')
+            ->where('vehicle_moment_id', $id)
+            ->where('crew_id', $booking->driver_id)
+            ->first();
+
+        $driverAllowance = $driverAttendance->allowances ?? 0;
+        $driverSalary = $driverAttendance->salary_amount ?? 0;
+        $driverBonus = $driverAttendance->bonus ?? 0;
+        $driverDeduction = $driverAttendance->deduction ?? 0;
+        $driverRemarks = $driverAttendance->remarks ?? '';
+
+        // Fetch existing attendance/allowance data for helper
+        $helperAttendance = DB::table('attendance')
+            ->where('vehicle_moment_id', $id)
+            ->where('crew_id', $booking->helper_id)
+            ->first();
+
+        $helperAllowance = $helperAttendance->allowances ?? 0;
+        $helperSalary = $helperAttendance->salary_amount ?? 0;
+        $helperBonus = $helperAttendance->bonus ?? 0;
+        $helperDeduction = $helperAttendance->deduction ?? 0;
+        $helperRemarks = $helperAttendance->remarks ?? '';
+
         return view('layouts.admin.vehicle_moments.create', compact(
             'moment',
             'booking',
@@ -221,7 +272,17 @@ class VehicleMomentController extends Controller
             'questionnaires',
             'answers',
             'tripCategories',
-            'tripRoutes'
+            'tripRoutes',
+            'driverAllowance',
+            'driverSalary',
+            'driverBonus',
+            'driverDeduction',
+            'driverRemarks',
+            'helperAllowance',
+            'helperSalary',
+            'helperBonus',
+            'helperDeduction',
+            'helperRemarks'
         ));
     }
 

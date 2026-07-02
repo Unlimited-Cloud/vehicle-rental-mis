@@ -55,7 +55,7 @@ class AttendanceController extends Controller
             ->when($request->end_date, function ($query) use ($request) {
                 return $query->whereDate('attendance_date', '<=', $request->end_date);
             })
-            ->orderBy('attendance_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
 
@@ -299,6 +299,7 @@ class AttendanceController extends Controller
             'salary_amount' => 'nullable|numeric',
             'bonus' => 'nullable|numeric',
             'deduction' => 'nullable|numeric',
+            'allowances' => 'nullable|numeric',
             'remarks' => 'nullable|string',
             'booking_id' => 'nullable|exists:vehicle_bookings,id',
             'vehicle_moment_id' => 'nullable|exists:vehicle_moments,id',
@@ -316,6 +317,7 @@ class AttendanceController extends Controller
             'attendance_date' => $request->attendance_date,
             'status' => $request->status,
             'salary_amount' => $salaryAmount,
+            'allowances' => $request->allowances,
             'bonus' => $bonus,
             'deduction' => $deduction,
             'net_amount' => $netAmount,
