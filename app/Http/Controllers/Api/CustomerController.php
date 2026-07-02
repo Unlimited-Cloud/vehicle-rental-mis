@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
@@ -79,19 +80,36 @@ class CustomerController extends Controller
 
     public function forgotPassword(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:customers,email'
         ]);
 
-        if($request->email == 'testloginvehiclerental@gmail.com'){
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+
+        if ($request->email == 'testloginvehiclerental@gmail.com') {
             $otp = '549862';
-        }else{
+        } else {
             $otp = random_int(100000, 999999);
         }
 
         $passcode = Passcode::where('email', $request->email)->where('requested_at', '>=', now())->orderBy('id', 'desc')->first();
 
-        $customerId = Customer::where('email', $request->email)->first()->id;
+        $customers = Customer::where('email', $request->email)->first();
+        if (!$customers) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found'
+            ], 404);
+        }
+        $customerId = $customers ? $customers->id : null;
 
         if ($passcode) {
 
@@ -355,5 +373,42 @@ class CustomerController extends Controller
             'success' => true,
             'data' => $data
         ]);
+    }
+
+
+    public function deleteAccount(Request $request)
+    {
+        try {
+            $customer = Customer::where('customer_uuid', $request->customer_id)->first();
+
+            if (!$customer) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Customer not found.'
+                ], 404);
+            }
+
+            if ($customer->deleted_at) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Customer account has already been deleted.'
+                ], 400);
+            }
+
+            $customer->update([
+                'deleted_at' => Carbon::now(),
+                'deleted_by' => $customer->id,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Customer account deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
