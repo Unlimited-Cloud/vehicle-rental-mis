@@ -32,6 +32,8 @@ class Customer extends Model
         'country_id',
         'district_id',
         'vdc_id',
+        'deleted_at',
+        'deleted_by',
     ];
 
     protected $casts = [
@@ -71,5 +73,12 @@ class Customer extends Model
     public function getProfileImageUrlAttribute()
     {
         return $this->profile_image ? asset($this->profile_image) : null;
+    }
+
+    protected static function booted()
+    {
+        static::addGlobalScope('not_deleted', function ($builder) {
+            $builder->whereNull('customers.deleted_at');
+        });
     }
 }
