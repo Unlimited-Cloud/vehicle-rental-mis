@@ -22,7 +22,7 @@ class EsewaIbftService
 
     public function __construct()
     {
-        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? " https://corporate-authentication.esewa.com.np";
+        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? "https://corporate-authentication.esewa.com.np";
         $this->baseUrl = env('ESEWA_BASE_URL') ?? "https://corporateapi.esewa.com.np";
         $this->hmacKey = env('ESEWA_HMAC_KEY') ?? "ZXNld2Fjb3";  // production HMAC key
         $this->clientId = env('ESEWA_CLIENT_ID') ?? "CP0002006";
