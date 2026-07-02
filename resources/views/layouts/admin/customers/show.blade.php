@@ -46,6 +46,14 @@
                                     <div class="col-md-8">
                                         <h5 class="text-primary mb-3"><i class="fas fa-user-circle"></i> Personal Information</h5>
                                         <div class="row">
+                                             <div class="col-sm-6">
+                                                <div class="info-box bg-light">
+                                                    <div class="info-box-content">
+                                                        <span class="info-box-text text-muted">UUID</span>
+                                                        <span class="info-box-number">{{ $customer->customer_uuid }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="col-sm-6">
                                                 <div class="info-box bg-light">
                                                     <div class="info-box-content">

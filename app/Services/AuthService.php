@@ -44,7 +44,7 @@ class AuthService
     public function getOtpPasscodeAppLogin($request)
     {
         try {
-            Log::info("login request",["payload" => $request->all()]);
+            Log::info("login request", ["payload" => $request->all()]);
             $validator = Validator::make($request->all(), [
                 'username' => 'required|string',
                 'password' => 'required|string',
@@ -88,7 +88,7 @@ class AuthService
             $email = $customer->email;
             $user = $this->userRepository->getUserByEmail($email);
             $userId = $user->id;
-            
+
             if ($emailLogin == 1) {
 
                 $setup = PasscodeSetup::firstOrFail();
@@ -106,10 +106,10 @@ class AuthService
                         'otp' => 'OTP request limit reached. Try again later.'
                     ]);
                 }
-                
-                if($user->email == 'testloginvehiclerental@gmail.com'){
+
+                if ($user->email == 'testloginvehiclerental@gmail.com') {
                     $otp = '549862';
-                }else{
+                } else {
                     $otp = random_int(100000, 999999);
                 }
 
@@ -154,6 +154,133 @@ class AuthService
                 'data' => '',
                 'statusCode' => 500
             );
+        }
+    }
+
+    public function resendOtpPasscode($request)
+    {
+        try {
+
+            $validator = Validator::make($request->all(), [
+                'username' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return [
+                    'status' => 'error',
+                    'message' => $validator->errors()->first(),
+                    'statusCode' => 422
+                ];
+            }
+
+            $username = $request->username;
+
+            $emailLogin = false;
+            $customer = $this->customerRepository->getCustomerByEmail($username);
+
+            if ($customer) {
+                $emailLogin = true;
+            } else {
+                $customer = $this->customerRepository->getCustomerByMobileNumber($username);
+            }
+
+            if (!$customer) {
+                return [
+                    'status' => 'error',
+                    'message' => 'Customer not found.',
+                    'statusCode' => 404
+                ];
+            }
+
+            $user = $this->userRepository->getUserByEmail($customer->email);
+
+            if (!$user) {
+                return [
+                    'status' => 'error',
+                    'message' => 'User not found.',
+                    'statusCode' => 404
+                ];
+            }
+
+            if ($emailLogin) {
+
+                $setup = PasscodeSetup::first();
+
+                $windowStart = now()->subMinutes($setup->window_minutes);
+
+                $recent = Passcode::where('email', $user->email)
+                    ->where('requested_at', '>=', $windowStart)
+                    ->latest()
+                    ->first();
+
+                $requestCount = $recent ? $recent->request_count + 1 : 1;
+
+                if ($requestCount > $setup->max_requests) {
+                    return [
+                        'status' => 'error',
+                        'message' => 'Passcode request limit reached. Please try again later.',
+                        'statusCode' => 429
+                    ];
+                }
+
+                $passcode = $user->email == 'testloginvehiclerental@gmail.com'
+                    ? '549862'
+                    : random_int(100000, 999999);
+
+                Passcode::create([
+                    'user_id'       => $user->id,
+                    'email'         => $user->email,
+                    'passcode'      => $passcode,
+                    'requested_at'  => now(),
+                    'request_count' => $requestCount,
+                    'attempt_count' => 0,
+                    'locked_until'  => null,
+                ]);
+
+                event(new EmailEvent(
+                    $user->email,
+                    'passcode',
+                    'success',
+                    'customer'
+                ));
+
+                return [
+                    'status' => 'success',
+                    'message' => 'Passcode resent successfully.',
+                    'statusCode' => 200
+                ];
+            }
+
+            // Mobile OTP
+
+            $fullMobileNumber = $customer->mobile_number_country_code . ' ' . $customer->phone;
+
+            $smsService = new SmsEvent(
+                $fullMobileNumber,
+                'login_otp',
+                'customer',
+                $user->id
+            );
+
+            $smsService->handle();
+
+            return [
+                'status' => 'success',
+                'message' => 'OTP resent successfully.',
+                'statusCode' => 200
+            ];
+        } catch (\Exception $e) {
+
+            Log::error('Resend OTP Error', [
+                'message' => $e->getMessage(),
+                'line' => $e->getLine()
+            ]);
+
+            return [
+                'status' => 'error',
+                'message' => 'Internal Server Error',
+                'statusCode' => 500
+            ];
         }
     }
 

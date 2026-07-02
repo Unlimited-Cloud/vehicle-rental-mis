@@ -203,15 +203,16 @@
         <table id="dataTable" class="table table-bordered table-striped show-search-bar">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>File No.</th>
-                    <th>Vehicle</th>
-                    <th>Customer</th>
-                    <th>Trip Route</th>
                     <th>Start Date (AD/BS)</th>
-                    <th>End Date (AD/BS)</th>
+                    <th>Start Time</th>
+                    <th>Customer</th>
+                    <th>File No</th>
+                    <th>Trip Route</th>
                     <th>Rate & Total</th>
-                    <th>Moment</th>
+                    <th>Vehicle</th>
+                    <th>Driver</th>
+                    <th>Helper</th>
+                    <th>Mvmt</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -231,55 +232,75 @@
                         $passengerName = $booking->passenger_name ?? ($booking->customer->name ?? 'N/A');
                     @endphp
                     <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
-                        <td>{{ $i+1 }}</td>
-                        <td>
-                           {{$fileNo}} 
-                            {{-- <span class="badge badge-secondary" style="white-space: normal;">
-                                {!! wordwrap($fileNo, 10, '&#8203;', true) !!}
-                            </span> --}}
-                        </td>
-                        <td>
-                            <div style="display: flex; align-items: center;">
-                                <div style="width:12px;height:12px; background:#{{ substr(md5($booking->vehicle_id),0,6) }}; border-radius:3px; margin-right:6px;"></div>
-                                {{ $booking->vehicle->vehicle_name ?? '' }}
-                            </div>
-                        </td>
-                        <td>{{ $passengerName }}</td>
-                       <td>
-                            {{ $booking->tripRoute->title ?? '-' }}
-                        </td>
-                        <td class="start-date-cell">
-                            <span class="ad-date">{{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}</span>
-                            <br>
-                            <small class="bs-date text-muted">Loading...</small>
-                        </td>
-                        <td class="end-date-cell">
-                            <span class="ad-date">{{ \Carbon\Carbon::parse($booking->end_date)->format('M d, Y') }}</span>
-                            <br>
-                            <small class="bs-date text-muted">Loading...</small>
-                        </td>
-                        <td>
-                            <div class="text-right">
-                                <div>
-                                    <small class="text-muted">Rate/day:</small>
-                                    <span class="font-weight-bold">
-                                        {{ number_format($booking->rate_per_day ?? 0, 2) }}
-                                    </span>
-                                </div>
-                                <div class="mt-1">
-                                    <small class="text-muted">Total:</small>
-                                    <span class="font-weight-bold text-success">
-                                        {{ number_format($booking->total_amount ?? 0, 2) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </td>
-                     <td>{!! $booking->is_moment_started ? '&#10004;' : '&#10008;' !!}</td>
-                        <td>
-                            <span class="badge" style="background-color: {{ $statusColor }}; color: white; padding: 5px 10px;">
-                                {{ ucfirst($booking->status) }}
-                            </span>
-                        </td>
+                    <td class="start-date-cell">
+        <span class="ad-date">
+            {{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}
+        </span>
+        <br>
+        <small class="bs-date text-muted">Loading...</small>
+    </td>
+
+    {{-- Start Time --}}
+    <td>
+        {{ \Carbon\Carbon::parse($booking->start_time)->format('h:i A') }}
+    </td>
+
+    {{-- Customer --}}
+    <td>{{ $passengerName }}</td>
+
+    {{-- File No --}}
+    <td>{{ $fileNo }}</td>
+
+    {{-- Trip Route --}}
+    <td>{{ $booking->tripRoute->title ?? '-' }}</td>
+
+    {{-- Rate & Total --}}
+    <td>
+        <div class="text-right">
+            <div>
+                <small class="text-muted">Rate:</small>
+                <strong>{{ number_format($booking->rate_per_day ?? 0, 2) }}</strong>
+            </div>
+
+            <div>
+                <small class="text-muted">Total:</small>
+                <strong class="text-success">
+                    {{ number_format($booking->total_amount ?? 0, 2) }}
+                </strong>
+            </div>
+        </div>
+    </td>
+
+    {{-- Vehicle --}}
+    <td>
+        <div style="display:flex;align-items:center;">
+            <div style="width:12px;height:12px;background:#{{ substr(md5($booking->vehicle_id),0,6) }};border-radius:3px;margin-right:6px;"></div>
+            {{ $booking->vehicle->vehicle_name ?? '-' }}
+        </div>
+    </td>
+
+    {{-- Driver --}}
+    <td>
+        {{ $booking->driver->user->name ?? '-' }}
+    </td>
+
+    {{-- Helper --}}
+    <td>
+        {{ $booking->helper->user->name ?? '-' }}
+    </td>
+
+    {{-- Movement --}}
+    <td class="text-center">
+        {!! $booking->is_moment_started ? '&#10004;' : '&#10008;' !!}
+    </td>
+
+    {{-- Status --}}
+    <td>
+        <span class="badge"
+              style="background-color: {{ $statusColor }}; color:white;">
+            {{ ucfirst($booking->status) }}
+        </span>
+    </td>
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">

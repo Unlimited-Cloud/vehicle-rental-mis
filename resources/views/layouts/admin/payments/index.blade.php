@@ -331,6 +331,15 @@
                             class="btn btn-info btn-sm">
                                 <i class="fas fa-eye"></i>
                             </a>
+                            @if($payment->payment_method === 'cash' && $payment->status !== 'completed')
+                            <button type="button" 
+                                    class="btn btn-success btn-sm complete-cod-btn"
+                                    data-payment-id="{{ $payment->id }}"
+                                    data-booking-id="{{ $payment->vehicle_booking_id }}"
+                                    data-status="{{ $payment->status }}">
+                                <i class="fas fa-check-circle"></i> Complete COD
+                            </button>
+                            @endif
                            
                             <form action="{{ route('admin.payments.destroy', [
             'method' => $payment->payment_method,
@@ -367,70 +376,165 @@
 </section>
 @endsection
 
-@push('scripts')
+@section('scripts')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 $(document).ready(function() {
-    // ← Add id="paymentsTable" to your <table> in the blade, then:
-       $('#dataTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true
+    // Initialize DataTable
+    if ($.fn.DataTable.isDataTable('#dataTable')) {
+        $('#dataTable').DataTable().destroy();
+    }
+    $('#dataTable').DataTable({
+        paging: true,
+        lengthChange: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        autoWidth: false,
+        responsive: true
     });
 
-    // Monthly Chart
-    const ctx = document.getElementById('monthlyChart').getContext('2d');
-    const monthlyData = @json($monthlyData);
+    // Monthly Chart - Only initialize if the element exists
+    const monthlyChartElement = document.getElementById('monthlyChart');
+    if (monthlyChartElement) {
+        const ctx = monthlyChartElement.getContext('2d');
+        const monthlyData = @json($monthlyData);
 
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: monthlyData.map(d => d.month),
-            datasets: [
-                {
-                    label: 'Income',
-                    data: monthlyData.map(d => d.income),
-                    backgroundColor: 'rgba(40, 167, 69, 0.5)',
-                    borderColor: '#28a745',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Expense',
-                    data: monthlyData.map(d => d.expense),
-                    backgroundColor: 'rgba(220, 53, 69, 0.5)',
-                    borderColor: '#dc3545',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'रु ' + value.toLocaleString();
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(d => d.month),
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: monthlyData.map(d => d.income),
+                        backgroundColor: 'rgba(40, 167, 69, 0.5)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expense',
+                        data: monthlyData.map(d => d.expense),
+                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'रु ' + value.toLocaleString();
+                            }
                         }
                     }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return context.dataset.label + ': रु ' + context.raw.toLocaleString();
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': रु ' + context.raw.toLocaleString();
+                            }
                         }
                     }
                 }
             }
+        });
+    }
+
+    // Handle Complete COD Payment button click
+    $(document).on('click', '.complete-cod-btn', function(e) {
+        e.preventDefault();
+        
+        const $btn = $(this);
+        const paymentId = $btn.data('payment-id');
+        const bookingId = $btn.data('booking-id');
+        const currentStatus = $btn.data('status');
+        
+        // Check if booking ID exists
+        if (!bookingId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No booking ID found for this payment.'
+            });
+            return;
         }
+
+        // Confirm action
+        Swal.fire({
+            title: 'Complete COD Payment?',
+            text: `Are you sure you want to complete this Cash on Delivery payment for Booking #${bookingId}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, complete payment!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Disable button and show loading state
+                $btn.prop('disabled', true);
+                $btn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+                // Make API call
+                $.ajax({
+                    url: '/api/complete-cod-payment-dashboard',
+                    method: 'POST',
+                    data: {
+                        booking_id: bookingId
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Payment Completed!',
+                            text: response.message || 'Cash on Delivery payment has been completed successfully.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload page to reflect changes
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        // Re-enable button
+                        $btn.prop('disabled', false);
+                        $btn.html('<i class="fas fa-check-circle"></i> Complete COD');
+                        
+                        // Show error message
+                        let errorMessage = 'Failed to complete COD payment. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage
+                        });
+                    }
+                });
+            }
+        });
     });
 });
 </script>
-@endpush
+@endsection

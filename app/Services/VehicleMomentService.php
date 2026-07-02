@@ -26,18 +26,15 @@ class VehicleMomentService
             )
             ->leftJoin('vehicle_bookings as vb', 'vb.id', '=', 'vm.booking_id')
             ->leftJoin('vehicles as v', 'v.id', '=', 'vb.vehicle_id')
-
             ->leftJoin('crew_profiles as cp_driver', 'cp_driver.id', '=', 'vb.driver_id')
             ->leftJoin('users as d', 'd.id', '=', 'cp_driver.user_id')
-
             ->leftJoin('crew_profiles as cp_helper', 'cp_helper.id', '=', 'vb.helper_id')
             ->leftJoin('users as h', 'h.id', '=', 'cp_helper.user_id')
-
             ->leftJoin('customers as c', 'c.id', '=', 'vb.customer_id')
-
             ->orderBy('vm.created_at', 'desc')
             ->get();
     }
+
     /**
      * Store vehicle moment with questionnaire answers
      */
@@ -60,40 +57,25 @@ class VehicleMomentService
             }
 
             // Create vehicle moment
-            // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
 
-            //  NEW: Sync with booking if changed
+            // Sync with booking if changed
             if (!empty($data['booking_id'])) {
-
                 $booking = DB::table('vehicle_bookings')
                     ->where('id', $data['booking_id'])
                     ->first();
 
                 if ($booking) {
-
                     $updateData = [];
 
-                    // Check trip_category_id
-                    if (
-                        isset($data['trip_category_id']) &&
-                        $data['trip_category_id'] != $booking->trip_category_id
-                    ) {
-
+                    if (isset($data['trip_category_id']) && $data['trip_category_id'] != $booking->trip_category_id) {
                         $updateData['trip_category_id'] = $data['trip_category_id'];
                     }
 
-                    // Check trip_route_id
-                    if (
-                        isset($data['trip_route_id']) &&
-                        $data['trip_route_id'] != $booking->trip_route_id
-                    ) {
-
+                    if (isset($data['trip_route_id']) && $data['trip_route_id'] != $booking->trip_route_id) {
                         $updateData['trip_route_id'] = $data['trip_route_id'];
                     }
 
-
-                    // Only update if something changed
                     if (!empty($updateData)) {
                         DB::table('vehicle_bookings')
                             ->where('id', $booking->id)
@@ -101,12 +83,8 @@ class VehicleMomentService
                     }
                 }
 
-
-                if (
-                    !empty($vehicleMoment->booking_id) &&
-                    !empty($vehicleMoment->start_datetime) &&
-                    empty($vehicleMoment->end_datetime)
-                ) {
+                // Update booking status
+                if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->start_datetime) && empty($vehicleMoment->end_datetime)) {
                     DB::table('vehicle_bookings')
                         ->where('id', $vehicleMoment->booking_id)
                         ->update([
@@ -115,6 +93,16 @@ class VehicleMomentService
                         ]);
                 }
 
+                if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->end_datetime)) {
+                    DB::table('vehicle_bookings')
+                        ->where('id', $vehicleMoment->booking_id)
+                        ->update([
+                            'status' => 'completed',
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                // Create booking logs
                 if (!empty($vehicleMoment->start_datetime)) {
                     BookingLog::firstOrCreate(
                         [
@@ -128,20 +116,6 @@ class VehicleMomentService
                     );
                 }
 
-                if (
-                    !empty($vehicleMoment->booking_id) &&
-                    !empty($vehicleMoment->end_datetime)
-                ) {
-                    DB::table('vehicle_bookings')
-                        ->where('id', $vehicleMoment->booking_id)
-                        ->update([
-                            'status' => 'completed',
-                            'updated_at' => now(),
-                        ]);
-                }
-
-
-                // Completed Log
                 if (!empty($vehicleMoment->end_datetime)) {
                     BookingLog::firstOrCreate(
                         [
@@ -156,11 +130,8 @@ class VehicleMomentService
                 }
             }
 
-
-
-
-
-            // $this->storeAttendance($vehicleMoment, $data);
+            // Store allowances in attendance table
+            $this->storeAllowances($vehicleMoment, $data);
 
             // Save questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
@@ -168,7 +139,6 @@ class VehicleMomentService
             }
 
             DB::commit();
-
             return $vehicleMoment;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -187,11 +157,8 @@ class VehicleMomentService
 
             $vehicleMoment = VehicleMoment::findOrFail($id);
 
-
-
             // Handle image uploads
             if (isset($data['start_image']) && $data['start_image'] instanceof \Illuminate\Http\UploadedFile) {
-                // Delete old image if exists
                 if ($vehicleMoment->start_image) {
                     $this->deleteImage($vehicleMoment->start_image);
                 }
@@ -199,7 +166,6 @@ class VehicleMomentService
             }
 
             if (isset($data['end_image']) && $data['end_image'] instanceof \Illuminate\Http\UploadedFile) {
-                // Delete old image if exists
                 if ($vehicleMoment->end_image) {
                     $this->deleteImage($vehicleMoment->end_image);
                 }
@@ -207,24 +173,17 @@ class VehicleMomentService
             }
 
             if (isset($data['incident_image']) && $data['incident_image'] instanceof \Illuminate\Http\UploadedFile) {
-
                 if ($vehicleMoment->incident_image) {
                     $this->deleteImage($vehicleMoment->incident_image);
                 }
-
                 $data['incident_image'] = $this->uploadImage($data['incident_image'], 'incident');
             }
-
-
 
             // Update vehicle moment
             $vehicleMoment->update($data);
 
-
-            if (
-                !empty($vehicleMoment->booking_id) &&
-                !empty($vehicleMoment->end_datetime)
-            ) {
+            // Update booking status
+            if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->end_datetime)) {
                 DB::table('vehicle_bookings')
                     ->where('id', $vehicleMoment->booking_id)
                     ->update([
@@ -235,8 +194,6 @@ class VehicleMomentService
 
             $vehicleMoment->refresh();
             if (!empty($vehicleMoment->booking_id)) {
-
-                // Started Log
                 if (!empty($vehicleMoment->start_datetime)) {
                     BookingLog::firstOrCreate(
                         [
@@ -250,7 +207,6 @@ class VehicleMomentService
                     );
                 }
 
-                // Completed Log
                 if (!empty($vehicleMoment->end_datetime)) {
                     BookingLog::firstOrCreate(
                         [
@@ -265,27 +221,91 @@ class VehicleMomentService
                 }
             }
 
-            // DB::table('attendance')
-            //     ->where('vehicle_moment_id', $id)
-            //     ->delete();
-            // $this->storeAttendance($vehicleMoment, $data);
+            // Delete existing attendance records and recreate
+            DB::table('attendance')
+                ->where('vehicle_moment_id', $id)
+                ->delete();
+
+            $this->storeAllowances($vehicleMoment, $data);
 
             // Update questionnaire answers if present
             if (isset($data['answers']) && is_array($data['answers'])) {
-                // Delete existing answers
                 VehicleQuestionnaireAnswer::where('vehicle_moment_id', $vehicleMoment->id)->delete();
-                // Save new answers
                 $this->saveQuestionnaireAnswers($vehicleMoment->id, $data['answers']);
             }
 
             DB::commit();
-
             return $vehicleMoment;
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update vehicle moment: ' . $e->getMessage());
             throw $e;
         }
+    }
+
+    /**
+     * Store allowances in attendance table
+     */
+    private function storeAllowances($moment, array $data)
+    {
+        // Get attendance date
+        $attendanceDate = $data['attendance_date'] ?? now()->format('Y-m-d');
+
+        // If start_datetime is available, use it as attendance date
+        // if (!empty($moment->start_datetime)) {
+        //     $attendanceDate = \Carbon\Carbon::parse($moment->start_datetime)->format('Y-m-d');
+        // }
+
+        $attendanceRecords = [];
+
+        // Store driver allowance
+        $driverAllowance = $data['driver_allowance'] ?? 0;
+        if ($driverAllowance > 0 || !empty($data['driver_id'])) {
+            $driverAttendance = DB::table('attendance')->insert(
+                [
+                    'crew_id' => $data['driver_id'],
+                    'attendance_date' => $attendanceDate,
+                    'vehicle_moment_id' => $moment->id,
+                    'booking_id' => $moment->booking_id,
+                    'status' => 'present',
+                    'allowances' => $driverAllowance,
+                    'remarks' => $data['driver_remarks'] ?? ' (Driver)',
+                    // 'salary_amount' => $data['driver_salary_amount'] ?? 0,
+                    // 'bonus' => $data['driver_bonus'] ?? 0,
+                    // 'deduction' => $data['driver_deduction'] ?? 0,
+                    // 'net_amount' => ($data['driver_salary_amount'] ?? 0) + ($data['driver_bonus'] ?? 0) - ($data['driver_deduction'] ?? 0) + $driverAllowance,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            $attendanceRecords[] = $driverAttendance;
+        }
+
+        // Store helper allowance
+        $helperAllowance = $data['helper_allowance'] ?? 0;
+        if (!empty($data['helper_id']) && ($helperAllowance > 0 || !empty($data['helper_id']))) {
+            $helperAttendance = DB::table('attendance')->insert(
+                [
+                    'crew_id' => $data['helper_id'],
+                    'attendance_date' => $attendanceDate,
+                    // 'helper_id' => null,
+                    'vehicle_moment_id' => $moment->id,
+                    'booking_id' => $moment->booking_id,
+                    'status' => 'present',
+                    'allowances' => $helperAllowance,
+                    'remarks' => $data['helper_remarks'] ?? ' (Helper)',
+                    // 'salary_amount' => $data['helper_salary_amount'] ?? 0,
+                    // 'bonus' => $data['helper_bonus'] ?? 0,
+                    // 'deduction' => $data['helper_deduction'] ?? 0,
+                    // 'net_amount' => ($data['helper_salary_amount'] ?? 0) + ($data['helper_bonus'] ?? 0) - ($data['helper_deduction'] ?? 0) + $helperAllowance,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            $attendanceRecords[] = $helperAttendance;
+        }
+
+        return $attendanceRecords;
     }
 
     /**
@@ -296,12 +316,10 @@ class VehicleMomentService
         $questionnaireAnswers = [];
 
         foreach ($answers as $questionnaireId => $answer) {
-            // Handle array answers (like checkboxes)
             if (is_array($answer)) {
                 $answer = json_encode($answer);
             }
 
-            // Handle empty answers
             if ($answer === null || $answer === '') {
                 continue;
             }
@@ -328,13 +346,11 @@ class VehicleMomentService
         $path = 'uploads/moments/';
         $name = time() . '_' . $type . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
 
-        // Create directory if it doesn't exist
         if (!file_exists(public_path($path))) {
             mkdir(public_path($path), 0777, true);
         }
 
         $file->move(public_path($path), $name);
-
         return $path . $name;
     }
 
@@ -381,63 +397,5 @@ class VehicleMomentService
         }
 
         return $query->orderBy('created_at', 'desc')->get();
-    }
-
-    public function storeAttendance($moment, $data)
-    {
-        if (empty($data['start_datetime'])) {
-            return;
-        }
-
-        $start = \Carbon\Carbon::parse($data['start_datetime'])->startOfDay();
-        $end = !empty($data['end_datetime'])
-            ? \Carbon\Carbon::parse($data['end_datetime'])->startOfDay()
-            : $start;
-
-        $crewIds = [];
-
-        if (!empty($data['driver_id'])) {
-            $crewIds[] = $data['driver_id'];
-        }
-
-        if (!empty($data['helper_id'])) {
-            $crewIds[] = $data['helper_id'];
-        }
-
-        $datesToInsert = [];
-
-        foreach ($crewIds as $crewId) {
-
-            $currentDate = $start->copy();
-
-            while ($currentDate->lte($end)) {
-
-                // Check if already exists
-                $exists = DB::table('attendance')
-                    ->where('vehicle_moment_id', $moment->id)
-                    ->where('crew_id', $crewId)
-                    ->where('attendance_date', $currentDate->toDateString())
-                    ->exists();
-
-                if (!$exists) {
-                    $datesToInsert[] = [
-                        'crew_id' => $crewId,
-                        'vehicle_moment_id' => $moment->id,
-                        'booking_id' => $data['booking_id'] ?? null,
-                        'attendance_date' => $currentDate->toDateString(),
-                        'salary_amount' => 0,
-                        'status' => 'present',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
-
-                $currentDate->addDay();
-            }
-        }
-
-        if (!empty($datesToInsert)) {
-            DB::table('attendance')->insert($datesToInsert);
-        }
     }
 }
