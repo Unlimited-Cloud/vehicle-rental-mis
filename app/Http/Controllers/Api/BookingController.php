@@ -2195,10 +2195,13 @@ class BookingController extends Controller
 
     public function vehicleSorting(Request $request)
     {
+
         $sortBy = $request->input('sort_by');
         $sortOrder = $request->input('sort_order', 'asc');
 
-        $vehicles = Vehicle::query();
+        $query = Vehicle::withAvg('reviews', 'rating')
+            ->where('status', 1);
+        $vehicles = $query;
 
         switch ($sortBy) {
 
