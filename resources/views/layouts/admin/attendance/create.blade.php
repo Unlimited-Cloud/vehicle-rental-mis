@@ -64,17 +64,17 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label>Salary Amount (Rs.)</label>
-                                <input type="number" step="0.01" name="salary_amount" class="form-control @error('salary_amount') is-invalid @enderror" 
-                                       value="{{ old('salary_amount', $attendance->salary_amount ?? 0) }}">
-                                @error('salary_amount')
+                                <label>Allowances Amount (Rs.)</label>
+                                <input type="number" step="0.01" name="allowances" class="form-control @error('allowances') is-invalid @enderror" 
+                                       value="{{ old('allowances', $attendance->allowances ?? 0) }}">
+                                @error('allowances')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
                     </div>
 
-                    <div class="row">
+                    {{-- <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Bonus (Rs.)</label>
@@ -95,7 +95,7 @@
                                 @enderror
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="row">
                         <div class="col-md-6">
