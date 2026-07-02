@@ -321,6 +321,95 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
     </div>
 </div>
 
+<!-- ALLOWANCES SECTION -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">Allowances & Salary Details</h4>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Enter allowances for driver and helper.
+        </div>
+    </div>
+
+    <!-- Driver Allowances -->
+    <div class="col-md-6">
+        <div class="card card-info">
+            <div class="card-header">
+                <h5 class="mb-0">Driver Allowance</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Allowances Date</label>
+                    <input type="date" 
+                           name="attendance_date" 
+                           class="form-control" 
+                            value="{{ old('attendance_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
+                           >
+                </div>
+
+                <div class="form-group">
+                    <label>Driver Allowance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" 
+                               name="driver_allowance" 
+                               class="form-control" 
+                               value="{{ old('driver_allowance', $driverAllowance ?? 0) }}"
+                               step="0.01" 
+                               min="0"
+                               placeholder="Enter driver allowance">
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label>Driver Remarks</label>
+                    <textarea name="driver_remarks" 
+                              class="form-control" 
+                              rows="2"
+                              placeholder="Driver remarks">{{ old('driver_remarks', $driverRemarks ?? '') }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Helper Allowances -->
+    <div class="col-md-6">
+        <div class="card card-success">
+            <div class="card-header">
+                <h5 class="mb-0">Helper Allowance</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Helper Allowance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" 
+                               name="helper_allowance" 
+                               class="form-control" 
+                               value="{{ old('helper_allowance', $helperAllowance ?? 0) }}"
+                               step="0.01" 
+                               min="0"
+                               placeholder="Enter helper allowance">
+                    </div>
+                </div>
+
+               
+                <div class="form-group">
+                    <label>Helper Remarks</label>
+                    <textarea name="helper_remarks" 
+                              class="form-control" 
+                              rows="2"
+                              placeholder="Helper remarks">{{ old('helper_remarks', $helperRemarks ?? '') }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Incident Information -->
 <div class="row mt-4">
     <div class="col-12">
@@ -390,6 +479,14 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
     }
     .d-block {
         display: block;
+    }
+    .card-info .card-header {
+        background-color: #17a2b8;
+        color: white;
+    }
+    .card-success .card-header {
+        background-color: #28a745;
+        color: white;
     }
 </style>
 {{-- @endpush --}}
