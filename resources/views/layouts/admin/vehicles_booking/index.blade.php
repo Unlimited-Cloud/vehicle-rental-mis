@@ -232,7 +232,7 @@
                         $passengerName = $booking->passenger_name ?? ($booking->customer->name ?? 'N/A');
                     @endphp
                     <tr data-booking-id="{{ $booking->id }}" data-start-date="{{ $booking->start_date }}" data-end-date="{{ $booking->end_date }}">
-                    <td class="start-date-cell">
+                    <td class="start-date-cell" data-order="{{ \Carbon\Carbon::parse($booking->start_date)->format('Y-m-d') }}">
         <span class="ad-date">
             {{ \Carbon\Carbon::parse($booking->start_date)->format('M d, Y') }}
         </span>
@@ -1489,7 +1489,8 @@ $(document).ready(function() {
         "ordering": true,
         "info": true,
         "autoWidth": false,
-        "responsive": true
+        "responsive": true,
+        "order": [[0, 'desc']]
     });
 });
 </script>

@@ -66,12 +66,12 @@ class VehicleRepository implements VehicleRepositoryInterface
     }
     public function getVehicleBookingsCountByCustomerId($customerId)
     {
-        return VehicleBooking::where('vehicle_bookings.customer_id', $customerId)->whereNull('deleted_at')->count();
+        return VehicleBooking::where('vehicle_bookings.customer_id', $customerId)->whereNull('vehicle_bookings.deleted_at')->count();
     }
 
     public function getVehicleBookingsCountByDriverId($driverId)
     {
-        return VehicleBooking::where('vehicle_bookings.driver_id', $driverId)->whereNull('deleted_at')->count();
+        return VehicleBooking::where('vehicle_bookings.driver_id', $driverId)->whereNull('vehicle_bookings.deleted_at')->count();
     }
 
     public function getAllActiveVehicleBookingsCount()
@@ -114,7 +114,7 @@ class VehicleRepository implements VehicleRepositoryInterface
     public function getAllRecentVehicleBookings($orderBy, $order)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
-            ->whereNull('deleted_at')
+            ->whereNull('vehicle_bookings.deleted_at')
             ->whereDate('start_date', now())
             ->orderBy($orderBy, $order)
             ->get();
@@ -123,7 +123,7 @@ class VehicleRepository implements VehicleRepositoryInterface
     public function getRecentVehicleBookingsByCustomerId($orderBy, $order, $customerId)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
-            ->whereNull('deleted_at')
+            ->whereNull('vehicle_bookings.deleted_at')
             ->where('vehicle_bookings.customer_id', $customerId)
             ->whereDate('start_date', now()) // filter today's bookings
             ->orderBy($orderBy, $order)
@@ -133,7 +133,7 @@ class VehicleRepository implements VehicleRepositoryInterface
     public function getRecentVehicleBookingsByDriverId($orderBy, $order, $limit, $driverId)
     {
         return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
-            ->whereNull('deleted_at')
+            ->whereNull('vehicle_bookings.deleted_at')
             ->where('vehicle_bookings.driver_id', $driverId)
             ->whereDate('start_date', now()) // filter today's bookings
             ->orderBy($orderBy, $order)
@@ -171,7 +171,7 @@ class VehicleRepository implements VehicleRepositoryInterface
             'tripRoute'
         ])->withExists([
             'vehicleMoment as is_moment_started'
-        ])->whereNull('deleted_at');
+        ])->whereNull('vehicle_bookings.deleted_at');
 
         // Filter by vehicle
         if ($request->vehicle_id) {
@@ -221,7 +221,7 @@ class VehicleRepository implements VehicleRepositoryInterface
             'driver.user'
         ]);
 
-        $query->where('customer_id', $customerId)->whereNull('deleted_at');
+        $query->where('customer_id', $customerId)->whereNull('vehicle_bookings.deleted_at');
 
         // Filter by vehicle
         if ($request->vehicle_id) {
@@ -271,7 +271,7 @@ class VehicleRepository implements VehicleRepositoryInterface
             'driver.user'
         ]);
 
-        $query->where('driver_id', $driverId)->whereNull('deleted_at');
+        $query->where('driver_id', $driverId)->whereNull('vehicle_bookings.deleted_at');
 
         // Filter by vehicle
         if ($request->vehicle_id) {
