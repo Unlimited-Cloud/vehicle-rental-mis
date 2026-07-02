@@ -350,7 +350,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                     <label>Driver Allowance</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">Nrs</span>
                         </div>
                         <input type="number" 
                                name="driver_allowance" 
@@ -385,7 +385,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                     <label>Helper Allowance</label>
                     <div class="input-group">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">$</span>
+                            <span class="input-group-text">Nrs</span>
                         </div>
                         <input type="number" 
                                name="helper_allowance" 
