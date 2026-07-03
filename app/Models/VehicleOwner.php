@@ -30,6 +30,7 @@ class VehicleOwner extends Model
         'wallet_name',
         'wallet_number',
         'commission_rate',
+        'user_id'
     ];
 
     protected $casts = [

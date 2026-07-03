@@ -34,6 +34,7 @@ class Customer extends Model
         'vdc_id',
         'deleted_at',
         'deleted_by',
+        'deleted_reason'
     ];
 
     protected $casts = [

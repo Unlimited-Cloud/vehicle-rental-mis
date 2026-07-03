@@ -311,4 +311,63 @@ class VehicleRepository implements VehicleRepositoryInterface
         $bookings = $query->orderBy('start_date', 'desc')->get();
         return $bookings;
     }
+
+
+    public function getVehicleBookingsByVehicleOwnerId($request, $vehicleOwnerId)
+    {
+        $query = VehicleBooking::with([
+            'vehicle',
+            'customer',
+            'payment',
+            'driver.user'
+        ]);
+
+        // Filter by vehicle owner through vehicles table
+        $query->whereHas('vehicle', function ($q) use ($vehicleOwnerId) {
+            $q->where('vehicle_owner_id', $vehicleOwnerId);
+        });
+
+        $query->whereNull('vehicle_bookings.deleted_at');
+
+        // Filter by vehicle
+        if ($request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Filter by customer
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Filter by driver
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
+        }
+
+        // Filter by file number
+        if ($request->file_no) {
+            $query->where('file_no', 'LIKE', '%' . $request->file_no . '%');
+        }
+
+        // Filter by passenger name
+        if ($request->passenger) {
+            $query->where('passenger_name', 'LIKE', '%' . $request->passenger . '%');
+        }
+
+        // Filter by date
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('start_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        } elseif ($request->start_date) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        } elseif ($request->end_date) {
+            $query->whereDate('start_date', '<=', $request->end_date);
+        }
+
+        $bookings = $query->orderBy('start_date', 'desc')->get();
+
+        return $bookings;
+    }
 }
