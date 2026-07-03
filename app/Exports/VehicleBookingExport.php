@@ -72,22 +72,24 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     {
         return [
             'Start Date',
+            'Start Time',
+            'Customer',
             'File No',
-            'No. of People',
-            'Customer Name',
-            'Customer Phone',
+            'Trip Route',
+            'Rate',
+            'Total Amount',
             'Vehicle',
             'Driver',
             'Helper',
-            'Route',
-            'Total Amount',
+            'No. of People',
+            'Status',
+            'Movement',
+            'Customer Phone',
             'Start KM',
             'End KM',
             'Total Consumed (KM)',
             'Fuel (Ltr)',
-            'Status',
             'Notes',
-            'Movement Done'
         ];
     }
 
@@ -110,23 +112,28 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
         }
 
         return [
+            // Main columns matching table order
             \Carbon\Carbon::parse($booking->start_date)->format('d-m-Y'),
+            \Carbon\Carbon::parse($booking->start_time)->format('h:i A'),
+            $booking->customer->name ?? ($booking->passenger_name ?? 'N/A'),
             $booking->file_no ?? 'N/A',
-            $booking->no_of_people ?? 'N/A',
-            $booking->customer->name ?? 'N/A',
-            $booking->customer->phone ?? 'N/A',
+            $booking->tripRoute->title ?? 'N/A',
+            $booking->rate_per_day ?? 0,
+            $booking->total_amount ?? 0,
             $booking->vehicle->vehicle_name ?? 'N/A',
             $booking->driver->user->name ?? 'Not Assigned',
             $booking->helper->user->name ?? 'Not Assigned',
-            $booking->tripRoute->title ?? 'N/A',
-            $booking->total_amount ?? 0, // Total Amount after Route
+            $booking->no_of_people ?? 'N/A',
+            ucfirst($booking->status),
+            $hasMovement ? 'Yes' : 'No',
+
+            // Additional columns after status
+            $booking->customer->phone ?? 'N/A',
             $booking->vehicleMoment->start_km ?? 'N/A',
             $booking->vehicleMoment->end_km ?? 'N/A',
             $totalKm ?? 'N/A',
             $booking->approx_fuel_litre ?? 'N/A',
-            ucfirst($booking->status),
             $booking->notes ?? 'N/A',
-            $hasMovement ? '✓' : '✗',
         ];
     }
 
@@ -158,23 +165,25 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
     public function columnWidths(): array
     {
         return [
-            'A' => 20,  // Start Date
-            'B' => 35,  // File No
-            'C' => 15,  // No. of People
-            'D' => 25,  // Customer Name
-            'E' => 20,  // Customer Phone
-            'F' => 15,  // Vehicle
-            'G' => 20,  // Driver
-            'H' => 20,  // Helper
-            'I' => 35,  // Route
-            'J' => 20,  // Total Amount
-            'K' => 15,  // Start KM
-            'L' => 15,  // End KM
-            'M' => 20,  // Total Consumed (KM)
-            'N' => 15,  // Fuel (Ltr)
-            'O' => 15,  // Status
-            'P' => 30,  // Notes
-            'Q' => 18,  // Movement Done
+            'A' => 20,  // Start Date (AD/BS)
+            'B' => 15,  // Start Time
+            'C' => 25,  // Customer
+            'D' => 20,  // File No
+            'E' => 35,  // Trip Route
+            'F' => 15,  // Rate
+            'G' => 20,  // Total Amount
+            'H' => 20,  // Vehicle
+            'I' => 20,  // Driver
+            'J' => 20,  // Helper
+            'K' => 15,  // Movement
+            'L' => 15,  // Status
+            'M' => 15,  // No. of People
+            'N' => 20,  // Customer Phone
+            'O' => 15,  // Start KM
+            'P' => 15,  // End KM
+            'Q' => 20,  // Total Consumed (KM)
+            'R' => 15,  // Fuel (Ltr)
+            'S' => 30,  // Notes
         ];
     }
 
@@ -187,7 +196,7 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
                 $lastRow = $sheet->getHighestRow();
-                $lastColumn = 'Q'; // Now 17 columns (A to Q)
+                $lastColumn = 'S'; // Now 19 columns (A to S)
 
                 // Auto-size columns (as fallback)
                 foreach (range('A', $lastColumn) as $column) {
@@ -209,54 +218,61 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
                 ]);
 
                 // Style specific columns
-                // Date column (A)
+                // Date column (A) - center
                 $sheet->getStyle('A2:A' . $lastRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Number/Currency columns (C, J, K, L, M, N)
-                foreach (['C', 'J', 'K', 'L', 'M', 'N'] as $column) {
+                // Time column (B) - center
+                $sheet->getStyle('B2:B' . $lastRow)
+                    ->getAlignment()
+                    ->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                // Number/Currency columns (F, G, O, P, Q, R)
+                foreach (['F', 'G', 'O', 'P', 'Q', 'R'] as $column) {
                     $sheet->getStyle($column . '2:' . $column . $lastRow)
                         ->getAlignment()
                         ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
                 }
 
-                // Format Total Amount column (J) as currency
-                $sheet->getStyle('J2:J' . $lastRow)
-                    ->getNumberFormat()
-                    ->setFormatCode('#,##0.00');
-
-                // Movement Done column (Q) - center alignment and color coding
-                $sheet->getStyle('Q2:Q' . $lastRow)
+                // Movement column (K) - center
+                $sheet->getStyle('K2:K' . $lastRow)
                     ->getAlignment()
                     ->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Color code the movement status
-                for ($row = 2; $row <= $lastRow; $row++) {
-                    $movementStatus = $sheet->getCell('Q' . $row)->getValue();
+                // Format Rate and Total Amount columns (F, G) as currency
+                foreach (['F', 'G'] as $column) {
+                    $sheet->getStyle($column . '2:' . $column . $lastRow)
+                        ->getNumberFormat()
+                        ->setFormatCode('#,##0.00');
+                }
 
-                    if ($movementStatus === '✓') {
+                // Movement column (K) - color coding
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $movementStatus = $sheet->getCell('K' . $row)->getValue();
+
+                    if ($movementStatus === 'Yes') {
                         // Green color for movement done
-                        $sheet->getStyle('Q' . $row)
+                        $sheet->getStyle('K' . $row)
                             ->getFont()
                             ->getColor()
                             ->setARGB('FF28A745');
-                    } elseif ($movementStatus === '✗') {
+                    } elseif ($movementStatus === 'No') {
                         // Red color for no movement
-                        $sheet->getStyle('Q' . $row)
+                        $sheet->getStyle('K' . $row)
                             ->getFont()
                             ->getColor()
                             ->setARGB('FFDC3545');
                     }
                 }
 
-                // Status column (O) - color code based on status
+                // Status column (L) - color code based on status
                 for ($row = 2; $row <= $lastRow; $row++) {
-                    $status = $sheet->getCell('O' . $row)->getValue();
+                    $status = $sheet->getCell('L' . $row)->getValue();
                     $color = $this->getStatusColor($status);
 
                     if ($color) {
-                        $sheet->getStyle('O' . $row)
+                        $sheet->getStyle('L' . $row)
                             ->getFont()
                             ->getColor()
                             ->setARGB($color);
