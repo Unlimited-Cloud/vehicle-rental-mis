@@ -851,15 +851,7 @@ async function loadNepaliDatesForTable() {
     });
 }
 
-$(document).ready(function () {
-    let table = $('#dataTable').DataTable();
-    // Initial load
-    loadNepaliDatesForTable();
-    // 🔥 IMPORTANT: Run after every redraw
-    table.on('draw', function () {
-        loadNepaliDatesForTable();
-    });
-});
+
 
 // View Toggle Functions
 function showTable() {
@@ -1477,12 +1469,30 @@ function deleteBooking(id) {
         syncTopScrollbar();
     });
 </script>
+
+<script>
+window.addEventListener('load', function() {
+    let table = $('#dataTable').DataTable(); // grabs existing instance, whoever created it
+
+    // Force the sort you want, no matter what initialized it or in what order
+    table.order([[0, 'desc']]).draw();
+
+    loadNepaliDatesForTable();
+
+    table.on('draw', function () {
+        loadNepaliDatesForTable();
+    });
+});
+</script>
 @endsection
 
-@push('scripts')
+{{-- @push('scripts')
 <script>
 $(document).ready(function() {
-    $('#dataTable').DataTable({
+     if ($.fn.DataTable.isDataTable('#dataTable')) {
+        $('#dataTable').DataTable().destroy();
+    }
+   let table = $('#dataTable').DataTable({
         "paging": true,
         "lengthChange": true,
         "searching": true,
@@ -1492,6 +1502,12 @@ $(document).ready(function() {
         "responsive": true,
         "order": [[0, 'desc']]
     });
+    loadNepaliDatesForTable();
+
+    // Re-run after every redraw (sort, page, search, filter, etc.)
+    table.on('draw', function () {
+        loadNepaliDatesForTable();
+    });
 });
 </script>
-@endpush
+@endpush --}}
