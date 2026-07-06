@@ -10,16 +10,49 @@ use App\Models\Vehicle;
 use App\Models\VehicleOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Repositories\Interfaces\VehicleRepositoryInterface;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
+
+
 
 class VehicleController extends Controller
 {
+    protected $vehicleRepository;
+    protected $userRepository;
+    private $currentUserVehicleOwnerId;
+    private $currentUserIsOwner;
+    private $currentUserId;
+    private $currentUserRoleId;
+
+
+    public function __construct(
+        VehicleRepositoryInterface $vehicleRepository,
+        UserRepositoryInterface $userRepository
+
+    ) {
+        $this->vehicleRepository = $vehicleRepository;
+        $this->userRepository = $userRepository;
+
+        $this->middleware(function ($request, $next) {
+            $this->currentUserId = Auth::user()->id;
+            $this->currentUserRoleId = Auth::user()->role_id;
+            $this->currentUserVehicleOwnerId = $this->userRepository->getVehicleOwnerByUserId($this->currentUserId) ? $this->userRepository->getVehicleOwnerByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserIsOwner = $this->currentUserRoleId == 10 ? 'Y' : 'N';
+            return $next($request);
+        });
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         Gate::authorize('index_vehicles');
-        $vehicles = Vehicle::latest()->get();
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicles = $this->vehicleRepository->getVehiclesByOwnerId($this->currentUserVehicleOwnerId);
+        } else {
+            $vehicles = Vehicle::latest()->get();
+        }
         return view('layouts.admin.vehicles.index', compact('vehicles'));
     }
 
@@ -33,7 +66,11 @@ class VehicleController extends Controller
         $brands = Brand::latest()->get();
         $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
-        $vehicle_owners = VehicleOwner::get();
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
+        } else {
+            $vehicle_owners = VehicleOwner::get();
+        }
         return view('layouts.admin.vehicles.create', compact('brands', 'seaters', 'fuel_type', 'vehicle_owners'));
     }
 
@@ -152,7 +189,11 @@ class VehicleController extends Controller
         $brands = Brand::latest()->get();
         $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
-        $vehicle_owners = VehicleOwner::get();
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
+        } else {
+            $vehicle_owners = VehicleOwner::get();
+        }
         return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'seaters', 'fuel_type', 'vehicle_owners'));
     }
 

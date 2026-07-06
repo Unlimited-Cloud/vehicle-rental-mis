@@ -27,6 +27,8 @@ class DashboardController extends Controller
 
     protected $vehicleRepository;
     protected $userRepository;
+    private $currentUserVehicleOwnerId;
+    private $currentUserIsOwner;
 
     public function __construct(
         VehicleRepositoryInterface $vehicleRepository,
@@ -42,16 +44,26 @@ class DashboardController extends Controller
             $this->currentUserRoleId = Auth::user()->role_id;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
             $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            $this->currentUserIsOwner = $this->currentUserRoleId == 10 ? 'Y' : 'N';
+            $this->currentUserVehicleOwnerId = $this->userRepository->getVehicleOwnerByUserId($this->currentUserId) ? $this->userRepository->getVehicleOwnerByUserId($this->currentUserId)->id : NULL;
             return $next($request);
         });
     }
     public function index()
     {
         Gate::authorize('index_dashboard');
-        // Vehicle counts
-        $totalVehicles = Vehicle::count();
-        $availableVehicles = Vehicle::where('status', 1)->count();
-        $unavailableVehicles = Vehicle::where('status', 0)->count();
+        if ($this->currentUserIsOwner == 'Y') {
+            // Vehicle counts
+            $totalVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->count();
+            $availableVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->where('status', 1)->count();
+            $unavailableVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->where('status', 0)->count();
+        } else {
+            // Vehicle counts
+            $totalVehicles = Vehicle::count();
+            $availableVehicles = Vehicle::where('status', 1)->count();
+            $unavailableVehicles = Vehicle::where('status', 0)->count();
+        }
+
 
         // Customer count
         $totalCustomers = Customer::count();
@@ -75,12 +87,17 @@ class DashboardController extends Controller
 
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         $currentUserIsDriver = $this->currentUserIsDriver;
+        $currentUserIsOwner = $this->currentUserIsOwner;
         // Booking counts
         if ($this->currentUserIsCustomer == 'Y') {
             $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
         } else {
             if ($this->currentUserIsDriver == 'Y') {
                 $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByDriverId($this->currentUserDriverId);
+            } elseif ($this->currentUserIsOwner == 'Y') {
+                $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByVehicleOwnerId(
+                    $this->currentUserVehicleOwnerId
+                );
             } else {
                 $totalBookings = $this->vehicleRepository->getAllVehicleBookingsCount();
             }
@@ -88,12 +105,16 @@ class DashboardController extends Controller
 
         if ($this->currentUserIsCustomer == 'Y') {
             $activeBookings = $this->vehicleRepository->getActiveVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
+        } else if ($this->currentUserIsOwner == 'Y') {
+            $activeBookings = $this->vehicleRepository->getActiveVehicleBookingsCountByOwnerId($this->currentUserVehicleOwnerId);
         } else {
             $activeBookings = $this->vehicleRepository->getAllActiveVehicleBookingsCount();
         }
 
         if ($this->currentUserIsCustomer == 'Y') {
             $pendingBookings = $this->vehicleRepository->getPendingVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
+        } elseif ($this->currentUserIsOwner == 'Y') {
+            $pendingBookings = $this->vehicleRepository->getPendingVehicleBookingsCountByOwnerId($this->currentUserVehicleOwnerId);
         } else {
             $pendingBookings = $this->vehicleRepository->getAllPendingVehicleBookingsCount();
         }
@@ -101,8 +122,8 @@ class DashboardController extends Controller
         if ($this->currentUserIsCustomer == 'Y') {
             $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByCustomerId('start_date', 'desc', $this->currentUserCustomerId);
         } else {
-            if ($this->currentUserIsDriver == 'Y') {
-                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByDriverId('start_date', 'desc', '6', $this->currentUserDriverId);
+            if ($this->currentUserIsOwner == 'Y') {
+                $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByOwnerId('start_date', 'desc', $this->currentUserVehicleOwnerId);
             } else {
                 $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc',);
             }
@@ -138,6 +159,12 @@ class DashboardController extends Controller
 
         $query = VehicleBooking::query()
             ->whereBetween('start_date', [$fromDate, $toDate]);
+
+        if ($this->currentUserIsOwner == 'Y') {
+            $query->whereHas('vehicle', function ($q) {
+                $q->where('vehicle_owner_id', $this->currentUserVehicleOwnerId);
+            });
+        }
 
         if ($vehicleId) {
             $query->where('vehicle_id', $vehicleId);
@@ -185,7 +212,11 @@ class DashboardController extends Controller
             ->get();
 
         // 🚗 Vehicle Utilization
-        $totalVehicles = Vehicle::count();
+        if ($this->currentUserIsOwner == 'Y') {
+            $totalVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->count();
+        } else {
+            $totalVehicles = Vehicle::count();
+        }
         $usedVehicles = (clone $query)->distinct('vehicle_id')->count('vehicle_id');
 
         // 📅 Heatmap
