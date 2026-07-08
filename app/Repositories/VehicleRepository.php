@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Models\CrewProfile;
 use App\Models\EstimateBill;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
 use App\Models\Module;
 use App\Models\Role;
 use App\Models\Permission;
 use App\Models\ProformaInvoice;
+use App\Models\Vehicle;
 use App\Models\VehicleReceipt;
 use App\Models\VehicleBooking;
 
@@ -74,6 +76,14 @@ class VehicleRepository implements VehicleRepositoryInterface
         return VehicleBooking::where('vehicle_bookings.driver_id', $driverId)->whereNull('vehicle_bookings.deleted_at')->count();
     }
 
+    public function getVehicleBookingsCountByVehicleOwnerId($vehicleOwnerId)
+    {
+        return VehicleBooking::join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
+            ->where('vehicles.vehicle_owner_id', $vehicleOwnerId)
+            ->whereNull('vehicle_bookings.deleted_at')
+            ->count();
+    }
+
     public function getAllActiveVehicleBookingsCount()
     {
         return VehicleBooking::where('status', 'confirmed')
@@ -100,6 +110,41 @@ class VehicleRepository implements VehicleRepositoryInterface
         return VehicleBooking::where('status', 'pending')
             ->whereNull('deleted_at')
             ->whereDate('end_date', '>=', now())->where('vehicle_bookings.customer_id', $customerId)->count();
+    }
+
+
+    public function getActiveVehicleBookingsCountByOwnerId($ownerId)
+    {
+        return VehicleBooking::where('status', 'confirmed')
+            ->whereNull('deleted_at')
+            ->whereDate('end_date', '>=', now())
+            ->whereHas('vehicle', function ($query) use ($ownerId) {
+                $query->where('vehicle_owner_id', $ownerId);
+            })
+            ->count();
+    }
+
+    public function getPendingVehicleBookingsCountByOwnerId($ownerId)
+    {
+        return VehicleBooking::where('status', 'pending')
+            ->whereNull('deleted_at')
+            ->whereDate('end_date', '>=', now())
+            ->whereHas('vehicle', function ($query) use ($ownerId) {
+                $query->where('vehicle_owner_id', $ownerId);
+            })
+            ->count();
+    }
+
+    public function getRecentVehicleBookingsByOwnerId($orderBy, $order, $ownerId)
+    {
+        return VehicleBooking::with(['vehicle', 'customer', 'tripRoute', 'driver'])
+            ->whereNull('vehicle_bookings.deleted_at')
+            ->whereHas('vehicle', function ($query) use ($ownerId) {
+                $query->where('vehicle_owner_id', $ownerId);
+            })
+            ->whereDate('start_date', now()) // filter today's bookings
+            ->orderBy($orderBy, $order)
+            ->get();
     }
 
     // public function getAllRecentVehicleBookings($orderBy, $order, $limit)
@@ -310,5 +355,74 @@ class VehicleRepository implements VehicleRepositoryInterface
 
         $bookings = $query->orderBy('start_date', 'desc')->get();
         return $bookings;
+    }
+
+
+    public function getVehicleBookingsByVehicleOwnerId($request, $vehicleOwnerId)
+    {
+        $query = VehicleBooking::with([
+            'vehicle',
+            'customer',
+            'payment',
+            'driver.user'
+        ]);
+
+        // Filter by vehicle owner through vehicles table
+        $query->whereHas('vehicle', function ($q) use ($vehicleOwnerId) {
+            $q->where('vehicle_owner_id', $vehicleOwnerId);
+        });
+
+        $query->whereNull('vehicle_bookings.deleted_at');
+
+        // Filter by vehicle
+        if ($request->vehicle_id) {
+            $query->where('vehicle_id', $request->vehicle_id);
+        }
+
+        // Filter by customer
+        if ($request->customer_id) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        // Filter by driver
+        if ($request->driver_id) {
+            $query->where('driver_id', $request->driver_id);
+        }
+
+        // Filter by file number
+        if ($request->file_no) {
+            $query->where('file_no', 'LIKE', '%' . $request->file_no . '%');
+        }
+
+        // Filter by passenger name
+        if ($request->passenger) {
+            $query->where('passenger_name', 'LIKE', '%' . $request->passenger . '%');
+        }
+
+        // Filter by date
+        if ($request->start_date && $request->end_date) {
+            $query->whereBetween('start_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
+        } elseif ($request->start_date) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        } elseif ($request->end_date) {
+            $query->whereDate('start_date', '<=', $request->end_date);
+        }
+
+        $bookings = $query->orderBy('start_date', 'desc')->get();
+
+        return $bookings;
+    }
+
+    public function getVehiclesByOwnerId($vehicleOwnerId)
+    {
+        return Vehicle::where('vehicle_owner_id', $vehicleOwnerId)->where('status', '1')->latest()->get();
+    }
+
+    public function getCrewProfilesByOwnerId($vehicleOwnerId)
+    {
+        return CrewProfile::where('vehicle_owner_id', $vehicleOwnerId)->get();
     }
 }

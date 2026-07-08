@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Repositories\Interfaces\VehicleOwnerRepositoryInterface;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class VehicleOwnerController extends Controller
 {
@@ -123,6 +125,31 @@ class VehicleOwnerController extends Controller
         }
 
         $data['bank_code'] = $bank->swift_code;
+
+        $userData = [];
+
+        // Find Vehicle Owner role
+        $role = DB::table('roles')->where('name', 'Vehicle Owner')->first();
+
+        $userData['role_id'] = $role ? $role->id : 10;
+        $userData['name'] = $validated['name'];
+        $userData['email'] = $validated['email'];
+        $userData['mobile_number'] = $validated['phone'];
+        $userData['mobile_number_country_code'] = "+977";
+
+
+
+        // Generate email if empty
+        if (empty($userData['email'])) {
+            $formattedName = strtolower(str_replace(' ', '', $validated['name']));
+            $userData['email'] = $formattedName . time() . '@unlimitedremit.com';
+        }
+
+        $userData['password'] = Hash::make('Nepal@123456');
+
+        $userId = DB::table('users')->insertGetId($userData);
+
+        $validated['user_id'] = $userId;
 
         VehicleOwner::create($validated);
 
@@ -243,6 +270,22 @@ class VehicleOwnerController extends Controller
 
             $data['bank_code'] = $bank->swift_code;
         }
+
+        $userData = [];
+
+        $role = DB::table('roles')->where('name', 'vehicle_owner')->first();
+
+        $userData['role_id'] = $role ? $role->id : null;
+        $userData['name'] = $validated['name'];
+        
+
+        if (!empty($validated['email'])) {
+            $userData['email'] = $validated['email'];
+        }
+
+        DB::table('users')
+            ->where('id', $vehicleowner->user_id)
+            ->update($userData);
 
         $vehicleowner->update($validated);
 

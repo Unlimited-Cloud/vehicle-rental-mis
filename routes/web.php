@@ -150,7 +150,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
 
 
 
-        Route::get('/invoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
+        Route::get('/inevoice/single/{booking_id}', [ProformaInvoiceController::class, 'generateSingleInvoice']);
         Route::get('/vehicle-receipt/bookings/{file_no}', [ProformaInvoiceController::class, 'getBookingsByFileNo'])
             ->name('vehicle_receipt.bookings');
         Route::post('/receipt/finalize', [ProformaInvoiceController::class, 'finalizeReceipt']);

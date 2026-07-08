@@ -79,6 +79,7 @@
                         </select>
                     </div>
 
+                    @if($currentUserIsOwner == 'N')
                     <div class="form-group">
                         <label>Customer</label>
                         <select id="customerFilter" class="form-control">
@@ -88,8 +89,10 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
 
                     @if($currentUserIsDriver == 'N')
+                     @if($currentUserIsOwner == 'N')
                     <div class="form-group">
                         <label>Driver</label>
                         <select id="driverFilter" class="form-control">
@@ -99,6 +102,7 @@
                             @endforeach
                         </select>
                     </div>
+                    @endif
                     @endif
 
                     <hr>
@@ -382,11 +386,11 @@
                             </div>
                         </td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="10" class="text-center">No bookings found</td>
-                    </tr>
-                @endforelse
+               @empty
+    <tr>
+        <td colspan="12" class="text-center dataTables_empty">No bookings found</td>
+    </tr>
+@endforelse
             </tbody>
         </table>
     </div>

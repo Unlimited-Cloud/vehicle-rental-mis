@@ -46,6 +46,10 @@
                 </p>
 
                 <ul class="list-group list-group-unbordered mb-3">
+                     <li class="list-group-item">
+                        <b>Owner</b> 
+                        <a class="float-right">{{ $crew_profile->vehicleOwner->name ?? 'N/A' }}</a>
+                    </li>
                     <li class="list-group-item">
                         <b>Experience</b> 
                         <a class="float-right">{{ $crew_profile->experience ?? '0' }} years</a>

@@ -20,9 +20,11 @@ class TripRouteController extends Controller
     public function index()
     {
         Gate::authorize('index_vehicles_trip_routes');
-        $routes = TripRoute::with('category')->whereNull('deleted_at')->latest()->get();
 
-        return view('layouts.admin.trip_routes.index', compact('routes'));
+        $routes = TripRoute::with('category')->whereNull('deleted_at')->latest()->get();
+        $categories = TripCategory::whereNull('deleted_at')->orderBy('name')->pluck('name', 'id');
+
+        return view('layouts.admin.trip_routes.index', compact('routes', 'categories'));
     }
 
 

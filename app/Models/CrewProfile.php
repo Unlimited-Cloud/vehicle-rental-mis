@@ -15,7 +15,8 @@ class CrewProfile extends Model
         'contact_number',
         'experience',
         'basic_salary',
-        'age'
+        'age',
+        'vehicle_owner_id'
     ];
 
     public function user()
@@ -34,5 +35,9 @@ class CrewProfile extends Model
     public function bankDetails()
     {
         return $this->hasMany(CrewBankDetail::class, 'crew_id');
+    }
+    public function vehicleOwner()
+    {
+        return $this->belongsTo(VehicleOwner::class, 'vehicle_owner_id');
     }
 }
