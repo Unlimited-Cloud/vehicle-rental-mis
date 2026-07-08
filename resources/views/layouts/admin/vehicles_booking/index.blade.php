@@ -1490,28 +1490,3 @@ window.addEventListener('load', function() {
 </script>
 @endsection
 
-{{-- @push('scripts')
-<script>
-$(document).ready(function() {
-     if ($.fn.DataTable.isDataTable('#dataTable')) {
-        $('#dataTable').DataTable().destroy();
-    }
-   let table = $('#dataTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-        "order": [[0, 'desc']]
-    });
-    loadNepaliDatesForTable();
-
-    // Re-run after every redraw (sort, page, search, filter, etc.)
-    table.on('draw', function () {
-        loadNepaliDatesForTable();
-    });
-});
-</script>
-@endpush --}}

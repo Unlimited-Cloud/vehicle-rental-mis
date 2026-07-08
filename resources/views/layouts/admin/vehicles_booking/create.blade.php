@@ -477,11 +477,24 @@
         </div>
     </div>
 </section>
+@endsection
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@section('scripts')
+{{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
 $(document).ready(function() {
     const VAT_RATE = 0.13; // 13%
+
+    let suppressRouteRateCalc = false; // NEW: prevents rate overwrite on programmatic selection
+
+    $('#trip_category_id, #trip_route_id').select2({
+        placeholder: 'Select an option',
+        allowClear: true,
+        dropdownAutoWidth: false
+    });
+
 
     // Function to calculate hours between start and end datetime
     function calculateHours() {
@@ -658,7 +671,7 @@ $(document).ready(function() {
     // Trip Category Change - Load Routes
     $('#trip_category_id').change(function() {
         var category_id = $(this).val();
-        $('#trip_route_id').html('<option value="">Loading...</option>');
+      $('#trip_route_id').html('<option value="">Loading...</option>').trigger('change');
 
         if (category_id) {
             $.ajax({
@@ -680,8 +693,12 @@ $(document).ready(function() {
                     $('#trip_route_id').html(options);
                     
                     // If editing, set the previously selected route
-                    @if(isset($booking) && $booking->trip_route_id)
-                        $('#trip_route_id').val('{{ $booking->trip_route_id }}');
+                   @if(isset($booking) && $booking->trip_route_id)
+                    suppressRouteRateCalc = true;
+                    $('#trip_route_id').val('{{ $booking->trip_route_id }}').trigger('change');
+                    suppressRouteRateCalc = false;
+                    @else
+                        $('#trip_route_id').trigger('change'); // just refresh select2 UI, no route selected yet
                     @endif
                 },
                 error: function() {
@@ -695,6 +712,7 @@ $(document).ready(function() {
 
     // Route selection - Set rate based on vehicle type
     $('#trip_route_id').change(function() {
+        if (suppressRouteRateCalc) return;
         var vehicleType = $('#vehicle_id option:selected').data('type');
         var selected = $(this).find(':selected');
         var rate = 0;
@@ -998,6 +1016,48 @@ hr {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-left: none;
+}
+
+/* Fix Select2 + Bootstrap input-group layout */
+.input-group > .select2-container {
+    flex: 1 1 auto;
+    width: 1% !important; /* forces it to shrink/grow like .form-control does in input-group */
+}
+
+.input-group > .select2-container .select2-selection--single {
+    height: calc(2.25rem + 2px); /* match Bootstrap .form-control height */
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+/* When Select2 sits with a button after it, kill the right rounding
+   so it looks continuous with the input-group-append button */
+.input-group > .select2-container:not(:last-child) .select2-selection--single {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.select2-selection__rendered {
+    line-height: calc(2.25rem) !important;
+    padding-left: 0.75rem !important;
+}
+
+.select2-selection__arrow {
+    height: calc(2.25rem + 2px) !important;
+}
+
+/* Keep the clear (x) and arrow from overlapping/stacking oddly */
+.select2-selection__clear {
+    margin-right: 6px;
+}
+
+/* Match focus state to other inputs */
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default .select2-selection--single:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 </style>
 @endsection
