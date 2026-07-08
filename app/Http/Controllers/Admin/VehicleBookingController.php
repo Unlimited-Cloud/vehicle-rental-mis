@@ -312,9 +312,10 @@ class VehicleBookingController extends Controller
         $updateData['trip_category_id'] = $request->trip_category_id;
         $updateData['trip_route_id'] = $request->trip_route_id;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
-        $updateData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
+        // $updateData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         $oldRate = $vehicleBooking->rate_per_day;
         $oldTotal = $vehicleBooking->sub_total;
+        $oldVehicleId = $vehicleBooking->vehicle_id;
         $vehicleBooking->update($updateData);
         // if (
         //     $oldRate != $vehicleBooking->rate_per_day ||
@@ -331,6 +332,7 @@ class VehicleBookingController extends Controller
         $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
+        $customers = Customer::where('id', $vehicleBooking->customer_id)->first();
 
         //generate invoice 
         if ($vehicleBooking->status === 'confirmed' && $vehicleBooking->call_type === 'api') {
@@ -341,6 +343,7 @@ class VehicleBookingController extends Controller
                 'remarks' => 'Booking confirmed by admin',
                 'created_by' => Auth::user() ? Auth::user()->id : 0,
             ]);
+            event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
         }
 
         if ($vehicleBooking->status === 'cancelled' && $vehicleBooking->call_type === 'api') {
@@ -352,8 +355,17 @@ class VehicleBookingController extends Controller
             ]);
         }
 
-        $customers = Customer::where('id', $request->customer_id)->first();
-        event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
+        if ($oldVehicleId != $vehicleBooking->vehicle_id) {
+            event(new EmailEvent(
+                $customers->email,
+                'booking_changed',
+                'success',
+                'customer',
+                '',
+                '',
+                $vehicleBooking->id
+            ));
+        }
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
