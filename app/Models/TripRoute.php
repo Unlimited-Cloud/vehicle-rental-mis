@@ -25,4 +25,9 @@ class TripRoute extends Model
     {
         return $this->belongsTo(TripCategory::class, 'trip_category_id');
     }
+
+    public function vehiclePrices()
+    {
+        return $this->hasMany(TripRouteVehiclePrice::class);
+    }
 }

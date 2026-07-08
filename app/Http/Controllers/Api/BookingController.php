@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Services\ProformaService;
 use App\Imports\VehicleBookingImport;
 use App\Models\Customer;
+use App\Models\TripRouteVehiclePrice;
 use App\Models\Review;
 use Illuminate\Support\Facades\Auth;
 
@@ -1384,7 +1385,7 @@ class BookingController extends Controller
 
             return response()->json([
                 'status' => 'error', // Name of the status
-                'message' => $validator->errors()->first(),
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -1416,7 +1417,15 @@ class BookingController extends Controller
             default => 'other_price',
         };
 
-        $price = round($route->$priceColumn, 2);
+        $price = $route->$priceColumn;
+        if (!$price) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Price not configured for selected route and vehicle'
+            ], 404);
+        }
+
+        $price = $price;
         $vatPercentage = 13;
         $vatPrice = round(($price * $vatPercentage) / 100, 2);
         $totalPrice = round($price + $vatPrice, 2);
@@ -1424,13 +1433,82 @@ class BookingController extends Controller
 
 
         return response()->json([
+            'status' => 'success',
             'vehicle_name' => $vehicle->vehicle_name,
             'vehicle_type' => $vehicle->vehicle_type,
             'trip_category' => $tripCategory->name,
             'route_name' => $route->title,
-            'price' => number_format($price, 2, '.', ','),
-            'vat_price' => number_format($vatPrice, 2, '.', ','),
-            'total_price' => number_format($totalPrice, 2, '.', ','),
+            'price' => $price,
+            'vat_price' => number_format($vatPrice, 2),
+            'total_price' => number_format($totalPrice, 2),
+        ]);
+    }
+
+
+    public function getTripPriceNew(Request $request)
+    {
+        $validator = Validator::make(
+            $request->all(),
+            [
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'trip_category_id' => 'required|exists:trip_categories,id',
+                'trip_route_id' => 'required|exists:trip_routes,id',
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error', // Name of the status
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $vehicle = Vehicle::find($request->vehicle_id);
+
+        $tripCategory = TripCategory::find($request->trip_category_id);
+
+        $route = TripRoute::where('id', $request->trip_route_id)
+            ->where('trip_category_id', $request->trip_category_id)
+            ->first();
+
+        if (!$route) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Route not found for selected category'
+            ], 404);
+        }
+
+        $tripPrice = TripRouteVehiclePrice::where(
+            'trip_route_id',
+            $request->trip_route_id
+        )
+            ->where(
+                'vehicle_id',
+                $request->vehicle_id
+            )
+            ->first();
+
+        if (!$tripPrice) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Price not configured for selected route and vehicle'
+            ], 404);
+        }
+
+        $price = $tripPrice->price;
+        $vatPercentage = 13;
+        $vatPrice = round(($price * $vatPercentage) / 100, 2);
+        $totalPrice = round($price + $vatPrice, 2);
+
+        return response()->json([
+            'status' => 'success',
+            'vehicle_name' => $vehicle->vehicle_name,
+            'vehicle_type' => $vehicle->vehicle_type,
+            'trip_category' => $tripCategory->name,
+            'route_name' => $route->title,
+            'price' => number_format($tripPrice->price, 2),
+            'vat_price' => number_format($vatPrice, 2),
+            'total_price' => number_format($totalPrice, 2),
         ]);
     }
 

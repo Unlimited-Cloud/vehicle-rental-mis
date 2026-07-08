@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\TripRouteController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
@@ -71,6 +72,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
         Route::post('/get-trip-price', [BookingController::class, 'getTripPrice']);
+        Route::post('/get-trip-price-new', [BookingController::class, 'getTripPriceNew']);
         Route::post('/bookings', [BookingController::class, 'createBooking']);
         Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
@@ -204,7 +206,7 @@ Route::get('/vehicle-receipt-blob/{booking_id}', [BookingController::class, 'get
 
 Route::get('/vehicle-sorting', [BookingController::class, 'vehicleSorting']);
 
-
+Route::post('/import-route-price', [TripRouteController::class, 'importRoutePrice']);
 
 
 Route::prefix('esewa')->group(function () {
