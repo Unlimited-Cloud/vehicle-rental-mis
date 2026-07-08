@@ -43,9 +43,10 @@ class EmailEvent
     public  $isPasscode;
     public $currentUserId;
     public $transactionId;
+    public $bookingId;
 
     public $recurringRemittanceId;
-    public function __construct($email, $activity, $response, $userType,  $transactionId = null,  $recurringRemittanceId = null)
+    public function __construct($email, $activity, $response, $userType,  $transactionId = null,  $recurringRemittanceId = null, $bookingId = null)
     {
         $this->email  = $email;
         $this->activity = $activity;
@@ -55,6 +56,7 @@ class EmailEvent
         $this->isPasscode = true;
         $this->currentUserId = Auth::user() ? Auth::user()->id : 0;
         $this->recurringRemittanceId = $recurringRemittanceId;
+        $this->bookingId = $bookingId;
 
         if ($this->userType == 'customer') {
             $emailconfig = 'asiyana';
@@ -70,11 +72,29 @@ class EmailEvent
                 $this->PersonalDetails = Customer::where('email', $email)->first();
             }
             //
-            if ($this->activity == 'create_booking' || $this->activity == 'confirmed_booking' || $this->activity == 'paid_booking') {
+            if ($this->activity == 'create_booking' || $this->activity == 'confirmed_booking' || $this->activity == 'paid_booking' || $this->activity == 'booking_changed') {
                 $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
                     ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
                     ->join('trip_routes', 'vehicle_bookings.trip_route_id', '=', 'trip_routes.id')
                     ->where('vehicle_bookings.customer_id', $this->PersonalDetails->id)
+                    ->select(
+                        'vehicle_bookings.*',
+                        'customers.name',
+                        'customers.email',
+                        'customers.customer_uuid',
+                        'vehicles.vehicle_name',
+                        'vehicles.vehicle_type',
+                        'trip_routes.title as trip_route_name'
+                    )
+                    ->latest('vehicle_bookings.created_at')
+                    ->first();
+            }
+
+            if ($this->activity == 'booking_changed') {
+                $this->PersonalDetails = VehicleBooking::join('customers', 'vehicle_bookings.customer_id', '=', 'customers.id')
+                    ->join('vehicles', 'vehicle_bookings.vehicle_id', '=', 'vehicles.id')
+                    ->join('trip_routes', 'vehicle_bookings.trip_route_id', '=', 'trip_routes.id')
+                    ->where('vehicle_bookings.id', $this->bookingId)
                     ->select(
                         'vehicle_bookings.*',
                         'customers.name',

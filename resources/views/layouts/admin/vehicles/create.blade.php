@@ -31,7 +31,7 @@
 
     <div class="card-body">
         <div class="row">
-             <div class="col-md-6">
+            <div class="col-md-6">
                 <div class="form-group">
                     <label>Vehicle Owner</label>
                     <select name="vehicle_owner_id" class="form-control">

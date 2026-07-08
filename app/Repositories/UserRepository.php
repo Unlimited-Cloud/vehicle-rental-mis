@@ -14,10 +14,7 @@ use App\Models\Partnerdetailstable;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PartnerUser;
 use App\Models\CrewProfile;
-
-
-
-
+use App\Models\VehicleOwner;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -451,47 +448,47 @@ class UserRepository implements UserRepositoryInterface
      * @return user data
      */
     public function getAllLoggedInPartnerUsersList($search, $partnerId, $partnerFilter = null)
-{
-    $query = DB::table('users')
-        ->select(
-            'users.name',
-            'users.middle_name',
-            'users.last_name',
-            'users.password',
-            'users.id',
-            'users.email',
-            'users.phone_number_country_code',
-            'users.phone_no',
-            'roles.name as role_name',
-            DB::raw("CASE
+    {
+        $query = DB::table('users')
+            ->select(
+                'users.name',
+                'users.middle_name',
+                'users.last_name',
+                'users.password',
+                'users.id',
+                'users.email',
+                'users.phone_number_country_code',
+                'users.phone_no',
+                'roles.name as role_name',
+                DB::raw("CASE
                 WHEN users.status = 1 THEN 'Active'
                 ELSE 'Inactive'
             END as status"),
-            DB::raw("CASE
+                DB::raw("CASE
                 WHEN users.organization_id = 1 THEN 'Company'
                 ELSE 'Other Organization'
             END as organization_type"),
-            'partners.name as partnername'
-        )
-        ->join('partner_user', 'partner_user.user_id', '=', 'users.id')
-        ->join('partners', 'partner_user.partner_id', '=', 'partners.id')
-        ->leftJoin('roles', 'users.role_id', '=', 'roles.id')
-        ->where('partners.id', $partnerId);
+                'partners.name as partnername'
+            )
+            ->join('partner_user', 'partner_user.user_id', '=', 'users.id')
+            ->join('partners', 'partner_user.partner_id', '=', 'partners.id')
+            ->leftJoin('roles', 'users.role_id', '=', 'roles.id')
+            ->where('partners.id', $partnerId);
 
-    if (!empty($search)) {
-        $query->where(function ($query) use ($search) {
-            $query->where('users.name', 'like', "%{$search}%")
-                  ->orWhere('users.email', 'like', "%{$search}%")
-                  ->orWhere('users.phone_no', 'like', "%{$search}%");
-        });
+        if (!empty($search)) {
+            $query->where(function ($query) use ($search) {
+                $query->where('users.name', 'like', "%{$search}%")
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.phone_no', 'like', "%{$search}%");
+            });
+        }
+
+        if (!empty($partnerFilter)) {
+            $query->where('partners.name', 'like', "%{$partnerFilter}%");
+        }
+
+        return $query->paginate(10); // ✅ now pagination works with ->links()
     }
-
-    if (!empty($partnerFilter)) {
-        $query->where('partners.name', 'like', "%{$partnerFilter}%");
-    }
-
-    return $query->paginate(10); // ✅ now pagination works with ->links()
-}
 
     public function getLoggedInPartnerData($partnerId)
     {
@@ -605,8 +602,8 @@ class UserRepository implements UserRepositoryInterface
     public function getCustomerUserByEmail($email)
     {
         $detail = User::select('users.*')
-        ->where('users.email', $email)->join('customer_users','customer_users.user_id','=','users.id')
-        ->first();
+            ->where('users.email', $email)->join('customer_users', 'customer_users.user_id', '=', 'users.id')
+            ->first();
         return $detail;
     }
 
@@ -627,30 +624,38 @@ class UserRepository implements UserRepositoryInterface
         return $detail;
     }
 
-    public function getUsers(){
+    public function getUsers()
+    {
         return User::latest()
-        ->select('users.*','roles.name as rolename')
-        ->leftJoin('roles','roles.id','=','users.role_id')
-        ->get();
+            ->select('users.*', 'roles.name as rolename')
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->get();
     }
 
-    public function getUsersByCustomerId($customerId){
-        return User::where('customer_id',$customerId)->latest()
-        ->select('users.*','roles.name as rolename')
-        ->leftJoin('roles','roles.id','=','users.role_id')
-        ->get();
+    public function getUsersByCustomerId($customerId)
+    {
+        return User::where('customer_id', $customerId)->latest()
+            ->select('users.*', 'roles.name as rolename')
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->get();
     }
 
-    public function getUserByCustomerIdAndUserType($customerId,$userType){
-        return User::where('customer_id',$customerId)
-        ->where('users.user_type','customer_app')->latest()
-        ->select('users.*','roles.name as rolename')
-        ->leftJoin('roles','roles.id','=','users.role_id')
-        ->first();
+    public function getUserByCustomerIdAndUserType($customerId, $userType)
+    {
+        return User::where('customer_id', $customerId)
+            ->where('users.user_type', 'customer_app')->latest()
+            ->select('users.*', 'roles.name as rolename')
+            ->leftJoin('roles', 'roles.id', '=', 'users.role_id')
+            ->first();
     }
 
     public function getCrewProfileByUserId($userId)
     {
         return CrewProfile::where('user_id', $userId)->first();
+    }
+
+    public function getVehicleOwnerByUserId($userId)
+    {
+        return VehicleOwner::where('user_id', $userId)->first();
     }
 }

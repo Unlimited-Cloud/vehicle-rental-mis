@@ -57,6 +57,7 @@ class VehicleBooking extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+ 
     public function agent()
     {
         return $this->belongsTo(Agent::class, 'agent_code', 'agent_code');

@@ -46,6 +46,20 @@ value="{{ $crew_profile->user_id }}">
     </div>
 @endif
     </div>
+
+     <div class="col-md-6">
+                <div class="form-group">
+                    <label>Vehicle Owner</label>
+                    <select name="vehicle_owner_id" class="form-control">
+                        <option value="">Select Vehicle Owner</option>
+                        @foreach($vehicle_owners as $owner)
+                            <option value="{{ $owner->id }}" {{ old('vehicle_owner_id',$crew_profile->vehicle_owner_id ?? '')==$owner->id?'selected':'' }}>{{ $owner->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+
 <div class="col-md-6">
 <div class="form-group">
 <label>Name *</label>

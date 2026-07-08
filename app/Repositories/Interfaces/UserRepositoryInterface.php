@@ -48,7 +48,7 @@ interface UserRepositoryInterface
     public function storePartnerUser($data);
     public function getAllNonPartnerUsersList($search);
     public function getAllPartnerRoles();
-    public function getAllLoggedInPartnerUsersList($search,$partnerId);
+    public function getAllLoggedInPartnerUsersList($search, $partnerId);
     public function getLoggedInPartnerData($partnerId);
     public function getPartnerUser($id);
     public function updatePartnerUser($data, $id);
@@ -60,5 +60,6 @@ interface UserRepositoryInterface
     public function getUsers();
     public function getUsersByCustomerId($customerId);
     public function getCrewProfileByUserId($userId);
-    public function getUserByCustomerIdAndUserType($customerId,$userType);
+    public function getVehicleOwnerByUserId($userId);
+    public function getUserByCustomerIdAndUserType($customerId, $userType);
 }
