@@ -4,190 +4,165 @@
 
 <div class="content-header">
     <div class="container-fluid">
-
         <h1>
             {{ isset($price) ? 'Edit Vehicle Route Price' : 'Create Vehicle Route Price' }}
         </h1>
-
     </div>
 </div>
 
 <section class="content">
+    <div class="container-fluid">
+        <form
+            action="{{ isset($price)
+                ? route('admin.trip-routes-vehicle-prices.update', $price->id)
+                : route('admin.trip-routes-vehicle-prices.store') }}"
+            method="POST">
 
-<div class="container-fluid">
+            @csrf
+            @if(isset($price))
+                @method('PUT')
+            @endif
 
-<form
-    action="{{ isset($price)
-        ? route('admin.trip-routes-vehicle-prices.update',$price->id)
-        : route('admin.trip-routes-vehicle-prices.store') }}"
-    method="POST">
+            @include('layouts.admin_theme.alert')
 
-    @csrf
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Vehicle Selection -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Vehicle <span class="text-danger">*</span></label>
+                                <select name="vehicle_id" class="form-control" required>
+                                    <option value="">Select Vehicle</option>
+                                    @foreach($vehicles as $id => $name)
+                                        <option value="{{ $id }}"
+                                            {{ old('vehicle_id', $price->vehicle_id ?? '') == $id ? 'selected' : '' }}>
+                                            {{ $name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('vehicle_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
 
-    @if(isset($price))
-        @method('PUT')
-    @endif
+                        <!-- Per KM Price -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Price Per KM (Rs)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    name="per_km"
+                                    class="form-control"
+                                    placeholder="Enter price per kilometer"
+                                    value="{{ old('per_km', $price->per_km ?? '') }}">
+                                @error('per_km')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
 
-    @include('layouts.admin_theme.alert')
+                        <!-- Per Hour Price -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Price Per Hour (Rs)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    name="per_hour"
+                                    class="form-control"
+                                    placeholder="Enter price per hour"
+                                    value="{{ old('per_hour', $price->per_hour ?? '') }}">
+                                @error('per_hour')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
+                        <!-- Overnight Stay -->
 
-    <div class="card">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Overnight Charge (Rs)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    name="price"
+                                    class="form-control"
+                                    placeholder="Enter overnight charge"
+                                    value="{{ old('price', $price->price ?? '') }}">
+                                @error('price')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div>
 
-        <div class="card-body">
+                        <!-- Overnight Stay -->
+                        {{-- <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Overnight Stay Charge</label>
+                                <div class="custom-control custom-switch mt-2">
+                                    <input
+                                        type="checkbox"
+                                        name="overnight"
+                                        class="custom-control-input"
+                                        id="overnightSwitch"
+                                        value="1"
+                                        {{ old('overnight', $price->overnight ?? false) ? 'checked' : '' }}>
+                                    <label class="custom-control-label" for="overnightSwitch">
+                                        {{ old('overnight', $price->overnight ?? false) ? 'Yes' : 'No' }}
+                                    </label>
+                                </div>
+                                <small class="form-text text-muted">Check if overnight stay charges apply</small>
+                                @error('overnight')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                        </div> --}}
 
-            <div class="row">
-
-                <div class="col-md-6">
-                    <label>Trip Category</label>
-                    <select
-                        id="trip_category_id"
-                        class="form-control"
-                        {{ isset($price) ? 'disabled' : '' }}>
-                        <option value="">Select Category</option>
-                        @foreach($categories as $id => $name)
-                            <option 
-                                value="{{ $id }}"
-                                {{ isset($price) && $price->tripRoute->category_id == $id ? 'selected' : '' }}>
-                                {{ $name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @if(isset($price))
-                        <input type="hidden" name="trip_category_id" value="{{ $price->tripRoute->category_id }}">
-                    @endif
+                        <!-- Note: trip_route_id is null for global vehicle prices -->
+                        <div class="col-md-12">
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note:</strong> This price will be applied globally to all routes for the selected vehicle.
+                                To set route-specific prices, please use the route-wise pricing section.
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-6">
-                    <label>Trip Route</label>
-                    <select
-                        id="trip_route_id"
-                        name="trip_route_id"
-                        class="form-control"
-                        required>
-                        <option value="">Select Route</option>
-                        @if(isset($price))
-                            @php
-                                $routes = App\Models\TripRoute::where('trip_category_id', $price->tripRoute->category_id)->get();
-                            @endphp
-                            @foreach($routes as $route)
-                                <option 
-                                    value="{{ $route->id }}"
-                                    {{ $price->trip_route_id == $route->id ? 'selected' : '' }}>
-                                    {{ $route->title }}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
+                <div class="card-footer text-right">
+                    <a href="{{ route('admin.trip-routes-vehicle-prices.index') }}"
+                       class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        {{ isset($price) ? 'Update Price' : 'Save Price' }}
+                    </button>
                 </div>
-
-                <div class="col-md-6">
-                    <label>Vehicle</label>
-                    <select
-                        name="vehicle_id"
-                        class="form-control"
-                        required>
-                        <option value="">Select Vehicle</option>
-                        @foreach($vehicles as $id => $name)
-                            <option
-                                value="{{ $id }}"
-                                {{ old('vehicle_id', $price->vehicle_id ?? '') == $id ? 'selected' : '' }}>
-                                {{ $name }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="col-md-4 mt-3">
-                    <label>Price</label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        name="price"
-                        class="form-control"
-                        value="{{ old('price', $price->price ?? '') }}"
-                        required>
-                </div>
-
             </div>
-
-        </div>
-
-        <div class="card-footer text-right">
-            <a href="{{ route('admin.trip-routes-vehicle-prices.index') }}"
-               class="btn btn-secondary">
-                Back
-            </a>
-            <button class="btn btn-primary">
-                {{ isset($price) ? 'Update Price' : 'Save Price' }}
-            </button>
-        </div>
-
+        </form>
     </div>
-
-</form>
-
-</div>
-
 </section>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script type="text/javascript">
-$(document).ready(function(){
-
-    // Store the selected route ID for edit mode
-    var selectedRouteId = '{{ isset($price) ? $price->trip_route_id : '' }}';
-    var selectedCategoryId = '{{ isset($price) ? $price->tripRoute->trip_category_id : '' }}';
-
-    // If editing, load routes for the selected category
-    if(selectedCategoryId && selectedRouteId) {
-        loadRoutes(selectedCategoryId, selectedRouteId);
-    }
-
-    // Category change event
-    $('#trip_category_id').change(function(){
-        var categoryId = $(this).val();
-        loadRoutes(categoryId, '');
-    });
-
-    function loadRoutes(categoryId, selectedRoute) {
-        $('#trip_route_id')
-            .html('<option value="">Loading...</option>');
-
-        if(categoryId){
-            $.ajax({
-                url: '/dashboard/get-trip-routes/' + categoryId,
-                type: 'GET',
-                success: function(routes){
-                    let options = '<option value="">Select Route</option>';
-                    
-                    $.each(routes, function(index, route){
-                        var selected = (selectedRoute && selectedRoute == route.id) ? 'selected' : '';
-                        options +=
-                            '<option value="' + route.id + '" ' + selected + '>' +
-                            route.title +
-                            '</option>';
-                    });
-
-                    $('#trip_route_id').html(options);
-
-                    // If no selected route but we have a selectedRouteId from edit
-                    if(!selectedRoute && selectedRouteId) {
-                        $('#trip_route_id').val(selectedRouteId);
-                    }
-                },
-                error: function(){
-                    $('#trip_route_id').html(
-                        '<option value="">Error loading routes</option>'
-                    );
-                }
-            });
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Toggle overnight switch label
+    $('#overnightSwitch').change(function() {
+        if ($(this).is(':checked')) {
+            $(this).closest('.custom-control').find('.custom-control-label').text('Yes');
         } else {
-            $('#trip_route_id').html(
-                '<option value="">Select Route</option>'
-            );
+            $(this).closest('.custom-control').find('.custom-control-label').text('No');
         }
-    }
-
+    });
 });
 </script>
+@endpush
 
 @endsection

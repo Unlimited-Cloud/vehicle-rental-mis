@@ -20,7 +20,6 @@ class TripRouteVehiclePriceController extends Controller
         // Gate::authorize('index_trip_route_vehicle_prices');
 
         $prices = TripRouteVehiclePrice::with([
-            'tripRoute',
             'vehicle'
         ])->latest()->get();
 
@@ -63,13 +62,11 @@ class TripRouteVehiclePriceController extends Controller
     {
         // Gate::authorize('create_trip_route_vehicle_prices');
 
-        $tripRoutes = TripRoute::pluck('title', 'id');
-        $categories = TripCategory::pluck('name', 'id');
         $vehicles   = Vehicle::pluck('vehicle_name', 'id');
 
         return view(
             'layouts.admin.trip_route_vehicle_prices.create',
-            compact('tripRoutes', 'categories', 'vehicles')
+            compact('vehicles')
         );
     }
 
@@ -81,16 +78,25 @@ class TripRouteVehiclePriceController extends Controller
         // Gate::authorize('create_trip_route_vehicle_prices');
 
         $request->validate([
-            'trip_route_id' => 'required|exists:trip_routes,id',
             'vehicle_id' => 'required|exists:vehicles,id',
-            'price' => 'required|numeric|min:0',
+            'per_km'     => 'nullable|numeric|min:0',
+            'per_hour'   => 'nullable|numeric|min:0',
+            'price'   => 'nullable|numeric|min:0',
+            'overnight'  => 'nullable|boolean',
         ]);
 
-        TripRouteVehiclePrice::create([
-            'trip_route_id' => $request->trip_route_id,
-            'vehicle_id'    => $request->vehicle_id,
-            'price'         => $request->price,
-        ]);
+        TripRouteVehiclePrice::updateOrCreate(
+            [
+                'vehicle_id' => $request->vehicle_id,
+                'trip_route_id' => null,
+            ],
+            [
+                'per_km'    => $request->per_km,
+                'per_hour'  => $request->per_hour,
+                'price'   => $request->price,
+                'overnight' => $request->overnight,
+            ]
+        );
 
         return redirect()
             ->route('admin.trip-routes-vehicle-prices.index')
@@ -105,17 +111,12 @@ class TripRouteVehiclePriceController extends Controller
         // Gate::authorize('update_trip_route_vehicle_prices');
 
         $price = TripRouteVehiclePrice::findOrFail($id);
-
-        $tripRoutes = TripRoute::pluck('title', 'id');
-        $categories = TripCategory::pluck('name', 'id');
         $vehicles   = Vehicle::pluck('vehicle_name', 'id');
 
         return view(
             'layouts.admin.trip_route_vehicle_prices.create',
             compact(
                 'price',
-                'tripRoutes',
-                'categories',
                 'vehicles'
             )
         );
@@ -129,17 +130,21 @@ class TripRouteVehiclePriceController extends Controller
         // Gate::authorize('update_trip_route_vehicle_prices');
 
         $request->validate([
-            'trip_route_id' => 'required|exists:trip_routes,id',
-            'vehicle_id'    => 'required|exists:vehicles,id',
-            'price'         => 'required|numeric|min:0',
+            'vehicle_id' => 'required|exists:vehicles,id',
+            'per_km'     => 'nullable|numeric|min:0',
+            'per_hour'   => 'nullable|numeric|min:0',
+            'price'   => 'nullable|numeric|min:0',
+            'overnight'  => 'nullable|boolean',
         ]);
 
         $price = TripRouteVehiclePrice::findOrFail($id);
 
         $price->update([
-            'trip_route_id' => $request->trip_route_id,
-            'vehicle_id'    => $request->vehicle_id,
-            'price'         => $request->price,
+            'vehicle_id' => $request->vehicle_id,
+            'per_km'     => $request->per_km,
+            'per_hour'   => $request->per_hour,
+            'price'   => $request->price,
+            'overnight'  => $request->overnight,
         ]);
 
         return redirect()

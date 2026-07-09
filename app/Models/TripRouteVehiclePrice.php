@@ -12,6 +12,9 @@ class TripRouteVehiclePrice extends Model
         'trip_route_id',
         'vehicle_id',
         'price',
+        'per_km',
+        'per_hour',
+        'overnight',
     ];
 
     public function tripRoute()

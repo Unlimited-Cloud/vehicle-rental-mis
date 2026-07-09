@@ -36,83 +36,95 @@
                     <thead>
                     <tr>
                         <th>#</th>
-                        <th>Category</th>
-                        <th>Route</th>
                         <th>Vehicle</th>
                         <th>Type</th>
-                        <th>Price</th>
+                        <th>Per KM (Rs)</th>
+                        <th>Per Hour (Rs)</th>
+                        <th>Overnight</th>
                         <th width="150">Action</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     @forelse($prices as $price)
-
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-
                             <td>
-                                {{ $price->tripRoute->category->name ?? '-' }}
+                                <strong>{{ $price->vehicle->vehicle_name ?? '-' }}</strong>
                             </td>
-
                             <td>
-                                {{ $price->tripRoute->title ?? '-' }}
+                                @php
+                                    $vehicleType = $price->vehicle->vehicle_type ?? '-';
+                                    $badgeClass = 'secondary';
+                                    switch(strtolower($vehicleType)) {
+                                        case 'car': $badgeClass = 'primary'; break;
+                                        case 'hiace': $badgeClass = 'info'; break;
+                                        case 'coaster': $badgeClass = 'warning'; break;
+                                        case 'bus': $badgeClass = 'danger'; break;
+                                        case 'van': $badgeClass = 'success'; break;
+                                        case 'jeep': $badgeClass = 'dark'; break;
+                                        case 'mini bus':
+                                        case 'minibus': $badgeClass = 'secondary'; break;
+                                        case 'truck': $badgeClass = 'danger'; break;
+                                        default: $badgeClass = 'secondary';
+                                    }
+                                @endphp
+                                <span class="badge badge-{{ $badgeClass }}">
+                                    {{ $vehicleType }}
+                                </span>
                             </td>
-
+                            <td class="text-right">
+                                {{ $price->per_km ? 'Rs ' . number_format($price->per_km, 2) : '-' }}
+                            </td>
+                            <td class="text-right">
+                                {{ $price->per_hour ? 'Rs ' . number_format($price->per_hour, 2) : '-' }}
+                            </td>
+                             <td class="text-right">
+                                {{ $price->price ? 'Rs ' . number_format($price->price, 2) : '-' }}
+                            </td>
+                            {{-- <td>
+                                @if($price->overnight)
+                                    <span class="badge badge-success">
+                                        <i class="fas fa-check-circle"></i> Yes
+                                    </span>
+                                @else
+                                    <span class="badge badge-secondary">
+                                        <i class="fas fa-times-circle"></i> No
+                                    </span>
+                                @endif
+                            </td> --}}
                             <td>
-                                {{ $price->vehicle->vehicle_name ?? '-' }}
-                            </td>
-                             <td>
-                                {{ $price->vehicle->vehicle_type ?? '-' }}
-                            </td>
-
-                            <td>
-                                Rs {{ number_format($price->price,2) }}
-                            </td>
-
-                            <td>
-
-                                <a href="{{ route('admin.trip-routes-vehicle-prices.edit',$price->id) }}"
+                                <a href="{{ route('admin.trip-routes-vehicle-prices.edit', $price->id) }}"
                                    class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
 
-                              
-
                                 <form
-                                    action="{{ route('admin.trip-routes-vehicle-prices.destroy',$price->id) }}"
+                                    action="{{ route('admin.trip-routes-vehicle-prices.destroy', $price->id) }}"
                                     method="POST"
                                     class="d-inline">
-
                                     @csrf
                                     @method('DELETE')
-
                                     <button
                                         type="submit"
                                         class="btn btn-sm btn-danger"
                                         onclick="return confirm('Delete this record?')">
-
                                         <i class="fas fa-trash"></i>
-
                                     </button>
-
                                 </form>
-
                             </td>
-
                         </tr>
-
                     @empty
-
                         <tr>
-                            <td colspan="5" class="text-center">
-                                No Records Found
+                            <td colspan="7" class="text-center">
+                                <div class="py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted"></i>
+                                    <p class="mt-2 text-muted">No Records Found</p>
+                                </div>
                             </td>
                         </tr>
-
                     @endforelse
                     </tbody>
-
                 </table>
 
             </div>
@@ -126,7 +138,18 @@
 @push('scripts')
 <script>
 $(function(){
-    $('#dataTable').DataTable();
+    $('#dataTable').DataTable({
+        "paging": true,
+        "pageLength": 25,
+        "lengthChange": true,
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        "searching": true,
+        "ordering": true,
+        "info": true,
+        "autoWidth": false,
+        "responsive": true,
+        "order": [[0, 'asc']]
+    });
 });
 </script>
 @endpush
