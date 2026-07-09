@@ -1289,9 +1289,13 @@ class BookingController extends Controller
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
+            ->whereHas('vehicle', function ($query) {
+                $query->where('status', 1);
+            })
             ->with([
                 'vehicle' => function ($query) {
-                    $query->withAvg('reviews', 'rating');
+                    $query->where('status', 1)
+                        ->withAvg('reviews', 'rating');
                 }
             ])
             ->groupBy('vehicle_id')
