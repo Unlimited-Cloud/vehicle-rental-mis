@@ -115,6 +115,8 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
 
+        Route::get('get-vehicle-rate/{vehicleId}', [VehicleBookingController::class, 'getVehicleRate'])->name('vehicle_bookings.vehicle_rate');
+
         Route::get('trip-categories/list', [VehicleBookingController::class, 'getTripCategoriesList'])->name('ajax.trip-categories.list');
         Route::post('trip-categories/store', [VehicleBookingController::class, 'storeTripCategory'])->name('ajax.trip-categories.store');
         Route::get('trip-routes/list', [VehicleBookingController::class, 'getTripRoutesList'])->name('ajax.trip-routes.list');

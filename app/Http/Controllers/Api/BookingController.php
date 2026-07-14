@@ -613,6 +613,7 @@ class BookingController extends Controller
 
             DB::table('itineraries')->insert($itineraryRows);
 
+
             Passenger::create([
                 'contact_person' => $request->contact_person ?? $customerName,
                 'contact_email' => $request->contact_email ?? $customers->email,
