@@ -1010,6 +1010,7 @@ class BookingController extends Controller
         $usedBrands = Vehicle::where('status', 1)->distinct()->pluck('brand');
 
         $brands = Brand::select('id', 'name', 'logo')
+            ->orderBy('name', 'asc')
             ->whereIn('name', $usedBrands)
             ->get()
             ->map(function ($b) {
@@ -1096,6 +1097,7 @@ class BookingController extends Controller
 
         $seaters = Seater::select('id', 'name', 'logo')
             ->whereIn('name', $usedSeaters)
+            ->orderByRaw('CAST(name AS UNSIGNED) ASC')
             ->get()
             ->map(function ($b) {
                 return [
