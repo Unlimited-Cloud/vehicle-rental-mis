@@ -45,6 +45,35 @@
             </div>
         </div>
 
+        <!-- Filters -->
+<div class="card card-outline card-secondary mb-3">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="filterCategory">Filter by Category</label>
+                <select id="filterCategory" class="form-control">
+                    <option value="">All Categories</option>
+                    @foreach($categories as $id => $name)
+                        <option value="{{ $name }}">{{ $name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="filterRoute">Filter by Route Title</label>
+                <input type="text" id="filterRoute" class="form-control" placeholder="Type route name...">
+            </div>
+                <div class="col-md-4 d-flex align-items-end">
+                <button type="button" id="applyFilters" class="btn btn-primary mr-2">
+                    <i class="fas fa-filter mr-1"></i> Filter
+                </button>
+                <button type="button" id="clearFilters" class="btn btn-outline-secondary">
+                    <i class="fas fa-times mr-1"></i> Clear
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
         <!-- Main Table Card -->
         <div class="card card-primary card-outline">
             <div class="card-header">
@@ -144,7 +173,11 @@
 
 @endsection
 
-@push('styles')
+@section('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
 <style>
     .btn-group .btn {
         margin-right: 2px;
@@ -157,20 +190,30 @@
         vertical-align: middle;
     }
 </style>
-@endpush
-@push('scripts')
+
 <script>
+var table; // accessible to both init and filter handlers
+
 $(document).ready(function() {
-    $('#dataTable').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true
+     table = $('#dataTable').DataTable();
+
+    // Apply filters only when the button is clicked
+    $('#applyFilters').on('click', function() {
+        var category = $.fn.dataTable.util.escapeRegex($('#filterCategory').val());
+        var routeTitle = $('#filterRoute').val();
+
+        table.column(1).search(category ? '^' + category + '$' : '', true, false);
+        table.column(2).search(routeTitle);
+        table.draw();
+    });
+
+    // Clear both
+    $('#clearFilters').on('click', function() {
+        $('#filterCategory').val('');
+        $('#filterRoute').val('');
+        table.column(1).search('').column(2).search('').draw();
     });
 });
 </script>
-@endpush
+@endsection
 

@@ -37,10 +37,12 @@ class VehicleBookingController extends Controller
     private $currentUserId;
     private $currentUserCustomerId;
     private $currentUserDriverId;
+    private $currentUserVehicleOwnerId;
     private $currentUserRoleId;
 
     private $currentUserIsCustomer;
     private $currentUserIsDriver;
+    private $currentUserIsOwner;
 
     public function __construct(
         ProformaService $service,
@@ -55,8 +57,10 @@ class VehicleBookingController extends Controller
             $this->currentUserCustomerId = Auth::user()->customer_id;
             $this->currentUserRoleId = Auth::user()->role_id;
             $this->currentUserDriverId = $this->userRepository->getCrewProfileByUserId($this->currentUserId) ? $this->userRepository->getCrewProfileByUserId($this->currentUserId)->id : NULL;
+            $this->currentUserVehicleOwnerId = $this->userRepository->getVehicleOwnerByUserId($this->currentUserId) ? $this->userRepository->getVehicleOwnerByUserId($this->currentUserId)->id : NULL;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
             $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            $this->currentUserIsOwner = $this->currentUserRoleId == 10 ? 'Y' : 'N';
             return $next($request);
         });
     }
@@ -73,21 +77,32 @@ class VehicleBookingController extends Controller
         } else {
             if ($this->currentUserIsDriver == 'Y') {
                 $bookings = $this->vehicleRepository->getVehicleBookingsByDriverId($request, $this->currentUserDriverId);
+            } elseif ($this->currentUserIsOwner == 'Y') {
+                $bookings = $this->vehicleRepository->getVehicleBookingsByVehicleOwnerId(
+                    $request,
+                    $this->currentUserVehicleOwnerId
+                );
             } else {
                 $bookings = $this->vehicleRepository->getAllVehicleBookings($request);
             }
         }
 
-        $vehicles  = Vehicle::orderBy('vehicle_name')->get();
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->orderBy('vehicle_name')->get();
+        } else {
+            $vehicles = Vehicle::all();
+        }
         $customers = Customer::orderBy('name')->get();
         $drivers   = CrewProfile::whereHas('user', function ($q) {
             $q->where('role', 'driver');
         })->with('user')->get();
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         $currentUserIsDriver = $this->currentUserIsDriver;
+        $currentUserIsOwner = $this->currentUserIsOwner;
+
         return view(
             'layouts.admin.vehicles_booking.index',
-            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer', 'currentUserIsDriver')
+            compact('bookings', 'vehicles', 'customers', 'drivers', 'currentUserIsCustomer', 'currentUserIsDriver', 'currentUserIsOwner')
         );
     }
     /**
@@ -97,7 +112,11 @@ class VehicleBookingController extends Controller
     {
         Gate::authorize('create_vehicle_bookings');
 
-        $vehicles = Vehicle::all();
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->get();
+        } else {
+            $vehicles = Vehicle::all();
+        }
         $drivers = CrewProfile::whereHas('user', function ($q) {
             $q->where('role', 'driver');
         })->with('user')->get();
@@ -111,6 +130,7 @@ class VehicleBookingController extends Controller
         $start = $request->start;
         $end = $request->end;
         $currentUserIsCustomer = $this->currentUserIsCustomer;
+        $currentUserIsOwner = $this->currentUserIsOwner;
 
         // Check if we should show multiple booking form
         if ($request->has('multiple') && $request->multiple == 'true') {
@@ -122,6 +142,7 @@ class VehicleBookingController extends Controller
                 'helpers',
                 'customers',
                 'currentUserIsCustomer',
+                'currentUserIsOwner',
                 'tripCategories'
             ));
         }
@@ -189,7 +210,7 @@ class VehicleBookingController extends Controller
         }
         $addData['no_of_hours'] = (int) $no_of_hours;
         $addData['rate_per_day'] = $request->rate_per_day;
-        $addData['sub_total'] = $request->sub_total;
+        $addData['sub_total'] = $request->rate_per_day;
         $addData['remaining_balance'] = $request->remaining_balance;
 
 
@@ -213,6 +234,9 @@ class VehicleBookingController extends Controller
             $paymentData['notes'] = $request->payment_note;
 
             Payment::create($paymentData);
+        }
+        if ($request->has('itineraries')) {
+            $this->saveItineraries($vehicleBooking, $request->itineraries);
         }
 
         return redirect()->route('admin.vehicle_bookings.index')
@@ -248,6 +272,9 @@ class VehicleBookingController extends Controller
             ->leftJoin('payments', 'payments.vehicle_booking_id', '=', 'vehicle_bookings.id')
             ->where('vehicle_bookings.id', $vehicleBooking->id)
             ->first();
+        if ($booking) {
+            $booking->setRelation('itineraries', \App\Models\Itinerary::where('booking_id', $booking->id)->orderBy('day_number')->get());
+        }
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         return view(
             'layouts.admin.vehicles_booking.create',
@@ -291,10 +318,16 @@ class VehicleBookingController extends Controller
         $updateData['trip_category_id'] = $request->trip_category_id;
         $updateData['trip_route_id'] = $request->trip_route_id;
         $updateData['payment_status'] = $request->payment_status == '' ? 0 : $request->payment_status;
-        $updateData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
+        // $updateData['customer_id'] = $this->currentUserIsCustomer == 'N' ? $request->customer_id : $this->currentUserCustomerId;
         $oldRate = $vehicleBooking->rate_per_day;
         $oldTotal = $vehicleBooking->sub_total;
+        $oldVehicleId = $vehicleBooking->vehicle_id;
         $vehicleBooking->update($updateData);
+
+        if ($request->has('itineraries')) {
+            $this->saveItineraries($vehicleBooking, $request->itineraries);
+        }
+
         // if (
         //     $oldRate != $vehicleBooking->rate_per_day ||
         //     $oldTotal != $vehicleBooking->sub_total
@@ -310,6 +343,7 @@ class VehicleBookingController extends Controller
         $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
+        $customers = Customer::where('id', $vehicleBooking->customer_id)->first();
 
         //generate invoice 
         if ($vehicleBooking->status === 'confirmed' && $vehicleBooking->call_type === 'api') {
@@ -320,6 +354,7 @@ class VehicleBookingController extends Controller
                 'remarks' => 'Booking confirmed by admin',
                 'created_by' => Auth::user() ? Auth::user()->id : 0,
             ]);
+            event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
         }
 
         if ($vehicleBooking->status === 'cancelled' && $vehicleBooking->call_type === 'api') {
@@ -331,8 +366,17 @@ class VehicleBookingController extends Controller
             ]);
         }
 
-        $customers = Customer::where('id', $request->customer_id)->first();
-        event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
+        if ($oldVehicleId != $vehicleBooking->vehicle_id) {
+            event(new EmailEvent(
+                $customers->email,
+                'booking_changed',
+                'success',
+                'customer',
+                '',
+                '',
+                $vehicleBooking->id
+            ));
+        }
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
@@ -345,7 +389,10 @@ class VehicleBookingController extends Controller
             'vehicle',
             'customer',
             'driver.user',
-            'helper.user'
+            'helper.user',
+            'itineraries' => function ($q) {
+                $q->orderBy('day_number');
+            }
         ]);
         if (request()->ajax()) {
             return response()->json($vehicleBooking);
@@ -407,7 +454,7 @@ class VehicleBookingController extends Controller
 
     public function fetchEvents(Request $request)
     {
-        $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user']);
+        $query = VehicleBooking::with(['vehicle', 'customer', 'driver.user', 'itineraries']);
 
         if ($this->currentUserIsCustomer == 'Y') {
             $query->where('customer_id', $this->currentUserCustomerId);
@@ -435,6 +482,7 @@ class VehicleBookingController extends Controller
         }
 
         $bookings = $query->get();
+
 
         $events = [];
 
@@ -823,6 +871,55 @@ class VehicleBookingController extends Controller
             'success' => true,
             'id' => $helper->id,
             'helpers' => $helpers
+        ]);
+    }
+
+
+    private function saveItineraries(VehicleBooking $vehicleBooking, array $itineraries)
+    {
+        \App\Models\Itinerary::where('booking_id', $vehicleBooking->id)->delete();
+
+        $rows = [];
+        foreach ($itineraries as $index => $item) {
+            if (empty($item['itinerary_date']) && empty($item['from_destination']) && empty($item['to_destination']) && empty($item['est_km']) && empty($item['est_hours'])) {
+                continue;
+            }
+
+            $rows[] = [
+                'booking_id' => $vehicleBooking->id,
+                'file_no' => $vehicleBooking->file_no,
+                'day_number' => $index + 1,
+                'itinerary_date' => $item['itinerary_date'] ?? null,
+                'from_destination' => $item['from_destination'] ?? null,
+                'to_destination' => $item['to_destination'] ?? null,
+                'est_km' => $item['est_km'] ?? 0,
+                'est_hours' => $item['est_hours'] ?? 0,
+                'is_overnight' => !empty($item['is_overnight']) && $item['is_overnight'] == 1,
+                'per_km_rate' => $item['per_km_rate'] ?? 0,
+                'per_hour_rate' => $item['per_hour_rate'] ?? 0,
+                'overnight_charge' => $item['overnight_charge'] ?? 0,
+                'est_price' => $item['est_price'] ?? 0,
+                'notes' => $item['notes'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($rows)) {
+            \App\Models\Itinerary::insert($rows);
+        }
+    }
+
+    public function getVehicleRate($vehicleId)
+    {
+        $rate = DB::table('trip_routes_vehicle_price')
+            ->where('vehicle_id', $vehicleId)
+            ->first();
+
+        return response()->json([
+            'per_km_rate' => $rate->per_km ?? 0,
+            'per_hour_rate' => $rate->per_hour ?? 0,
+            'overnight_price' => $rate->price ?? 0,
         ]);
     }
 }

@@ -161,21 +161,21 @@
                                 </div>
                             </div>
 
- <div class="col-md-6">
+                        <div class="col-md-6">
                             @if($vehicleBooking->pickup_latitude && $vehicleBooking->pickup_longitude)
-                <small class="d-block text-muted mt-1">
-                    <i class="fas fa-globe-asia mr-1"></i>
-                    {{ $vehicleBooking->pickup_latitude }},
-                    {{ $vehicleBooking->pickup_longitude }}
-                </small>
+                                    <small class="d-block text-muted mt-1">
+                                        <i class="fas fa-globe-asia mr-1"></i>
+                                        {{ $vehicleBooking->pickup_latitude }},
+                                        {{ $vehicleBooking->pickup_longitude }}
+                                    </small>
 
-                <a href="https://www.google.com/maps?q={{ $vehicleBooking->pickup_latitude }},{{ $vehicleBooking->pickup_longitude }}"
-                   target="_blank"
-                   class="btn btn-xs btn-outline-primary mt-2">
-                    <i class="fas fa-map"></i> Open in Map
-                </a>
-            @endif
-        </div>
+                                    <a href="https://www.google.com/maps?q={{ $vehicleBooking->pickup_latitude }},{{ $vehicleBooking->pickup_longitude }}"
+                                    target="_blank"
+                                    class="btn btn-xs btn-outline-primary mt-2">
+                                        <i class="fas fa-map"></i> Open in Map
+                                    </a>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="row mt-3">
@@ -215,6 +215,71 @@
                         </div>
                     </div>
                 </div>
+
+
+                {{-- Itinerary Card --}}
+                @if($vehicleBooking->itineraries && $vehicleBooking->itineraries->count())
+                <div class="card card-warning card-outline mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-map-signs mr-2"></i>Itinerary
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Date</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th class="text-right">Est. KM</th>
+                                    <th class="text-right">Est. Hours</th>
+                                    <th class="text-center">Overnight</th>
+                                    <th class="text-right">Est. Price</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($vehicleBooking->itineraries as $itinerary)
+                                <tr>
+                                    <td>{{ $itinerary->day_number }}</td>
+                                    <td>{{ $itinerary->itinerary_date ? \Carbon\Carbon::parse($itinerary->itinerary_date)->format('d M Y') : '-' }}</td>
+                                    <td>{{ $itinerary->from_destination ?? '-' }}</td>
+                                    <td>{{ $itinerary->to_destination ?? '-' }}</td>
+                                    <td class="text-right">{{ number_format($itinerary->est_km, 1) }}</td>
+                                    <td class="text-right">{{ number_format($itinerary->est_hours, 1) }}</td>
+                                    <td class="text-center">
+                                        @if($itinerary->is_overnight)
+                                            <span class="badge badge-info">Yes</span>
+                                        @else
+                                            <span class="badge badge-secondary">No</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">Rs. {{ number_format($itinerary->est_price, 2) }}</td>
+                                    <td>{{ $itinerary->notes ?? '-' }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-weight-bold">
+                                    <td colspan="4" class="text-right">Totals:</td>
+                                    <td class="text-right">{{ number_format($vehicleBooking->itineraries->sum('est_km'), 1) }}</td>
+                                    <td class="text-right">{{ number_format($vehicleBooking->itineraries->sum('est_hours'), 1) }}</td>
+                                    <td></td>
+                                    <td class="text-right">Rs. {{ number_format($vehicleBooking->itineraries->sum('est_price'), 2) }}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                @endif
 
                 {{-- Staff Assignment Card --}}
                 <div class="card card-secondary card-outline mb-4">

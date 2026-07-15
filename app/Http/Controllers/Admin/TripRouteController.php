@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TripRoutesExport;
 use App\Imports\TripRoutesImport;
+use App\Imports\TripRoutesPriceImport;
+
+
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 
@@ -20,9 +23,11 @@ class TripRouteController extends Controller
     public function index()
     {
         Gate::authorize('index_vehicles_trip_routes');
-        $routes = TripRoute::with('category')->whereNull('deleted_at')->latest()->get();
 
-        return view('layouts.admin.trip_routes.index', compact('routes'));
+        $routes = TripRoute::with('category')->whereNull('deleted_at')->latest()->get();
+        $categories = TripCategory::whereNull('deleted_at')->orderBy('name')->pluck('name', 'id');
+
+        return view('layouts.admin.trip_routes.index', compact('routes', 'categories'));
     }
 
 
@@ -112,10 +117,30 @@ class TripRouteController extends Controller
 
         return redirect()->back()->with('success', 'Trip routes uploaded successfully!');
     }
+
     public function upload()
     {
         return view('layouts.admin.trip_routes.upload'); // Blade file path
     }
+
+
+    public function importRoutePrice(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        Excel::import(new TripRoutesPriceImport, $request->file('file'));
+
+        return redirect()->back()->with('success', 'Trip routes price uploaded successfully!');
+    }
+
+    public function uploadTripPrice()
+    {
+        return view('layouts.admin.trip_route_vehicle_prices.upload'); // Blade file path
+    }
+
+
 
     public function storeAjax(Request $request)
     {

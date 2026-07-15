@@ -398,6 +398,7 @@ class CustomerController extends Controller
             $customer->update([
                 'deleted_at' => Carbon::now(),
                 'deleted_by' => $customer->id,
+                'deleted_reason' => $request->deleted_reason ?? 'No reason provided'
             ]);
 
             return response()->json([

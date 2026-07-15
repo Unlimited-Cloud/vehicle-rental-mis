@@ -47,7 +47,10 @@ class VehicleBooking extends Model
         'deleted_by',
         'pickup_latitude',
         'pickup_longitude',
-        'call_type'
+        'call_type',
+        'itinerary',
+        'est_km',
+        'overnight',
     ];
 
     protected $dates = ['start_date', 'end_date'];
@@ -56,6 +59,7 @@ class VehicleBooking extends Model
     {
         return $this->belongsTo(Vehicle::class);
     }
+
 
     public function agent()
     {
@@ -117,5 +121,10 @@ class VehicleBooking extends Model
     public function esewaPayments()
     {
         return $this->hasMany(EsewaPayment::class, 'booking_id');
+    }
+
+    public function itineraries()
+    {
+        return $this->hasMany(Itinerary::class, 'booking_id');
     }
 }

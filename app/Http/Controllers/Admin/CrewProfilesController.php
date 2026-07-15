@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\CrewProfile;
 use App\Models\User;
+use App\Models\VehicleOwner;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -25,6 +26,8 @@ class CrewProfilesController extends Controller
 
     protected $vehicleRepository;
     protected $userRepository;
+    private $currentUserVehicleOwnerId;
+    private $currentUserIsOwner;
 
     public function __construct(
         VehicleRepositoryInterface $vehicleRepository,
@@ -40,15 +43,24 @@ class CrewProfilesController extends Controller
             $this->currentUserRoleId = Auth::user()->role_id;
             $this->currentUserIsCustomer = !empty(Auth::user()->customer_id) ? 'Y' : 'N';
             $this->currentUserIsDriver = $this->currentUserRoleId == 3 ? 'Y' : 'N';
+            $this->currentUserIsOwner = $this->currentUserRoleId == 10 ? 'Y' : 'N';
+            $this->currentUserVehicleOwnerId = $this->userRepository->getVehicleOwnerByUserId($this->currentUserId) ? $this->userRepository->getVehicleOwnerByUserId($this->currentUserId)->id : NULL;
+
             return $next($request);
         });
     }
     public function index()
     {
+
         Gate::authorize('index_crew_profiles');
         if ($this->currentUserIsDriver == 'Y') {
+
             $crew = CrewProfile::with('user')->where('id', $this->currentUserDriverId)->latest()->get();
+        } else if ($this->currentUserIsOwner == 'Y') {
+
+            $crew = CrewProfile::with('user')->where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->latest()->get();
         } else {
+
             $crew = CrewProfile::with('user')->latest()->get();
         }
 
@@ -59,7 +71,12 @@ class CrewProfilesController extends Controller
     {
         Gate::authorize('create_crew_profiles');
         $users = User::all();
-        return view('layouts.admin.crew_profiles.create', compact('users'));
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
+        } else {
+            $vehicle_owners = VehicleOwner::get();
+        }
+        return view('layouts.admin.crew_profiles.create', compact('users', 'vehicle_owners'));
     }
 
     public function store(Request $request)
@@ -69,6 +86,7 @@ class CrewProfilesController extends Controller
             'role' => 'required|in:driver,helper',
             'license_number' => 'nullable|string',
             'license_expiry' => 'nullable|date',
+            'vehicle_owner_id' => 'nullable|exists:vehicle_owners,id',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'contact_number' => 'nullable|string',
             'experience' => 'required_if:role,driver|nullable|integer',
@@ -131,6 +149,12 @@ class CrewProfilesController extends Controller
             ->join('users', 'users.id', '=', 'crew_profiles.user_id')
             ->get();
 
+        if ($this->currentUserIsOwner == 'Y') {
+            $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
+        } else {
+            $vehicle_owners = VehicleOwner::get();
+        }
+
         $crew_profile = CrewProfile::select(
             'users.name as crew_member_name',
             'users.email as crew_member_email',
@@ -138,7 +162,7 @@ class CrewProfilesController extends Controller
         )
             ->join('users', 'users.id', '=', 'crew_profiles.user_id')
             ->where('crew_profiles.id', $crew_profile->id)->first();
-        return view('layouts.admin.crew_profiles.create', compact('crew_profile', 'users'));
+        return view('layouts.admin.crew_profiles.create', compact('crew_profile', 'users', 'vehicle_owners'));
     }
 
     public function update(Request $request, CrewProfile $crew_profile)
@@ -149,6 +173,7 @@ class CrewProfilesController extends Controller
             'role' => 'required|in:driver,helper',
             'license_number' => 'nullable|string',
             'license_expiry' => 'nullable|date',
+            'vehicle_owner_id' => 'nullable|exists:vehicle_owners,id',
             'citizenship_doc' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'img' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'contact_number' => 'nullable|string',
