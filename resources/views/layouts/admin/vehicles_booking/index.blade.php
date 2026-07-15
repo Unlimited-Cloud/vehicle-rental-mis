@@ -1186,6 +1186,7 @@ function openCreateBooking(vehicleId, date) {
 }
 
 // Open booking details modal
+// Open booking details modal
 async function openBookingModal(bookingId) {
     // Show loading
     $('#bookingModalBody').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Loading booking details...</p></div>');
@@ -1207,6 +1208,88 @@ async function openBookingModal(bookingId) {
             let bsStartDate = await convertToNepaliDate(booking.start_date);
             let bsEndDate = await convertToNepaliDate(booking.end_date);
             
+            // Build itineraries HTML
+            let itinerariesHtml = '';
+            if (booking.itineraries && booking.itineraries.length > 0) {
+                itinerariesHtml = `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-route"></i> Itinerary (${booking.itineraries.length} Day${booking.itineraries.length > 1 ? 's' : ''})</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Day</th>
+                                                    <th>Date</th>
+                                                    <th>From</th>
+                                                    <th>To</th>
+                                                    <th>Est. KM</th>
+                                                    <th>Est. Hours</th>
+                                                    <th>Overnight</th>
+                                                    <th>Est. Price</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${booking.itineraries.map((item, index) => `
+                                                    <tr>
+                                                        <td><strong>${index + 1}</strong></td>
+                                                        <td>
+                                                            ${item.itinerary_date ? moment(item.itinerary_date).format('MMM D, YYYY') : 'N/A'}
+                                                        </td>
+                                                        <td>${item.from_destination || '-'}</td>
+                                                        <td>${item.to_destination || '-'}</td>
+                                                        <td class="text-right">${item.est_km || 0}</td>
+                                                        <td class="text-right">${item.est_hours || 0}</td>
+                                                        <td>
+                                                            <span class="badge ${item.is_overnight ? 'badge-warning' : 'badge-secondary'}">
+                                                                ${item.is_overnight ? 'Yes' : 'No'}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-right">
+                                                            <strong>रू ${parseFloat(item.est_price || 0).toFixed(2)}</strong>
+                                                        </td>
+                                                        <td>${item.notes || '-'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="table-active">
+                                                    <td colspan="7" class="text-right"><strong>Total Estimated Price:</strong></td>
+                                                    <td class="text-right">
+                                                        <strong>रू ${booking.itineraries.reduce((sum, item) => sum + parseFloat(item.est_price || 0), 0).toFixed(2)}</strong>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                itinerariesHtml = `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-route"></i> Itinerary</h6>
+                                </div>
+                                <div class="card-body text-center text-muted">
+                                    <i class="fa fa-info-circle"></i> No itinerary details available for this booking.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             let html = `
                 <div class="container-fluid">
                     <!-- Status Bar -->
@@ -1224,9 +1307,12 @@ async function openBookingModal(bookingId) {
                         <div class="col-md-12 mb-2">
                             <div class="alert alert-info py-2">
                                 <strong>File No:</strong> ${booking.file_no || 'N/A'} 
+                                ${booking.passenger ? `| <strong>Passenger:</strong> ${booking.passenger}` : ''}
                             </div>
                         </div>
-                        
+                    </div>
+                    
+                    <div class="row">
                         <!-- Vehicle Info -->
                         <div class="col-md-6 mb-3">
                             <div class="card h-100">
@@ -1249,6 +1335,10 @@ async function openBookingModal(bookingId) {
                                         <tr>
                                             <td><strong>Helper:</strong></td>
                                             <td>${booking.helper ? booking.helper.user.name : '<span class="text-muted">Not Assigned</span>'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Rate/Day:</strong></td>
+                                            <td>रू ${parseFloat(booking.rate_per_day || 0).toFixed(2)}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -1293,33 +1383,99 @@ async function openBookingModal(bookingId) {
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
-                                                    <td style="width: 100px;"><strong>Passenger:</strong></td>
-                                                    <td>${booking.passenger || 'N/A'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="width: 100px;"><strong>From:</strong></td>
+                                                    <td><strong>From:</strong></td>
                                                     <td>${booking.from_destination || 'N/A'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>To:</strong></td>
                                                     <td>${booking.to_destination || 'N/A'}</td>
                                                 </tr>
+                                                <tr>
+                                                    <td><strong>No. of People:</strong></td>
+                                                    <td>${booking.no_of_people || 'N/A'}</td>
+                                                </tr>
                                             </table>
                                         </div>
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
-                                                    <td style="width: 100px;"><strong>Start Date:</strong></td>
+                                                    <td style="width: 120px;"><strong>Start Date:</strong></td>
                                                     <td>
-                                                        <div>${startDate}</div>
+                                                        <div>${startDate} ${booking.start_time ? moment(booking.start_time, 'HH:mm:ss').format('h:mm A') : ''}</div>
                                                         <small class="nepali-date">${bsStartDate.display}</small>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>End Date:</strong></td>
                                                     <td>
-                                                        <div>${endDate}</div>
+                                                        <div>${endDate} ${booking.end_time ? moment(booking.end_time, 'HH:mm:ss').format('h:mm A') : ''}</div>
                                                         <small class="nepali-date">${bsEndDate.display}</small>
+                                                    </td>
+                                                </tr>
+                                                
+                                                ${booking.signage_information ? `
+                                                <tr>
+                                                    <td><strong>Signage:</strong></td>
+                                                    <td>${booking.signage_information}</td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Details -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-money"></i> Financial Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td style="width: 140px;"><strong>Sub Total:</strong></td>
+                                                    <td class="text-right">रू ${parseFloat(booking.sub_total || 0).toFixed(2)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Discount (${booking.discount_amount_type || 'amount'}):</strong></td>
+                                                    <td class="text-right text-danger">- रू ${parseFloat(booking.discount || 0).toFixed(2)}</td>
+                                                </tr>
+                                                ${booking.vat == 1 ? `
+                                                <tr>
+                                                    <td><strong>VAT (13%):</strong></td>
+                                                    <td class="text-right">रू ${parseFloat(booking.tax || 0).toFixed(2)}</td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr class="table-active">
+                                                    <td style="width: 140px;"><strong>Total Amount:</strong></td>
+                                                    <td class="text-right"><strong>रू ${parseFloat(booking.total_amount || 0).toFixed(2)}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Paid Amount:</strong></td>
+                                                    <td class="text-right text-success">रू ${parseFloat(booking.paid_amount || 0).toFixed(2)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Remaining Balance:</strong></td>
+                                                    <td class="text-right ${parseFloat(booking.remaining_balance || 0) > 0 ? 'text-danger' : 'text-success'}">
+                                                        <strong>रू ${parseFloat(booking.remaining_balance || 0).toFixed(2)}</strong>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Payment Status:</strong></td>
+                                                    <td class="text-right">
+                                                        <span class="badge ${booking.payment_status == 1 ? 'badge-success' : (booking.payment_status == 2 ? 'badge-warning' : 'badge-danger')}">
+                                                            ${booking.payment_status == 1 ? 'Paid' : (booking.payment_status == 2 ? 'Partial' : 'Pending')}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -1330,10 +1486,13 @@ async function openBookingModal(bookingId) {
                         </div>
                     </div>
                     
-                    <!-- Additional Info -->
+                    <!-- Itineraries -->
+                    ${itinerariesHtml}
+                    
+                    <!-- Notes -->
                     ${booking.notes ? `
                     <div class="row">
-                        <div class="col-12">
+                        <div class="col-12 mb-3">
                             <div class="card">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="fa fa-sticky-note"></i> Notes</h6>
@@ -1347,7 +1506,8 @@ async function openBookingModal(bookingId) {
                     ` : ''}
                     
                     <!-- KM and Fuel Info (if available) -->
-                    <div class="row mt-3">
+                    ${(booking.start_km || booking.end_km || booking.approx_fuel_litre) ? `
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="small-box bg-info">
                                 <div class="inner">
@@ -1382,6 +1542,7 @@ async function openBookingModal(bookingId) {
                             </div>
                         </div>
                     </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -1399,7 +1560,6 @@ async function openBookingModal(bookingId) {
         }
     });
 }
-
 function updateExportLink() {
     let params = {
         vehicle_id: $('#vehicleFilter').val(),
