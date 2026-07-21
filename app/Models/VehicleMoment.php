@@ -25,8 +25,42 @@ class VehicleMoment extends Model
         'incident_image',
         'trip_category_id',
         'trip_route_id',
+
+
+        // Depot Departure
+        'depot_departure_datetime',
+        'depot_departure_km',
+        'depot_departure_image',
+        'depot_departure_comments',
+
+        // Pickup Arrival
+        'pickup_arrival_datetime',
+        'pickup_arrival_km',
+        'pickup_arrival_image',
+        'pickup_arrival_comments',
+
+        // Drop Off
+        'dropoff_datetime',
+        'dropoff_km',
+        'dropoff_image',
+        'dropoff_comments',
+
+        // Estimated return values
+        'estimated_return_to_depot_km',
+        'estimated_return_to_depot_minutes',
+
+        'estimated_return_to_pickup_km',
+        'estimated_return_to_pickup_minutes',
     ];
-    protected $appends = ['start_image_url', 'end_image_url', 'incident_image_url'];
+    protected $appends = [
+        'start_image_url',
+        'end_image_url',
+        'incident_image_url',
+        'depot_departure_image_url',
+        'pickup_arrival_image_url',
+        'dropoff_image_url',
+        'incident_image_url'
+    ];
 
 
     public function booking()
@@ -77,5 +111,26 @@ class VehicleMoment extends Model
     public function getIncidentImageUrlAttribute()
     {
         return $this->incident_image ? asset($this->incident_image) : null;
+    }
+
+    public function getDepotDepartureImageUrlAttribute()
+    {
+        return $this->depot_departure_image
+            ? asset($this->depot_departure_image)
+            : null;
+    }
+
+    public function getPickupArrivalImageUrlAttribute()
+    {
+        return $this->pickup_arrival_image
+            ? asset($this->pickup_arrival_image)
+            : null;
+    }
+
+    public function getDropoffImageUrlAttribute()
+    {
+        return $this->dropoff_image
+            ? asset($this->dropoff_image)
+            : null;
     }
 }

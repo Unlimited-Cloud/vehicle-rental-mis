@@ -32,7 +32,7 @@
     <div class="col-12">
         <h4 class="mb-3">Booking Information</h4>
     </div>
-    
+
     <input type="hidden" name="booking_id" value="{{ $booking->id }}">
 
     <div class="col-md-4">
@@ -41,7 +41,7 @@
             <select name="vehicle_no" class="form-control select2" required>
                 <option value="">Select Vehicle</option>
                 @foreach($vehicles as $vehicle)
-                    <option value="{{ $vehicle->id }}" 
+                    <option value="{{ $vehicle->id }}"
                         {{ $booking->vehicle_id == $vehicle->id ? 'selected' : '' }}
                         data-vehicle-type="{{ $vehicle->vehicle_type }}">
                         {{ $vehicle->vehicle_name }}
@@ -55,8 +55,8 @@
         <div class="form-group">
             <label>Driver</label>
             <input type="hidden" name="driver_id" value="{{ $booking->driver_id }}">
-            <input type="text" class="form-control bg-light" 
-                   value="{{ $booking->driver_name }}" 
+            <input type="text" class="form-control bg-light"
+                   value="{{ $booking->driver_name }}"
                    readonly>
         </div>
     </div>
@@ -67,7 +67,7 @@
             <select name="helper_id" class="form-control select2">
                 <option value="">Select Helper</option>
                 @foreach($helpers as $helper)
-                    <option value="{{ $helper->crew_id }}" 
+                    <option value="{{ $helper->crew_id }}"
                         {{ $booking->helper_id == $helper->crew_id ? 'selected' : '' }}>
                         {{ $helper->name }}
                     </option>
@@ -77,105 +77,222 @@
     </div>
 </div>
 
-<!-- Trip Category and Route Section -->
+<!-- Depot Departure -->
 <div class="row mt-4">
     <div class="col-12">
-        <h4 class="mb-3">Trip Information</h4>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="form-group">
-            <label>Trip Category</label>
-            <select name="trip_category_id" id="trip_category_id" class="form-control select2">
-                <option value="">Select Category</option>
-                @foreach($tripCategories as $category)
-                    <option value="{{ $category->id }}" 
-                        {{ old('trip_category_id', $moment->trip_category_id ?? $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
-                        {{ $category->name }}
-                    </option>
-                @endforeach
-            </select>
-            <small class="text-muted">Leave empty to use booking default</small>
-        </div>
+        <h4 class="mb-3">Depot Departure</h4>
     </div>
 
-    <div class="col-md-6">
-        <div class="form-group">
-            <label>Trip Route</label>
-            <select name="trip_route_id" id="trip_route_id" class="form-control select2">
-                <option value="">Select Route</option>
-                @if(isset($moment) && $moment->trip_route_id)
-                    @php
-                        $selectedRoute = \App\Models\TripRoute::find($moment->trip_route_id);
-                    @endphp
-                    @if($selectedRoute)
-                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
-                    @endif
-                @elseif(isset($booking) && $booking->trip_route_id)
-                    @php
-                        $selectedRoute = \App\Models\TripRoute::find($booking->trip_route_id);
-                    @endphp
-                    @if($selectedRoute)
-                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
-                    @endif
-                @endif
-            </select>
-            <small class="text-muted">Leave empty to use booking default</small>
-        </div>
-    </div>
-</div>
-
-<!-- Start Journey Details -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h4 class="mb-3">Start Journey Details</h4>
-    </div>
-    
     <div class="col-md-4">
         <div class="form-group">
-            <label>Start Date & Time <span class="text-danger">*</span></label>
+            <label>Depot Departure Date & Time <span class="text-danger">*</span></label>
             <input type="datetime-local"
-                   name="start_datetime"
+                   name="depot_departure_datetime"
                    class="form-control"
-                  value="{{ \Carbon\Carbon::parse($booking->start_date . ' ' . $booking->start_time)->format('Y-m-d\TH:i') }}"
+                   value="{{ old('depot_departure_datetime', isset($moment) && $moment->depot_departure_datetime ? \Carbon\Carbon::parse($moment->depot_departure_datetime)->format('Y-m-d\TH:i') : '') }}"
                    required>
         </div>
     </div>
 
     <div class="col-md-4">
         <div class="form-group">
-            <label>Start KM <span class="text-danger">*</span></label>
-            <input type="number" 
-                   name="start_km" 
-                   class="form-control" 
-                   value="{{ old('start_km', $moment->start_km ?? $booking->start_km ?? '') }}" 
-                   step="0.01" 
+            <label>Depot Departure KM <span class="text-danger">*</span></label>
+            <input type="number"
+                   name="depot_departure_km"
+                   class="form-control"
+                   value="{{ old('depot_departure_km', $moment->depot_departure_km ?? '') }}"
+                   step="0.01"
                    min="0"
-                   placeholder="Enter starting kilometer"
+                   placeholder="Enter depot departure kilometer"
                    required>
         </div>
     </div>
 
     <div class="col-md-4">
         <div class="form-group">
-            <label>Start Image</label>
+            <label>Depot Departure Image</label>
             <div class="custom-file">
-                <input type="file" name="start_image" class="custom-file-input" id="startImage">
-                <label class="custom-file-label" for="startImage">Choose file</label>
+                <input type="file" name="depot_departure_image" class="custom-file-input" id="depotDepartureImage">
+                <label class="custom-file-label" for="depotDepartureImage">Choose file</label>
             </div>
-           @if(isset($moment) && $moment->start_image)
-            <img src="{{ asset($moment->start_image) }}" width="120" class="mt-2">
+            @if(isset($moment) && $moment->depot_departure_image)
+            <img src="{{ asset($moment->depot_departure_image) }}" width="120" class="mt-2">
             @endif
         </div>
     </div>
 
     <div class="col-md-12">
         <div class="form-group">
-            <label>Start Comments</label>
-            <textarea name="start_comments" 
-                      class="form-control" 
+            <label>Depot Departure Comments</label>
+            <textarea name="depot_departure_comments"
+                      class="form-control"
                       rows="2"
-                      placeholder="Any notes about the start of journey">{{ old('start_comments', $moment->start_comments ?? $booking->start_comments ?? '') }}</textarea>
+                      placeholder="Any notes about departure from depot">{{ old('depot_departure_comments', $moment->depot_departure_comments ?? '') }}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Pickup Arrival -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">Pickup Arrival</h4>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Pickup Arrival Date & Time</label>
+            <input type="datetime-local"
+                   name="pickup_arrival_datetime"
+                   class="form-control"
+                   value="{{ old('pickup_arrival_datetime', isset($moment) && $moment->pickup_arrival_datetime ? \Carbon\Carbon::parse($moment->pickup_arrival_datetime)->format('Y-m-d\TH:i') : '') }}">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Pickup Arrival KM</label>
+            <input type="number"
+                   name="pickup_arrival_km"
+                   class="form-control"
+                   value="{{ old('pickup_arrival_km', $moment->pickup_arrival_km ?? '') }}"
+                   step="0.01"
+                   min="0"
+                   placeholder="Enter pickup arrival kilometer">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Pickup Arrival Image</label>
+            <div class="custom-file">
+                <input type="file" name="pickup_arrival_image" class="custom-file-input" id="pickupArrivalImage">
+                <label class="custom-file-label" for="pickupArrivalImage">Choose file</label>
+            </div>
+            @if(isset($moment) && $moment->pickup_arrival_image)
+            <img src="{{ asset($moment->pickup_arrival_image) }}" width="120" class="mt-2">
+            @endif
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <label>Pickup Arrival Comments</label>
+            <textarea name="pickup_arrival_comments"
+                      class="form-control"
+                      rows="2"
+                      placeholder="Any notes about arrival at pickup point">{{ old('pickup_arrival_comments', $moment->pickup_arrival_comments ?? '') }}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Drop Off -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">Drop Off</h4>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Drop Off Date & Time</label>
+            <input type="datetime-local"
+                   name="dropoff_datetime"
+                   class="form-control"
+                   value="{{ old('dropoff_datetime', isset($moment) && $moment->dropoff_datetime ? \Carbon\Carbon::parse($moment->dropoff_datetime)->format('Y-m-d\TH:i') : '') }}">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Drop Off KM</label>
+            <input type="number"
+                   name="dropoff_km"
+                   class="form-control"
+                   value="{{ old('dropoff_km', $moment->dropoff_km ?? '') }}"
+                   step="0.01"
+                   min="0"
+                   placeholder="Enter drop off kilometer">
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="form-group">
+            <label>Drop Off Image</label>
+            <div class="custom-file">
+                <input type="file" name="dropoff_image" class="custom-file-input" id="dropoffImage">
+                <label class="custom-file-label" for="dropoffImage">Choose file</label>
+            </div>
+            @if(isset($moment) && $moment->dropoff_image)
+            <img src="{{ asset($moment->dropoff_image) }}" width="120" class="mt-2">
+            @endif
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <label>Drop Off Comments</label>
+            <textarea name="dropoff_comments"
+                      class="form-control"
+                      rows="2"
+                      placeholder="Any notes about the drop off">{{ old('dropoff_comments', $moment->dropoff_comments ?? '') }}</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- Estimated Return -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h4 class="mb-3">Estimated Return</h4>
+    </div>
+
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>Est. Return to Depot (KM)</label>
+            <input type="number"
+                   name="estimated_return_to_depot_km"
+                   class="form-control"
+                   value="{{ old('estimated_return_to_depot_km', $moment->estimated_return_to_depot_km ?? '') }}"
+                   step="0.01"
+                   min="0"
+                   placeholder="KM">
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>Est. Return to Depot (Minutes)</label>
+            <input type="number"
+                   name="estimated_return_to_depot_minutes"
+                   class="form-control"
+                   value="{{ old('estimated_return_to_depot_minutes', $moment->estimated_return_to_depot_minutes ?? '') }}"
+                   step="1"
+                   min="0"
+                   placeholder="Minutes">
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>Est. Return to Pickup (KM)</label>
+            <input type="number"
+                   name="estimated_return_to_pickup_km"
+                   class="form-control"
+                   value="{{ old('estimated_return_to_pickup_km', $moment->estimated_return_to_pickup_km ?? '') }}"
+                   step="0.01"
+                   min="0"
+                   placeholder="KM">
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="form-group">
+            <label>Est. Return to Pickup (Minutes)</label>
+            <input type="number"
+                   name="estimated_return_to_pickup_minutes"
+                   class="form-control"
+                   value="{{ old('estimated_return_to_pickup_minutes', $moment->estimated_return_to_pickup_minutes ?? '') }}"
+                   step="1"
+                   min="0"
+                   placeholder="Minutes">
         </div>
     </div>
 </div>
@@ -266,61 +383,6 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
 </div>
 @endforelse
 
-<!-- End Journey Details -->
-<div class="row mt-4">
-    <div class="col-12">
-        <h4 class="mb-3">End Journey Details</h4>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>End Date & Time </label>
-            <input type="datetime-local"
-                   name="end_datetime"
-                   class="form-control"
-                   value="{{ \Carbon\Carbon::parse($booking->end_date)->format('Y-m-d\TH:i') }}"
-                   >
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>End KM </label>
-            <input type="number" 
-                   name="end_km" 
-                   class="form-control"
-                   value="{{ $booking->end_km ?? '' }}"
-                   step="0.01" 
-                   min="0"
-                   placeholder="Enter ending kilometer"
-                   >
-        </div>
-    </div>
-
-    <div class="col-md-4">
-        <div class="form-group">
-            <label>End Image</label>
-            <div class="custom-file">
-                <input type="file" name="end_image" class="custom-file-input" id="endImage">
-                <label class="custom-file-label" for="endImage">Choose file</label>
-            </div>
-           @if(isset($moment) && $moment->end_image)
-            <img src="{{ asset($moment->end_image) }}" width="120" class="mt-2">
-            @endif
-        </div>
-    </div>
-
-    <div class="col-md-12">
-        <div class="form-group">
-            <label>End Comments</label>
-            <textarea name="end_comments" 
-                      class="form-control" 
-                      rows="2"
-                      placeholder="Any notes about the end of journey">{{ old('end_comments', $moment->end_comments ?? $booking->end_comments ?? '') }}</textarea>
-        </div>
-    </div>
-</div>
-
 <!-- ALLOWANCES SECTION -->
 <div class="row mt-4">
     <div class="col-12">
@@ -339,9 +401,9 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
             <div class="card-body">
                 <div class="form-group">
                     <label>Allowances Date</label>
-                    <input type="date" 
-                           name="attendance_date" 
-                           class="form-control" 
+                    <input type="date"
+                           name="attendance_date"
+                           class="form-control"
                             value="{{ old('attendance_date', \Carbon\Carbon::now()->format('Y-m-d')) }}"
                            >
                 </div>
@@ -352,21 +414,20 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                         <div class="input-group-prepend">
                             <span class="input-group-text">Nrs</span>
                         </div>
-                        <input type="number" 
-                               name="driver_allowance" 
-                               class="form-control" 
+                        <input type="number"
+                               name="driver_allowance"
+                               class="form-control"
                                value="{{ old('driver_allowance', $driverAllowance ?? 0) }}"
-                               step="0.01" 
+                               step="0.01"
                                min="0"
                                placeholder="Enter driver allowance">
                     </div>
                 </div>
 
-
                 <div class="form-group">
                     <label>Driver Remarks</label>
-                    <textarea name="driver_remarks" 
-                              class="form-control" 
+                    <textarea name="driver_remarks"
+                              class="form-control"
                               rows="2"
                               placeholder="Driver remarks">{{ old('driver_remarks', $driverRemarks ?? '') }}</textarea>
                 </div>
@@ -387,21 +448,20 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                         <div class="input-group-prepend">
                             <span class="input-group-text">Nrs</span>
                         </div>
-                        <input type="number" 
-                               name="helper_allowance" 
-                               class="form-control" 
+                        <input type="number"
+                               name="helper_allowance"
+                               class="form-control"
                                value="{{ old('helper_allowance', $helperAllowance ?? 0) }}"
-                               step="0.01" 
+                               step="0.01"
                                min="0"
                                placeholder="Enter helper allowance">
                     </div>
                 </div>
 
-               
                 <div class="form-group">
                     <label>Helper Remarks</label>
-                    <textarea name="helper_remarks" 
-                              class="form-control" 
+                    <textarea name="helper_remarks"
+                              class="form-control"
                               rows="2"
                               placeholder="Helper remarks">{{ old('helper_remarks', $helperRemarks ?? '') }}</textarea>
                 </div>
@@ -419,9 +479,9 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
     <div class="col-md-12" id="incidentReportField">
         <div class="form-group">
             <label>Incident Report, If exist<span class="text-danger"></span></label>
-            <textarea name="incident_report" 
+            <textarea name="incident_report"
                       id="incidentReport"
-                      class="form-control" 
+                      class="form-control"
                       rows="4"
                       placeholder="Please describe the incident in detail">{{ old('incident_report', $moment->incident_report ?? $booking->incident_report ?? '') }}</textarea>
         </div>
@@ -434,7 +494,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                 <input type="file" name="incident_image" class="custom-file-input" id="incident_image">
                 <label class="custom-file-label" for="incident_image">Choose file</label>
             </div>
-           @if(isset($moment) && $moment->incident_image)
+            @if(isset($moment) && $moment->incident_image)
             <img src="{{ asset($moment->incident_image) }}" width="120" class="mt-2">
             @endif
         </div>
@@ -494,7 +554,6 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
 {{-- @push('scripts') --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- 2. Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
 <script>
     $(document).ready(function() {
@@ -512,108 +571,19 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                 .html(fileName);
         });
 
-        $('#trip_category_id').on('change', function () {
-    console.log('🔥 Category changed!', $(this).val());
-});
-
-        // Trip Category Change - Load Routes via AJAX
-      $('#trip_category_id').change(function() {
-        var category_id = $(this).val();
-        $('#trip_route_id').html('<option value="">Loading...</option>');
-
-        if (category_id) {
-            $.ajax({
-                url: '/dashboard/get-trip-routes/' + category_id,
-                type: 'GET',
-                success: function(routes) {
-                    var options = '<option value="">Select Route</option>';
-                    
-                    $.each(routes, function(index, route) {
-                        options += '<option value="' + route.id + '" ' +
-                            'data-car="' + (route.car_price || 0) + '" ' +
-                            'data-hiace="' + (route.hiace_price || 0) + '" ' +
-                            'data-coaster="' + (route.coaster_price || 0) + '" ' +
-                            'data-bus="' + (route.bus_price || 0) + '">' +
-                            route.title +
-                            '</option>';
-                    });
-
-                    $('#trip_route_id').html(options);
-                    
-                    // If editing, set the previously selected route
-                    @if(isset($booking) && $booking->trip_route_id)
-                        $('#trip_route_id').val('{{ $booking->trip_route_id }}');
-                    @endif
-                },
-                error: function() {
-                    $('#trip_route_id').html('<option value="">Error loading routes</option>');
-                }
-            });
-        } else {
-            $('#trip_route_id').html('<option value="">Select Route</option>');
-        }
-    });
-        // Route selection - Update any related fields (like rate if needed)
-        $('#trip_route_id').change(function() {
-            var selectedRoute = $(this).find(':selected');
-            var routeId = selectedRoute.val();
-            
-            if (routeId) {
-                console.log('Route selected:', {
-                    id: routeId,
-                    title: selectedRoute.text(),
-                    car_price: selectedRoute.data('car'),
-                    hiace_price: selectedRoute.data('hiace'),
-                    coaster_price: selectedRoute.data('coaster'),
-                    bus_price: selectedRoute.data('bus')
-                });
-                
-                // You can add additional logic here if needed
-                // For example, auto-populate rate based on vehicle type
-                var vehicleSelect = $('select[name="vehicle_no"]');
-                var vehicleOption = vehicleSelect.find(':selected');
-                var vehicleType = vehicleOption.data('vehicle-type');
-                
-                if (vehicleType && routeId) {
-                    var rate = selectedRoute.data(vehicleType.toLowerCase());
-                    if (rate && rate > 0) {
-                        // If you have a rate field, you can set it here
-                        // $('input[name="rate"]').val(rate);
-                        console.log('Suggested rate for ' + vehicleType + ': ' + rate);
-                    }
-                }
-            }
-        });
-
-        // Vehicle change - Update rate if route is selected
-        $('select[name="vehicle_no"]').change(function() {
-            if ($('#trip_route_id').val()) {
-                $('#trip_route_id').trigger('change');
-            }
-        });
-
-        // Trigger category change on page load to load routes for existing selection
-        @if(isset($moment) && $moment->trip_category_id)
-            $('#trip_category_id').trigger('change');
-        @elseif(isset($booking) && $booking->trip_category_id)
-            $('#trip_category_id').trigger('change');
-        @endif
-
         // Form validation for yes/no radio buttons
         $('form').on('submit', function (e) {
             let isValid = true;
             let errorMessage = 'Please answer all required questions.';
-            
-            // Check each questionnaire item
+
             $('.questionnaire-item').each(function() {
                 let questionId = $(this).data('question-id');
                 let isRequired = $(this).find('input[type="radio"]').first().prop('required');
-                
-                // If it's a yes/no question and required
+
                 if (isRequired) {
                     let radioName = `answers[${questionId}]`;
                     let isChecked = $(this).find(`input[name="${radioName}"]:checked`).length > 0;
-                    
+
                     if (!isChecked) {
                         isValid = false;
                         $(this).addClass('has-error');
@@ -621,8 +591,7 @@ $selectedAnswer = old('answers.' . $question->id, $answers[$question->id] ?? nul
                         $(this).removeClass('has-error');
                     }
                 }
-                
-                // Check required textareas
+
                 let requiredTextarea = $(this).find('textarea[required]');
                 if (requiredTextarea.length > 0 && requiredTextarea.val().trim() === '') {
                     isValid = false;

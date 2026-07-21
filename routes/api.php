@@ -14,6 +14,8 @@ use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\EsewaIbftController;
 use App\Http\Controllers\Api\ResourceController;
 use App\Http\Controllers\Api\GpsController;
+use App\Http\Controllers\Api\VehicleCatalogController;
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -73,8 +75,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
         Route::post('/get-trip-price', [BookingController::class, 'getTripPrice']);
         Route::post('/get-trip-price-new', [BookingController::class, 'getVehiclePrice']);
+        Route::post('/get-vehicle-type-price', [BookingController::class, 'getVehicleTypePrice']);
+
         Route::post('/bookings', [BookingController::class, 'createBooking']);
         Route::post('/new-bookings', [BookingController::class, 'createBookingNew']);
+        // Route::post('/vehicle-type-bookings', [BookingController::class, 'createBookingByVehicleType']);
         Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
     Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
@@ -83,6 +88,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/brands', [BookingController::class, 'brands']);
     Route::get('/vehicles-and-brand', [BookingController::class, 'BrandWithVehicle']);
     Route::post('/vehicles-by-brand', [BookingController::class, 'vehiclesByBrand']);
+
+
+    //vehicle catalog APIS
+    Route::post('/vehiclecatalog-by-brand', [VehicleCatalogController::class, 'vehicleCatalogByBrand']);
+    Route::post('/vehiclecatalog-by-seater', [VehicleCatalogController::class, 'vehicleCatalogBySeaters']);
+    Route::post('/vehiclecatalog-by-transmission', [VehicleCatalogController::class, 'vehicleCatalogByTransmission']);
+    Route::post('/vehiclecatalog-most-popular', [VehicleCatalogController::class, 'mostPopularVehiclesByCatalog']);
+    Route::post('/vehicle-catalog-price', [VehicleCatalogController::class, 'getVehicleCatalogPrice']);
+    Route::get('/vehicle-catalog-detail/{id}', [VehicleCatalogController::class, 'VehicleCatalogDetailById']);
+    Route::post('/vehicle-catalog-bookings', [BookingController::class, 'createBookingByVehicleCatalog']);
+   
 
 
     Route::post('/check-vehicle-availability', [BookingController::class, 'checkAvailability']);
