@@ -40,7 +40,7 @@
                                     {{-- <th>Rent/Day</th> --}}
                                     <th>Fuel</th>
                                     <th>Transmission</th>
-                                    <th>Status</th>
+                                    {{-- <th>Status</th> --}}
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -67,13 +67,13 @@
                                     <td>{{ $vehiclecatalog->fuel_type }}</td>
                                     <td>{{ $vehiclecatalog->transmission }}</td>
 
-                                    <td>
+                                    {{-- <td>
                                         @if($vehiclecatalog->status)
                                             <span class="badge badge-success">Available</span>
                                         @else
                                             <span class="badge badge-danger">Not Available</span>
                                         @endif
-                                    </td>
+                                    </td> --}}
 
                                     <td>
                                         @if(auth()->user()->can('update_vehicles_vehicle_catalog'))
