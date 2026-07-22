@@ -36,13 +36,27 @@ class CustomerService
     }
 
     public function saveCustomer($request){
-        Log::info("saveCustomer",["payload" => $request->all()]);
+        Log::info("Customer Registration Request",["payload" => $request->all()]);
         try{
             $validator = Validator::make($request->all(), [
                 'customerType' => 'required|string',
-                'first_name' => 'required_if:customerType,individual|string',
-                'last_name'  => 'required_if:customerType,individual|string',
-                'institutionName'  => 'required_if:customerType,institution|string',
+                'first_name' => [
+                    'required_if:customerType,individual',
+                    'nullable',
+                    'string',
+                ],
+
+                'last_name' => [
+                    'required_if:customerType,individual',
+                    'nullable',
+                    'string',
+                ],
+
+                'institutionName' => [
+                    'required_if:customerType,institution',
+                    'nullable',
+                    'string',
+                ],
                 'email' => 'required|email|unique:customers',
                 'mobileNumber' => 'required|unique:customers,phone',
                 'password' => [
@@ -103,8 +117,14 @@ class CustomerService
 
             $newCustomerId = $customer->id;
 
+            if($customerType == 'individual'){
+                $userName = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name);
+            }else{
+                $userName = $request->institutionName;
+            }
+
             $userData = [
-                'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
+                'name' => $userName,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'user_type' => 'customer_app',
