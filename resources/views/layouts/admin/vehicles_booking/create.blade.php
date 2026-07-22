@@ -64,12 +64,33 @@
                             </div>
                         </div>
 
-                         <div class="col-md-4">
+                        <div class="col-md-4">
                             <div class="form-group">
                                 <label>File No</label>
                                 <input type="text" name="file_no" value="{{ old('file_no', $booking->file_no ?? '') }}" class="form-control" placeholder="Enter file no">
                             </div>
                         </div>
+
+                        {{-- <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Vehicle Type</label>
+                                <input type="text" name="vehicle_type" id="vehicle_type" value="{{ old('vehicle_type', $booking->vehicle_type ?? '') }}" class="form-control" placeholder="Enter vehicle type">
+                            </div>
+                        </div> --}}
+
+                        {{-- <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Vehicle  Type<span class="text-danger">*</span></label>
+                                <select name="vehicle_type" id="vehicle_type" class="form-control" required>
+                                    <option value="">Select Vehicle Type</option>
+                                    @foreach($vehicle_types as $vehicle_type)
+                                        <option value="{{ $vehicle_type->fuel_type }}" data-type="{{ $vehicle_type->fuel_type }}" {{ old('vehicle_type', $booking->vehicle_type ?? '') == $vehicle_type->fuel_type ? 'selected' : '' }}>
+                                            {{ ucfirst($vehicle_type->fuel_type) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div> --}}
 
                         <div class="col-md-4">
                             <div class="form-group">
@@ -842,17 +863,17 @@ $(document).on('click', '.removeItineraryRow', function() {
 });
 
 // Fetch vehicle rates whenever vehicle changes
-$('#vehicle_id').on('change', function() {
-    var vehicleId = $(this).val();
+$('#vehicle_type').on('change', function() {
+    var vehicle_type = $(this).val();
 
-    if (!vehicleId) {
+    if (!vehicle_type) {
         vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
         recalcAllRows();
         return;
     }
 
     $.ajax({
-        url: '/dashboard/get-vehicle-rate/' + vehicleId,
+        url: '/dashboard/get-vehicle-rate/' + vehicle_type,
         type: 'GET',
         success: function(rate) {
             vehicleRates = {
@@ -867,7 +888,27 @@ $('#vehicle_id').on('change', function() {
             console.error('Could not load vehicle rates');
         }
     });
+
+
+      $.ajax({
+        url: '/dashboard/get-vehicles-by-type/' + vehicle_type,
+        type: 'GET',
+        success: function(vehicles) {
+            var options = '<option value="">Select Vehicle</option>';
+            $.each(vehicles, function(i, v) {
+                options += '<option value="' + v.id + '" data-type="' + v.vehicle_type + '" data-seater="' + (v.seater ?? '') + '">' +
+                    v.vehicle_name +
+                    '</option>';
+            });
+            $('#vehicle_id').html(options);
+        },
+        error: function() {
+            $('#vehicle_id').html('<option value="">Error loading vehicles</option>');
+        }
+    });
 });
+
+
 
 // Prefill rows in edit mode
 @if(isset($booking) && $booking->itineraries && $booking->itineraries->count())
@@ -889,13 +930,14 @@ $('#vehicle_id').on('change', function() {
     existingItineraries.forEach(function(item) {
         addItineraryRow(item);
     });
+    
 
-    @if($booking->vehicle_id)
-        $('#vehicle_id').trigger('change');
+    @if($booking->vehicle_type)
+        $('#vehicle_type').trigger('change');
     @endif
 @else
-    @if(isset($booking) && $booking->vehicle_id)
-        $('#vehicle_id').trigger('change');
+    @if(isset($booking) && $booking->vehicle_type)
+        $('#vehicle_type').trigger('change');
     @endif
     addItineraryRow();
 @endif

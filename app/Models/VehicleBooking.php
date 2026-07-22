@@ -8,6 +8,7 @@ class VehicleBooking extends Model
 {
     protected $fillable = [
         'vehicle_id',
+        'brand',
         'contact_person',
         'contact_email',
         'contact_number',
@@ -51,6 +52,8 @@ class VehicleBooking extends Model
         'itinerary',
         'est_km',
         'overnight',
+        'vehicle_type',
+        'seater',
     ];
 
     protected $dates = ['start_date', 'end_date'];
