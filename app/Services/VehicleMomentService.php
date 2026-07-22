@@ -44,12 +44,16 @@ class VehicleMomentService
             DB::beginTransaction();
 
             // Handle image uploads
-            if (isset($data['start_image']) && $data['start_image'] instanceof \Illuminate\Http\UploadedFile) {
-                $data['start_image'] = $this->uploadImage($data['start_image'], 'start');
+            if (isset($data['depot_departure_image']) && $data['depot_departure_image'] instanceof \Illuminate\Http\UploadedFile) {
+                $data['depot_departure_image'] = $this->uploadImage($data['depot_departure_image'], 'depot_departure');
             }
 
-            if (isset($data['end_image']) && $data['end_image'] instanceof \Illuminate\Http\UploadedFile) {
-                $data['end_image'] = $this->uploadImage($data['end_image'], 'end');
+            if (isset($data['pickup_arrival_image']) && $data['pickup_arrival_image'] instanceof \Illuminate\Http\UploadedFile) {
+                $data['pickup_arrival_image'] = $this->uploadImage($data['pickup_arrival_image'], 'pickup_arrival');
+            }
+
+            if (isset($data['dropoff_image']) && $data['dropoff_image'] instanceof \Illuminate\Http\UploadedFile) {
+                $data['dropoff_image'] = $this->uploadImage($data['dropoff_image'], 'dropoff');
             }
 
             if (isset($data['incident_image']) && $data['incident_image'] instanceof \Illuminate\Http\UploadedFile) {
@@ -59,32 +63,9 @@ class VehicleMomentService
             // Create vehicle moment
             $vehicleMoment = VehicleMoment::create($data);
 
-            // Sync with booking if changed
-            if (!empty($data['booking_id'])) {
-                $booking = DB::table('vehicle_bookings')
-                    ->where('id', $data['booking_id'])
-                    ->first();
-
-                if ($booking) {
-                    $updateData = [];
-
-                    if (isset($data['trip_category_id']) && $data['trip_category_id'] != $booking->trip_category_id) {
-                        $updateData['trip_category_id'] = $data['trip_category_id'];
-                    }
-
-                    if (isset($data['trip_route_id']) && $data['trip_route_id'] != $booking->trip_route_id) {
-                        $updateData['trip_route_id'] = $data['trip_route_id'];
-                    }
-
-                    if (!empty($updateData)) {
-                        DB::table('vehicle_bookings')
-                            ->where('id', $booking->id)
-                            ->update($updateData);
-                    }
-                }
-
-                // Update booking status
-                if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->start_datetime) && empty($vehicleMoment->end_datetime)) {
+            // Sync booking status based on trip progress
+            if (!empty($vehicleMoment->booking_id)) {
+                if (!empty($vehicleMoment->depot_departure_datetime) && empty($vehicleMoment->dropoff_datetime)) {
                     DB::table('vehicle_bookings')
                         ->where('id', $vehicleMoment->booking_id)
                         ->update([
@@ -93,7 +74,7 @@ class VehicleMomentService
                         ]);
                 }
 
-                if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->end_datetime)) {
+                if (!empty($vehicleMoment->dropoff_datetime)) {
                     DB::table('vehicle_bookings')
                         ->where('id', $vehicleMoment->booking_id)
                         ->update([
@@ -103,7 +84,7 @@ class VehicleMomentService
                 }
 
                 // Create booking logs
-                if (!empty($vehicleMoment->start_datetime)) {
+                if (!empty($vehicleMoment->depot_departure_datetime)) {
                     BookingLog::firstOrCreate(
                         [
                             'booking_id' => $vehicleMoment->booking_id,
@@ -116,7 +97,7 @@ class VehicleMomentService
                     );
                 }
 
-                if (!empty($vehicleMoment->end_datetime)) {
+                if (!empty($vehicleMoment->dropoff_datetime)) {
                     BookingLog::firstOrCreate(
                         [
                             'booking_id' => $vehicleMoment->booking_id,
@@ -146,7 +127,6 @@ class VehicleMomentService
             throw $e;
         }
     }
-
     /**
      * Update vehicle moment with questionnaire answers
      */
@@ -158,18 +138,25 @@ class VehicleMomentService
             $vehicleMoment = VehicleMoment::findOrFail($id);
 
             // Handle image uploads
-            if (isset($data['start_image']) && $data['start_image'] instanceof \Illuminate\Http\UploadedFile) {
-                if ($vehicleMoment->start_image) {
-                    $this->deleteImage($vehicleMoment->start_image);
+            if (isset($data['depot_departure_image']) && $data['depot_departure_image'] instanceof \Illuminate\Http\UploadedFile) {
+                if ($vehicleMoment->depot_departure_image) {
+                    $this->deleteImage($vehicleMoment->depot_departure_image);
                 }
-                $data['start_image'] = $this->uploadImage($data['start_image'], 'start');
+                $data['depot_departure_image'] = $this->uploadImage($data['depot_departure_image'], 'depot_departure');
             }
 
-            if (isset($data['end_image']) && $data['end_image'] instanceof \Illuminate\Http\UploadedFile) {
-                if ($vehicleMoment->end_image) {
-                    $this->deleteImage($vehicleMoment->end_image);
+            if (isset($data['pickup_arrival_image']) && $data['pickup_arrival_image'] instanceof \Illuminate\Http\UploadedFile) {
+                if ($vehicleMoment->pickup_arrival_image) {
+                    $this->deleteImage($vehicleMoment->pickup_arrival_image);
                 }
-                $data['end_image'] = $this->uploadImage($data['end_image'], 'end');
+                $data['pickup_arrival_image'] = $this->uploadImage($data['pickup_arrival_image'], 'pickup_arrival');
+            }
+
+            if (isset($data['dropoff_image']) && $data['dropoff_image'] instanceof \Illuminate\Http\UploadedFile) {
+                if ($vehicleMoment->dropoff_image) {
+                    $this->deleteImage($vehicleMoment->dropoff_image);
+                }
+                $data['dropoff_image'] = $this->uploadImage($data['dropoff_image'], 'dropoff');
             }
 
             if (isset($data['incident_image']) && $data['incident_image'] instanceof \Illuminate\Http\UploadedFile) {
@@ -181,20 +168,29 @@ class VehicleMomentService
 
             // Update vehicle moment
             $vehicleMoment->update($data);
-
-            // Update booking status
-            if (!empty($vehicleMoment->booking_id) && !empty($vehicleMoment->end_datetime)) {
-                DB::table('vehicle_bookings')
-                    ->where('id', $vehicleMoment->booking_id)
-                    ->update([
-                        'status' => 'completed',
-                        'updated_at' => now(),
-                    ]);
-            }
-
             $vehicleMoment->refresh();
+
+            // Sync booking status based on trip progress
             if (!empty($vehicleMoment->booking_id)) {
-                if (!empty($vehicleMoment->start_datetime)) {
+                if (!empty($vehicleMoment->depot_departure_datetime) && empty($vehicleMoment->dropoff_datetime)) {
+                    DB::table('vehicle_bookings')
+                        ->where('id', $vehicleMoment->booking_id)
+                        ->update([
+                            'status' => 'started',
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                if (!empty($vehicleMoment->dropoff_datetime)) {
+                    DB::table('vehicle_bookings')
+                        ->where('id', $vehicleMoment->booking_id)
+                        ->update([
+                            'status' => 'completed',
+                            'updated_at' => now(),
+                        ]);
+                }
+
+                if (!empty($vehicleMoment->depot_departure_datetime)) {
                     BookingLog::firstOrCreate(
                         [
                             'booking_id' => $vehicleMoment->booking_id,
@@ -207,7 +203,7 @@ class VehicleMomentService
                     );
                 }
 
-                if (!empty($vehicleMoment->end_datetime)) {
+                if (!empty($vehicleMoment->dropoff_datetime)) {
                     BookingLog::firstOrCreate(
                         [
                             'booking_id' => $vehicleMoment->booking_id,
@@ -242,7 +238,6 @@ class VehicleMomentService
             throw $e;
         }
     }
-
     /**
      * Store allowances in attendance table
      */

@@ -45,8 +45,7 @@ use App\Models\PaymentMode;
 use App\Models\CustomerLocation;
 use App\Models\Payment;
 use App\Models\Passenger;
-
-
+use App\Models\TripRouteVehicleTypePrice;
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -632,6 +631,276 @@ class BookingController extends Controller
             //  Generate Proforma
             // $this->service->generateFinalInvoice($file_no);
             event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
+
+            // Return response
+            return response()->json([
+                'status' => true,
+                'message' => 'Booking created successfully',
+                'data' => $booking->load('itineraries')
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+
+    public function createBookingByVehicleCatalog(Request $request)
+    {
+        try {
+            Log::info("Vehicle Bokking Request", ["body" => $request->all()]);
+
+            //  Validation
+            $validator = Validator::make($request->all(), [
+                'customer_id' => 'required|exists:customers,customer_uuid',
+                'vehicle_type' => 'nullable|exists:vehicles,fuel_type',
+                'seater' => 'required|exists:vehicles,seater',
+                'brand' => 'required|exists:vehicles,brand',
+                'driver_id' => 'nullable|exists:crew_profiles,id',
+                'start_datetime' => 'required|date|after_or_equal:now',
+                'end_datetime' => 'required|date|after:start_datetime',
+
+                'discount_amount_type' => 'nullable|in:flat,percent',
+                'discount' => 'nullable|numeric|min:0',
+
+                'from_destination' => 'nullable|string',
+                'to_destination' => 'nullable|string',
+                'notes' => 'nullable|string',
+                'no_of_people' => 'nullable|string',
+                'signage_information' => 'nullable|string',
+
+                'contact_person' => 'nullable|string',
+                'contact_email' => 'nullable|string',
+                'contact_number' => 'nullable|string',
+                'agent_code' => 'nullable|exists:agents,agent_code',
+
+                // NEW: itinerary days
+                'itineraries' => 'required|array|min:1',
+                'itineraries.*.itinerary_date' => 'nullable|date',
+                'itineraries.*.from_destination' => 'nullable|string',
+                'itineraries.*.to_destination' => 'nullable|string',
+                'itineraries.*.est_km' => 'required|numeric|min:0',
+                'itineraries.*.est_hours' => 'required|numeric|min:0',
+                'itineraries.*.is_overnight' => 'nullable|boolean',
+                'itineraries.*.notes' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                Log::info("booking validation failed", ["errors" => $validator->errors()]);
+                return response()->json([
+                    'status' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            //  Parse DateTime objects
+            $startDateTime = \Carbon\Carbon::parse($request->start_datetime);
+            $endDateTime = \Carbon\Carbon::parse($request->end_datetime);
+
+            // Apply buffer for overlap (30 mins)
+            $bufferMinutes = 30;
+            $startWithBuffer = $startDateTime->copy()->subMinutes($bufferMinutes);
+            $endWithBuffer = $endDateTime->copy()->addMinutes($bufferMinutes);
+
+            //  Prevent Double Booking
+            // $conflict = VehicleBooking::where('vehicle_id', $request->vehicle_id)
+            //     ->where('status', '!=', 'cancelled')
+            //     ->whereRaw("
+            //     CONCAT(start_date, ' ', start_time) <= ?
+            //     AND CONCAT(end_date, ' ', end_time) >= ?
+            // ", [
+            //         $endWithBuffer->format('Y-m-d H:i'),
+            //         $startWithBuffer->format('Y-m-d H:i')
+            //     ])
+            //     ->exists();
+
+            // if ($conflict) {
+            //     return response()->json([
+            //         'status' => false,
+            //         'message' => 'Vehicle is already booked for the selected time range'
+            //     ], 409);
+            // }
+
+
+
+            // ADJUST: table/column names below to match your actual
+            // trip_routes_vehicle_price schema if different.
+            $vehicleRate = DB::table('trip_route_vehicle_type_prices')
+                ->where('brand', $request->brand)
+                ->when($request->filled('vehicle_type'), function ($query) use ($request) {
+                    $query->where('vehicle_type', $request->vehicle_type);
+                })
+                ->when($request->filled('seater'), function ($query) use ($request) {
+                    $query->where('seater', $request->seater);
+                })
+                ->first();
+
+            if (!$vehicleRate) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Rates not defined for this vehicle'
+                ], 400);
+            }
+
+
+            $perKmRate = (float) $vehicleRate->per_km;
+            $perHourRate = (float) $vehicleRate->per_hour;
+            $overnightCharge = (float) $vehicleRate->overnight_price;
+
+            //  Build itinerary rows + compute sub_total from est_km/est_hours/overnight
+            $itineraryInput = $request->input('itineraries', []);
+            $itineraryRows = [];
+            $sub_total = 0;
+
+            foreach ($itineraryInput as $index => $item) {
+                $est_km = (float) ($item['est_km'] ?? 0);
+                $est_hours = (float) ($item['est_hours'] ?? 0);
+                $is_overnight = (bool) ($item['is_overnight'] ?? false);
+
+                $est_price = ($est_km * $perKmRate)
+                    + ($est_hours * $perHourRate)
+                    + ($is_overnight ? $overnightCharge : 0);
+
+                $sub_total += $est_price;
+
+                $itineraryRows[] = [
+                    'day_number' => $index + 1,
+                    'itinerary_date' => $item['itinerary_date'] ?? null,
+                    'from_destination' => $item['from_destination'] ?? null,
+                    'to_destination' => $item['to_destination'] ?? null,
+                    'est_km' => $est_km,
+                    'est_hours' => $est_hours,
+                    'is_overnight' => $is_overnight,
+                    'per_km_rate' => $perKmRate,
+                    'per_hour_rate' => $perHourRate,
+                    'overnight_charge' => $is_overnight ? $overnightCharge : 0,
+                    'est_price' => $est_price,
+                    'notes' => $item['notes'] ?? null,
+                ];
+            }
+
+            $discount_amount = 0;
+
+            if ($request->discount && $request->discount_amount_type) {
+                if ($request->discount_amount_type === 'flat') {
+                    $discount_amount = $request->discount;
+                } elseif ($request->discount_amount_type === 'percent') {
+                    $discount_amount = ($sub_total * $request->discount) / 100;
+                }
+            }
+
+            // Taxable amount after discount
+            $taxable_amount = max(0, $sub_total - $discount_amount);
+
+            // VAT calculation (13%)
+            $tax_amount_type = 'percentage';
+            $tax_amount = ($taxable_amount * 13) / 100;
+
+            // Final total
+            $total_amount = $taxable_amount + $tax_amount;
+
+            // Extract separate date & time for DB
+            $start_date = $startDateTime->format('Y-m-d');
+            $start_time = $startDateTime->format('H:i');
+            $end_date = $endDateTime->format('Y-m-d');
+            $end_time = $endDateTime->format('H:i');
+
+            $customers = Customer::where('customer_uuid', $request->customer_id)->first();
+            $customerId = $customers->id;
+
+            $customerName = strtoupper(
+                preg_replace('/[^A-Za-z0-9]/', '', $customers->name)
+            );
+
+            $customerName = substr($customerName, 0, 5);
+            $file_no = 'FILE-' .
+                $customerName . '-' .
+                $startDateTime->format('Ymd') . '-' .
+                strtoupper(Str::random(4));
+
+            $driver_id = $request->driver_id ?? null;
+
+            Log::info("Vehicle Bokking Request Start end", ["start_time" => $start_time, "end_time" => $end_time, "driver_id" => $driver_id]);
+
+            //  Create booking
+            $booking = VehicleBooking::create([
+                'customer_id' => $customerId,
+                'vehicle_type' => $request->vehicle_type,
+                'seater' => $request->seater,
+                'brand' => $request->brand,
+                'trip_category_id' => $request->trip_category_id,
+                'trip_route_id' => $request->trip_route_id,
+                'driver_id' => $driver_id,
+
+                'start_date' => $start_date,
+                'start_time' => $start_time,
+                'end_date' => $end_date,
+                'end_time' => $end_time,
+
+                'from_destination' => $request->from_destination,
+                'to_destination' => $request->to_destination,
+                'notes' => $request->notes,
+                'no_of_people' => $request->no_of_people,
+                'signage_information' => $request->signage_information,
+
+                // rate_per_day no longer represents a single flat rate — itinerary-driven now.
+                // Kept null/0 unless you still want to store something here for legacy views.
+                'rate_per_day' => $sub_total,
+                'sub_total' => $sub_total,
+                'discount' => $discount_amount,
+                'tax_amount_type' => $tax_amount_type,
+                'tax' => $tax_amount,
+                'vat' => '1',
+                'total_amount' => $total_amount,
+
+                'status' => 'pending',
+                'call_type' => 'api',
+
+                'contact_person' => $request->contact_person,
+                'contact_email' => $request->contact_email,
+                'contact_number' => $request->contact_number,
+                'agent_code' => $request->agent_code ?? null,
+                'file_no' => $file_no ?? null,
+                'pickup_latitude' => $request->pickup_latitude ?? null,
+                'pickup_longitude' => $request->pickup_longitude ?? null,
+            ]);
+
+            //  Persist itinerary rows now that we have booking_id + file_no
+            foreach ($itineraryRows as &$row) {
+                $row['booking_id'] = $booking->id;
+                $row['file_no'] = $booking->file_no;
+                $row['created_at'] = now();
+                $row['updated_at'] = now();
+            }
+            unset($row);
+
+            DB::table('itineraries')->insert($itineraryRows);
+
+
+            Passenger::create([
+                'contact_person' => $request->contact_person ?? $customerName,
+                'contact_email' => $request->contact_email ?? $customers->email,
+                'contact_number' => $request->contact_number ?? $customers->phone,
+                'contact_address' => $request->contact_address ?? "Kathmandu",
+                'customer_id' => $customerId,
+                'booking_id' => $booking->id,
+            ]);
+
+            BookingLog::create([
+                'booking_id' => $booking->id,
+                'status' => 'pending',
+                'remarks' => 'Booking created by customer',
+            ]);
+
+            //  Generate Proforma
+            // $this->service->generateFinalInvoice($file_no);
+            // event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
             return response()->json([
@@ -1778,6 +2047,69 @@ class BookingController extends Controller
         ]);
     }
 
+
+    public function getVehicleTypePrice(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'vehicle_type' => 'required|exists:vehicle_types,name',
+            'est_km'     => 'required|numeric|min:0',
+            'est_hour'   => 'nullable|numeric|min:0',
+            'overnight'  => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+
+        $pricing = TripRouteVehicleTypePrice::where('vehicle_type', $request->vehicle_type)
+            ->first();
+
+        if (!$pricing) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Pricing not configured for selected vehicle type.',
+            ], 404);
+        }
+
+        $kmCharge = $request->est_km * ($pricing->per_km ?? 0);
+
+        $hourCharge = ($request->est_hour ?? 0) * ($pricing->per_hour ?? 0);
+
+        $overnightCharge = ($request->boolean('overnight'))
+            ? $pricing->overnight_price
+            : 0;
+
+        $subTotal = $kmCharge + $hourCharge + $overnightCharge;
+
+        $vatPercentage = 13;
+        $vatAmount = round(($subTotal * $vatPercentage) / 100, 2);
+        $total = round($subTotal + $vatAmount, 2);
+
+        return response()->json([
+            'status' => 'success',
+            'vehicle_type' => $request->vehicle_type,
+            'est_km' => $request->est_km,
+            'est_hour' => $request->est_hour ?? 0,
+            'overnight' => $request->boolean('overnight'),
+
+            'rate_per_km' => $pricing->per_km,
+            'rate_per_hour' => $pricing->per_hour,
+            'overnight_charge' => $pricing->overnight_price,
+
+            'km_charge' => number_format($kmCharge, 2),
+            'hour_charge' => number_format($hourCharge, 2),
+            'overnight_charge_applied' => number_format($overnightCharge, 2),
+
+            'sub_total' => number_format($subTotal, 2),
+            'vat' => number_format($vatAmount, 2),
+            'total_price' => number_format($total, 2),
+        ]);
+    }
+
     public function splashscreens()
     {
         $data = Splashscreen::orderBy('order_by', 'asc')->get()
@@ -2649,4 +2981,6 @@ class BookingController extends Controller
             'message' => 'Vehicle is available.'
         ]);
     }
+
+
 }

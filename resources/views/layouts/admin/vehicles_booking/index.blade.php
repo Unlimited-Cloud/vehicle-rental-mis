@@ -329,6 +329,19 @@
                                         <i class="fas fa-ticket-alt text-success mr-2"></i> Generate Coupon
                                     </a>
                                     @endcan
+                                   @can('update_vehicle_bookings')
+                                    <a class="dropdown-item" href="#"
+                                    onclick="openAssignVehicleModal(
+                                        {{ $booking->id }},
+                                        '{{ $booking->vehicle_type ?? '' }}',
+                                        '{{ $booking->brand ?? '' }}',
+                                        '{{ $booking->seater ?? '' }}',
+                                        {{ $booking->vehicle_id ?? 'null' }},
+                                        '{{ $booking->status }}'
+                                    )">
+                                        <i class="fas fa-car-side text-warning mr-2"></i> Assign Vehicle
+                                    </a>
+                                    @endcan
 
                                     <div class="dropdown-divider"></div>
                                      @can('delete_vehicle_bookings')
@@ -462,6 +475,51 @@
     </div>
 </div>
 
+<div class="modal fade" id="assignVehicleModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="assignVehicleForm">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Assign Vehicle — Booking #<span id="av_booking_id_display"></span></h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="av_booking_id">
+                    <input type="hidden" id="av_vehicle_type">
+                    <input type="hidden" id="av_brand">
+                    <input type="hidden" id="av_seater">
+
+                    <div class="alert alert-light border mb-3">
+                        <strong>Requested:</strong> <span id="av_requested_summary"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Matching Vehicles <span class="text-danger">*</span></label>
+                        <select id="av_vehicle_id" class="form-control" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="av_status" class="form-control">
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="av_submit_btn">
+                        <span id="av_submit_spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none;"></span>
+                        <span id="av_submit_text">Assign &amp; Update</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -1186,7 +1244,6 @@ function openCreateBooking(vehicleId, date) {
 }
 
 // Open booking details modal
-// Open booking details modal
 async function openBookingModal(bookingId) {
     // Show loading
     $('#bookingModalBody').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p class="mt-2">Loading booking details...</p></div>');
@@ -1632,6 +1689,92 @@ function deleteBooking(id) {
     $(window).on('resize', function () {
         syncTopScrollbar();
     });
+
+
+function openAssignVehicleModal(bookingId, vehicleType, brand, seater, vehicleId, status) {
+    $('#av_booking_id').val(bookingId);
+    $('#av_booking_id_display').text(bookingId);
+    $('#av_vehicle_type').val(vehicleType || '');
+    $('#av_brand').val(brand || '');
+    $('#av_seater').val(seater || '');
+    $('#av_status').val(status || 'pending');
+
+    let summary = [];
+    if (brand) summary.push('Brand: <strong>' + brand + '</strong>');
+    if (seater) summary.push('Seater: <strong>' + seater + '</strong>');
+    if (vehicleType) summary.push('Fuel Type: <strong>' + vehicleType + '</strong>');
+    $('#av_requested_summary').html(summary.length ? summary.join(' | ') : 'No specific requirements saved on this booking');
+
+    loadVehiclesForAssign(vehicleId);
+    $('#assignVehicleModal').modal('show');
+}
+
+function loadVehiclesForAssign(selectedVehicleId = null) {
+    $('#av_vehicle_id').html('<option value="">Loading...</option>');
+
+    let data = {
+        brand: $('#av_brand').val(),
+        seater: $('#av_seater').val()
+    };
+    let fuelType = $('#av_vehicle_type').val();
+    if (fuelType) {
+        data.fuel_type = fuelType;
+    }
+
+    $.ajax({
+        url: "{{ route('admin.vehicle_bookings.get_vehicles_by_type') }}",
+        type: 'GET',
+        data: data,
+        success: function(vehicles) {
+            if (!vehicles.length) {
+                $('#av_vehicle_id').html('<option value="">No matching vehicles found</option>');
+                return;
+            }
+            let options = '<option value="">Select Vehicle</option>';
+            $.each(vehicles, function(i, v) {
+                let sel = (selectedVehicleId && v.id == selectedVehicleId) ? 'selected' : '';
+                options += `<option value="${v.id}" ${sel}>${v.vehicle_name} (${v.brand ?? ''}, ${v.seater ?? ''} seater)</option>`;
+            });
+            $('#av_vehicle_id').html(options);
+        },
+        error: function() {
+            $('#av_vehicle_id').html('<option value="">Error loading vehicles</option>');
+        }
+    });
+}
+
+$('#assignVehicleForm').on('submit', function(e) {
+    e.preventDefault();
+    let bookingId = $('#av_booking_id').val();
+
+    if (!$('#av_vehicle_id').val()) {
+        toastr.error('Please select a vehicle');
+        return;
+    }
+
+    let $btn = $('#av_submit_btn');
+    $btn.prop('disabled', true);
+    $('#av_submit_spinner').show();
+    $('#av_submit_text').text('Updating...');
+
+    $.ajax({
+        url: '/dashboard/vehicle_bookings/' + bookingId + '/assign-vehicle',
+        type: 'POST',
+        data: {
+            _token: "{{ csrf_token() }}",
+            vehicle_id: $('#av_vehicle_id').val(),
+            status: $('#av_status').val()
+        },
+        success: function() {
+            $('#assignVehicleModal').modal('hide');
+            toastr.success('Vehicle assigned successfully');
+            setTimeout(() => location.reload(), 800);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error assigning vehicle');
+        }
+    });
+});
 </script>
 
 <script>

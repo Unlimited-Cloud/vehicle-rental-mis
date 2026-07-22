@@ -1,0 +1,574 @@
+@extends('layouts.admin_theme.container')
+
+@section('dynamicdata')
+
+<div class="content-header">
+    <div class="container-fluid">
+        <h1 class="mb-3">
+            {{ isset($vehiclecatalog) ? 'Edit Vehicle Catalog' : 'Create Vehicle Catalog' }}
+        </h1>
+    </div>
+</div>
+
+<section class="content">
+<div class="container-fluid">
+
+<form action="{{ isset($vehiclecatalog) ? route('admin.vehiclecatalog.update',$vehiclecatalog->id) : route('admin.vehiclecatalog.store') }}"
+      method="POST" enctype="multipart/form-data">
+
+@csrf
+@if(isset($vehiclecatalog)) @method('PUT') @endif
+
+@include('layouts.admin_theme.alert')
+
+<!-- ================= BASIC INFORMATION ================= -->
+<div class="card card-primary card-outline mb-4">
+    <div class="card-header bg-primary">
+        <h3 class="card-title text-white">
+            <i class="fas fa-car"></i> Basic Vehicle Information
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Brand *</label>
+                    <select name="brand" class="form-control" required>
+                        <option value="">Select Brand</option>
+
+                        @foreach($brands as $b)
+                            <option value="{{ $b->name }}"
+                                {{ old('brand', $vehiclecatalog->brand ?? '') == $b->name ? 'selected' : '' }}>
+                                {{ $b->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Seater *</label>
+                    <select name="seater" class="form-control" required>
+                        <option value="">Select Seater</option>
+
+                        @foreach($seaters as $b)
+                            <option value="{{ $b->name }}"
+                                {{ old('seater', $vehiclecatalog->seater ?? '') == $b->name ? 'selected' : '' }}>
+                                {{ $b->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Fuel Type *</label>
+                    <select name="fuel_type" class="form-control" required>
+                        <option value="">Select Fuel Type</option>
+
+                        @foreach($fuel_type as $ft)
+                            <option value="{{ $ft->name }}"
+                                {{ old('fuel_type', $vehiclecatalog->fuel_type ?? '') == $ft->name ? 'selected' : '' }}>
+                                {{ $ft->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Transmission *</label>
+                    <select name="transmission" class="form-control">
+                        <option value="Manual" {{ old('transmission',$vehiclecatalog->transmission ?? '')=='Manual'?'selected':'' }}>Manual</option>
+                        <option value="Automatic" {{ old('transmission',$vehiclecatalog->transmission ?? '')=='Automatic'?'selected':'' }}>Automatic</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-control">
+                        <option value="1" {{ old('status',$vehiclecatalog->status ?? 1)==1?'selected':'' }}>Available</option>
+                        <option value="0" {{ old('status',$vehiclecatalog->status ?? 1)==0?'selected':'' }}>Not Available</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" rows="4" class="form-control ckeditor"
+                            placeholder="Enter vehicle details...">{{ old('description', $vehiclecatalog->description ?? '') }}</textarea>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Vehicle Logo</label>
+                    <input type="file" name="image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->image)
+                        <br>
+                        <img src="{{ asset($vehiclecatalog->image) }}" width="120" class="img-thumbnail">
+                    @endif
+                </div>
+            </div>
+
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label>Vehicle Gallery Images</label>
+                    <input type="file" name="car_images[]" id="carImagesInput" 
+                           class="form-control" multiple accept="image/*">
+
+                    {{-- Preview for newly selected images --}}
+                    <div id="newImagePreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+
+                    {{-- Preview existing images (edit mode) --}}
+                    @php
+                        $carImages = $vehiclecatalog->car_images ?? null;
+                        if (is_string($carImages)) {
+                            $carImages = json_decode($carImages, true);
+                        }
+                        if (!is_array($carImages)) {
+                            $carImages = [];
+                        }
+                    @endphp
+
+                    @if(isset($vehiclecatalog) && !empty($carImages))
+                        <div class="mt-2">
+                            <small class="text-muted">Current Images:</small>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                @foreach($carImages as $img)
+                                    <img src="{{ asset($img) }}" width="100"
+                                         class="img-thumbnail" style="height:80px;object-fit:cover;">
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= REGISTRATION ================= -->
+<div class="card card-info card-outline mb-4">
+    <div class="card-header bg-info">
+        <h3 class="card-title text-white">
+            <i class="fas fa-id-card"></i> Registration Details
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6 mt-3">
+                <label>Number Plate Color</label>
+                <select name="number_plate_color" class="form-control">
+                    <option value="">Select</option>
+                    <option value="RED" {{ old('number_plate_color',$vehiclecatalog->number_plate_color ?? '')=='RED'?'selected':'' }}>RED</option>
+                    <option value="BLACK" {{ old('number_plate_color',$vehiclecatalog->number_plate_color ?? '')=='BLACK'?'selected':'' }}>BLACK</option>
+                    <option value="GREEN" {{ old('number_plate_color',$vehiclecatalog->number_plate_color ?? '')=='GREEN'?'selected':'' }}>GREEN</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= INSURANCE ================= -->
+<div class="card card-success card-outline mb-4">
+    <div class="card-header bg-success">
+        <h3 class="card-title text-white">
+            <i class="fas fa-shield-alt"></i> Insurance Details
+        </h3>
+    </div>
+
+    <div class="card-body">
+        
+        <div class="row">
+
+            <div class="col-md-6">
+                <label>Insurance Policy No</label>
+                <input type="text" name="insurance_policy_no" class="form-control"
+                       value="{{ old('insurance_policy_no',$vehiclecatalog->insurance_policy_no ?? '') }}">
+            </div>
+
+            <div class="col-md-6">
+                <label>Insurance Company</label>
+                <input type="text" name="insurance_company" class="form-control"
+                       value="{{ old('insurance_company',$vehiclecatalog->insurance_company ?? '') }}">
+            </div>
+
+            <div class="col-md-6 mt-3">
+                <label>Insurance Type</label>
+                <input type="text" name="insurance_type" class="form-control"
+                       value="{{ old('insurance_type',$vehiclecatalog->insurance_type ?? '') }}">
+            </div>
+
+            <div class="col-md-6 mt-3">
+                <label>Insurance Valid Till</label>
+                <input type="date" name="insurance_till" class="form-control"
+                       value="{{ old('insurance_till',$vehiclecatalog->insurance_till ?? '') }}">
+            </div>
+
+            <div class="col-md-6 mt-3">
+                <label>Insurance Cost Per Annum</label>
+                <input type="number" step="0.01" name="insurance_cost_per_annum" class="form-control"
+                    value="{{ old('insurance_cost_per_annum',$vehiclecatalog->insurance_cost_per_annum ?? '') }}">
+            </div>
+
+            <div class="col-md-6 mt-3">
+                <label>Insurance Policy Document (PDF/Image)</label>
+                <input type="file" name="insurance_policy_document" class="form-control">
+
+                @if(isset($vehiclecatalog) && $vehiclecatalog->insurance_policy_document)
+                    <br>
+                    <a href="{{ asset($vehiclecatalog->insurance_policy_document) }}" 
+                    target="_blank" class="btn btn-sm btn-info">
+                    View Document
+                    </a>
+                @endif
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= PASSENGER INSURANCE ================= -->
+<div class="card card-primary card-outline mb-4">
+    <div class="card-header bg-primary">
+        <h3 class="card-title text-white">
+            <i class="fas fa-user-shield"></i> Passenger Insurance Details
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+
+            <div class="col-md-4">
+                <label class="form-label">Passenger Insured</label>
+
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           id="passenger_insured"
+                           name="passenger_insured"
+                           value="1"
+                           {{ old('passenger_insured', $vehiclecatalog->passenger_insured ?? false) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="passenger_insured">
+                        Yes
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label>Passenger Insured Amount</label>
+                <div class="input-group">
+                    <span class="input-group-text">Rs.</span>
+                    <input type="number"
+                           step="0.01"
+                           min="0"
+                           name="passenger_insured_amount"
+                           class="form-control"
+                           value="{{ old('passenger_insured_amount', $vehiclecatalog->passenger_insured_amount ?? '') }}"
+                           placeholder="Enter insured amount">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label>Passenger Insurance Company</label>
+                <input type="text"
+                       name="passenger_insurance_company"
+                       class="form-control"
+                       value="{{ old('passenger_insurance_company', $vehiclecatalog->passenger_insurance_company ?? '') }}"
+                       placeholder="Enter insurance company">
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= SAFETY FEATURES ================= -->
+<div class="card card-warning card-outline mb-4">
+    <div class="card-header bg-warning">
+        <h3 class="card-title text-dark">
+            <i class="fas fa-shield-virus"></i> Safety Features
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+            
+            <!-- Dash Cam -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Dash Cam</label>
+                    <select name="dash_cam" class="form-control">
+                        <option value="0" {{ old('dash_cam', $vehiclecatalog->dash_cam ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('dash_cam', $vehiclecatalog->dash_cam ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Dash Cam Image</label>
+                    <input type="file" name="dash_cam_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->dash_cam_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->dash_cam_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- EBS -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>EBS</label>
+                    <select name="ebs" class="form-control">
+                        <option value="0" {{ old('ebs', $vehiclecatalog->ebs ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('ebs', $vehiclecatalog->ebs ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>EBS Image</label>
+                    <input type="file" name="ebs_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->ebs_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->ebs_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Air Conditioning -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Air Conditioning</label>
+                    <select name="air_conditioning" class="form-control">
+                        <option value="0" {{ old('air_conditioning', $vehiclecatalog->air_conditioning ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('air_conditioning', $vehiclecatalog->air_conditioning ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Air Conditioning Image</label>
+                    <input type="file" name="air_conditioning_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->air_conditioning_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->air_conditioning_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Reverse Camera -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Reverse Camera</label>
+                    <select name="reverse_camera" class="form-control">
+                        <option value="0" {{ old('reverse_camera', $vehiclecatalog->reverse_camera ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('reverse_camera', $vehiclecatalog->reverse_camera ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Reverse Camera Image</label>
+                    <input type="file" name="reverse_camera_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->reverse_camera_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->reverse_camera_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Camera 360 -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Camera 360</label>
+                    <select name="camera_360" class="form-control">
+                        <option value="0" {{ old('camera_360', $vehiclecatalog->camera_360 ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('camera_360', $vehiclecatalog->camera_360 ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Camera 360 Image</label>
+                    <input type="file" name="camera_360_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->camera_360_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->camera_360_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Emergency Braking System -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Emergency Braking System</label>
+                    <select name="emergency_braking_system" class="form-control">
+                        <option value="0" {{ old('emergency_braking_system', $vehiclecatalog->emergency_braking_system ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('emergency_braking_system', $vehiclecatalog->emergency_braking_system ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Emergency Braking System Image</label>
+                    <input type="file" name="emergency_braking_system_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->emergency_braking_system_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->emergency_braking_system_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Hillside Braking System -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Hillside Braking System</label>
+                    <select name="hillside_braking_system" class="form-control">
+                        <option value="0" {{ old('hillside_braking_system', $vehiclecatalog->hillside_braking_system ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('hillside_braking_system', $vehiclecatalog->hillside_braking_system ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Hillside Braking System Image</label>
+                    <input type="file" name="hillside_braking_system_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->hillside_braking_system_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->hillside_braking_system_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+            <!-- Hill Descent Control -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label>Hill Descent Control</label>
+                    <select name="hill_descent_control" class="form-control">
+                        <option value="0" {{ old('hill_descent_control', $vehiclecatalog->hill_descent_control ?? 0) == 0 ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('hill_descent_control', $vehiclecatalog->hill_descent_control ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
+            {{-- <div class="col-md-4">
+                <div class="form-group">
+                    <label>Hill Descent Control Image</label>
+                    <input type="file" name="hill_descent_control_image" class="form-control">
+                    @if(isset($vehiclecatalog) && $vehiclecatalog->hill_descent_control_image)
+                        <br>
+                        <img src="{{ asset('uploads/vehiclecatalog/security-features/' . $vehiclecatalog->hill_descent_control_image) }}" 
+                             width="80" class="img-thumbnail">
+                    @endif
+                </div>
+            </div> --}}
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= SUBMIT ================= -->
+<div class="card">
+    <div class="card-footer text-right">
+        <a href="{{ route('admin.vehiclecatalog.index') }}" class="btn btn-secondary">
+            Back
+        </a>
+
+        <button type="submit" class="btn btn-primary">
+            {{ isset($vehiclecatalog) ? 'Update Vehicle Catalog' : 'Create Vehicle Catalog' }}
+        </button>
+    </div>
+</div>
+
+</form>
+
+</div>
+</section>
+
+@endsection
+
+@section('scripts')
+
+<script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll('.ckeditor').forEach(function (textarea) {
+
+        ClassicEditor
+            .create(textarea)
+            .catch(error => {
+                console.error(error);
+            });
+
+    });
+
+});
+// Gallery image live preview
+document.getElementById('carImagesInput').addEventListener('change', function () {
+    const preview = document.getElementById('newImagePreview');
+    preview.innerHTML = '';
+
+    Array.from(this.files).forEach(function (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'relative';
+
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'img-thumbnail';
+            img.style.cssText = 'width:100px;height:80px;object-fit:cover;';
+
+            const label = document.createElement('small');
+            label.className = 'd-block text-muted text-truncate';
+            label.style.maxWidth = '100px';
+            label.textContent = file.name;
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(label);
+            preview.appendChild(wrapper);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const insuredCheckbox = document.getElementById('passenger_insured');
+    const amountField = document.querySelector('[name="passenger_insured_amount"]').closest('.col-md-4');
+    const companyField = document.querySelector('[name="passenger_insurance_company"]').closest('.col-md-4');
+
+    function toggleFields() {
+        const show = insuredCheckbox.checked;
+        amountField.style.display = show ? '' : 'none';
+        companyField.style.display = show ? '' : 'none';
+    }
+
+    insuredCheckbox.addEventListener('change', toggleFields);
+    toggleFields();
+});
+</script>
+
+@endsection

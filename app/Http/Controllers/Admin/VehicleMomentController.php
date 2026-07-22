@@ -157,10 +157,12 @@ class VehicleMomentController extends Controller
     {
         Gate::authorize('create_vehicles_vehicle_movement');
         $request->validate([
-            'start_km' => 'required|numeric|min:0',
-            'end_km' => 'nullable|numeric|gt:start_km',
+            'depot_departure_km' => 'required|numeric|min:0',
+            'pickup_arrival_km' => 'nullable|numeric|gte:depot_departure_km',
+            'dropoff_km' => 'nullable|numeric|gte:depot_departure_km',
         ], [
-            'end_km.gt' => 'End KM must be greater than Start KM.',
+            'pickup_arrival_km.gte' => 'Pickup Arrival KM must be greater than or equal to Depot Departure KM.',
+            'dropoff_km.gte' => 'Drop Off KM must be greater than or equal to Depot Departure KM.',
         ]);
 
         try {
@@ -290,15 +292,16 @@ class VehicleMomentController extends Controller
     {
         Gate::authorize('update_vehicles_vehicle_movement');
         $request->validate([
-            'start_km' => 'required|numeric|min:0',
-            'end_km' => 'nullable|numeric|gt:start_km',
+            'depot_departure_km' => 'required|numeric|min:0',
+            'pickup_arrival_km' => 'nullable|numeric|gte:depot_departure_km',
+            'dropoff_km' => 'nullable|numeric|gte:depot_departure_km',
         ], [
-            'end_km.gt' => 'End KM must be greater than Start KM.',
+            'pickup_arrival_km.gte' => 'Pickup Arrival KM must be greater than or equal to Depot Departure KM.',
+            'dropoff_km.gte' => 'Drop Off KM must be greater than or equal to Depot Departure KM.',
         ]);
         try {
             $data = $request->all();
 
-            // Use service to update with all logic
             $this->service->update($id, $data);
 
             return redirect()->route('admin.vehicle_moments.index')
