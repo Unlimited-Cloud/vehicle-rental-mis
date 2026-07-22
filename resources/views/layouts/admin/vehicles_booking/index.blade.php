@@ -500,18 +500,21 @@
                         </select>
                     </div>
 
-                    {{-- <div class="form-group">
+                    <div class="form-group">
                         <label>Status</label>
                         <select id="av_status" class="form-control">
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
-                    </div> --}}
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign &amp; Update</button>
+                    <button type="submit" class="btn btn-primary" id="av_submit_btn">
+                        <span id="av_submit_spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none;"></span>
+                        <span id="av_submit_text">Assign &amp; Update</span>
+                    </button>
                 </div>
             </div>
         </form>
@@ -1748,6 +1751,11 @@ $('#assignVehicleForm').on('submit', function(e) {
         toastr.error('Please select a vehicle');
         return;
     }
+
+    let $btn = $('#av_submit_btn');
+    $btn.prop('disabled', true);
+    $('#av_submit_spinner').show();
+    $('#av_submit_text').text('Updating...');
 
     $.ajax({
         url: '/dashboard/vehicle_bookings/' + bookingId + '/assign-vehicle',

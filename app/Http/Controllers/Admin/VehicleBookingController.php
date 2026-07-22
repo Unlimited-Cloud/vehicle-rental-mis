@@ -358,6 +358,7 @@ class VehicleBookingController extends Controller
         $oldRate = $vehicleBooking->rate_per_day;
         $oldTotal = $vehicleBooking->sub_total;
         $oldVehicleId = $vehicleBooking->vehicle_id;
+        $oldStatus = $vehicleBooking->status;
         $vehicleBooking->update($updateData);
 
         if ($request->has('itineraries')) {
@@ -379,40 +380,7 @@ class VehicleBookingController extends Controller
         $paymentData['payment_date'] = $request->payment_date . ' ' . $request->payment_time;
         $paymentData['notes'] = $request->payment_note;
         Payment::where('vehicle_booking_id', $vehicleBookingId)->update($paymentData);
-        $customers = Customer::where('id', $vehicleBooking->customer_id)->first();
-
-        //generate invoice 
-        if ($vehicleBooking->status === 'confirmed' && $vehicleBooking->call_type === 'api') {
-            $this->service->generateFinalInvoice($request->file_no);
-            BookingLog::create([
-                'booking_id' => $vehicleBookingId,
-                'status' => 'confirmed',
-                'remarks' => 'Booking confirmed by admin',
-                'created_by' => Auth::user() ? Auth::user()->id : 0,
-            ]);
-            event(new EmailEvent($customers->email, 'confirmed_booking', 'success', 'customer'));
-        }
-
-        if ($vehicleBooking->status === 'cancelled' && $vehicleBooking->call_type === 'api') {
-            BookingLog::create([
-                'booking_id' => $vehicleBookingId,
-                'status' => 'cancelled',
-                'remarks' => 'Booking cancelled by admin',
-                'created_by' => Auth::user() ? Auth::user()->id : 0,
-            ]);
-        }
-
-        if ($oldVehicleId != $vehicleBooking->vehicle_id) {
-            event(new EmailEvent(
-                $customers->email,
-                'booking_changed',
-                'success',
-                'customer',
-                '',
-                '',
-                $vehicleBooking->id
-            ));
-        }
+        $this->handleStatusTransition($vehicleBooking, $oldStatus, $oldVehicleId, $request->file_no);
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('success', 'Booking updated successfully.');
@@ -998,6 +966,7 @@ class VehicleBookingController extends Controller
 
         $vehicleBooking = VehicleBooking::findOrFail($id);
         $oldVehicleId = $vehicleBooking->vehicle_id;
+        $oldStatus = $vehicleBooking->status;
 
         $vehicleBooking->vehicle_id = $request->vehicle_id;
         if ($request->filled('status')) {
@@ -1005,24 +974,59 @@ class VehicleBookingController extends Controller
         }
         $vehicleBooking->save();
 
-        // if ($oldVehicleId != $vehicleBooking->vehicle_id) {
-        //     $customer = Customer::find($vehicleBooking->customer_id);
-        //     if ($customer && $customer->email) {
-        //         event(new EmailEvent(
-        //             $customer->email,
-        //             'booking_changed',
-        //             'success',
-        //             'customer',
-        //             '',
-        //             '',
-        //             $vehicleBooking->id
-        //         ));
-        //     }
-        // }
+        $this->handleStatusTransition($vehicleBooking, $oldStatus, $oldVehicleId);
 
         return response()->json([
             'success' => true,
             'message' => 'Vehicle assigned successfully.'
         ]);
+    }
+
+
+
+
+    private function handleStatusTransition(VehicleBooking $vehicleBooking, string $oldStatus, $oldVehicleId, $fileNo = null)
+    {
+        $newStatus = $vehicleBooking->status;
+        $customer = Customer::find($vehicleBooking->customer_id);
+
+        // Only fire once — on the transition INTO confirmed, not every save while already confirmed
+        if ($newStatus === 'confirmed' && $oldStatus !== 'confirmed' && $vehicleBooking->call_type === 'api') {
+            $this->service->generateFinalInvoice($fileNo ?? $vehicleBooking->file_no);
+
+            BookingLog::create([
+                'booking_id' => $vehicleBooking->id,
+                'status' => 'confirmed',
+                'remarks' => 'Booking confirmed by admin',
+                'created_by' => Auth::user() ? Auth::user()->id : 0,
+            ]);
+
+            if ($customer && $customer->email) {
+                event(new EmailEvent($customer->email, 'confirmed_booking', 'success', 'customer'));
+            }
+        }
+
+        // Same idea — only on the transition INTO cancelled
+        if ($newStatus === 'cancelled' && $oldStatus !== 'cancelled' && $vehicleBooking->call_type === 'api') {
+            BookingLog::create([
+                'booking_id' => $vehicleBooking->id,
+                'status' => 'cancelled',
+                'remarks' => 'Booking cancelled by admin',
+                'created_by' => Auth::user() ? Auth::user()->id : 0,
+            ]);
+        }
+
+        // Vehicle reassignment notice — unchanged behavior, just consolidated here
+        if ($oldVehicleId != $vehicleBooking->vehicle_id && $customer && $customer->email) {
+            event(new EmailEvent(
+                $customer->email,
+                'booking_changed',
+                'success',
+                'customer',
+                '',
+                '',
+                $vehicleBooking->id
+            ));
+        }
     }
 }
