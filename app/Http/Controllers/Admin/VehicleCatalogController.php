@@ -81,7 +81,7 @@ class VehicleCatalogController extends Controller
             'fuel_type' => 'nullable',
             'transmission' => 'nullable',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required',
+            'status' => 'nullable',
             'is_helper_needed' => 'nullable',
 
             // Registration
@@ -245,7 +245,7 @@ class VehicleCatalogController extends Controller
             'fuel_type' => 'nullable',
             'transmission' => 'nullable',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required',
+            'status' => 'nullable',
             'is_helper_needed' => 'nullable',
 
             // Registration
