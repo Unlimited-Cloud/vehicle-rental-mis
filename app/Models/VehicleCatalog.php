@@ -101,7 +101,7 @@ class VehicleCatalog extends Model
     // Accessor for image URL
     public function getVehicleImageUrlAttribute()
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        return $this->image ? asset($this->image) : null;
     }
 
 
