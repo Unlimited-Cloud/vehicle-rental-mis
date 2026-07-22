@@ -171,9 +171,23 @@ class CustomerService
         try{
             $validator = Validator::make($request->all(), [
                 'customer_uuid' => 'nullable|exists:customers,customer_uuid',
-                'first_name' => 'required_if:customerType,individual|string',
-                'last_name'  => 'required_if:customerType,individual|string',
-                'institutionName'  => 'required_if:customerType,institution',
+                'first_name' => [
+                    'required_if:customerType,individual',
+                    'nullable',
+                    'string',
+                ],
+
+                'last_name' => [
+                    'required_if:customerType,individual',
+                    'nullable',
+                    'string',
+                ],
+
+                'institutionName' => [
+                    'required_if:customerType,institution',
+                    'nullable',
+                    'string',
+                ],
                 'email' => [
                     'required',
                     'email',
@@ -237,8 +251,14 @@ class CustomerService
 
             $customerUser = $this->userRepository->getUserByCustomerIdAndUserType($customerId,'customer_app');
 
+            if($customer->customer_type == 'individual'){
+                $userName = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name);
+            }else{
+                $userName = $request->institutionName;
+            }
+
             $userData = [
-                'name' => trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name),
+                'name' => $userName,
                 'password' => $customer->password,
                 'email' => $request->email,
                 'user_type' => 'customer_app',
