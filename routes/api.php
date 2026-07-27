@@ -83,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/vehicle-booking-import', [BookingController::class, 'importBooking']);
     });
     Route::get('/get-vehicle', [BookingController::class, 'GetVehicle']);
+    Route::get('/get-vehicle-catalog', [BookingController::class, 'GetVehicleCatalog']);
     Route::get('/get-drivers', [BookingController::class, 'getDrivers']);
     Route::get('/get-helpers', [BookingController::class, 'getHelpers']);
     Route::get('/brands', [BookingController::class, 'brands']);
@@ -98,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vehicle-catalog-price', [VehicleCatalogController::class, 'getVehicleCatalogPrice']);
     Route::get('/vehicle-catalog-detail/{id}', [VehicleCatalogController::class, 'VehicleCatalogDetailById']);
     Route::post('/vehicle-catalog-bookings', [BookingController::class, 'createBookingByVehicleCatalog']);
-   
+
 
 
     Route::post('/check-vehicle-availability', [BookingController::class, 'checkAvailability']);
