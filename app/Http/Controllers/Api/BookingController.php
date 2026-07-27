@@ -858,6 +858,7 @@ class BookingController extends Controller
                 'tax' => $tax_amount,
                 'vat' => '1',
                 'total_amount' => $total_amount,
+                'remaining_balance' => $total_amount,
 
                 'status' => 'pending',
                 'call_type' => 'api',
@@ -2981,6 +2982,4 @@ class BookingController extends Controller
             'message' => 'Vehicle is available.'
         ]);
     }
-
-
 }
