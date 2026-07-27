@@ -46,6 +46,7 @@ use App\Models\CustomerLocation;
 use App\Models\Payment;
 use App\Models\Passenger;
 use App\Models\TripRouteVehicleTypePrice;
+use App\Models\VehicleCatalog;
 use Illuminate\Support\Facades\Http;
 
 class BookingController extends Controller
@@ -71,6 +72,17 @@ class BookingController extends Controller
             'status' => true,
             'message' => 'Vehicle list fetched successfully',
             'data' => $vehicles
+        ]);
+    }
+
+    public function GetVehicleCatalog()
+    {
+        $vehiclecatalog = VehicleCatalog::get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Vehicle Catalog list fetched successfully',
+            'data' => $vehiclecatalog
         ]);
     }
 
