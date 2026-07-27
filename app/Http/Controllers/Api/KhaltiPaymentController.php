@@ -98,7 +98,7 @@ class KhaltiPaymentController extends Controller
             ];
             Log::info('Initiating Khalti payment with payload: ', $payload);
 
-            Log::info("current url",["url" => url('/')]);
+            Log::info("current url", ["url" => url('/')]);
 
             $url = env('KHALTI_API_URL') ?? "https://dev.khalti.com/api/v2/" . 'epayment/initiate/';
 
@@ -173,6 +173,7 @@ class KhaltiPaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'booking_id' => 'required|exists:vehicle_bookings,id',
             'customer_id' => 'required|exists:customers,customer_uuid',
+            'amount' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -204,6 +205,20 @@ class KhaltiPaymentController extends Controller
                     'message' => 'Customer not found.'
                 ], 422);
             }
+            $amount = $request->amount ?? $booking->total_amount;
+
+            if ($amount <= 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Payment amount must be greater than zero.'
+                ], 422);
+            }
+            if ($amount > $booking->remaining_balance) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Amount ({$amount}) exceeds remaining balance ({$booking->remaining_balance})."
+                ], 422);
+            }
 
             $merchantTransactionId =
                 $request->transaction_id ?? 'ASH:' . strtoupper(Str::random(8));
@@ -211,7 +226,7 @@ class KhaltiPaymentController extends Controller
             // Create payment record
             $payment = Payment::create([
                 'vehicle_booking_id' => $request->booking_id,
-                'amount' => $booking->total_amount,
+                'amount' => $amount,
                 'payment_method' => 'online',
                 'payment_type' => 'booking',
                 'payment_date' => now(),
@@ -226,7 +241,7 @@ class KhaltiPaymentController extends Controller
             $payload = [
                 "return_url" => route('khalti.confirm'),
                 "website_url" => config('app.url'),
-                "amount" => $booking->total_amount * 100,
+                "amount" => $amount * 100,
                 "purchase_order_id" => $merchantTransactionId,
                 "purchase_order_name" => "Vehicle Rental Payment",
                 "customer_info" => [
@@ -236,11 +251,11 @@ class KhaltiPaymentController extends Controller
                 ]
             ];
 
-            Log::info("current url",["url" => url('/')]);
+            Log::info("current url", ["url" => url('/')]);
             $currentUrl = url('/');
-            if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+            if ($currentUrl == 'https://rental.kathmandusightseeing.com') {
                 $khaltiApiUrl = env('KHALTI_API_URL', 'https://khalti.com/api/v2/');
-            }else{
+            } else {
                 $khaltiApiUrl = env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/');
             }
 
@@ -254,9 +269,9 @@ class KhaltiPaymentController extends Controller
                 'payload' => $payload
             ]);
 
-            if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+            if ($currentUrl == 'https://rental.kathmandusightseeing.com') {
                 $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02";
-            }else{
+            } else {
                 $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
             }
 
@@ -289,7 +304,7 @@ class KhaltiPaymentController extends Controller
                     'payment_id' => $payment->id,
                     'pidx' => $data['pidx'],
                     'merchant_transaction_id' => $merchantTransactionId,
-                    'amount' => $booking->total_amount,
+                    'amount' => $amount,
                     'user_name' => $customers->name ?? 'Guest User',
                     'user_email' => $customers->email,
                     'user_mobile' => $request->mobile ?? $customers->phone,
@@ -334,9 +349,9 @@ class KhaltiPaymentController extends Controller
         $payment = KhaltiPayment::where('pidx', $request->pidx)->firstOrFail();
 
         $currentUrl = url('/');
-        if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+        if ($currentUrl == 'https://rental.kathmandusightseeing.com') {
             $khaltiApiUrl = env('KHALTI_API_URL', 'https://khalti.com/api/v2/');
-        }else{
+        } else {
             $khaltiApiUrl = env('KHALTI_API_URL', 'https://dev.khalti.com/api/v2/');
         }
 
@@ -345,9 +360,9 @@ class KhaltiPaymentController extends Controller
             '/'
         ) . '/epayment/lookup/';
 
-        if($currentUrl == 'https://rental.kathmandusightseeing.com'){
+        if ($currentUrl == 'https://rental.kathmandusightseeing.com') {
             $khaltiKey = env('KHALTI_KEY') ?? "live_secret_key_5487369ff8a0474cae185dbf973d6f02";
-        }else{
+        } else {
             $khaltiKey = env('KHALTI_KEY') ?? "0dfc7e70c51b4edab0f7d49f031ed0db";
         }
 
@@ -381,16 +396,8 @@ class KhaltiPaymentController extends Controller
                 $booking = $payment->booking;
                 $customer = Customer::where('id', $booking->customer_id)->first();
 
-                $booking->update([
-                    'payment_status' => 1,
-                    'status' => 'paid'
-                ]);
 
-                BookingLog::create([
-                    'booking_id' => $payment->booking_id,
-                    'status' => 'paid',
-                    'remarks' => 'Booking paid by customer via Khalti',
-                ]);
+
 
                 if ($payment->payment_type == 'attendance') {
                     $attendanceId = $payment->attendance_id;
@@ -427,10 +434,38 @@ class KhaltiPaymentController extends Controller
                             'status' => 'completed',
                         ]
                     );
+
+                    $totalPaid = Payment::where('vehicle_booking_id', $booking->id)
+                        ->where('status', 'completed')
+                        ->sum('amount');
+
+                    $remaining_balance = max(0, $booking->total_amount - $totalPaid);
+
+                    $bookingStatus = $remaining_balance == 0 ? 'paid' : 'partial_paid';
+
+                    $paymentStatus = $remaining_balance == 0 ? 1 : 0;
+
+                    $booking->update([
+                        'remaining_balance' => $remaining_balance,
+                        'status' => $bookingStatus,
+                        'payment_status' => $paymentStatus,
+                    ]);
+
+                    BookingLog::create([
+                        'booking_id' => $payment->booking_id,
+                        'status' => $bookingStatus,
+                        'remarks' => $remaining_balance == 0
+                            ? 'Booking fully paid by customer via Khalti'
+                            : 'Partial payment received via Khalti',
+                    ]);
+
+
                     event(new EmailEvent($customer->email, 'paid_booking', 'success', 'customer'));
 
-                    // Create Receipt
-                    $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
+                    if ($remaining_balance == 0) {
+                        // Create Receipt
+                        $this->service->finalizeReceipt($booking->file_no, 'wallet', "khalti", $payment->user_mobile);
+                    }
                 }
             } else {
 
