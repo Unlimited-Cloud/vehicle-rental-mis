@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\Brand;
+use App\Models\Customer;
 use App\Models\FuelType;
 use App\Models\Seater;
 use App\Models\TripRouteVehicleTypePrice;
+use App\Models\VehicleBooking;
 use App\Models\VehicleCatalog;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -311,6 +313,19 @@ class VehicleCatalogController extends Controller
             }
         }
 
+        $price = TripRouteVehicleTypePrice::where('brand', $vehiclecatalog->brand)
+            ->where('seater', $vehiclecatalog->seater)
+            ->first([
+                'per_km',
+                'per_hour',
+                'overnight_price'
+            ]);
+
+        // Add pricing fields
+        $data['per_km'] = $price?->per_km;
+        $data['per_hour'] = $price?->per_hour;
+        $data['overnight_price'] = $price?->overnight_price;
+
         return response()->json([
             'status' => 'success',
             'message' => 'Vehicle Catalog Fetched Successfully',
@@ -346,5 +361,163 @@ class VehicleCatalogController extends Controller
             'success' => true,
             'data' => $vehiclecatalog->get()
         ]);
+    }
+
+
+
+    public function CatalogBookingbyAllStatus($customer_id)
+    {
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+
+        $bookings = VehicleBooking::where('customer_id', $customer->id)
+            ->whereNull('vehicle_bookings.deleted_at')
+            ->latest()
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'vehicle_id',
+                'driver_id',
+                'brand',
+                'seater',
+                'start_date',
+                'start_time',
+                'end_date',
+                'end_time',
+                'from_destination',
+                'to_destination',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount',
+                'payment_status'
+            ]);
+
+        // Fetch all catalogs once
+        $catalogs = VehicleCatalog::get([
+            'brand',
+            'seater',
+            'image',
+            'description',
+            'car_images',
+            'model',
+            'year',
+            'fuel_type',
+            'transmission',
+            'number_plate_color'
+        ]);
+
+        // Match by brand + seater
+        $bookings->transform(function ($booking) use ($catalogs) {
+
+            $catalog = $catalogs->first(function ($item) use ($booking) {
+                return strtolower(trim($item->brand)) == strtolower(trim($booking->brand))
+                    && (string)$item->seater === (string)$booking->seater;
+            });
+
+            $booking->vehicle_catalog = $catalog;
+
+            return $booking;
+        });
+
+
+        return response()->json([
+            'status' => true,
+            'data' => $bookings
+        ]);
+    }
+
+
+    public function BookingbyStatus($status, $customer_id)
+    {
+        $validStatuses = ['pending', 'confirmed', 'cancelled', 'started', 'completed', 'paid'];
+
+        if (!in_array($status, $validStatuses)) {
+            return response()->json([
+                'message' => 'Invalid status'
+            ], 400);
+        }
+
+
+        $customer = Customer::where('customer_uuid', $customer_id)->first();
+
+        if (!$customer) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Customer not found',
+                'data' => []
+            ], 404);
+        }
+        $customer_id = $customer->id;
+        $query = VehicleBooking::query()->where('customer_id', $customer_id);
+
+
+        if ($status === 'completed') {
+            $query->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('end_datetime');
+            });
+        } elseif ($status === 'started') {
+            $query->whereHas('vehicleMoment', function ($q) {
+                $q->whereNotNull('start_datetime')
+                    ->whereNull('end_datetime');
+            });
+        } elseif ($status === 'paid') {
+            $query->where('payment_status', 1);
+        } else {
+            $query->where('status', $status);
+        }
+
+        $bookings = $query->with([
+            'tripRoute:id,title',
+            'vehicle:id,vehicle_name,image,car_images',
+            'driver:id,user_id,experience,age',
+            'driver.user:id,name',
+            'vehicleMoment:id,booking_id,end_datetime,start_datetime'
+        ])
+            ->get([
+                'id',
+                'file_no',
+                'status',
+                'trip_route_id',
+                'vehicle_id',
+                'driver_id',
+                'start_date',
+                'start_time',
+                'end_date',
+                'rate_per_day',
+                'tax',
+                'discount',
+                'total_amount',
+                'payment_status'
+            ]);
+
+        $bookings->each(function ($booking) {
+            if ($booking->vehicleMoment) {
+
+                if (
+                    !empty($booking->vehicleMoment->start_datetime) &&
+                    empty($booking->vehicleMoment->end_datetime)
+                ) {
+                    $booking->status = 'started';
+                }
+
+                if (!empty($booking->vehicleMoment->end_datetime)) {
+                    $booking->status = 'completed';
+                }
+            }
+            if ($booking->payment_status == 1) {
+                $booking->status = 'paid';
+            }
+        });
+
+        return response()->json($bookings);
     }
 }
