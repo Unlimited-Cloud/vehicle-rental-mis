@@ -83,7 +83,7 @@ class ProformaService
             // Fetch all bookings with the same file_no
             $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
                 ->where('file_no', $file_no)
-                ->where('status', 'confirmed')
+                ->whereNotIn('status', ['cancelled','pending'])
                 ->orderBy('start_date', 'asc')
                 ->orderBy('start_time', 'asc')
                 ->get();
@@ -307,7 +307,7 @@ class ProformaService
             if ($receipt->file_no) {
                 $bookings = \App\Models\VehicleBooking::with(['vehicle', 'tripRoute'])
                     ->where('file_no', $receipt->file_no)
-                    ->where('status', 'confirmed')
+                    ->whereNotIn('status', ['cancelled','pending'])
                     ->orderBy('start_date', 'asc')
                     ->orderBy('start_time', 'asc')
                     ->get();
