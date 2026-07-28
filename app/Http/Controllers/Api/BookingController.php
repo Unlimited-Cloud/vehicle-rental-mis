@@ -913,7 +913,7 @@ class BookingController extends Controller
 
             //  Generate Proforma
             // $this->service->generateFinalInvoice($file_no);
-            // event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
+            event(new EmailEvent($customers->email, 'create_booking', 'success', 'customer'));
 
             // Return response
             return response()->json([
@@ -2368,6 +2368,42 @@ class BookingController extends Controller
         ]);
     }
 
+    public function catalogBookingDetails($booking_id)
+    {
+        $booking = VehicleBooking::whereNull('vehicle_bookings.deleted_at')
+            ->find($booking_id);
+
+        if (!$booking) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Booking not found'
+            ], 404);
+        }
+
+        // Match VehicleCatalog using brand + seater
+        $catalog = VehicleCatalog::where('brand', $booking->brand)
+            ->where('seater', $booking->seater)
+            ->first([
+                'image',
+                'car_images',
+                'description',
+                'brand',
+                'model',
+                'seater',
+                'year',
+                'fuel_type',
+                'transmission',
+                'number_plate_color'
+            ]);
+
+        // Attach catalog data
+        $booking->vehicle_catalog = $catalog;
+
+        return response()->json([
+            'status' => true,
+            'data' => $booking
+        ]);
+    }
 
 
     public function bookingLogDetails($booking_id)
