@@ -100,6 +100,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vehicle-catalog-detail/{id}', [VehicleCatalogController::class, 'VehicleCatalogDetailById']);
     Route::post('/vehicle-catalog-bookings', [BookingController::class, 'createBookingByVehicleCatalog']);
     Route::get('/vehicle-catalog-sorting', [VehicleCatalogController::class, 'vehicleCatalogSorting']);
+    Route::get('catalog-booking-by-all-status/{customer_id}', [VehicleCatalogController::class, 'CatalogBookingbyAllStatus']);
+    // Route::get('catalog-booking-by-status/{status}/{customer_id}', [VehicleCatalogController::class, 'CatalogBookingbyStatus']);
+    Route::get('/catalog-booking-details/{booking_id}', [BookingController::class, 'catalogBookingDetails']);
 
 
     Route::post('/check-vehicle-availability', [BookingController::class, 'checkAvailability']);
