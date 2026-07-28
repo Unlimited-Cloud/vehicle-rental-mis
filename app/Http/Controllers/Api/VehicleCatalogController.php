@@ -317,4 +317,34 @@ class VehicleCatalogController extends Controller
             'data' => $data
         ]);
     }
+
+
+
+    public function vehicleCatalogSorting(Request $request)
+    {
+        $sortBy = $request->input('sort_by');
+        $sortOrder = strtolower($request->input('sort_order', 'asc'));
+        $sortOrder = in_array($sortOrder, ['asc', 'desc']) ? $sortOrder : 'asc';
+
+        $vehiclecatalog = VehicleCatalog::query();
+
+        switch ($sortBy) {
+            case 'seater':
+                $vehiclecatalog->orderBy('seater', $sortOrder);
+                break;
+
+            case 'brand':
+                $vehiclecatalog->orderBy('brand', $sortOrder);
+                break;
+
+            case 'age':
+                $vehiclecatalog->orderBy('year', $sortOrder);
+                break;
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $vehiclecatalog->get()
+        ]);
+    }
 }
