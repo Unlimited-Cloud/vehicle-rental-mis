@@ -125,9 +125,96 @@
             @endif
         </div>
 
+        <!-- ================= NEW STATISTICS ROW ================= -->
+        <div class="row mt-2">
+            <div class="col-12">
+                <h6 class="mb-3 font-weight-bold text-uppercase text-muted">
+                    <i class="fas fa-chart-bar mr-2" style="font-size: 0.9rem;"></i>Vehicle & People Statistics
+                </h6>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Vehicle Types -->
+            @if($currentUserIsCustomer == 'N')
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+                <a href="{{ route('admin.vehicles.index') }}" style="text-decoration: none;">
+                    <div class="small-box bg-gradient-purple" style="border-radius: 8px; min-height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="inner">
+                            <h4 class="mb-2 font-weight-bold">{{ $vehicleTypesCount }}</h4>
+                            <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Vehicle Types</p>
+                            <small style="font-size: 0.7rem;">
+                                <span class="text-white">{{ $vehicleTypesList }}</span>
+                            </small>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-car-side" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            @endif
+
+            <!-- Brands -->
+            @if($currentUserIsCustomer == 'N')
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+                <a href="{{ route('admin.brand.index') }}" style="text-decoration: none;">
+                    <div class="small-box bg-gradient-pink" style="border-radius: 8px; min-height: 100px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="inner">
+                            <h4 class="mb-2 font-weight-bold">{{ $brandsCount }}</h4>
+                            <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Brands</p>
+                            {{-- <small style="font-size: 0.7rem;">
+                                <span class="text-white">{{ $brandsList }}</span>
+                            </small> --}}
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-trademark" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            @endif
+
+            <!-- Vehicle Owners -->
+            @if($currentUserIsCustomer == 'N')
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+                <a href="{{ route('admin.vehicleowner.index') }}" style="text-decoration: none;">
+                    <div class="small-box bg-gradient-orange" style="border-radius: 8px; min-height: 100px; background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
+                        <div class="inner">
+                            <h4 class="mb-2 font-weight-bold">{{ $vehicleOwnersCount }}</h4>
+                            <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Vehicle Owners</p>
+                            <small style="font-size: 0.7rem;">Registered Owners</small>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-user-tie" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            @endif
+
+            <!-- Agents -->
+            @if($currentUserIsCustomer == 'N')
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+                <a href="{{ route('admin.agents.index') }}" style="text-decoration: none;">
+                    <div class="small-box bg-gradient-teal" style="border-radius: 8px; min-height: 100px; background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="inner">
+                            <h4 class="mb-2 font-weight-bold">{{ $agentsCount }}</h4>
+                            <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Agents</p>
+                            <small style="font-size: 0.7rem;">Registered Agents</small>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-user-tie" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            @endif
+        </div>
+
+        <!-- ================= SECOND ROW - CREW STATISTICS ================= -->
         @if($currentUserIsCustomer == 'N')
         @can('read_dashboard_crew_management')
-        <!-- Second Row - Crew Members -->
         <div class="row mt-2">
             <div class="col-12">
                 <h6 class="mb-3 font-weight-bold text-uppercase text-muted">
@@ -136,7 +223,7 @@
             </div>
 
             <!-- Total Crew -->
-            <div class="col-lg-4 col-md-4 col-sm-6 col-12 mb-3">
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.crew_profiles.index') }}" style="text-decoration: none;">
                     <div class="small-box bg-secondary" style="border-radius: 8px; min-height: 100px;">
                         <div class="inner">
@@ -152,7 +239,7 @@
             </div>
 
             <!-- Total Drivers -->
-            <div class="col-lg-4 col-md-4 col-sm-6 col-12 mb-3">
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.crew_profiles.index', ['role' => 'driver']) }}" style="text-decoration: none;">
                     <div class="small-box bg-primary" style="border-radius: 8px; min-height: 100px;">
                         <div class="inner">
@@ -168,9 +255,9 @@
             </div>
 
             <!-- Total Helpers -->
-            <div class="col-lg-4 col-md-4 col-sm-6 col-12 mb-3">
+            <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
                 <a href="{{ route('admin.crew_profiles.index', ['role' => 'helper']) }}" style="text-decoration: none;">
-                    <div class="small-box" style="border-radius: 8px; min-height: 100px;">
+                    <div class="small-box bg-gradient-mint" style="border-radius: 8px; min-height: 100px;);">
                         <div class="inner">
                             <h4 class="mb-2 font-weight-bold">{{ $totalHelpers }}</h4>
                             <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Total Helpers</p>
@@ -182,6 +269,22 @@
                     </div>
                 </a>
             </div>
+
+            <!-- Active Crew -->
+            {{-- <div class="col-lg-3 col-md-6 col-sm-6 col-12 mb-3">
+                <a href="{{ route('admin.crew_profiles.index', ['status' => 'active']) }}" style="text-decoration: none;">
+                    <div class="small-box bg-gradient-rose" style="border-radius: 8px; min-height: 100px;);">
+                        <div class="inner">
+                            <h4 class="mb-2 font-weight-bold">{{ $activeCrew }}</h4>
+                            <p class="mb-1" style="font-size: 0.85rem; font-weight: 500;">Active Crew</p>
+                            <small style="font-size: 0.7rem;">Currently Active</small>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-user-check" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                        </div>
+                    </div>
+                </a>
+            </div> --}}
         </div>
         @endcan
         @endif
@@ -255,108 +358,106 @@
             </div>
         </div>
 
+        <!-- ================= FILTER BAR ================= -->
+        <div class="card shadow-sm mb-3">
+            <div class="card-body p-2">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <select id="range" class="form-control form-control-sm">
+                            <option value="7">Last 7 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="365">Last 1 Year</option>
+                        </select>
+                    </div>
 
-       <!-- ================= FILTER BAR ================= -->
-<div class="card shadow-sm mb-3">
-    <div class="card-body p-2">
-        <div class="row g-2 align-items-center">
+                    <div class="col-md-3">
+                        <select id="vehicle" class="form-control form-control-sm">
+                            <option value="">All Vehicles</option>
+                            @foreach($vehicles as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
 
-            <div class="col-md-3">
-                <select id="range" class="form-control form-control-sm">
-                    <option value="7">Last 7 Days</option>
-                    <option value="30">Last 30 Days</option>
-                    <option value="365">Last 1 Year</option> {{-- NEW --}}
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <select id="vehicle" class="form-control form-control-sm">
-                    <option value="">All Vehicles</option>
-                    @foreach($vehicles as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <select id="customer" class="form-control form-control-sm">
-                    <option value="">All Customers</option>
-                    @foreach($customers as $id => $name)
-                        <option value="{{ $id }}">{{ $name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3 text-right mt-3">
-                    <button onclick="fetchDashboard()" class="btn btn-primary btn-sm">
-                        <i class="fas fa-sync-alt mr-1"></i> Refresh
-                    </button>
+                    <div class="col-md-3">
+                        <select id="customer" class="form-control form-control-sm">
+                            <option value="">All Customers</option>
+                            @foreach($customers as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-right mt-3">
+                        <button onclick="fetchDashboard()" class="btn btn-primary btn-sm">
+                            <i class="fas fa-sync-alt mr-1"></i> Refresh
+                        </button>
+                    </div>
                 </div>
-
-        </div>
-    </div>
-</div>
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="mb-0 font-weight-bold">Analytics</h6>
-    <small class="text-muted">Live Filters Applied</small>
-</div>
-
-<!-- ================= CHARTS ================= -->
-<div class="row">
-    <!-- Booking Trends -->
-    <div class="col-12 mb-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 py-2">
-                <small class="font-weight-bold text-muted">
-                    <i class="fas fa-chart-line mr-1 text-primary"></i>Booking Trends
-                </small>
-            </div>
-            <div class="card-body p-2">
-                <canvas id="bookingTrendChart" height="200"></canvas>
             </div>
         </div>
-    </div>
 
-    <div class="col-12 mb-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 py-2">
-                <small class="font-weight-bold text-muted">
-                    <i class="fas fa-coins mr-1 text-success"></i>Revenue Trends
-                </small>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="mb-0 font-weight-bold">Analytics</h6>
+            <small class="text-muted">Live Filters Applied</small>
+        </div>
+
+        <!-- ================= CHARTS ================= -->
+        <div class="row">
+            <!-- Booking Trends -->
+            <div class="col-12 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-2">
+                        <small class="font-weight-bold text-muted">
+                            <i class="fas fa-chart-line mr-1 text-primary"></i>Booking Trends
+                        </small>
+                    </div>
+                    <div class="card-body p-2">
+                        <canvas id="bookingTrendChart" height="200"></canvas>
+                    </div>
+                </div>
             </div>
-            <div class="card-body p-2">
-                <canvas id="revenueTrendChart" height="200"></canvas>
+
+            <div class="col-12 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-2">
+                        <small class="font-weight-bold text-muted">
+                            <i class="fas fa-coins mr-1 text-success"></i>Revenue Trends
+                        </small>
+                    </div>
+                    <div class="card-body p-2">
+                        <canvas id="revenueTrendChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Customers - Minimal & Colorful -->
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
+                        <i class="fas fa-crown mr-2 text-warning" style="font-size: 0.9rem;"></i>
+                        <small class="font-weight-bold text-muted">Top Customers</small>
+                        <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Bookings</span>
+                    </div>
+                    <div class="card-body p-2">
+                        <canvas id="topCustomerChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Vehicles - Minimal & Colorful -->
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
+                        <i class="fas fa-truck mr-2 text-info" style="font-size: 0.9rem;"></i>
+                        <small class="font-weight-bold text-muted">Top Vehicles</small>
+                        <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Usage</span>
+                    </div>
+                    <div class="card-body p-2">
+                        <canvas id="topVehicleChart" height="200"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <!-- Top Customers - Minimal & Colorful -->
-    <div class="col-md-6 mb-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
-                <i class="fas fa-crown mr-2 text-warning" style="font-size: 0.9rem;"></i>
-                <small class="font-weight-bold text-muted">Top Customers</small>
-                <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Bookings</span>
-            </div>
-            <div class="card-body p-2">
-                <canvas id="topCustomerChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top Vehicles - Minimal & Colorful -->
-    <div class="col-md-6 mb-3">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white border-0 py-2 d-flex align-items-center">
-                <i class="fas fa-truck mr-2 text-info" style="font-size: 0.9rem;"></i>
-                <small class="font-weight-bold text-muted">Top Vehicles</small>
-                <span class="ml-auto badge badge-light text-muted" style="font-size: 0.6rem;">Usage</span>
-            </div>
-            <div class="card-body p-2">
-                <canvas id="topVehicleChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
 
         <!-- Quick Actions -->
         <div class="row mt-2">
@@ -451,12 +552,10 @@
         font-size: 2.5rem;
     }
     
-    /* Remove the footer since we're not using it */
     .small-box .small-box-footer {
         display: none;
     }
     
-    /* Make the entire card clickable */
     a .small-box {
         color: white;
     }
@@ -467,6 +566,37 @@
     
     .bg-orange {
         background-color: #fd7e14 !important;
+        color: #fff;
+    }
+    
+    /* Gradient backgrounds */
+    .bg-gradient-purple {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: #fff;
+    }
+    
+    .bg-gradient-pink {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        color: #fff;
+    }
+    
+    .bg-gradient-orange {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
+        color: #fff;
+    }
+    
+    .bg-gradient-teal {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+        color: #fff;
+    }
+    
+    .bg-gradient-mint {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
+        color: #fff;
+    }
+    
+    .bg-gradient-rose {
+        background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%) !important;
         color: #fff;
     }
     
@@ -494,14 +624,14 @@
     .btn-sm {
         font-size: 0.7rem;
     }
-
 </style>
 @endsection
+
 @section('footer_js')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-let trendChart, statusChart, customerChart, vehicleChart, utilizationChart,revenueChart;
+let trendChart, statusChart, customerChart, vehicleChart, utilizationChart, revenueChart;
 
 function fetchDashboard() {
     const range = document.getElementById('range').value;
@@ -515,8 +645,6 @@ function fetchDashboard() {
             const trendLabels = data.trends.length ? data.trends.map(i => i.date) : ['No Data'];
             const trendData = data.trends.length ? data.trends.map(i => i.total) : [0];
             const trendRevenue = data.trends.length ? data.trends.map(i => i.total_amount) : [0];
-
-
 
             if (trendChart) trendChart.destroy();
             trendChart = new Chart(document.getElementById('bookingTrendChart'), {
@@ -543,7 +671,7 @@ function fetchDashboard() {
                         legend: { display: false },
                         tooltip: { enabled: true }
                     },
-                   scales: {
+                    scales: {
                         y: {
                             beginAtZero: true,
                             grid: { display: false }
@@ -556,9 +684,7 @@ function fetchDashboard() {
                 }
             });
 
-
             if (revenueChart) revenueChart.destroy();
-
             revenueChart = new Chart(document.getElementById('revenueTrendChart'), {
                 type: 'line',
                 data: {
@@ -631,7 +757,7 @@ function fetchDashboard() {
                 }
             });
 
-            // 📊 Customers - Colorful Bar Chart - REDUCED HEIGHT
+            // 📊 Customers - Colorful Bar Chart
             if (customerChart) customerChart.destroy();
             const customerColors = ['#f97316', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
             
@@ -679,7 +805,7 @@ function fetchDashboard() {
                 }
             });
 
-            // 🚗 Vehicles - Colorful Bar Chart - REDUCED HEIGHT
+            // 🚗 Vehicles - Colorful Bar Chart
             if (vehicleChart) vehicleChart.destroy();
             const vehicleColors = ['#0ea5e9', '#8b5cf6', '#d946ef', '#f59e0b', '#10b981'];
             
@@ -734,11 +860,8 @@ function fetchDashboard() {
                     layout: { padding: { top: 5, bottom: 0, left: 0, right: 0 } }
                 }
             });
-
-           
         });
 }
-
 
 // Auto trigger
 document.querySelectorAll('#range, #vehicle, #customer')
