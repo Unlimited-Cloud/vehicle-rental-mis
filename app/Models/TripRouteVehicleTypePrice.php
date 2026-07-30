@@ -8,6 +8,7 @@ class TripRouteVehicleTypePrice extends Model
 {
     protected $fillable = [
         'vehicle_type',
+        'vehicle_catalog_id',
         'seater',
         'brand',
         'per_km',

@@ -24,7 +24,13 @@
             <i class="fas fa-info-circle"></i> Vehicle Details
         </a>
     </li>
-    
+    <li class="nav-item">
+        <a class="nav-link {{ session('active_tab') == 'charges' ? 'active' : '' }}" 
+           data-toggle="pill" href="#charges" role="tab" aria-selected="false">
+            <i class="fas fa-money-bill-wave"></i> Charges
+            <span class="badge badge-success">{{ $vehiclecatalog->charges->count() }}</span>
+        </a>
+    </li>
 </ul>
 </div>
 
@@ -616,7 +622,106 @@
 
     </div>
 
+    <!-- ================= CHARGES TAB ================= -->
+    <div class="tab-pane fade {{ session('active_tab') == 'charges' ? 'show active' : '' }}" 
+         id="charges" role="tabpanel">
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card card-outline card-success">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="card-title">
+                            <i class="fas fa-money-bill-wave"></i> Vehicle Charges
+                        </h3>
+                        <div class="card-tools">
+                            <span class="badge badge-light">{{ $vehiclecatalog->charges->count() }} Charges</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if($vehiclecatalog->charges->count() > 0)
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped table-hover" id="chargesTable">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Vehicle Type</th>
+                                            <th>Brand</th>
+                                            <th>Seater</th>
+                                            <th>Per KM (Rs)</th>
+                                            <th>Per Hour (Rs)</th>
+                                            <th>Overnight (Rs)</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($vehiclecatalog->charges as $index => $charge)
+                                            <tr>
+                                                <td>{{ $index + 1 }}</td>
+                                                <td>
+                                                    <span class="badge badge-info">{{ $charge->vehicle_type ?? 'N/A' }}</span>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ $charge->brand }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-primary">{{ $charge->seater }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-success font-weight-bold">
+                                                        Rs {{ number_format($charge->per_km, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-primary font-weight-bold">
+                                                        Rs {{ number_format($charge->per_hour, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-warning font-weight-bold">
+                                                        Rs {{ number_format($charge->overnight_price, 2) }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <a href="{{ route('admin.trip-routes-vehicle-type-prices.edit', $charge->id) }}" 
+                                                           class="btn btn-sm btn-warning">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <form action="{{ route('admin.trip-routes-vehicle-type-prices.destroy', $charge->id) }}" 
+                                                              method="POST" 
+                                                              style="display: inline-block;"
+                                                              onsubmit="return confirm('Are you sure you want to delete this charge?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-5">
+                                <i class="fas fa-money-bill-wave fa-4x text-muted mb-3"></i>
+                                <h5>No Charges Added</h5>
+                                <p class="text-muted">This vehicle doesn't have any pricing configured yet.</p>
+                                <a href="{{ route('admin.vehiclecatalog.edit', $vehiclecatalog->id) }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add Charges
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+</div>
 </div>
 </div>
 </div>
@@ -624,14 +729,91 @@
 </div>
 </section>
 
+<!-- ================= CHARGE MODAL ================= -->
+<div class="modal fade" id="chargeModal" tabindex="-1" role="dialog" aria-labelledby="chargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="chargeModalLabel">
+                    <i class="fas fa-money-bill-wave"></i> Charge Details
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-info"><i class="fas fa-tag"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Vehicle Type</span>
+                                <span class="info-box-number" id="modalVehicleType">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-primary"><i class="fas fa-cog"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Brand</span>
+                                <span class="info-box-number" id="modalBrand">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-secondary"><i class="fas fa-chair"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Seater</span>
+                                <span class="info-box-number" id="modalSeater">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-success"><i class="fas fa-road"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Per KM</span>
+                                <span class="info-box-number" id="modalPerKm">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-info"><i class="fas fa-clock"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Per Hour</span>
+                                <span class="info-box-number" id="modalPerHour">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-box bg-light">
+                            <span class="info-box-icon bg-warning"><i class="fas fa-moon"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Overnight</span>
+                                <span class="info-box-number" id="modalOvernight">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize DataTables with consistent IDs
-    if ($('#permitTable').length) {
-        $('#permitTable').DataTable({
+    // Initialize DataTables
+    if ($('#chargesTable').length) {
+        $('#chargesTable').DataTable({
             "paging": true,
             "lengthChange": true,
             "searching": true,
@@ -639,46 +821,8 @@ $(document).ready(function() {
             "info": true,
             "autoWidth": false,
             "responsive": true,
-            "pageLength": 10
-        });
-    }
-    
-    if ($('#serviceTable').length) {
-        $('#serviceTable').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "pageLength": 10
-        });
-    }
-    
-    if ($('#repairTable').length) {
-        $('#repairTable').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "pageLength": 10
-        });
-    }
-    
-    if ($('#tyreTable').length) {
-        $('#tyreTable').DataTable({
-            "paging": true,
-            "lengthChange": true,
-            "searching": true,
-            "ordering": true,
-            "info": true,
-            "autoWidth": false,
-            "responsive": true,
-            "pageLength": 10
+            "pageLength": 10,
+            "order": [[0, 'asc']]
         });
     }
 
@@ -707,6 +851,18 @@ $(document).ready(function() {
     if (activeTab) {
         $('.nav-link[href="#' + activeTab + '"]').tab('show');
     }
+
+    // View charge details in modal
+    $('.view-charge-btn').on('click', function() {
+        var charge = $(this).data('charge');
+        
+        $('#modalVehicleType').text(charge.vehicle_type || 'N/A');
+        $('#modalBrand').text(charge.brand || 'N/A');
+        $('#modalSeater').text(charge.seater || 'N/A');
+        $('#modalPerKm').text(charge.per_km ? 'Rs ' + parseFloat(charge.per_km).toFixed(2) : 'N/A');
+        $('#modalPerHour').text(charge.per_hour ? 'Rs ' + parseFloat(charge.per_hour).toFixed(2) : 'N/A');
+        $('#modalOvernight').text(charge.overnight_price ? 'Rs ' + parseFloat(charge.overnight_price).toFixed(2) : 'N/A');
+    });
 });
 </script>
 @endpush

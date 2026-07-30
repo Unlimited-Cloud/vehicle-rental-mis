@@ -720,24 +720,6 @@ class BookingController extends Controller
             $startWithBuffer = $startDateTime->copy()->subMinutes($bufferMinutes);
             $endWithBuffer = $endDateTime->copy()->addMinutes($bufferMinutes);
 
-            //  Prevent Double Booking
-            // $conflict = VehicleBooking::where('vehicle_id', $request->vehicle_id)
-            //     ->where('status', '!=', 'cancelled')
-            //     ->whereRaw("
-            //     CONCAT(start_date, ' ', start_time) <= ?
-            //     AND CONCAT(end_date, ' ', end_time) >= ?
-            // ", [
-            //         $endWithBuffer->format('Y-m-d H:i'),
-            //         $startWithBuffer->format('Y-m-d H:i')
-            //     ])
-            //     ->exists();
-
-            // if ($conflict) {
-            //     return response()->json([
-            //         'status' => false,
-            //         'message' => 'Vehicle is already booked for the selected time range'
-            //     ], 409);
-            // }
 
 
 
@@ -769,15 +751,24 @@ class BookingController extends Controller
             $itineraryInput = $request->input('itineraries', []);
             $itineraryRows = [];
             $sub_total = 0;
+            $total_est_km = 0;
+            $total_est_hours = 0;
+            $total_overnight_charge = 0;
 
             foreach ($itineraryInput as $index => $item) {
                 $est_km = (float) ($item['est_km'] ?? 0);
                 $est_hours = (float) ($item['est_hours'] ?? 0);
                 $is_overnight = (bool) ($item['is_overnight'] ?? false);
 
+                $overnight = $is_overnight ? $overnightCharge : 0;
                 $est_price = ($est_km * $perKmRate)
                     + ($est_hours * $perHourRate)
-                    + ($is_overnight ? $overnightCharge : 0);
+                    + ($overnight);
+
+                // Running totals
+                $total_est_km += $est_km;
+                $total_est_hours += $est_hours;
+                $total_overnight_charge += $overnight;
 
                 $sub_total += $est_price;
 
@@ -860,6 +851,10 @@ class BookingController extends Controller
                 'notes' => $request->notes,
                 'no_of_people' => $request->no_of_people,
                 'signage_information' => $request->signage_information,
+
+                'no_of_hour' => $total_est_hours,
+                'est_km' => $total_est_km,
+                'overnight' => $total_overnight_charge,
 
                 // rate_per_day no longer represents a single flat rate — itinerary-driven now.
                 // Kept null/0 unless you still want to store something here for legacy views.
