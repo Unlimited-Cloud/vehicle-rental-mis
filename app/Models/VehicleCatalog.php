@@ -152,4 +152,9 @@ class VehicleCatalog extends Model
             ->whereColumn('vehicles.seater', 'vehicle_catalogs.seater')
             ->whereColumn('vehicles.fuel_type', 'vehicle_catalogs.fuel_type');
     }
+
+    public function charges()
+    {
+        return $this->hasMany(TripRouteVehicleTypePrice::class, 'vehicle_catalog_id');
+    }
 }

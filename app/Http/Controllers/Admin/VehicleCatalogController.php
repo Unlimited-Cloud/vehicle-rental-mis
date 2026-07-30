@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\FuelType;
 use App\Models\VehicleCatalog;
 use App\Models\Seater;
+use App\Models\TripRouteVehicleTypePrice;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -209,7 +210,9 @@ class VehicleCatalogController extends Controller
             }
         }
 
-        VehicleCatalog::create($data);
+        $vehicleCatalog =  VehicleCatalog::create($data);
+
+        $this->saveVehicleCharges($vehicleCatalog, $request);
 
         return redirect()->route('admin.vehiclecatalog.index')
             ->with('success', 'VehicleCatalog Created Successfully');
@@ -370,6 +373,7 @@ class VehicleCatalogController extends Controller
 
 
         $vehiclecatalog->update($data);
+        $this->saveVehicleCharges($vehiclecatalog, $request);
 
         return redirect()->route('admin.vehiclecatalog.index')
             ->with('success', 'VehicleCatalog Updated Successfully');
@@ -390,5 +394,31 @@ class VehicleCatalogController extends Controller
     {
         session(['active_tab' => $request->tab]);
         return response()->json(['success' => true]);
+    }
+
+
+
+    // Add this method to your VehicleCatalogController
+    private function saveVehicleCharges($vehicleCatalog, $request)
+    {
+        // Delete existing charges for this vehicle
+        TripRouteVehicleTypePrice::where('vehicle_catalog_id', $vehicleCatalog->id)->delete();
+
+        // Save new charges if provided
+        if ($request->has('charges') && is_array($request->charges)) {
+            foreach ($request->charges as $charge) {
+                if (!empty($charge['brand']) && !empty($charge['seater'])) {
+                    TripRouteVehicleTypePrice::create([
+                        'vehicle_catalog_id' => $vehicleCatalog->id,
+                        'vehicle_type' => $charge['vehicle_type'] ?? null,
+                        'seater' => $charge['seater'],
+                        'brand' => $charge['brand'],
+                        'per_km' => $charge['per_km'] ?? 0,
+                        'per_hour' => $charge['per_hour'] ?? 0,
+                        'overnight_price' => $charge['overnight_price'] ?? 0,
+                    ]);
+                }
+            }
+        }
     }
 }

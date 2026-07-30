@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\FuelType;
 use App\Models\Seater;
 use App\Models\Vehicle;
+use App\Models\VehicleCatalog;
 use App\Models\VehicleOwner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -66,12 +67,13 @@ class VehicleController extends Controller
         $brands = Brand::latest()->get();
         $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
+        $vehicle_catalog = VehicleCatalog::latest()->get();
         if ($this->currentUserIsOwner == 'Y') {
             $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
         } else {
             $vehicle_owners = VehicleOwner::get();
         }
-        return view('layouts.admin.vehicles.create', compact('brands', 'seaters', 'fuel_type', 'vehicle_owners'));
+        return view('layouts.admin.vehicles.create', compact('brands', 'seaters', 'fuel_type', 'vehicle_owners', 'vehicle_catalog'));
     }
 
     public function store(Request $request)
@@ -189,12 +191,13 @@ class VehicleController extends Controller
         $brands = Brand::latest()->get();
         $seaters = Seater::latest()->get();
         $fuel_type = FuelType::latest()->get();
+        $vehicle_catalog = VehicleCatalog::latest()->get();
         if ($this->currentUserIsOwner == 'Y') {
             $vehicle_owners = VehicleOwner::where('id', $this->currentUserVehicleOwnerId)->get();
         } else {
             $vehicle_owners = VehicleOwner::get();
         }
-        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'seaters', 'fuel_type', 'vehicle_owners'));
+        return view('layouts.admin.vehicles.create', compact('vehicle', 'brands', 'seaters', 'fuel_type', 'vehicle_owners', 'vehicle_catalog'));
     }
 
     public function update(Request $request, Vehicle $vehicle)
