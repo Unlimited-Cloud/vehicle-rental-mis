@@ -624,7 +624,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Auto-generate vehicle name from brand and model
         const vehicleName = data.brand + ' ' + data.model;
-        document.getElementById('vehicleName').value = vehicleName;
+        // document.getElementById('vehicleName').value = vehicleName;
 
         // Registration
         document.getElementById('registrationNumber').value = data.registrationNumber;
