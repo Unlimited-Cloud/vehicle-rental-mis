@@ -8,6 +8,7 @@ class Vehicle extends Model
 {
     protected $fillable = [
         'vehicle_name',
+        'vehicle_catalog_id',
         'vehicle_type',
         'brand',
         'model',
@@ -98,6 +99,11 @@ class Vehicle extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function routePrices()
+    {
+        return $this->hasMany(TripRouteVehiclePrice::class, 'vehicle_id');
     }
     public function getVehicleImageUrlAttribute()
     {

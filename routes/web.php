@@ -4,6 +4,9 @@ use App\Http\Controllers\Admin\AgentController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\VehicleController;
+use App\Http\Controllers\Admin\VehicleCatalogController;
+
+
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VehicleDetailsController;
@@ -53,6 +56,9 @@ use App\Http\Controllers\Admin\FuelTypeController;
 use App\Http\Controllers\Admin\PaymentModeController;
 use App\Http\Controllers\Admin\VehicleSecurityFeatureController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Admin\TripRouteVehiclePriceController;
+use App\Http\Controllers\Admin\TripRouteVehicleTypePriceController;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -88,6 +94,7 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::post('admin/vehicles/set-active-tab', [VehicleController::class, 'setActiveTab'])
             ->name('vehicles.set-active-tab');
         Route::resource('vehicles', VehicleController::class);
+        Route::resource('vehiclecatalog', VehicleCatalogController::class);
         Route::resource('users', UserController::class);
         Route::get('profile', [UserController::class, 'show'])->name('profile.show');
         Route::get('profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
@@ -108,11 +115,19 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::get('vehicle_bookings/events', [VehicleBookingController::class, 'fetchEvents'])
             ->name('vehicle_bookings.events');
 
+        Route::post('vehicle_bookings/{id}/assign-vehicle', [VehicleBookingController::class, 'assignVehicle'])
+            ->name('vehicle_bookings.assign_vehicle');
+
         Route::get(
             'get-trip-routes/{category}',
             [VehicleBookingController::class, 'getRoutes']
         )->name('get_trip_routes');
 
+        Route::get('get-vehicle-rate/{vehicleType}', [VehicleBookingController::class, 'getVehicleRate'])->name('vehicle_bookings.vehicle_rate');
+
+        Route::get('get-vehicles-by-type', [VehicleBookingController::class, 'getVehiclesByType'])
+            ->name('vehicle_bookings.get_vehicles_by_type');
+        // Route::get('get-vehicles-by-type/{vehicleType}', [VehicleBookingController::class, 'getVehiclesByType'])->name('vehicle_bookings.vehicles_by_type');
         Route::get('trip-categories/list', [VehicleBookingController::class, 'getTripCategoriesList'])->name('ajax.trip-categories.list');
         Route::post('trip-categories/store', [VehicleBookingController::class, 'storeTripCategory'])->name('ajax.trip-categories.store');
         Route::get('trip-routes/list', [VehicleBookingController::class, 'getTripRoutesList'])->name('ajax.trip-routes.list');
@@ -208,6 +223,15 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('faq', FaqController::class);
         Route::resource('fuel-type', FuelTypeController::class);
         Route::resource('vehicle-security-features', VehicleSecurityFeatureController::class);
+        Route::get('trip-routes-vehicle-prices/vehicle-view', [TripRouteVehiclePriceController::class, 'vehicleView'])
+            ->name('trip-routes-vehicle-prices.vehicle-view');
+        Route::get('trip-routes-price-upload', [TripRouteController::class, 'uploadTripPrice'])->name('trip-routes-price.upload');
+        Route::post('trip-routes-price-import', [TripRouteController::class, 'importRoutePrice'])->name('trip-routes-price.import');
+        Route::resource('trip-routes-vehicle-prices', TripRouteVehiclePriceController::class);
+
+
+        Route::resource('trip-routes-vehicle-type-prices', TripRouteVehicleTypePriceController::class);
+
         Route::resource('agents', AgentController::class);
 
         Route::prefix('agent-bookings')->name('agent-bookings.')->group(function () {

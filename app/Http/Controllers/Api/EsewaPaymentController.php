@@ -88,7 +88,8 @@ class EsewaPaymentController extends Controller
             Log::info("esewa generateSignature", ["payload" => $request->all()]);
             $validator = Validator::make($request->all(), [
                 'booking_id' => 'required|exists:vehicle_bookings,id',
-                'customer_id' => 'required|exists:customers,customer_uuid'
+                'customer_id' => 'required|exists:customers,customer_uuid',
+                'amount' => 'nullable|numeric|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -117,17 +118,34 @@ class EsewaPaymentController extends Controller
                     'message' => 'Customer not found.'
                 ], 422);
             }
+
+
+            $amount = $request->amount ?? $booking->total_amount;
+
+            if ($amount <= 0) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Payment amount must be greater than zero.'
+                ], 422);
+            }
+            if ($amount > $booking->remaining_balance) {
+                return response()->json([
+                    'status' => false,
+                    'message' => "Amount ({$amount}) exceeds remaining balance ({$booking->remaining_balance})."
+                ], 422);
+            }
+
             // $secret = "8gBm/:&EnhH.1/q";
             $secret = "LhIRHwwSBQEMRSAMEAkHGAAcDB0CVzEFH0tZKQcBWVs9O0g8Nl42PiY7PzY8IDorMFs2OyQgOjImNCQgODoyICo=";  //production secret key
 
             $transaction_uuid = uniqid();
 
-            $data = "total_amount={$booking->total_amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
+            $data = "total_amount={$amount},transaction_uuid={$transaction_uuid},product_code=NP-ES-SIGHTSEEING";
 
             // Create payment record
             $payment = Payment::create([
                 'vehicle_booking_id' => $request->booking_id,
-                'amount' => $booking->total_amount,
+                'amount' => $amount,
                 'payment_method' => 'online',
                 'payment_type' => 'booking',
                 'payment_date' => now(),
@@ -143,7 +161,7 @@ class EsewaPaymentController extends Controller
             // Save payment
             EsewaPayment::create([
                 'transaction_uuid' => $transaction_uuid,
-                'amount' => $booking->total_amount,
+                'amount' => $amount,
                 'status' => 'PENDING',
                 'booking_id' => $booking->id,
                 'payment_id' => $payment->id,
@@ -154,7 +172,7 @@ class EsewaPaymentController extends Controller
                 'success' => true,
                 'signature' => $hash,
                 'transaction_uuid' => $transaction_uuid,
-                'amount' => $booking->total_amount,
+                'amount' => $amount,
                 'success_url' => route('esewa.success'),
                 'failure_url' => '',
             ]);
@@ -248,14 +266,30 @@ class EsewaPaymentController extends Controller
                     );
 
                     // Update booking
+                    $totalPaid = Payment::where('vehicle_booking_id', $booking->id)
+                        ->where('status', 'completed')
+                        ->sum('amount');
+
+                    $remaining_balance = max(0, $booking->total_amount - $totalPaid);
+
+                    $bookingStatus = $remaining_balance == 0
+                        ? 'paid'
+                        : 'partial_paid';
+
+                    $paymentStatus = $remaining_balance == 0 ? 1 : 0;
+
                     $booking->update([
-                        'payment_status' => 1,
-                        'status' => 'paid'
+                        'payment_status'   => $paymentStatus,
+                        'status'           => $bookingStatus,
+                        'remaining_balance' => $remaining_balance,
                     ]);
+
                     BookingLog::create([
                         'booking_id' => $payment->booking_id,
-                        'status' => 'paid',
-                        'remarks' => 'Booking paid by customer via Esewa',
+                        'status' => $bookingStatus,
+                        'remarks' => $remaining_balance == 0
+                            ? 'Booking fully paid by customer via Esewa'
+                            : 'Partial payment received via Esewa',
                     ]);
 
                     // Dispatch email event

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agent;
+use App\Models\Brand;
 use Illuminate\Http\Request;
 use App\Models\Vehicle;
 use App\Models\Customer;
@@ -10,6 +12,7 @@ use App\Models\CrewProfile;
 use App\Models\User;
 use App\Models\PetrolPump;
 use App\Models\VehicleBooking;
+use App\Models\VehicleOwner;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
@@ -52,18 +55,35 @@ class DashboardController extends Controller
     public function index()
     {
         Gate::authorize('index_dashboard');
+
+        // Vehicle counts
         if ($this->currentUserIsOwner == 'Y') {
-            // Vehicle counts
             $totalVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->count();
             $availableVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->where('status', 1)->count();
             $unavailableVehicles = Vehicle::where('vehicle_owner_id', $this->currentUserVehicleOwnerId)->where('status', 0)->count();
         } else {
-            // Vehicle counts
             $totalVehicles = Vehicle::count();
             $availableVehicles = Vehicle::where('status', 1)->count();
             $unavailableVehicles = Vehicle::where('status', 0)->count();
         }
 
+        // Vehicle Types Statistics
+        $vehicleTypes = Vehicle::select('vehicle_type', \DB::raw('count(*) as total'))
+            ->groupBy('vehicle_type')
+            ->get();
+        $vehicleTypesCount = $vehicleTypes->count();
+        $vehicleTypesList = $vehicleTypes->pluck('vehicle_type')->implode(', ');
+
+        // Brands Statistics
+        $brands = Brand::all();
+        $brandsCount = $brands->count();
+        $brandsList = $brands->pluck('name')->implode(', ');
+
+        // Vehicle Owners
+        $vehicleOwnersCount = VehicleOwner::count();
+
+        // Agents
+        $agentsCount = Agent::count();
 
         // Customer count
         $totalCustomers = Customer::count();
@@ -77,10 +97,11 @@ class DashboardController extends Controller
             $q->where('role', 'helper');
         })->count();
 
+        $totalCrew = CrewProfile::count();
+        $activeCrew = CrewProfile::count();
+
         $vehicles = Vehicle::pluck('vehicle_name', 'id');
         $customers = Customer::pluck('name', 'id');
-
-        $totalCrew = CrewProfile::count();
 
         // Petrol pump count
         $totalPetrolPumps = PetrolPump::count();
@@ -88,6 +109,7 @@ class DashboardController extends Controller
         $currentUserIsCustomer = $this->currentUserIsCustomer;
         $currentUserIsDriver = $this->currentUserIsDriver;
         $currentUserIsOwner = $this->currentUserIsOwner;
+
         // Booking counts
         if ($this->currentUserIsCustomer == 'Y') {
             $totalBookings = $this->vehicleRepository->getVehicleBookingsCountByCustomerId($this->currentUserCustomerId);
@@ -125,7 +147,7 @@ class DashboardController extends Controller
             if ($this->currentUserIsOwner == 'Y') {
                 $recentBookings = $this->vehicleRepository->getRecentVehicleBookingsByOwnerId('start_date', 'desc', $this->currentUserVehicleOwnerId);
             } else {
-                $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc',);
+                $recentBookings = $this->vehicleRepository->getAllRecentVehicleBookings('start_date', 'desc');
             }
         }
 
@@ -137,6 +159,7 @@ class DashboardController extends Controller
             'totalDrivers',
             'totalHelpers',
             'totalCrew',
+            'activeCrew',
             'totalPetrolPumps',
             'totalBookings',
             'activeBookings',
@@ -144,10 +167,18 @@ class DashboardController extends Controller
             'recentBookings',
             'currentUserIsCustomer',
             'currentUserIsDriver',
+            'currentUserIsOwner',
             'vehicles',
-            'customers'
+            'customers',
+            'vehicleTypesCount',
+            'vehicleTypesList',
+            'brandsCount',
+            'brandsList',
+            'vehicleOwnersCount',
+            'agentsCount'
         ));
     }
+
     public function getDashboardData(Request $request)
     {
         $range     = $request->range ?? 7;
@@ -175,12 +206,6 @@ class DashboardController extends Controller
         }
 
         // 📈 Trends
-        // $trends = (clone $query)
-        //     ->selectRaw('DATE(start_date) as date, COUNT(*) as total')
-        //     ->groupBy('date')
-        //     ->orderBy('date')
-        //     ->get();
-
         $trends = (clone $query)
             ->selectRaw('DATE(start_date) as date, COUNT(*) as total, SUM(total_amount) as total_amount')
             ->groupBy('date')
@@ -202,7 +227,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // 📊 Top Customers
+        // 📊 Top Vehicles
         $vehicles = (clone $query)
             ->selectRaw('vehicle_id, COUNT(*) as total')
             ->with('vehicle')
@@ -230,8 +255,6 @@ class DashboardController extends Controller
             'status' => $status,
             'customers' => $customers,
             'vehicles' => $vehicles,
-
-            // 'revenue' => $revenue,
             'utilization' => [
                 'used' => $usedVehicles,
                 'total' => $totalVehicles

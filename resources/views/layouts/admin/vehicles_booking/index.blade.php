@@ -329,6 +329,19 @@
                                         <i class="fas fa-ticket-alt text-success mr-2"></i> Generate Coupon
                                     </a>
                                     @endcan
+                                   @can('update_vehicle_bookings')
+                                    <a class="dropdown-item" href="#"
+                                    onclick="openAssignVehicleModal(
+                                        {{ $booking->id }},
+                                        '{{ $booking->vehicle_type ?? '' }}',
+                                        '{{ $booking->brand ?? '' }}',
+                                        '{{ $booking->seater ?? '' }}',
+                                        {{ $booking->vehicle_id ?? 'null' }},
+                                        '{{ $booking->status }}'
+                                    )">
+                                        <i class="fas fa-car-side text-warning mr-2"></i> Assign Vehicle
+                                    </a>
+                                    @endcan
 
                                     <div class="dropdown-divider"></div>
                                      @can('delete_vehicle_bookings')
@@ -462,6 +475,51 @@
     </div>
 </div>
 
+<div class="modal fade" id="assignVehicleModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <form id="assignVehicleForm">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Assign Vehicle — Booking #<span id="av_booking_id_display"></span></h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="av_booking_id">
+                    <input type="hidden" id="av_vehicle_type">
+                    <input type="hidden" id="av_brand">
+                    <input type="hidden" id="av_seater">
+
+                    <div class="alert alert-light border mb-3">
+                        <strong>Requested:</strong> <span id="av_requested_summary"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Matching Vehicles <span class="text-danger">*</span></label>
+                        <select id="av_vehicle_id" class="form-control" required>
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="av_status" class="form-control">
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="av_submit_btn">
+                        <span id="av_submit_spinner" class="spinner-border spinner-border-sm mr-1" role="status" style="display:none;"></span>
+                        <span id="av_submit_text">Assign &amp; Update</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -1207,6 +1265,88 @@ async function openBookingModal(bookingId) {
             let bsStartDate = await convertToNepaliDate(booking.start_date);
             let bsEndDate = await convertToNepaliDate(booking.end_date);
             
+            // Build itineraries HTML
+            let itinerariesHtml = '';
+            if (booking.itineraries && booking.itineraries.length > 0) {
+                itinerariesHtml = `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-route"></i> Itinerary (${booking.itineraries.length} Day${booking.itineraries.length > 1 ? 's' : ''})</h6>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-striped mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Day</th>
+                                                    <th>Date</th>
+                                                    <th>From</th>
+                                                    <th>To</th>
+                                                    <th>Est. KM</th>
+                                                    <th>Est. Hours</th>
+                                                    <th>Overnight</th>
+                                                    <th>Est. Price</th>
+                                                    <th>Notes</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${booking.itineraries.map((item, index) => `
+                                                    <tr>
+                                                        <td><strong>${index + 1}</strong></td>
+                                                        <td>
+                                                            ${item.itinerary_date ? moment(item.itinerary_date).format('MMM D, YYYY') : 'N/A'}
+                                                        </td>
+                                                        <td>${item.from_destination || '-'}</td>
+                                                        <td>${item.to_destination || '-'}</td>
+                                                        <td class="text-right">${item.est_km || 0}</td>
+                                                        <td class="text-right">${item.est_hours || 0}</td>
+                                                        <td>
+                                                            <span class="badge ${item.is_overnight ? 'badge-warning' : 'badge-secondary'}">
+                                                                ${item.is_overnight ? 'Yes' : 'No'}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-right">
+                                                            <strong>रू ${parseFloat(item.est_price || 0).toFixed(2)}</strong>
+                                                        </td>
+                                                        <td>${item.notes || '-'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="table-active">
+                                                    <td colspan="7" class="text-right"><strong>Total Estimated Price:</strong></td>
+                                                    <td class="text-right">
+                                                        <strong>रू ${booking.itineraries.reduce((sum, item) => sum + parseFloat(item.est_price || 0), 0).toFixed(2)}</strong>
+                                                    </td>
+                                                    <td></td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                itinerariesHtml = `
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-route"></i> Itinerary</h6>
+                                </div>
+                                <div class="card-body text-center text-muted">
+                                    <i class="fa fa-info-circle"></i> No itinerary details available for this booking.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             let html = `
                 <div class="container-fluid">
                     <!-- Status Bar -->
@@ -1224,9 +1364,12 @@ async function openBookingModal(bookingId) {
                         <div class="col-md-12 mb-2">
                             <div class="alert alert-info py-2">
                                 <strong>File No:</strong> ${booking.file_no || 'N/A'} 
+                                ${booking.passenger ? `| <strong>Passenger:</strong> ${booking.passenger}` : ''}
                             </div>
                         </div>
-                        
+                    </div>
+                    
+                    <div class="row">
                         <!-- Vehicle Info -->
                         <div class="col-md-6 mb-3">
                             <div class="card h-100">
@@ -1249,6 +1392,10 @@ async function openBookingModal(bookingId) {
                                         <tr>
                                             <td><strong>Helper:</strong></td>
                                             <td>${booking.helper ? booking.helper.user.name : '<span class="text-muted">Not Assigned</span>'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Rate/Day:</strong></td>
+                                            <td>रू ${parseFloat(booking.rate_per_day || 0).toFixed(2)}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -1293,33 +1440,99 @@ async function openBookingModal(bookingId) {
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
-                                                    <td style="width: 100px;"><strong>Passenger:</strong></td>
-                                                    <td>${booking.passenger || 'N/A'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="width: 100px;"><strong>From:</strong></td>
+                                                    <td><strong>From:</strong></td>
                                                     <td>${booking.from_destination || 'N/A'}</td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>To:</strong></td>
                                                     <td>${booking.to_destination || 'N/A'}</td>
                                                 </tr>
+                                                <tr>
+                                                    <td><strong>No. of People:</strong></td>
+                                                    <td>${booking.no_of_people || 'N/A'}</td>
+                                                </tr>
                                             </table>
                                         </div>
                                         <div class="col-md-6">
                                             <table class="table table-sm table-borderless">
                                                 <tr>
-                                                    <td style="width: 100px;"><strong>Start Date:</strong></td>
+                                                    <td style="width: 120px;"><strong>Start Date:</strong></td>
                                                     <td>
-                                                        <div>${startDate}</div>
+                                                        <div>${startDate} ${booking.start_time ? moment(booking.start_time, 'HH:mm:ss').format('h:mm A') : ''}</div>
                                                         <small class="nepali-date">${bsStartDate.display}</small>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td><strong>End Date:</strong></td>
                                                     <td>
-                                                        <div>${endDate}</div>
+                                                        <div>${endDate} ${booking.end_time ? moment(booking.end_time, 'HH:mm:ss').format('h:mm A') : ''}</div>
                                                         <small class="nepali-date">${bsEndDate.display}</small>
+                                                    </td>
+                                                </tr>
+                                                
+                                                ${booking.signage_information ? `
+                                                <tr>
+                                                    <td><strong>Signage:</strong></td>
+                                                    <td>${booking.signage_information}</td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Details -->
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fa fa-money"></i> Financial Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr>
+                                                    <td style="width: 140px;"><strong>Sub Total:</strong></td>
+                                                    <td class="text-right">रू ${parseFloat(booking.sub_total || 0).toFixed(2)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Discount (${booking.discount_amount_type || 'amount'}):</strong></td>
+                                                    <td class="text-right text-danger">- रू ${parseFloat(booking.discount || 0).toFixed(2)}</td>
+                                                </tr>
+                                                ${booking.vat == 1 ? `
+                                                <tr>
+                                                    <td><strong>VAT (13%):</strong></td>
+                                                    <td class="text-right">रू ${parseFloat(booking.tax || 0).toFixed(2)}</td>
+                                                </tr>
+                                                ` : ''}
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr class="table-active">
+                                                    <td style="width: 140px;"><strong>Total Amount:</strong></td>
+                                                    <td class="text-right"><strong>रू ${parseFloat(booking.total_amount || 0).toFixed(2)}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Paid Amount:</strong></td>
+                                                    <td class="text-right text-success">रू ${parseFloat(booking.paid_amount || 0).toFixed(2)}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Remaining Balance:</strong></td>
+                                                    <td class="text-right ${parseFloat(booking.remaining_balance || 0) > 0 ? 'text-danger' : 'text-success'}">
+                                                        <strong>रू ${parseFloat(booking.remaining_balance || 0).toFixed(2)}</strong>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Payment Status:</strong></td>
+                                                    <td class="text-right">
+                                                        <span class="badge ${booking.payment_status == 1 ? 'badge-success' : (booking.payment_status == 2 ? 'badge-warning' : 'badge-danger')}">
+                                                            ${booking.payment_status == 1 ? 'Paid' : (booking.payment_status == 2 ? 'Partial' : 'Pending')}
+                                                        </span>
                                                     </td>
                                                 </tr>
                                             </table>
@@ -1330,10 +1543,13 @@ async function openBookingModal(bookingId) {
                         </div>
                     </div>
                     
-                    <!-- Additional Info -->
+                    <!-- Itineraries -->
+                    ${itinerariesHtml}
+                    
+                    <!-- Notes -->
                     ${booking.notes ? `
                     <div class="row">
-                        <div class="col-12">
+                        <div class="col-12 mb-3">
                             <div class="card">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="fa fa-sticky-note"></i> Notes</h6>
@@ -1347,7 +1563,8 @@ async function openBookingModal(bookingId) {
                     ` : ''}
                     
                     <!-- KM and Fuel Info (if available) -->
-                    <div class="row mt-3">
+                    ${(booking.start_km || booking.end_km || booking.approx_fuel_litre) ? `
+                    <div class="row">
                         <div class="col-md-4">
                             <div class="small-box bg-info">
                                 <div class="inner">
@@ -1382,6 +1599,7 @@ async function openBookingModal(bookingId) {
                             </div>
                         </div>
                     </div>
+                    ` : ''}
                 </div>
             `;
             
@@ -1399,7 +1617,6 @@ async function openBookingModal(bookingId) {
         }
     });
 }
-
 function updateExportLink() {
     let params = {
         vehicle_id: $('#vehicleFilter').val(),
@@ -1472,6 +1689,92 @@ function deleteBooking(id) {
     $(window).on('resize', function () {
         syncTopScrollbar();
     });
+
+
+function openAssignVehicleModal(bookingId, vehicleType, brand, seater, vehicleId, status) {
+    $('#av_booking_id').val(bookingId);
+    $('#av_booking_id_display').text(bookingId);
+    $('#av_vehicle_type').val(vehicleType || '');
+    $('#av_brand').val(brand || '');
+    $('#av_seater').val(seater || '');
+    $('#av_status').val(status || 'pending');
+
+    let summary = [];
+    if (brand) summary.push('Brand: <strong>' + brand + '</strong>');
+    if (seater) summary.push('Seater: <strong>' + seater + '</strong>');
+    if (vehicleType) summary.push('Fuel Type: <strong>' + vehicleType + '</strong>');
+    $('#av_requested_summary').html(summary.length ? summary.join(' | ') : 'No specific requirements saved on this booking');
+
+    loadVehiclesForAssign(vehicleId);
+    $('#assignVehicleModal').modal('show');
+}
+
+function loadVehiclesForAssign(selectedVehicleId = null) {
+    $('#av_vehicle_id').html('<option value="">Loading...</option>');
+
+    let data = {
+        brand: $('#av_brand').val(),
+        seater: $('#av_seater').val()
+    };
+    let fuelType = $('#av_vehicle_type').val();
+    if (fuelType) {
+        data.fuel_type = fuelType;
+    }
+
+    $.ajax({
+        url: "{{ route('admin.vehicle_bookings.get_vehicles_by_type') }}",
+        type: 'GET',
+        data: data,
+        success: function(vehicles) {
+            if (!vehicles.length) {
+                $('#av_vehicle_id').html('<option value="">No matching vehicles found</option>');
+                return;
+            }
+            let options = '<option value="">Select Vehicle</option>';
+            $.each(vehicles, function(i, v) {
+                let sel = (selectedVehicleId && v.id == selectedVehicleId) ? 'selected' : '';
+                options += `<option value="${v.id}" ${sel}>${v.vehicle_name} (${v.brand ?? ''}, ${v.seater ?? ''} seater)</option>`;
+            });
+            $('#av_vehicle_id').html(options);
+        },
+        error: function() {
+            $('#av_vehicle_id').html('<option value="">Error loading vehicles</option>');
+        }
+    });
+}
+
+$('#assignVehicleForm').on('submit', function(e) {
+    e.preventDefault();
+    let bookingId = $('#av_booking_id').val();
+
+    if (!$('#av_vehicle_id').val()) {
+        toastr.error('Please select a vehicle');
+        return;
+    }
+
+    let $btn = $('#av_submit_btn');
+    $btn.prop('disabled', true);
+    $('#av_submit_spinner').show();
+    $('#av_submit_text').text('Updating...');
+
+    $.ajax({
+        url: '/dashboard/vehicle_bookings/' + bookingId + '/assign-vehicle',
+        type: 'POST',
+        data: {
+            _token: "{{ csrf_token() }}",
+            vehicle_id: $('#av_vehicle_id').val(),
+            status: $('#av_status').val()
+        },
+        success: function() {
+            $('#assignVehicleModal').modal('hide');
+            toastr.success('Vehicle assigned successfully');
+            setTimeout(() => location.reload(), 800);
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error assigning vehicle');
+        }
+    });
+});
 </script>
 
 <script>
