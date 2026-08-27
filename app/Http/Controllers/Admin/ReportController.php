@@ -285,7 +285,8 @@ class ReportController extends Controller
             // Total revenue from bookings
             $totalRevenue = VehicleBooking::where('vehicle_id', $vehicle->id)
                 ->whereBetween('start_date', [$startDate, $endDate])
-                ->where('status', '=', 'confirmed')
+                ->whereNotIn('status', ['cancelled', 'pending'])
+                ->whereNull('deleted_at')
                 ->sum('total_amount');
 
             // Fuel cost
@@ -343,7 +344,7 @@ class ReportController extends Controller
 
     private function getRevenueReport($startDate, $endDate, $vehicleId = null)
     {
-        $baseQuery = VehicleBooking::whereBetween('start_date', [$startDate, $endDate]);
+        $baseQuery = VehicleBooking::whereBetween('start_date', [$startDate, $endDate])->whereNull('deleted_at');
 
         if ($vehicleId) {
             $baseQuery->where('vehicle_id', $vehicleId);
@@ -357,7 +358,7 @@ class ReportController extends Controller
 
         // Main revenue query (excluding cancelled)
         $query = (clone $baseQuery)
-            ->where('status', '=', 'confirmed')
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->with('vehicle');
 
 
@@ -562,7 +563,7 @@ class ReportController extends Controller
     private function getDiscountAnalysis($startDate, $endDate)
     {
         $bookings = VehicleBooking::whereBetween('start_date', [$startDate, $endDate])
-            ->where('status', 'confirmed')
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->with(['vehicle', 'tripRoute'])
             ->orderBy('start_date', 'desc') // ascending order; use 'desc' for descending
             ->get();
@@ -624,7 +625,7 @@ class ReportController extends Controller
         $clients = Customer::where('status', 'active')
             ->with(['bookings' => function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->where('status', '=', 'confirmed');
+                    ->whereNotIn('status', ['cancelled', 'pending']);
             }])
             ->get();
 
@@ -679,7 +680,8 @@ class ReportController extends Controller
      */
     private function getSummaryStats($startDate, $endDate, $vehicleId = null)
     {
-        $baseQuery = VehicleBooking::whereBetween('start_date', [$startDate, $endDate]);
+        $baseQuery = VehicleBooking::whereBetween('start_date', [$startDate, $endDate])
+            ->whereNull('deleted_at');
 
         if ($vehicleId) {
             $baseQuery->where('vehicle_id', $vehicleId);
@@ -693,9 +695,8 @@ class ReportController extends Controller
 
         // Main revenue query 
         $query = (clone $baseQuery)
-            ->where('status', '=', 'confirmed')
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->with('vehicle');
-
 
         $bookings = $query->get();
 

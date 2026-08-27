@@ -402,7 +402,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->where('status', 'confirmed')
+            ->whereNotIn('status', ['cancelled','pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -701,11 +701,6 @@ class BookingController extends Controller
         return $this->apiGenerateInvoice($request);
     }
 
-
-
-
-
-
     public function apiGenerateProforma(Request $request)
     {
         $request->validate([
@@ -715,7 +710,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->where('status', 'confirmed')
+            ->whereNotIn('status', ['cancelled','pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -852,8 +847,6 @@ class BookingController extends Controller
         return $this->apiGenerateProforma($request);
     }
 
-
-
     public function apiGenerateEstimate(Request $request)
     {
         $request->validate([
@@ -864,7 +857,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->where('status', 'confirmed')
+            ->whereNotIn('status', ['cancelled','pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -1010,6 +1003,7 @@ class BookingController extends Controller
         $usedBrands = Vehicle::where('status', 1)->distinct()->pluck('brand');
 
         $brands = Brand::select('id', 'name', 'logo')
+            ->orderBy('name', 'asc')
             ->whereIn('name', $usedBrands)
             ->get()
             ->map(function ($b) {
@@ -1096,6 +1090,7 @@ class BookingController extends Controller
 
         $seaters = Seater::select('id', 'name', 'logo')
             ->whereIn('name', $usedSeaters)
+            ->orderByRaw('CAST(name AS UNSIGNED) ASC')
             ->get()
             ->map(function ($b) {
                 return [
@@ -1289,9 +1284,13 @@ class BookingController extends Controller
     public function mostPopularVehicles()
     {
         $vehicles = VehicleBooking::selectRaw('vehicle_id, COUNT(*) as total')
+            ->whereHas('vehicle', function ($query) {
+                $query->where('status', 1);
+            })
             ->with([
                 'vehicle' => function ($query) {
-                    $query->withAvg('reviews', 'rating');
+                    $query->where('status', 1)
+                        ->withAvg('reviews', 'rating');
                 }
             ])
             ->groupBy('vehicle_id')
