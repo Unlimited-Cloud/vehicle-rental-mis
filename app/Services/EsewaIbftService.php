@@ -22,14 +22,35 @@ class EsewaIbftService
 
     public function __construct()
     {
-        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? "https://corporate-authentication.esewa.com.np";
-        $this->baseUrl = env('ESEWA_BASE_URL') ?? "https://corporateapi.esewa.com.np";
-        $this->hmacKey = env('ESEWA_HMAC_KEY') ?? "ZXNld2Fjb3";  // production HMAC key
-        $this->clientId = env('ESEWA_CLIENT_ID') ?? "CP0002006";
-        $this->username = env('ESEWA_USERNAME') ?? "esewadirect";
-        $this->password = env('ESEWA_PASSWORD') ?? "Hello@123";
-        $this->certPath = env('ESEWA_CERT_PATH') ?? "C:/xampp/htdocs/vehicle-rental-mis-sandbox/certs/esewa.pem";
-        $this->certPassword = env('ESEWA_CERT_PASSWORD') ?? "Test@123";
+        $url = url('/');
+        Log::info("current url",["url" => $url]);
+        if($url == 'https://rentalsandbox.kathmandusightseeing.com'){
+            $auth_base_url = 'https://ceapi-uat.esewa.com.np';
+            $base_url = 'https://ceapi-uat.esewa.com.np';
+            $hmac_key = 'esewa';
+            $client_id = 'CP0002006';
+            $user_name = 'esewadirect';
+            $pass_word = 'Hello@123';
+            $cert_path = "C:/xampp/htdocs/vehicle-rental-mis-sandbox/certs/esewa.pem";
+            $cert_password = 'Test@123';
+        }else{
+            $auth_base_url = 'https://ceapp-uat.esewa.com.np';
+            $base_url = 'https://corporateapi.esewa.com.np';
+            $hmac_key = 'ZXNld2Fjb3';
+            $client_id = 'CP0002006';
+            $user_name = 'esewadirect';
+            $pass_word = 'Hello@123';
+            $cert_path = "C:/xampp/htdocs/vehicle-rental-mis/certs/esewa.pem";
+            $cert_password = 'Test@123';
+        }
+        $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? $auth_base_url;
+        $this->baseUrl = env('ESEWA_BASE_URL') ?? $base_url;
+        $this->hmacKey = env('ESEWA_HMAC_KEY') ?? $hmac_key;
+        $this->clientId = env('ESEWA_CLIENT_ID') ?? $client_id;
+        $this->username = env('ESEWA_USERNAME') ?? $user_name;
+        $this->password = env('ESEWA_PASSWORD') ?? $pass_word;
+        $this->certPath = env('ESEWA_CERT_PATH') ?? $cert_path;
+        $this->certPassword = env('ESEWA_CERT_PASSWORD') ?? $cert_password;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -45,7 +66,7 @@ class EsewaIbftService
         Log::info('eSewa token request', [
             'url'       => $this->authBaseUrl . '/api/auth/v1/token',
             'client_id' => $this->clientId,
-            "client_secret" => "ZXNld2Fjb3",
+            "client_secret" => $this->hmacKey,
             'username'  => $this->username,
             'cert_path' => $this->certPath,
             'cert_exists' => file_exists($this->certPath),
@@ -55,7 +76,7 @@ class EsewaIbftService
 
             $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
                 'client_id' => $this->clientId,
-                "client_secret" => "ZXNld2Fjb3",
+                "client_secret" => $this->hmacKey,
                 'username' => $this->username,
                 'password' => $this->password,
                 'grant_type' => 'password',
