@@ -169,7 +169,7 @@
 </div>
 
 <!-- ================= REGISTRATION ================= -->
-<div class="card card-info card-outline mb-4">
+{{-- <div class="card card-info card-outline mb-4">
     <div class="card-header bg-info">
         <h3 class="card-title text-white">
             <i class="fas fa-id-card"></i> Registration Details
@@ -189,10 +189,10 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- ================= INSURANCE ================= -->
-<div class="card card-success card-outline mb-4">
+{{-- <div class="card card-success card-outline mb-4">
     <div class="card-header bg-success">
         <h3 class="card-title text-white">
             <i class="fas fa-shield-alt"></i> Insurance Details
@@ -248,10 +248,10 @@
 
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- ================= PASSENGER INSURANCE ================= -->
-<div class="card card-primary card-outline mb-4">
+{{-- <div class="card card-primary card-outline mb-4">
     <div class="card-header bg-primary">
         <h3 class="card-title text-white">
             <i class="fas fa-user-shield"></i> Passenger Insurance Details
@@ -302,10 +302,10 @@
 
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- ================= SAFETY FEATURES ================= -->
-<div class="card card-warning card-outline mb-4">
+{{-- <div class="card card-warning card-outline mb-4">
     <div class="card-header bg-warning">
         <h3 class="card-title text-dark">
             <i class="fas fa-shield-virus"></i> Safety Features
@@ -313,10 +313,10 @@
     </div>
 
     <div class="card-body">
-        <div class="row">
+        <div class="row"> --}}
             
             <!-- Dash Cam -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Dash Cam</label>
                     <select name="dash_cam" class="form-control">
@@ -324,7 +324,7 @@
                         <option value="1" {{ old('dash_cam', $vehiclecatalog->dash_cam ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Dash Cam Image</label>
@@ -360,7 +360,7 @@
             </div> --}}
 
             <!-- Air Conditioning -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Air Conditioning</label>
                     <select name="air_conditioning" class="form-control">
@@ -368,7 +368,7 @@
                         <option value="1" {{ old('air_conditioning', $vehiclecatalog->air_conditioning ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Air Conditioning Image</label>
@@ -382,7 +382,7 @@
             </div> --}}
 
             <!-- Reverse Camera -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Reverse Camera</label>
                     <select name="reverse_camera" class="form-control">
@@ -390,7 +390,7 @@
                         <option value="1" {{ old('reverse_camera', $vehiclecatalog->reverse_camera ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Reverse Camera Image</label>
@@ -404,7 +404,7 @@
             </div> --}}
 
             <!-- Camera 360 -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Camera 360</label>
                     <select name="camera_360" class="form-control">
@@ -412,7 +412,7 @@
                         <option value="1" {{ old('camera_360', $vehiclecatalog->camera_360 ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Camera 360 Image</label>
@@ -426,7 +426,7 @@
             </div> --}}
 
             <!-- Emergency Braking System -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Emergency Braking System</label>
                     <select name="emergency_braking_system" class="form-control">
@@ -434,7 +434,7 @@
                         <option value="1" {{ old('emergency_braking_system', $vehiclecatalog->emergency_braking_system ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Emergency Braking System Image</label>
@@ -448,7 +448,7 @@
             </div> --}}
 
             <!-- Hillside Braking System -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Hillside Braking System</label>
                     <select name="hillside_braking_system" class="form-control">
@@ -456,7 +456,7 @@
                         <option value="1" {{ old('hillside_braking_system', $vehiclecatalog->hillside_braking_system ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Hillside Braking System Image</label>
@@ -470,7 +470,7 @@
             </div> --}}
 
             <!-- Hill Descent Control -->
-            <div class="col-md-4">
+            {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Hill Descent Control</label>
                     <select name="hill_descent_control" class="form-control">
@@ -478,7 +478,7 @@
                         <option value="1" {{ old('hill_descent_control', $vehiclecatalog->hill_descent_control ?? 0) == 1 ? 'selected' : '' }}>Yes</option>
                     </select>
                 </div>
-            </div>
+            </div> --}}
             {{-- <div class="col-md-4">
                 <div class="form-group">
                     <label>Hill Descent Control Image</label>
@@ -490,10 +490,10 @@
                     @endif
                 </div>
             </div> --}}
-
+{{-- 
         </div>
     </div>
-</div>
+</div> --}}
 
 
 

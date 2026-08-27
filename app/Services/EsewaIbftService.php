@@ -23,8 +23,8 @@ class EsewaIbftService
     public function __construct()
     {
         $url = url('/');
-        Log::info("current url",["url" => $url]);
-        if($url == 'https://rentalsandbox.kathmandusightseeing.com'){
+        Log::info("current url", ["url" => $url]);
+        if ($url == 'https://rentalsandbox.kathmandusightseeing.com') {
             $auth_base_url = 'https://ceapi-uat.esewa.com.np';
             $base_url = 'https://ceapi-uat.esewa.com.np';
             $hmac_key = 'esewa';
@@ -33,7 +33,7 @@ class EsewaIbftService
             $pass_word = 'Hello@123';
             $cert_path = "C:/xampp/htdocs/vehicle-rental-mis-sandbox/certs/esewa.pem";
             $cert_password = 'Test@123';
-        }else{
+        } else {
             $auth_base_url = 'https://corporate-authentication.esewa.com.np';
             $base_url = 'https://corporateapi.esewa.com.np';
             $hmac_key = 'Bailochanapi@123#';
@@ -66,20 +66,21 @@ class EsewaIbftService
         Log::info('eSewa token request', [
             'url'       => $this->authBaseUrl . '/api/auth/v1/token',
             'client_id' => $this->clientId,
-            "client_secret" => $this->hmacKey,
+            // "client_secret" => $this->hmacKey,
             'username'  => $this->username,
-            'cert_path' => $this->certPath,
-            'cert_exists' => file_exists($this->certPath),
+            'password' => $this->password,
+            // 'cert_path' => $this->certPath,
+            // 'cert_exists' => file_exists($this->certPath),
         ]);
 
         try {
 
             $response = $this->makeRequest('POST', $this->authBaseUrl . '/api/auth/v1/token', [
                 'client_id' => $this->clientId,
-                "client_secret" => $this->hmacKey,
+                // "client_secret" => $this->hmacKey,
                 'username' => $this->username,
                 'password' => $this->password,
-                'grant_type' => 'password',
+                // 'grant_type' => 'password',
 
             ], withAuth: false);
 
@@ -381,8 +382,13 @@ class EsewaIbftService
      */
     protected function makeRequest(string $method, string $url, array $body = [], bool $withAuth = true): array
     {
+        // Use array only if password exists, otherwise single string
+        $certOption = empty($this->certPassword)
+            ? $this->certPath
+            : [$this->certPath, $this->certPassword];
+
         $client = Http::withOptions([
-            'cert'   => $this->certPath,
+            'cert'   => $certOption,
             'verify' => true,
         ])->timeout(30);
 
@@ -391,16 +397,16 @@ class EsewaIbftService
         }
 
         $response = match (strtoupper($method)) {
-            'GET' => $client->get($url, $body),
-            'POST' => $client->post($url, $body),
+            'GET'   => $client->get($url, $body),
+            'POST'  => $client->post($url, $body),
             default => throw new Exception("Unsupported HTTP method: $method"),
         };
 
         if ($response->failed()) {
             Log::error('eSewa API error', [
-                'url' => $url,
+                'url'    => $url,
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body'   => $response->body(),
             ]);
             throw new Exception("eSewa API call failed [{$response->status()}]: " . $response->body());
         }
