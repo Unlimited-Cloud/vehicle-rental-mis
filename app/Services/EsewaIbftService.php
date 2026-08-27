@@ -34,14 +34,14 @@ class EsewaIbftService
             $cert_path = "C:/xampp/htdocs/vehicle-rental-mis-sandbox/certs/esewa.pem";
             $cert_password = 'Test@123';
         }else{
-            $auth_base_url = 'https://ceapp-uat.esewa.com.np';
+            $auth_base_url = 'https://corporate-authentication.esewa.com.np';
             $base_url = 'https://corporateapi.esewa.com.np';
-            $hmac_key = 'ZXNld2Fjb3';
+            $hmac_key = 'Bailochanapi@123#';
             $client_id = 'CP0039005';
             $user_name = 'allen@unlimitedremit.com';
             $pass_word = 'Bailochanapi@123#';
             $cert_path = "C:/xampp/htdocs/vehicle-rental-mis/certs/esewa.pem";
-            $cert_password = 'Test@123';
+            $cert_password = '(nI$V$%6';
         }
         $this->authBaseUrl = env('ESEWA_AUTH_BASE_URL') ?? $auth_base_url;
         $this->baseUrl = env('ESEWA_BASE_URL') ?? $base_url;
