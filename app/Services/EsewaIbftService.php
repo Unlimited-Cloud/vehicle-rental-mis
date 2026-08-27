@@ -36,7 +36,7 @@ class EsewaIbftService
         }else{
             $auth_base_url = 'https://corporate-authentication.esewa.com.np';
             $base_url = 'https://corporateapi.esewa.com.np';
-            $hmac_key = 'Bailochanapi@123#';
+            $hmac_key = 'ZXNld2Fjb3';
             $client_id = 'CP0039005';
             $user_name = 'allen@unlimitedremit.com';
             $pass_word = 'Bailochanapi@123#';
@@ -79,12 +79,12 @@ class EsewaIbftService
                 "client_secret" => $this->hmacKey,
                 'username' => $this->username,
                 'password' => $this->password,
-                'grant_type' => 'password',
+                // 'grant_type' => 'password',
 
             ], withAuth: false);
 
             $token = $response['data']['token'] ?? $response['Data']['token'] ?? null;
-
+            dd($token);
 
             if (empty($token)) {
                 throw new Exception('eSewa token response missing access_token: ' . json_encode($response));
