@@ -47,7 +47,11 @@
     <td>{{ $user->name }}</td>
     <td>{{ $user->email }}</td>
     <td>{{ $user->rolename ?? 'N/A' }}</td>
-    <td>{{ $user->created_at->format('d M Y') }}</td>
+    <td>
+        @if(!empty($user->created_at))
+        {{ $user->created_at->format('d M Y') }}
+        @endif
+    </td>
 
     <td>
         @if(auth()->user()->can('update_users'))
