@@ -38,7 +38,7 @@ class EsewaIbftService
             $base_url = 'https://corporateapi.esewa.com.np';
             $hmac_key = 'ZXNld2Fjb3';
             $client_id = 'CP0039005';
-            $user_name = 'allen@unlimitedremit.com';
+            $user_name = 'allen@kathmandusightseeing.com';
             $pass_word = 'Bailochanapi@123#';
             $cert_path = "C:/xampp/htdocs/vehicle-rental-mis/certs/esewa.pem";
             $cert_password = '(nI$V$%6';
@@ -85,7 +85,6 @@ class EsewaIbftService
             ], withAuth: false);
 
             $token = $response['data']['token'] ?? $response['Data']['token'] ?? null;
-            dd($token);
 
             if (empty($token)) {
                 throw new Exception('eSewa token response missing access_token: ' . json_encode($response));
