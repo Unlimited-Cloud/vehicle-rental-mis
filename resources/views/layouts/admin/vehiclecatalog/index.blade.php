@@ -34,7 +34,7 @@
                                     <th>SN</th>
                                     {{-- <th>Image</th> --}}
                                     <th>Brand</th>
-                                    {{-- <th>Model</th> --}}
+                                    <th>Model</th>
                                     <th>Seater</th>
                                     {{-- <th>Year</th> --}}
                                     {{-- <th>Rent/Day</th> --}}
@@ -60,7 +60,7 @@
                                         @endif
                                     </td> --}}
                                     <td>{{ $vehiclecatalog->brand }}</td>
-                                    {{-- <td>{{ $vehiclecatalog->model }}</td> --}}
+                                    <td>{{ $vehiclecatalog->model }}</td>
                                     <td>{{ $vehiclecatalog->seater }}</td>
                                     {{-- <td>{{ $vehiclecatalog->year }}</td> --}}
                                     {{-- <td>Rs {{ number_format($vehiclecatalog->rent_price_per_day,2) }}</td> --}}

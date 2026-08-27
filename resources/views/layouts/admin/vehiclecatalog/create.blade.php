@@ -85,6 +85,14 @@
 
             <div class="col-md-6">
                 <div class="form-group">
+                    <label>Model *</label>
+                    <input type="text" name="model" id="model" class="form-control"
+                           value="{{ old('model',$vehicle->model ?? '') }}" required>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
                     <label>Transmission *</label>
                     <select name="transmission" class="form-control">
                         <option value="Manual" {{ old('transmission',$vehiclecatalog->transmission ?? '')=='Manual'?'selected':'' }}>Manual</option>

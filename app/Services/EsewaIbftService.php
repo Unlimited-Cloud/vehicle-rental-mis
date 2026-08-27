@@ -37,9 +37,9 @@ class EsewaIbftService
             $auth_base_url = 'https://ceapp-uat.esewa.com.np';
             $base_url = 'https://corporateapi.esewa.com.np';
             $hmac_key = 'ZXNld2Fjb3';
-            $client_id = 'CP0002006';
-            $user_name = 'esewadirect';
-            $pass_word = 'Hello@123';
+            $client_id = 'CP0039005';
+            $user_name = 'allen@unlimitedremit.com';
+            $pass_word = 'Bailochanapi@123#';
             $cert_path = "C:/xampp/htdocs/vehicle-rental-mis/certs/esewa.pem";
             $cert_password = 'Test@123';
         }
