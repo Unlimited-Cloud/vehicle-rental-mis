@@ -87,7 +87,7 @@
                 <div class="form-group">
                     <label>Model *</label>
                     <input type="text" name="model" id="model" class="form-control"
-                           value="{{ old('model',$vehicle->model ?? '') }}" required>
+                           value="{{ old('model',$vehiclecatalog->model ?? '') }}" required>
                 </div>
             </div>
 

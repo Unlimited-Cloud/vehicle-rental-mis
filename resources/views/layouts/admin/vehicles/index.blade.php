@@ -27,6 +27,7 @@
                             
                         </div>
                         @endif
+                        <div><span class="text-danger" title="Vehicle is not linked with catalog">* </span>(Denotes Vehicle not linked with catalog)</div>
 
                         <table id="dataTable" class="table table-bordered table-striped show-search-bar">
                             <thead>
@@ -62,7 +63,13 @@
                                         @endif
                                     </td> --}}
 
-                                    <td>{{ $vehicle->vehicle_name }}</td>
+                                    <td>
+                                         @if(is_null($vehicle->vehicle_catalog_id))
+                                            <span class="text-danger" title="Vehicle is not linked with catalog">*</span>
+                                        @endif 
+
+                                        {{ $vehicle->vehicle_name }}
+                                    </td>
                                    <td>{{ ucfirst($vehicle->vehicle_type) }}</td>
                                     <td>{{ $vehicle->brand }}</td>
                                     <td>{{ $vehicle->model }}</td>
