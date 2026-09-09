@@ -59,7 +59,9 @@ class OtpController extends Controller
             'locked_until'  => null,
         ]);
 
-        Mail::to($email)->send(new LoginOtpMail($otp));
+        $user = User::where('email', $email)->first();
+
+        Mail::to($email)->send(new LoginOtpMail($otp, $user->name));
 
         return back()->with('success', 'New OTP sent to your email.');
     }
