@@ -61,7 +61,7 @@
             </td>
 
             <td>
-                @if($detail->is_validated)
+                @if($detail->is_verified)
                     <span class="badge bg-success">Validated</span>
                 @else
                     <span class="badge bg-secondary">Non Validated</span>
@@ -70,7 +70,7 @@
 
             {{-- Single <td> for all action buttons --}}
             <td>
-                @if(!$detail->is_verified)
+                {{-- @if(!$detail->is_verified) --}}
                 <button type="button"
                         class="btn btn-success btn-sm validate-bank"
                         data-id="{{ $detail->id }}"
@@ -79,7 +79,7 @@
                         data-account-holder="{{ $detail->account_holder_name }}">
                     <i class="fas fa-check-circle"></i> Validate
                 </button>
-                @endif
+                {{-- @endif --}}
 
                 <a href="{{ route('admin.bank-details.edit', [$crew->id, $detail->id]) }}"
                    class="btn btn-primary btn-sm">

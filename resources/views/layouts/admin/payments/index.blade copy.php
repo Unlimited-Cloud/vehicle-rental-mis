@@ -4,54 +4,28 @@
 @section('dynamicdata')
 <style>
     .stat-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        transition: transform 0.3s;
         border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+        transform: translateY(-5px);
     }
     .badge-purple {
         background-color: #6f42c1;
-        color: #fff;
-    }
-    .bg-gradient-purple {
-        background: linear-gradient(135deg, #6f42c1, #8c5fd6);
-        color: #fff;
+        color: white;
     }
     .filter-card {
         background: #f8f9fa;
         border-radius: 10px;
-        padding: 18px;
+        padding: 15px;
         margin-bottom: 20px;
-        border: 1px solid #eceff1;
-    }
-    .filter-card label {
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        color: #6c757d;
-        margin-bottom: 4px;
     }
     .direction-income {
         border-left: 4px solid #28a745;
     }
     .direction-expense {
         border-left: 4px solid #dc3545;
-    }
-    .table-responsive .empty-state {
-        padding: 40px 0;
-    }
-    .table-responsive .empty-state i {
-        opacity: 0.3;
-    }
-    #dataTable td {
-        vertical-align: middle;
-    }
-    .action-btn-group .btn {
-        margin-right: 2px;
     }
 </style>
 
@@ -89,7 +63,7 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-lg-3 col-6">
         <div class="small-box bg-danger stat-card">
             <div class="inner">
@@ -101,7 +75,7 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-lg-3 col-6">
         <div class="small-box bg-success stat-card">
             <div class="inner">
@@ -113,7 +87,7 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning stat-card">
             <div class="inner">
@@ -142,7 +116,7 @@
                     <div class="col-md-6 text-center mb-3">
                         <div class="info-box bg-gradient-{{ $color }}">
                             <div class="info-box-content">
-                                <span class="info-box-text">{{ ucfirst(str_replace('_', ' ', $method)) }} Revenue</span>
+                                <span class="info-box-text">{{ ucfirst($method) }} Revenue</span>
                                 <span class="info-box-number">रु {{ number_format($paymentMethods[$method]['total'], 2) }}</span>
                                 <span class="info-box-text">Transactions: {{ $paymentMethods[$method]['count'] }}</span>
                                 @if($paymentMethods[$method]['expense'] > 0)
@@ -153,14 +127,14 @@
                     </div>
                     @endforeach
                 </div>
-
+                
                 @foreach(['cash', 'esewa', 'khalti', 'bank_transfer'] as $method)
                 @if($totalIncome > 0)
                 <div class="progress-group">
-                    <span class="progress-text">{{ ucfirst(str_replace('_', ' ', $method)) }}</span>
+                    <span class="progress-text">{{ ucfirst($method) }}</span>
                     <span class="float-right"><b>{{ round(($paymentMethods[$method]['total'] / $totalIncome) * 100, 1) }}%</b></span>
                     <div class="progress sm">
-                        <div class="progress-bar bg-{{ $method == 'cash' ? 'success' : ($method == 'esewa' ? 'info' : ($method == 'khalti' ? 'purple' : 'primary')) }}"
+                        <div class="progress-bar bg-{{ $method == 'cash' ? 'success' : ($method == 'esewa' ? 'info' : ($method == 'khalti' ? 'purple' : 'primary')) }}" 
                              style="width: {{ ($paymentMethods[$method]['total'] / $totalIncome) * 100 }}%"></div>
                     </div>
                 </div>
@@ -169,7 +143,7 @@
             </div>
         </div>
     </div>
-
+    
     <div class="col-md-6">
         <div class="card card-primary card-outline">
             <div class="card-header">
@@ -180,39 +154,33 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-6">
-                        <a href="{{ route('admin.payments.index', ['status' => 'completed']) }}" class="text-decoration-none">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Completed</span>
-                                    <span class="info-box-number">{{ $completedCount }}</span>
-                                </div>
+                        <div class="info-box">
+                            <span class="info-box-icon bg-success"><i class="fas fa-check-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Completed</span>
+                                <span class="info-box-number">{{ $completedCount }}</span>
                             </div>
-                        </a>
+                        </div>
                     </div>
                     <div class="col-6">
-                        <a href="{{ route('admin.payments.index', ['status' => 'pending']) }}" class="text-decoration-none">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Pending</span>
-                                    <span class="info-box-number">{{ $pendingCount }}</span>
-                                </div>
+                        <div class="info-box">
+                            <span class="info-box-icon bg-warning"><i class="fas fa-hourglass-half"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Pending</span>
+                                <span class="info-box-number">{{ $pendingCount }}</span>
                             </div>
-                        </a>
+                        </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-6">
-                        <a href="{{ route('admin.payments.index', ['status' => 'failed']) }}" class="text-decoration-none">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-danger"><i class="fas fa-times-circle"></i></span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">Failed</span>
-                                    <span class="info-box-number">{{ $failedCount }}</span>
-                                </div>
+                        <div class="info-box">
+                            <span class="info-box-icon bg-danger"><i class="fas fa-times-circle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Failed</span>
+                                <span class="info-box-number">{{ $failedCount }}</span>
                             </div>
-                        </a>
+                        </div>
                     </div>
                     <div class="col-6">
                         <div class="info-box">
@@ -229,10 +197,26 @@
     </div>
 </div>
 
+<!-- Monthly Chart -->
+{{-- <div class="row">
+    <div class="col-12">
+        <div class="card card-primary card-outline">
+            <div class="card-header">
+                <h3 class="card-title">
+                    <i class="fas fa-chart-bar"></i> Monthly Income vs Expense
+                </h3>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div> --}}
+
 <!-- Filter Section -->
 <div class="filter-card">
     <form method="GET" action="{{ route('admin.payments.index') }}">
-        <div class="row align-items-end">
+        <div class="row">
             <div class="col-md-2">
                 <label>Payment Method</label>
                 <select name="payment_method" class="form-control">
@@ -262,28 +246,24 @@
             </div>
             <div class="col-md-2">
                 <label>Date From</label>
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" max="{{ request('date_to') ?: '' }}">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-2">
                 <label>Date To</label>
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" min="{{ request('date_from') ?: '' }}">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
             </div>
             <div class="col-md-2">
-                <div class="d-flex">
-                    <button type="submit" class="btn btn-primary mr-1">
+                <label>&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Filter
                     </button>
-                    <a href="{{ route('admin.payments.index') }}" class="btn btn-secondary" title="Reset filters">
-                        <i class="fas fa-sync-alt"></i>
+                    <a href="{{ route('admin.payments.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Reset
                     </a>
                 </div>
             </div>
         </div>
-        @if(request('date_from') && request('date_to') && request('date_from') > request('date_to'))
-            <div class="text-danger small mt-2">
-                <i class="fas fa-exclamation-triangle"></i> "Date From" is after "Date To" — no results will match this range.
-            </div>
-        @endif
     </form>
 </div>
 
@@ -293,12 +273,21 @@
         <h3 class="card-title">
             <i class="fas fa-list"></i> Payment Transactions
         </h3>
+        {{-- <div class="card-tools">
+            <a href="{{ route('layouts.admin.payments.create') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Add Payment
+            </a>
+            <a href="{{ route('layouts.admin.payments.export', request()->query()) }}" class="btn btn-success btn-sm">
+                <i class="fas fa-download"></i> Export
+            </a>
+        </div> --}}
     </div>
     <div class="card-body">
         <div class="table-responsive">
              <table id="dataTable" class="table table-bordered table-striped show-search-bar">
                 <thead>
                     <tr>
+                        {{-- <th>ID</th> --}}
                         <th>Date</th>
                         <th>Transaction ID</th>
                         <th>Direction</th>
@@ -312,9 +301,8 @@
                 <tbody>
                     @forelse($payments as $payment)
                     <tr class="{{ $payment->direction == 'in' ? 'direction-income' : 'direction-expense' }}">
-                        <td data-order="{{ $payment->payment_date->timestamp }}">
-                            {{ $payment->payment_date->format('Y-m-d H:i') }}
-                        </td>
+                        {{-- <td>#{{ $payment->id }}</td> --}}
+                        <td>{{ $payment->payment_date->format('Y-m-d H:i') }}</td>
                         <td>
                             <small class="text-muted">{{ $payment->unique_id }}</small>
                             @if($payment->transaction_reference)
@@ -335,56 +323,52 @@
                             <strong>रु {{ number_format($payment->amount, 2) }}</strong>
                         </td>
                         <td>{!! $payment->status_badge !!}</td>
-                        <td class="action-btn-group">
-                            <a href="{{ route('admin.payments.show', [
-                                    'method' => $payment->payment_method,
-                                    'id' => $payment->id
-                                ]) }}"
-                                class="btn btn-info btn-sm" title="View details" aria-label="View payment details">
+                        <td>
+                        <a href="{{ route('admin.payments.show', [
+                                'method' => $payment->payment_method,
+                                'id' => $payment->id
+                            ]) }}"
+                            class="btn btn-info btn-sm">
                                 <i class="fas fa-eye"></i>
                             </a>
-
                             @if($payment->payment_method === 'cash' && $payment->status !== 'completed')
-                            <button type="button"
+                            <button type="button" 
                                     class="btn btn-success btn-sm complete-cod-btn"
                                     data-payment-id="{{ $payment->id }}"
                                     data-booking-id="{{ $payment->vehicle_booking_id }}"
-                                    data-status="{{ $payment->status }}"
-                                    title="Complete COD payment" aria-label="Complete cash on delivery payment">
+                                    data-status="{{ $payment->status }}">
                                 <i class="fas fa-check-circle"></i> Complete COD
                             </button>
                             @endif
-
+                           
                             <form action="{{ route('admin.payments.destroy', [
-                                    'method' => $payment->payment_method,
-                                    'id' => $payment->id
-                                ]) }}"
-                                method="POST"
-                                class="delete-payment-form d-inline-block">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm delete-payment-btn" title="Delete payment" aria-label="Delete payment">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
+            'method' => $payment->payment_method,
+            'id' => $payment->id
+        ]) }}"
+      method="POST"
+      style="display:inline-block;"
+      onsubmit="return confirm('Are you sure?');">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="btn btn-danger btn-sm">
+        <i class="fas fa-trash"></i>
+    </button>
+</form>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8">
-                            <div class="empty-state text-center">
-                                <i class="fas fa-inbox fa-3x text-muted"></i>
-                                <p class="mt-2 mb-0 text-muted">No payment records found</p>
-                                @if(request()->anyFilled(['payment_method', 'direction', 'status', 'date_from', 'date_to']))
-                                    <a href="{{ route('admin.payments.index') }}" class="small">Clear filters</a>
-                                @endif
-                            </div>
+                        <td colspan="9" class="text-center">
+                            <i class="fas fa-inbox fa-3x text-muted"></i>
+                            <p class="mt-2">No payment records found</p>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        
+       
     </div>
 </div>
 
@@ -394,35 +378,96 @@
 
 @section('scripts')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<!-- SweetAlert2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<!-- Toastr CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<!-- Toastr JS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 $(document).ready(function() {
+    // Initialize DataTable
     if ($.fn.DataTable.isDataTable('#dataTable')) {
         $('#dataTable').DataTable().destroy();
     }
-    $('#dataTable').DataTable({
-        paging: true,
-        lengthChange: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        autoWidth: false,
-        responsive: true,
-        order: [[0, 'desc']] // latest transactions first
-    });
+   $('#dataTable').DataTable({
+    paging: true,
+    lengthChange: true,
+    searching: true,
+    ordering: true,
+    info: true,
+    autoWidth: false,
+    responsive: true,
+    order: [[0, 'desc']]   // sort by Date column, newest first
+});
 
-    // Complete COD Payment
+    // Monthly Chart - Only initialize if the element exists
+    const monthlyChartElement = document.getElementById('monthlyChart');
+    if (monthlyChartElement) {
+        const ctx = monthlyChartElement.getContext('2d');
+        const monthlyData = @json($monthlyData);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthlyData.map(d => d.month),
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: monthlyData.map(d => d.income),
+                        backgroundColor: 'rgba(40, 167, 69, 0.5)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Expense',
+                        data: monthlyData.map(d => d.expense),
+                        backgroundColor: 'rgba(220, 53, 69, 0.5)',
+                        borderColor: '#dc3545',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'रु ' + value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': रु ' + context.raw.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Handle Complete COD Payment button click
     $(document).on('click', '.complete-cod-btn', function(e) {
         e.preventDefault();
-
+        
         const $btn = $(this);
         const paymentId = $btn.data('payment-id');
         const bookingId = $btn.data('booking-id');
-
+        const currentStatus = $btn.data('status');
+        
+        // Check if booking ID exists
         if (!bookingId) {
             Swal.fire({
                 icon: 'error',
@@ -432,6 +477,7 @@ $(document).ready(function() {
             return;
         }
 
+        // Confirm action
         Swal.fire({
             title: 'Complete COD Payment?',
             text: `Are you sure you want to complete this Cash on Delivery payment for Booking #${bookingId}?`,
@@ -441,90 +487,53 @@ $(document).ready(function() {
             cancelButtonColor: '#d33',
             confirmButtonText: 'Yes, complete payment!'
         }).then((result) => {
-            if (!result.isConfirmed) return;
+            if (result.isConfirmed) {
+                // Disable button and show loading state
+                $btn.prop('disabled', true);
+                $btn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
 
-            $btn.prop('disabled', true);
-            $btn.html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-
-            $.ajax({
-                url: '/api/complete-cod-payment-dashboard',
-                method: 'POST',
-                data: { booking_id: bookingId },
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Payment Completed!',
-                        text: response.message || 'Cash on Delivery payment has been completed successfully.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => location.reload());
-                },
-                error: function(xhr) {
-                    $btn.prop('disabled', false);
-                    $btn.html('<i class="fas fa-check-circle"></i> Complete COD');
-
-                    let errorMessage = 'Failed to complete COD payment. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
+                // Make API call
+                $.ajax({
+                    url: '/api/complete-cod-payment-dashboard',
+                    method: 'POST',
+                    data: {
+                        booking_id: bookingId
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Payment Completed!',
+                            text: response.message || 'Cash on Delivery payment has been completed successfully.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            // Reload page to reflect changes
+                            location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        // Re-enable button
+                        $btn.prop('disabled', false);
+                        $btn.html('<i class="fas fa-check-circle"></i> Complete COD');
+                        
+                        // Show error message
+                        let errorMessage = 'Failed to complete COD payment. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage
+                        });
                     }
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: errorMessage
-                    });
-                }
-            });
-        });
-    });
-
-    // Delete Payment
-    $(document).on('click', '.delete-payment-btn', function(e) {
-        e.preventDefault();
-
-        const $btn = $(this);
-        const $form = $btn.closest('form.delete-payment-form');
-
-        Swal.fire({
-            title: 'Delete this payment?',
-            text: 'This action cannot be undone.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Yes, delete it'
-        }).then((result) => {
-            if (!result.isConfirmed) return;
-
-            $btn.prop('disabled', true);
-            $btn.html('<i class="fas fa-spinner fa-spin"></i>');
-
-            $.ajax({
-                url: $form.attr('action'),
-                method: 'POST',
-                data: $form.serialize(),
-                success: function() {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Deleted',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => location.reload());
-                },
-                error: function(xhr) {
-                    $btn.prop('disabled', false);
-                    $btn.html('<i class="fas fa-trash"></i>');
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: xhr.responseJSON?.message || 'Failed to delete payment.'
-                    });
-                }
-            });
+                });
+            }
         });
     });
 });

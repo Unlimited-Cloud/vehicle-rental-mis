@@ -15,6 +15,170 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentController extends Controller
 {
+    // public function index(Request $request)
+    // {
+    //     // Get all payments with relationships
+    //     $paymentsQuery = Payment::with(['vehicleBooking.customer', 'creator'])
+    //         ->orderBy('payment_date', 'desc');
+
+    //     if ($request->filled('payment_method')) {
+
+    //         if (in_array($request->payment_method, ['esewa', 'khalti'])) {
+
+    //             $paymentsQuery->where('payment_method', 'online')
+    //                 ->where('gateway', $request->payment_method);
+    //         } else {
+
+    //             $paymentsQuery->where('payment_method', $request->payment_method);
+    //         }
+    //     }
+
+    //     // if ($request->has('gateway') && $request->gateway != '') {
+    //     //     $paymentsQuery->where('gateway', $request->gateway);
+    //     // }
+
+    //     if ($request->has('direction') && $request->direction != '') {
+    //         $paymentsQuery->where('direction', $request->direction);
+    //     }
+
+    //     if ($request->has('status') && $request->status != '') {
+    //         $paymentsQuery->where('status', $request->status);
+    //     }
+
+    //     if ($request->has('date_from') && $request->date_from != '') {
+    //         $paymentsQuery->whereDate('payment_date', '>=', $request->date_from);
+    //     }
+
+    //     if ($request->has('date_to') && $request->date_to != '') {
+    //         $paymentsQuery->whereDate('payment_date', '<=', $request->date_to);
+    //     }
+
+    //     // Get paginated results
+    //     $payments = $paymentsQuery->get();
+
+    //     // Dashboard Statistics
+    //     $totalIncome = Payment::income()->completed()->sum('amount');
+    //     $totalExpense = Payment::expense()->completed()->sum('amount');
+    //     $netRevenue = $totalIncome - $totalExpense;
+
+    //     $totalTransactions = Payment::count();
+    //     $completedCount = Payment::completed()->count();
+    //     $pendingCount = Payment::pending()->count();
+    //     $failedCount = Payment::failed()->count();
+
+    //     // Payment method breakdown
+    //     $paymentMethods = [];
+
+    //     $paymentMethods['cash'] = [
+    //         'total' => Payment::where('payment_method', 'cash')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->sum('amount'),
+    //         'count' => Payment::where('payment_method', 'cash')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->count(),
+    //         'expense' => Payment::where('payment_method', 'cash')
+    //             ->where('direction', 'out')
+    //             ->completed()
+    //             ->sum('amount'),
+    //     ];
+
+    //     $paymentMethods['bank_transfer'] = [
+    //         'total' => Payment::where('payment_method', 'bank_transfer')
+    //             ->completed()
+    //             ->sum('amount'),
+    //         'count' => Payment::where('payment_method', 'bank_transfer')
+    //             ->completed()
+    //             ->count(),
+    //         'expense' => Payment::where('payment_method', 'bank_transfer')
+    //             ->where('direction', 'out')
+    //             ->completed()
+    //             ->sum('amount'),
+    //     ];
+
+    //     $paymentMethods['khalti'] = [
+    //         'total' => Payment::where('gateway', 'khalti')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->sum('amount'),
+
+    //         'count' => Payment::where('gateway', 'khalti')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->count(),
+
+    //         'expense' => Payment::where('gateway', 'khalti')
+    //             ->where('direction', 'out')
+    //             ->completed()
+    //             ->sum('amount'),
+    //     ];
+
+    //     $paymentMethods['esewa'] = [
+    //         'total' => Payment::where('gateway', 'esewa')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->sum('amount'),
+
+    //         'count' => Payment::where('gateway', 'esewa')
+    //             ->where('direction', 'in')
+    //             ->completed()
+    //             ->count(),
+
+    //         'expense' => Payment::where('gateway', 'esewa')
+    //             ->where('direction', 'out')
+    //             ->completed()
+    //             ->sum('amount'),
+    //     ];
+
+
+
+    //     // Direction breakdown
+    //     $incomeCount = Payment::income()->count();
+    //     $expenseCount = Payment::expense()->count();
+
+    //     // Monthly data for chart (last 12 months)
+    //     $monthlyData = [];
+    //     for ($i = 11; $i >= 0; $i--) {
+    //         $month = now()->subMonths($i);
+    //         $monthlyData[] = [
+    //             'month' => $month->format('M Y'),
+    //             'income' => Payment::income()
+    //                 ->completed()
+    //                 ->whereYear('payment_date', $month->year)
+    //                 ->whereMonth('payment_date', $month->month)
+    //                 ->sum('amount'),
+    //             'expense' => Payment::expense()
+    //                 ->completed()
+    //                 ->whereYear('payment_date', $month->year)
+    //                 ->whereMonth('payment_date', $month->month)
+    //                 ->sum('amount')
+    //         ];
+    //     }
+
+    //     // Recent transactions
+    //     $recentTransactions = Payment::with(['vehicleBooking.customer'])
+    //         ->orderBy('payment_date', 'desc')
+    //         ->take(10)
+    //         ->get();
+
+    //     return view('layouts.admin.payments.index', compact(
+    //         'payments',
+    //         'totalIncome',
+    //         'totalExpense',
+    //         'netRevenue',
+    //         'totalTransactions',
+    //         'completedCount',
+    //         'pendingCount',
+    //         'failedCount',
+    //         'paymentMethods',
+    //         'incomeCount',
+    //         'expenseCount',
+    //         'monthlyData',
+    //         'recentTransactions'
+    //     ));
+    // }
+
     public function index(Request $request)
     {
         // Get all payments with relationships
@@ -22,38 +186,30 @@ class PaymentController extends Controller
             ->orderBy('payment_date', 'desc');
 
         if ($request->filled('payment_method')) {
-
             if (in_array($request->payment_method, ['esewa', 'khalti'])) {
-
                 $paymentsQuery->where('payment_method', 'online')
                     ->where('gateway', $request->payment_method);
             } else {
-
                 $paymentsQuery->where('payment_method', $request->payment_method);
             }
         }
 
-        // if ($request->has('gateway') && $request->gateway != '') {
-        //     $paymentsQuery->where('gateway', $request->gateway);
-        // }
-
-        if ($request->has('direction') && $request->direction != '') {
+        if ($request->filled('direction')) {
             $paymentsQuery->where('direction', $request->direction);
         }
 
-        if ($request->has('status') && $request->status != '') {
+        if ($request->filled('status')) {
             $paymentsQuery->where('status', $request->status);
         }
 
-        if ($request->has('date_from') && $request->date_from != '') {
+        if ($request->filled('date_from')) {
             $paymentsQuery->whereDate('payment_date', '>=', $request->date_from);
         }
 
-        if ($request->has('date_to') && $request->date_to != '') {
+        if ($request->filled('date_to')) {
             $paymentsQuery->whereDate('payment_date', '<=', $request->date_to);
         }
 
-        // Get paginated results
         $payments = $paymentsQuery->get();
 
         // Dashboard Statistics
@@ -66,101 +222,46 @@ class PaymentController extends Controller
         $pendingCount = Payment::pending()->count();
         $failedCount = Payment::failed()->count();
 
-        // Payment method breakdown
-        $paymentMethods = [];
+        // Payment method breakdown — one grouped query instead of 12 separate ones
+        $breakdownRows = Payment::selectRaw("
+            CASE
+                WHEN payment_method = 'cash' THEN 'cash'
+                WHEN payment_method = 'bank_transfer' THEN 'bank_transfer'
+                WHEN gateway = 'esewa' THEN 'esewa'
+                WHEN gateway = 'khalti' THEN 'khalti'
+                ELSE 'other'
+            END as method_key,
+            direction,
+            SUM(amount) as total,
+            COUNT(*) as count
+        ")
+            ->completed()
+            ->groupBy('method_key', 'direction')
+            ->get();
 
-        $paymentMethods['cash'] = [
-            'total' => Payment::where('payment_method', 'cash')
-                ->where('direction', 'in')
-                ->completed()
-                ->sum('amount'),
-            'count' => Payment::where('payment_method', 'cash')
-                ->where('direction', 'in')
-                ->completed()
-                ->count(),
-            'expense' => Payment::where('payment_method', 'cash')
-                ->where('direction', 'out')
-                ->completed()
-                ->sum('amount'),
+        $paymentMethods = [
+            'cash'          => ['total' => 0, 'count' => 0, 'expense' => 0],
+            'bank_transfer' => ['total' => 0, 'count' => 0, 'expense' => 0],
+            'khalti'        => ['total' => 0, 'count' => 0, 'expense' => 0],
+            'esewa'         => ['total' => 0, 'count' => 0, 'expense' => 0],
         ];
 
-        $paymentMethods['bank_transfer'] = [
-            'total' => Payment::where('payment_method', 'bank_transfer')
-                ->completed()
-                ->sum('amount'),
-            'count' => Payment::where('payment_method', 'bank_transfer')
-                ->completed()
-                ->count(),
-            'expense' => Payment::where('payment_method', 'bank_transfer')
-                ->where('direction', 'out')
-                ->completed()
-                ->sum('amount'),
-        ];
+        foreach ($breakdownRows as $row) {
+            if (!isset($paymentMethods[$row->method_key])) {
+                continue;
+            }
 
-        $paymentMethods['khalti'] = [
-            'total' => Payment::where('gateway', 'khalti')
-                ->where('direction', 'in')
-                ->completed()
-                ->sum('amount'),
-
-            'count' => Payment::where('gateway', 'khalti')
-                ->where('direction', 'in')
-                ->completed()
-                ->count(),
-
-            'expense' => Payment::where('gateway', 'khalti')
-                ->where('direction', 'out')
-                ->completed()
-                ->sum('amount'),
-        ];
-
-        $paymentMethods['esewa'] = [
-            'total' => Payment::where('gateway', 'esewa')
-                ->where('direction', 'in')
-                ->completed()
-                ->sum('amount'),
-
-            'count' => Payment::where('gateway', 'esewa')
-                ->where('direction', 'in')
-                ->completed()
-                ->count(),
-
-            'expense' => Payment::where('gateway', 'esewa')
-                ->where('direction', 'out')
-                ->completed()
-                ->sum('amount'),
-        ];
-
-
+            if ($row->direction === 'in') {
+                $paymentMethods[$row->method_key]['total'] = (float) $row->total;
+                $paymentMethods[$row->method_key]['count'] = (int) $row->count;
+            } else {
+                $paymentMethods[$row->method_key]['expense'] = (float) $row->total;
+            }
+        }
 
         // Direction breakdown
         $incomeCount = Payment::income()->count();
         $expenseCount = Payment::expense()->count();
-
-        // Monthly data for chart (last 12 months)
-        $monthlyData = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $monthlyData[] = [
-                'month' => $month->format('M Y'),
-                'income' => Payment::income()
-                    ->completed()
-                    ->whereYear('payment_date', $month->year)
-                    ->whereMonth('payment_date', $month->month)
-                    ->sum('amount'),
-                'expense' => Payment::expense()
-                    ->completed()
-                    ->whereYear('payment_date', $month->year)
-                    ->whereMonth('payment_date', $month->month)
-                    ->sum('amount')
-            ];
-        }
-
-        // Recent transactions
-        $recentTransactions = Payment::with(['vehicleBooking.customer'])
-            ->orderBy('payment_date', 'desc')
-            ->take(10)
-            ->get();
 
         return view('layouts.admin.payments.index', compact(
             'payments',
@@ -173,9 +274,7 @@ class PaymentController extends Controller
             'failedCount',
             'paymentMethods',
             'incomeCount',
-            'expenseCount',
-            'monthlyData',
-            'recentTransactions'
+            'expenseCount'
         ));
     }
 
