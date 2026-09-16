@@ -122,9 +122,9 @@ class EsewaIbftController extends Controller
         try {
 
             $payload = [
-                'source_bank_code'           => "PRVUNPKA",
-                'source_account_number'      => "9100100008977000001",  //1234567891011120
-                'source_account_name'        => "Test CE",
+                'source_bank_code'           => "BOALNPKA",
+                'source_account_number'      => "0264150119547002",  //1234567891011120
+                'source_account_name'        => "Kathmandu Sightseeing Private Limited",
 
                 // Destination
                 'destination_bank_code'      => $request->destination_bank_code,
@@ -312,9 +312,9 @@ class EsewaIbftController extends Controller
             $payload = [
 
                 // Source
-                'source_bank_code'      => 'PRVUNPKA',
-                'source_account_number' => '9100100008977000001',
-                'source_account_name'   => 'Test CE',
+                'source_bank_code'      => 'BOALNPKA',
+                'source_account_number' => '0264150119547002',
+                'source_account_name'   => 'Kathmandu Sightseeing Private Limited',
 
                 // Destination
                 'destination_bank_code'      => $bankDetail->bank_code,
@@ -467,9 +467,9 @@ class EsewaIbftController extends Controller
             }
 
             $payload = [
-                'source_bank_code'           => 'PRVUNPKA',
-                'source_account_number'      => '9100100008977000001',
-                'source_account_name'        => 'Test CE',
+                'source_bank_code'           => 'BOALNPKA',
+                'source_account_number'      => '0264150119547002',
+                'source_account_name'        => 'Kathmandu Sightseeing Private Limited',
                 'destination_bank_code'      => $agent->bank_code,
                 'destination_account_number' => $agent->bank_account_number,
                 'destination_account_name'   => $agent->bank_account_name,
@@ -837,9 +837,9 @@ class EsewaIbftController extends Controller
 
 
             $payload = [
-                'source_bank_code'           => 'PRVUNPKA',
-                'source_account_number'      => '9100100008977000001',
-                'source_account_name'        => 'Test CE',
+                'source_bank_code'           => 'BOALNPKA',
+                'source_account_number'      => '0264150119547002',
+                'source_account_name'        => 'Kathmandu Sightseeing Private Limited',
 
                 'destination_bank_code'      => $owner->bank_code,
                 'destination_account_number' => $owner->bank_account_number,
