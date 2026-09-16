@@ -949,7 +949,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->whereNotIn('status', ['cancelled','pending'])
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -1257,7 +1257,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->whereNotIn('status', ['cancelled','pending'])
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
@@ -1404,7 +1404,7 @@ class BookingController extends Controller
 
         $bookings = VehicleBooking::with(['vehicle', 'customer', 'tripRoute'])
             ->where('file_no', $request->file_no)
-            ->whereNotIn('status', ['cancelled','pending'])
+            ->whereNotIn('status', ['cancelled', 'pending'])
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->get();
