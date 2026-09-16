@@ -299,6 +299,43 @@ class EsewaIbftController extends Controller
                 ], 400);
             }
 
+            // Validate account before proceeding with payment
+            $validation = $this->esewa->validateAccount(
+                $bankDetail->account_number,
+                $bankDetail->bank_code,
+                $bankDetail->account_holder_name ?? ''
+            );
+
+            if (!isset($validation['code']) || $validation['code'] !== '0') {
+                Log::warning('Account validation failed before transfer', [
+                    'attendance_id' => $request->attendance_id,
+                    'bank_detail_id' => $request->crew_bank_detail_id,
+                    'validation' => $validation,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => $validation['message'] ?? 'Account validation failed.',
+                    'validation' => $validation,
+                ], 400);
+            }
+
+            // Optional: also gate on match percentage, not just code
+            if (($validation['percentage'] ?? 0) < 100) {
+                Log::warning('Account name mismatch on validation', [
+                    'attendance_id' => $request->attendance_id,
+                    'requested_name' => $validation['requested_name'] ?? null,
+                    'held_name' => $bankDetail->account_holder_name,
+                    'percentage' => $validation['percentage'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account holder name does not fully match. Please verify before proceeding.',
+                    'validation' => $validation,
+                ], 400);
+            }
+
             // Amount from attendance allowances
             $amount = $attendance->allowances;
 
