@@ -337,7 +337,9 @@ class EsewaIbftController extends Controller
                 'created_user_type'  => 'user',
             ];
 
-            Log::info('Dashboard Transfer Payload', $payload);
+            Log::info("Dashboard Transfer Payload",[
+                "body" => $payload
+            ]);
 
             $payment = $this->esewa->directSingleTransaction($payload);
 
@@ -1054,8 +1056,8 @@ class EsewaIbftController extends Controller
             $validationData = null;
 
             // Check the response structure
-            if (isset($response['Data']['ibft_corporate_account_validation_response'])) {
-                $validationResponse = $response['Data']['ibft_corporate_account_validation_response'];
+            if (isset($response['code'])) {
+                $validationResponse = $response;
 
                 // Success code is "0" (string) according to your response
                 if ($validationResponse['code'] === '0' || $validationResponse['code'] == 0) {
