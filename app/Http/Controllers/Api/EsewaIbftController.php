@@ -21,6 +21,7 @@ use App\Models\VehicleOwner;
 use App\Helpers\NepaliDateHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class EsewaIbftController extends Controller
 {
@@ -1217,5 +1218,122 @@ class EsewaIbftController extends Controller
             'message' => 'Bank details fetched successfully',
             'data' => $bankdetails
         ]);
+    }
+
+
+    public function paymentOrchestrationPayout(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'destination_bank_code'      => 'required|string',
+            'destination_account_number' => 'required|string',
+            'destination_account_name'   => 'required|string',
+            'amount'                     => 'required|numeric|min:1',
+            'remarks'                    => 'nullable|string|max:255',
+            'narration_one'              => 'nullable|string|max:255',
+            'narration_two'              => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+
+
+            $validation = $this->esewa->validateAccount(
+                $request->destination_account_number,
+                $request->destination_bank_code,
+                $request->destination_account_name
+            );
+
+            if (!isset($validation['code']) || $validation['code'] !== '0') {
+
+                Log::warning('Payment orchestration payout account validation failed', [
+                    'bank_code'      => $request->destination_bank_code,
+                    'account_number' => $request->destination_account_number,
+                    'validation'     => $validation,
+                ]);
+
+                return response()->json([
+                    'success'    => false,
+                    'message'    => $validation['message'] ?? 'Account validation failed.',
+                    'validation' => $validation,
+                ], 400);
+            }
+
+            if (($validation['percentage'] ?? 0) < 100) {
+
+                Log::warning('Payment orchestration payout account name mismatch', [
+                    'requested_name' => $validation['requested_name'] ?? null,
+                    'held_name'      => $validation['held_name'] ?? null,
+                    'percentage'     => $validation['percentage'] ?? null,
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Account holder name does not fully match. Please verify before proceeding.',
+                    'validation' => $validation,
+                ], 400);
+            }
+
+
+            $uniqueId = 'PO-' . now()->format('YmdHis') . '-' . Str::upper(Str::random(8));
+
+            $identityString = $this->esewa->generateIdentityString(
+                "BOALNPKA",
+                $request->destination_account_number,
+                $request->destination_account_name
+            );
+
+            $payload = [
+                'client_id' => config('services.esewa.client_id'),
+
+                'source_bank_code'      => 'BOALNPKA',
+                'source_account_number' => '0264150119547002',
+                'source_account_name'   => 'Kathmandu Sightseeing Private Limited',
+
+                'destination_bank_code'      => $request->destination_bank_code,
+                'destination_account_number' => $request->destination_account_number,
+                'destination_account_name'   => $request->destination_account_name,
+
+                'amount'        => number_format((float) $request->amount, 2, '.', ''),
+                'remarks'      => $request->remarks ?? 'Payment',
+                'narration_one' => $request->narration_one ?? '',
+                'narration_two' => $request->narration_two ?? '',
+
+                'unique_id'       => $uniqueId,
+                'identity_string' => $identityString,
+            ];
+
+            Log::info('Payment orchestration payout initiated', [
+                'unique_id' => $uniqueId,
+                'amount'    => $payload['amount'],
+                'bank_code' => $request->destination_bank_code,
+            ]);
+
+            $response = $this->esewa->directSingleTransactionWithoutPersistence($payload);
+            return response()->json([
+                'success'  => true,
+                'message'  => $response['Message'] ?? 'Payout processed.',
+                'unique_id' => $uniqueId,
+                'data'     => $response['Data'] ?? null,
+            ]);
+        } catch (Exception $e) {
+
+            Log::error('Payment orchestration payout failed', [
+                'message' => $e->getMessage(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to process payout.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 }

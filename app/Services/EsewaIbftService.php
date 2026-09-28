@@ -412,4 +412,61 @@ class EsewaIbftService
 
         return $response->json();
     }
+
+    public function directSingleTransactionWithoutPersistence(array $params): array
+    {
+        $uniqueId = $params['unique_id'] ?? $this->generateUniqueId();
+
+        $identityString = $this->generateIdentityString(
+            $params['source_account_number'],
+            $params['destination_account_number'],
+            $params['destination_account_name']
+        );
+
+        $payload = [
+            'client_id' => $this->clientId,
+
+            'source_bank_code'      => $params['source_bank_code'],
+            'source_account_number' => $params['source_account_number'],
+            'source_account_name'   => $params['source_account_name'],
+
+            'destination_bank_code'      => $params['destination_bank_code'],
+            'destination_account_number' => $params['destination_account_number'],
+            'destination_account_name'   => $params['destination_account_name'],
+
+            'amount' => number_format(
+                (float) $params['amount'],
+                2,
+                '.',
+                ''
+            ),
+
+            'remarks'       => $params['remarks'] ?? '',
+            'narration_one' => $params['narration_one'] ?? '',
+            'narration_two' => $params['narration_two'] ?? '',
+
+            'unique_id'       => $uniqueId,
+            'identity_string' => $identityString,
+        ];
+
+        Log::info('eSewa IBFT orchestration payout request', [
+            'unique_id' => $uniqueId,
+            'amount'    => $payload['amount'],
+            'destination_bank_code' => $payload['destination_bank_code'],
+        ]);
+
+        $response = $this->makeRequest(
+            'POST',
+            $this->baseUrl . '/api/fonegateway/ibft/v1/transaction/direct_single_transaction',
+            $payload
+        );
+
+        Log::info('eSewa IBFT orchestration payout response', [
+            'unique_id'     => $uniqueId,
+            'response_code' => $response['Code'] ?? null,
+            'message'       => $response['Message'] ?? null,
+        ]);
+
+        return $response;
+    }
 }
