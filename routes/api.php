@@ -239,5 +239,6 @@ Route::prefix('esewa')->group(function () {
         Route::post('send-direct-transaction', 'transfer');
         Route::post('transaction-status',  'getTransactionStatus');
         Route::post('transaction-report',  'getTransactionReport');
+        Route::post('/payment-orchestration/payout', 'paymentOrchestrationPayout');
     });
 });
