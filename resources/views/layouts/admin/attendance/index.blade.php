@@ -213,30 +213,23 @@
                         <td> {{ ($attendance->status) }}</td>
 
                         
-                       <td>
+                        <td>
                             @if(($attendance->payment_status) === 'paid')
                                 <span class="badge badge-success">
                                     Paid
                                 </span>
                             @else
-                                {{-- <button id="khaltiBtn-{{ $attendance->id }}" class="btn btn-sm btn-primary"
-                                    onclick="payByKhalti({{ $attendance->id }})">
-                                    <i class="fas fa-credit-card mr-2"></i>Khalti
-                                </button> --}}
+                                @if(auth()->user()->can('index_attendance_payment'))
                                  <button id="bankBtn-{{ $attendance->id }}" class="btn btn-sm btn-info mb-1"
                                     onclick="payByBank({{ $attendance->id }})">
                                     <i class="fas fa-university mr-1"></i> Bank
                                 </button>
-                                {{-- <button class="btn btn-sm btn-success"
-                                    onclick="payByEsewa({{ $attendance->id }})">
-
-                                    <i class="fas fa-wallet mr-2"></i>
-                                    ESewa
-                                </button> --}}
+                                
                                 <button id="manualBtn-{{ $attendance->id }}" class="btn btn-sm btn-success"
                                     onclick="selectProof({{ $attendance->id }})">
                                     <i class="fas fa-money-bill mr-2"></i> Cash Payment
                                 </button>
+                                @endif
                             @endif
                         </td>
                         <td> {{ ($attendance->payment_remarks) }}</td>

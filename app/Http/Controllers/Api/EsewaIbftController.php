@@ -1309,6 +1309,7 @@ class EsewaIbftController extends Controller
                 'unique_id'       => $uniqueId,
                 'identity_string' => $identityString,
             ];
+            Log::info("paymentOrchestrationPayout payload",["data" => $payload]);
 
             Log::info('Payment orchestration payout initiated', [
                 'unique_id' => $uniqueId,
