@@ -2,6 +2,21 @@
 
 @section('dynamicdata')
 
+
+@php
+    // Combine booking start_date + start_time for the default datetime-local value
+    $bookingStartDefault = '';
+    try {
+        if (!empty($booking->start_date)) {
+            $datePart = \Carbon\Carbon::parse($booking->start_date)->format('Y-m-d');
+            $timePart = !empty($booking->start_time) ? $booking->start_time : '00:00';
+            $bookingStartDefault = \Carbon\Carbon::parse($datePart . ' ' . $timePart)->format('Y-m-d\TH:i');
+        }
+    } catch (\Exception $e) {
+        $bookingStartDefault = '';
+    }
+@endphp
+
 <div class="content-header">
 <div class="container-fluid">
 <h1>Add Vehicle Movement</h1>
@@ -26,6 +41,45 @@
 <div class="card-body">
 
 @include('layouts.admin_theme.alert')
+
+<div class="callout callout-info">
+    <h5 class="mb-3"><i class="fas fa-clipboard-list"></i> This movement is for Booking #{{ $booking->id }}</h5>
+    <div class="row">
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Booking ID / File No</small>
+            <strong>#{{ $booking->id }}@if(!empty($booking->file_no)) / {{ $booking->file_no }}@endif</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Customer</small>
+            <strong>{{ $booking->customer_name ?? '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">From</small>
+            <strong>{{ $booking->from_destination ?? '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">To</small>
+            <strong>{{ $booking->to_destination ?? '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Start Date</small>
+            <strong>{{ !empty($booking->start_date) ? \Carbon\Carbon::parse($booking->start_date)->format('d M Y') : '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Start Time</small>
+            <strong>{{ !empty($booking->start_time) ? \Carbon\Carbon::parse($booking->start_time)->format('h:i A') : '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Vehicle</small>
+            <strong>{{ $booking->vehicle_name ?? '-' }}</strong>
+        </div>
+        <div class="col-md-3 mb-2">
+            <small class="text-muted d-block">Driver / Helper</small>
+            <strong>{{ $booking->driver_name ?? '-' }}</strong>
+            @if(!empty($booking->helper_name)) / {{ $booking->helper_name }} @endif
+        </div>
+    </div>
+</div>
 
 <!-- Booking Information -->
 <div class="row">
@@ -87,10 +141,10 @@
         <div class="form-group">
             <label>Depot Departure Date & Time <span class="text-danger">*</span></label>
             <input type="datetime-local"
-                   name="depot_departure_datetime"
-                   class="form-control"
-                   value="{{ old('depot_departure_datetime', isset($moment) && $moment->depot_departure_datetime ? \Carbon\Carbon::parse($moment->depot_departure_datetime)->format('Y-m-d\TH:i') : '') }}"
-                   required>
+                    name="depot_departure_datetime"
+                    class="form-control"
+                    value="{{ old('depot_departure_datetime', isset($moment) && $moment->depot_departure_datetime ? \Carbon\Carbon::parse($moment->depot_departure_datetime)->format('Y-m-d\TH:i') : $bookingStartDefault) }}"
+                    required>
         </div>
     </div>
 
@@ -142,9 +196,9 @@
         <div class="form-group">
             <label>Pickup Arrival Date & Time</label>
             <input type="datetime-local"
-                   name="pickup_arrival_datetime"
-                   class="form-control"
-                   value="{{ old('pickup_arrival_datetime', isset($moment) && $moment->pickup_arrival_datetime ? \Carbon\Carbon::parse($moment->pickup_arrival_datetime)->format('Y-m-d\TH:i') : '') }}">
+       name="pickup_arrival_datetime"
+       class="form-control"
+       value="{{ old('pickup_arrival_datetime', isset($moment) && $moment->pickup_arrival_datetime ? \Carbon\Carbon::parse($moment->pickup_arrival_datetime)->format('Y-m-d\TH:i') : (isset($moment) ? '' : $bookingStartDefault)) }}">
         </div>
     </div>
 
