@@ -211,7 +211,7 @@
                     <th>Start Time</th>
                     <th>Customer</th>
                     <th>File No</th>
-                    <th>Trip Route</th>
+                    <th>Notes</th>
                     <th>Rate & Total</th>
                     <th>Vehicle</th>
                     <th>Driver</th>
@@ -255,8 +255,8 @@
     {{-- File No --}}
     <td>{{ $fileNo }}</td>
 
-    {{-- Trip Route --}}
-    <td>{{ $booking->tripRoute->title ?? '-' }}</td>
+    {{-- Notes --}}
+    <td>{{ $booking->notes ?? '-' }}</td>
 
     {{-- Rate & Total --}}
     <td>
