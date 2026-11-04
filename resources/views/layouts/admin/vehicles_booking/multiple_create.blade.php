@@ -19,17 +19,14 @@
 
         <div class="card card-primary card-outline">
             <div class="card-header">
-                <h3 class="card-title">
-                    <i class="fas fa-car mr-1"></i>
-                    Multiple Bookings Creation
-                </h3>
-               
+                <h3 class="card-title"><i class="fas fa-car mr-1"></i> Multiple Bookings Creation</h3>
             </div>
 
             <form method="POST" action="{{ route('admin.vehicle_bookings.multiple.store') }}" id="multipleBookingForm">
                 @csrf
                 <div class="card-body">
-                    <!-- Common Information Section -->
+
+                    {{-- COMMON INFORMATION --}}
                     <div class="card card-secondary mb-4">
                         <div class="card-header">
                             <h4 class="card-title">Common Information (Applies to all bookings)</h4>
@@ -44,20 +41,30 @@
                                             <select name="customer_id" id="customer_id" class="form-control" required>
                                                 <option value="">Select Customer</option>
                                                 @foreach($customers as $customer)
-                                                    <option value="{{ $customer->id }}">
-                                                        {{ $customer->name }}
-                                                    </option>
+                                                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                                                 @endforeach
                                             </select>
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-success" id="addCustomerBtn">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                                <button type="button" class="btn btn-success" id="addCustomerBtn"><i class="fas fa-plus"></i></button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 @endif
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Passenger</label>
+                                        <input type="text" name="passenger" class="form-control" placeholder="Enter passenger">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>File No</label>
+                                        <input type="text" name="file_no" class="form-control" placeholder="Enter file no">
+                                    </div>
+                                </div>
 
                                 <div class="col-md-4">
                                     <div class="form-group">
@@ -80,15 +87,11 @@
                                             <select name="driver_id" id="driver_id" class="form-control">
                                                 <option value="">Select Driver</option>
                                                 @foreach($drivers as $driver)
-                                                    <option value="{{ $driver->id }}">
-                                                        {{ $driver->user->name }}
-                                                    </option>
+                                                    <option value="{{ $driver->id }}">{{ $driver->user->name }}</option>
                                                 @endforeach
                                             </select>
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-success" id="addDriverBtn">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                                <button type="button" class="btn btn-success" id="addDriverBtn"><i class="fas fa-plus"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -101,274 +104,36 @@
                                             <select name="helper_id" id="helper_id" class="form-control">
                                                 <option value="">Select Helper</option>
                                                 @foreach($helpers as $helper)
-                                                    <option value="{{ $helper->id }}">
-                                                        {{ $helper->user->name }}
-                                                    </option>
+                                                    <option value="{{ $helper->id }}">{{ $helper->user->name }}</option>
                                                 @endforeach
                                             </select>
                                             <div class="input-group-append">
-                                                <button type="button" class="btn btn-success" id="addHelperBtn">
-                                                    <i class="fas fa-plus"></i>
-                                                </button>
+                                                <button type="button" class="btn btn-success" id="addHelperBtn"><i class="fas fa-plus"></i></button>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>Passenger</label>
-                                        <input type="text" name="passenger" id="passenger" class="form-control" placeholder="Enter passenger">
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>File No</label>
-                                        <input type="text" name="file_no" id="file_no" class="form-control" placeholder="Enter file no">
                                     </div>
                                 </div>
 
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>Signage Information</label>
-                                        <textarea name="signage_information" id="signageInformation" class="form-control" rows="2" placeholder="Describe signage details..."></textarea>
+                                        <textarea name="signage_information" class="form-control" rows="2" placeholder="Describe signage details..."></textarea>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                   <div class="card-tools d-flex justify-content-end mb-2">
+
+                    <div class="d-flex justify-content-end mb-2">
                         <button type="button" class="btn btn-success btn-sm" id="addBookingRowBtn">
                             <i class="fas fa-plus mr-1"></i> Add Another Booking Row
                         </button>
                     </div>
 
-                    <!-- Multiple Booking Rows Section -->
                     <div class="card card-success">
-                        <div class="card-header">
-                            <h4 class="card-title">Booking Details</h4>
-                        </div>
-                         
+                        <div class="card-header"><h4 class="card-title">Booking Details</h4></div>
                         <div class="card-body">
-                            <div id="bookingsRowsContainer">
-                                <!-- Booking Row 1 -->
-                                <div class="booking-row card card-info mb-3" data-row-index="1">
-                                    <div class="card-header">
-                                        <h5 class="card-title">Booking #1</h5>
-                                        <div class="card-tools">
-                                            <button type="button" class="btn btn-danger btn-sm remove-row-btn" data-row-id="1">
-                                                <i class="fas fa-trash"></i> Remove
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            {{-- <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>File No</label>
-                                                    <input type="text" name="bookings[1][file_no]" id="file_no" class="form-control" placeholder="Enter file no">
-                                                </div>
-                                            </div> --}}
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Trip Category</label>
-                                                    <div class="input-group">
-                                                        <select name="bookings[1][trip_category_id]" id="trip_category_id_1" class="form-control trip-category-select" data-row="1">
-                                                            <option value="">Select Category</option>
-                                                            @foreach($tripCategories as $category)
-                                                                <option value="{{ $category->id }}">
-                                                                    {{ $category->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                        <div class="input-group-append">
-                                                            <button type="button" class="btn btn-success add-category-btn">
-                                                                <i class="fas fa-plus"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Trip Route</label>
-                                                    <div class="input-group">
-                                                        <select name="bookings[1][trip_route_id]" id="trip_route_id_1" class="form-control trip-route-select" data-row="1">
-                                                            <option value="">Select Route</option>
-                                                        </select>
-                                                        <div class="input-group-append">
-                                                            <button type="button" class="btn btn-success add-route-btn">
-                                                                <i class="fas fa-plus"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Amount</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][rate_per_day]" class="form-control rate-per-day" data-row="1" value="0">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Pickup Destination</label>
-                                                    <input type="text" name="bookings[1][from_destination]" class="form-control" placeholder="Enter pickup location">
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Dropout Destination</label>
-                                                    <input type="text" name="bookings[1][to_destination]" class="form-control" placeholder="Enter dropoff location">
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>No. of People</label>
-                                                    <input type="number" name="bookings[1][no_of_people]" class="form-control no-of-people" min="1" data-row="1">
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Start Date <span class="text-danger">*</span></label>
-                                                    <input type="date" name="bookings[1][start_date]"  id="start_date_1" class="form-control start-date" data-row="1" required>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-2">
-                                                <div class="form-group">
-                                                    <label>Start Time <span class="text-danger">*</span></label>
-                                                    <input type="time" name="bookings[1][start_time]" class="form-control start-time" data-row="1" required>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>End Date <span class="text-danger">*</span></label>
-                                                    <input type="date" name="bookings[1][end_date]"  id="end_date_1" class="form-control end-date" data-row="1" required>
-                                                </div>
-                                            </div>
-
-                                              <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Status</label>
-                                                    <select name="bookings[1][status]" class="form-control status-type" data-row="1">
-                                                        <option value="confirmed">Confirmed</option>
-                                                        <option value="pending">Pending</option>
-                                                        <option value="cancelled">Cancelled</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-12">
-                                                <hr>
-                                                <h6>Financial Details - Booking #1</h6>
-                                            </div>
-
-                                            
-
-                                            {{-- <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Sub Total</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][sub_total]" class="form-control sub-total" data-row="1" readonly>
-                                                    </div>
-                                                </div>
-                                            </div> --}}
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Discount Type</label>
-                                                    <select name="bookings[1][discount_amount_type]" class="form-control discount-type" data-row="1">
-                                                        <option value="amount">Fixed Amount</option>
-                                                        <option value="percentage">Percentage</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Discount</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text discount-symbol" data-row="1">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][discount]" class="form-control discount" data-row="1" value="0">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Apply VAT (13%)</label>
-                                                    <select name="bookings[1][vat]" class="form-control vat" data-row="1">
-                                                        <option value="0">No</option>
-                                                        <option value="1">Yes</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>VAT Amount</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][tax]" class="form-control vat-amount" data-row="1" readonly>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Total Amount</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][total_amount]" class="form-control total-amount" data-row="1" readonly>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label>Paid Amount</label>
-                                                    <div class="input-group">
-                                                        <div class="input-group-prepend">
-                                                            <span class="input-group-text">रू</span>
-                                                        </div>
-                                                        <input type="number" step="0.01" name="bookings[1][paid_amount]" class="form-control paid-amount" data-row="1" value="0">
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-12">
-                                                <div class="form-group">
-                                                    <label>Additional Notes</label>
-                                                    <textarea name="bookings[1][notes]" rows="2" class="form-control" placeholder="Any additional notes..."></textarea>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <div id="bookingsRowsContainer"></div>
                         </div>
                     </div>
                 </div>
@@ -386,676 +151,416 @@
     </div>
 </section>
 
-<!-- Modals -->
+{{-- MODALS --}}
 <div class="modal fade" id="customerModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <h5>Add Customer</h5>
-            <input id="c_name" class="form-control mb-2" placeholder="Name">
-            <input id="c_phone" class="form-control mb-2" placeholder="Phone">
-            <input id="c_email" class="form-control mb-2" placeholder="Email">
-            <input id="c_address" class="form-control mb-2" placeholder="Address">
-            <button class="btn btn-primary" id="saveCustomer">Save</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="categoryModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <h5>Add Category</h5>
-            <input id="cat_name" class="form-control mb-2" placeholder="Name">
-            <textarea id="cat_desc" class="form-control mb-2" placeholder="Description"></textarea>
-            <button class="btn btn-primary" id="saveCategory">Save</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="routeModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <h5>Add Route</h5>
-            <select id="r_category" class="form-control mb-2">
-                @foreach($tripCategories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
-            </select>
-            <input id="r_title" class="form-control mb-2" placeholder="Title">
-            <input id="r_km" class="form-control mb-2" placeholder="KM">
-            <input id="r_car" class="form-control mb-2" placeholder="Car Price">
-            <input id="r_hiace" class="form-control mb-2" placeholder="Hiace Price">
-            <input id="r_coaster" class="form-control mb-2" placeholder="Coaster Price">
-            <input id="r_bus" class="form-control mb-2" placeholder="Bus Price">
-            <button class="btn btn-primary" id="saveRoute">Save</button>
-        </div>
-    </div>
+    <div class="modal-dialog"><div class="modal-content p-3">
+        <h5>Add Customer</h5>
+        <input id="c_name" class="form-control mb-2" placeholder="Name">
+        <input id="c_phone" class="form-control mb-2" placeholder="Phone">
+        <input id="c_email" class="form-control mb-2" placeholder="Email">
+        <input id="c_address" class="form-control mb-2" placeholder="Address">
+        <button class="btn btn-primary" id="saveCustomer">Save</button>
+    </div></div>
 </div>
 
 <div class="modal fade" id="driverModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <h5>Add Driver</h5>
-            <input id="d_name" class="form-control mb-2" placeholder="Driver Name">
-            <input id="d_phone" class="form-control mb-2" placeholder="Phone">
-            <input id="d_email" class="form-control mb-2" placeholder="Email">
-            <input id="d_license" class="form-control mb-2" placeholder="License Number">
-            <button class="btn btn-primary" id="saveDriver">Save</button>
-        </div>
-    </div>
+    <div class="modal-dialog"><div class="modal-content p-3">
+        <h5>Add Driver</h5>
+        <input id="d_name" class="form-control mb-2" placeholder="Driver Name">
+        <input id="d_phone" class="form-control mb-2" placeholder="Phone">
+        <input id="d_email" class="form-control mb-2" placeholder="Email">
+        <input id="d_license" class="form-control mb-2" placeholder="License Number">
+        <button class="btn btn-primary" id="saveDriver">Save</button>
+    </div></div>
 </div>
 
 <div class="modal fade" id="helperModal">
-    <div class="modal-dialog">
-        <div class="modal-content p-3">
-            <h5>Add Helper</h5>
-            <input id="h_name" class="form-control mb-2" placeholder="Helper Name">
-            <input id="h_phone" class="form-control mb-2" placeholder="Phone">
-            <input id="h_email" class="form-control mb-2" placeholder="Email">
-            <button class="btn btn-primary" id="saveHelper">Save</button>
-        </div>
-    </div>
+    <div class="modal-dialog"><div class="modal-content p-3">
+        <h5>Add Helper</h5>
+        <input id="h_name" class="form-control mb-2" placeholder="Helper Name">
+        <input id="h_phone" class="form-control mb-2" placeholder="Phone">
+        <input id="h_email" class="form-control mb-2" placeholder="Email">
+        <button class="btn btn-primary" id="saveHelper">Save</button>
+    </div></div>
 </div>
+@endsection
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@section('scripts')
 <script type="text/javascript">
-$(document).ready(function() {
-    const VAT_RATE = 0.13;
-    let rowCounter = 1;
-  function setDefaultDates(rowId) {
-    var today = new Date().toISOString().split('T')[0];
-    $(`#start_date_${rowId}`).val(today);
-    $(`#end_date_${rowId}`).val(today);
+const VAT_RATE = 0.13;
+let rowCounter = 0;
+let vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
+const itinCounters = {};
+
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+/* ---------- ROW TEMPLATE ---------- */
+function bookingRowHtml(i) {
+    const p = `bookings[${i}]`;
+    return `
+    <div class="booking-row card card-info mb-3" data-row-index="${i}">
+        <div class="card-header">
+            <h5 class="card-title">Booking #${i}</h5>
+            <div class="card-tools">
+                <button type="button" class="btn btn-danger btn-sm remove-row-btn"><i class="fas fa-trash"></i> Remove</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4"><div class="form-group">
+                    <label>Pickup Destination</label>
+                    <input type="text" name="${p}[from_destination]" class="form-control" placeholder="Enter pickup location">
+                </div></div>
+                <div class="col-md-4"><div class="form-group">
+                    <label>Dropout Destination</label>
+                    <input type="text" name="${p}[to_destination]" class="form-control" placeholder="Enter dropoff location">
+                </div></div>
+                <div class="col-md-4"><div class="form-group">
+                    <label>No. of People</label>
+                    <input type="number" name="${p}[no_of_people]" class="form-control" min="1">
+                </div></div>
+
+                <div class="col-md-3"><div class="form-group">
+                    <label>Start Date <span class="text-danger">*</span></label>
+                    <input type="date" name="${p}[start_date]" class="form-control start-date" value="${todayStr()}" required>
+                </div></div>
+                <div class="col-md-2"><div class="form-group">
+                    <label>Start Time <span class="text-danger">*</span></label>
+                    <input type="time" name="${p}[start_time]" class="form-control" required>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>End Date <span class="text-danger">*</span></label>
+                    <input type="date" name="${p}[end_date]" class="form-control end-date" value="${todayStr()}" required>
+                </div></div>
+                <div class="col-md-4"><div class="form-group">
+                    <label>Status</label>
+                    <select name="${p}[status]" class="form-control">
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div></div>
+            </div>
+
+            <hr>
+            <h6><i class="fas fa-route mr-1"></i> Itinerary (Day-wise Plan)</h6>
+            <div class="table-responsive">
+            <table class="table table-bordered table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th style="width:14%">Date</th><th style="width:15%">From</th><th style="width:15%">To</th>
+                        <th style="width:9%">Est. KM</th><th style="width:9%">Est. Hours</th><th style="width:9%">Overnight</th>
+                        <th style="width:10%">Est. Price</th><th style="width:14%">Notes</th><th style="width:5%"></th>
+                    </tr>
+                </thead>
+                <tbody class="itinerary-rows"></tbody>
+            </table>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary add-itinerary-btn mb-3">
+                <i class="fas fa-plus mr-1"></i> Add Day
+            </button>
+
+            <hr>
+            <h6>Financial Details</h6>
+            <div class="row">
+                <div class="col-md-3"><div class="form-group">
+                    <label>Amount</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[rate_per_day]" class="form-control rate-per-day" value="0">
+                    </div>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Discount Type</label>
+                    <select name="${p}[discount_amount_type]" class="form-control discount-type">
+                        <option value="amount">Fixed Amount</option>
+                        <option value="percentage">Percentage</option>
+                    </select>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Discount</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text discount-symbol">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[discount]" class="form-control discount" value="0">
+                    </div>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Apply VAT (13%)</label>
+                    <select name="${p}[vat]" class="form-control vat">
+                        <option value="0">No</option>
+                        <option value="1">Yes</option>
+                    </select>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>VAT Amount</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[tax]" class="form-control vat-amount" value="0" readonly>
+                    </div>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Total Amount</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[total_amount]" class="form-control total-amount" value="0" readonly>
+                    </div>
+                </div></div>
+            </div>
+
+            <hr>
+            <h6>Payment Information</h6>
+            <div class="row">
+                <div class="col-md-3"><div class="form-group">
+                    <label>Paid Amount</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[paid_amount]" class="form-control paid-amount" value="0">
+                    </div>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Remaining Balance</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+                        <input type="number" step="0.01" name="${p}[remaining_balance]" class="form-control remaining-balance" value="0" readonly>
+                    </div>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Payment Method</label>
+                    <select name="${p}[payment_method]" class="form-control">
+                        <option value="">Select Payment Method</option>
+                        <option value="cash">Cash</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="card">Card</option>
+                        <option value="online">Online</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Payment Status</label>
+                    <select name="${p}[payment_status]" class="form-control">
+                        <option value="0">Pending</option>
+                        <option value="1">Paid</option>
+                        <option value="2">Partial</option>
+                    </select>
+                </div></div>
+                <div class="col-md-3"><div class="form-group">
+                    <label>Payment Date</label>
+                    <input type="date" name="${p}[payment_date]" class="form-control" value="${todayStr()}">
+                </div></div>
+                <div class="col-md-9"><div class="form-group">
+                    <label>Payment Notes</label>
+                    <textarea name="${p}[payment_note]" rows="2" class="form-control"></textarea>
+                </div></div>
+                <div class="col-md-12"><div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea name="${p}[notes]" rows="2" class="form-control" placeholder="Any additional notes..."></textarea>
+                </div></div>
+            </div>
+        </div>
+    </div>`;
 }
 
-    // Calculate days between dates
-    function calculateDays(startDate, endDate) {
-        if (startDate && endDate) {
-            var start = new Date(startDate);
-            var end = new Date(endDate);
-            var diffTime = end - start;
-            var days = diffTime / (1000 * 60 * 60 * 24);
-            if (days < 0) days = 0;
-            if (days === 0 && startDate === endDate) {
-                days = 1;
-            }
-            return days;
-        }
-        return 0;
+/* ---------- ITINERARY ---------- */
+function addItineraryRow($row, data = {}) {
+    const i = $row.data('row-index');
+    const j = itinCounters[i]++;
+    const n = `bookings[${i}][itineraries][${j}]`;
+    const date = data.itinerary_date || $row.find('.start-date').val() || todayStr();
+
+    const tr = `
+    <tr>
+        <td><input type="date" name="${n}[itinerary_date]" class="form-control form-control-sm" value="${date}"></td>
+        <td><input type="text" name="${n}[from_destination]" class="form-control form-control-sm" placeholder="From"></td>
+        <td><input type="text" name="${n}[to_destination]" class="form-control form-control-sm" placeholder="To"></td>
+        <td><input type="number" step="0.01" name="${n}[est_km]" class="form-control form-control-sm itin-km" value="0"></td>
+        <td><input type="number" step="0.01" name="${n}[est_hours]" class="form-control form-control-sm itin-hours" value="0"></td>
+        <td>
+            <select name="${n}[is_overnight]" class="form-control form-control-sm itin-overnight">
+                <option value="0">No</option><option value="1">Yes</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" step="0.01" name="${n}[est_price]" class="form-control form-control-sm itin-price" value="0" readonly>
+            <input type="hidden" name="${n}[per_km_rate]" class="itin-per-km" value="0">
+            <input type="hidden" name="${n}[per_hour_rate]" class="itin-per-hour" value="0">
+            <input type="hidden" name="${n}[overnight_charge]" class="itin-overnight-charge" value="0">
+        </td>
+        <td><input type="text" name="${n}[notes]" class="form-control form-control-sm" placeholder="Notes"></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-itin-btn"><i class="fas fa-trash"></i></button></td>
+    </tr>`;
+    const $tr = $(tr).appendTo($row.find('.itinerary-rows'));
+    calcItineraryRow($tr);
+}
+
+function calcItineraryRow($tr) {
+    const km = parseFloat($tr.find('.itin-km').val()) || 0;
+    const hrs = parseFloat($tr.find('.itin-hours').val()) || 0;
+    const overnight = $tr.find('.itin-overnight').val() == '1';
+    const overnightCharge = overnight ? vehicleRates.overnight_price : 0;
+
+    const price = (km * vehicleRates.per_km_rate) + (hrs * vehicleRates.per_hour_rate) + overnightCharge;
+
+    $tr.find('.itin-price').val(price.toFixed(2));
+    $tr.find('.itin-per-km').val(vehicleRates.per_km_rate);
+    $tr.find('.itin-per-hour').val(vehicleRates.per_hour_rate);
+    $tr.find('.itin-overnight-charge').val(overnightCharge);
+
+    updateRowTotals($tr.closest('.booking-row'), true);
+}
+
+/* ---------- TOTALS ---------- */
+function updateRowTotals($row, fromItinerary = false) {
+    if (fromItinerary) {
+        let sum = 0;
+        $row.find('.itin-price').each(function () { sum += parseFloat($(this).val()) || 0; });
+        $row.find('.rate-per-day').val(sum.toFixed(2));
     }
 
-    
+    const subTotal = parseFloat($row.find('.rate-per-day').val()) || 0;
+    const discount = parseFloat($row.find('.discount').val()) || 0;
+    const type = $row.find('.discount-type').val();
 
+    let discountAmount = 0;
+    if (discount > 0) discountAmount = type === 'percentage' ? subTotal * discount / 100 : discount;
 
-    // Calculate total for a specific row
-    function calculateRowTotal(rowId) {
-        var startDate = $(`#start_date_${rowId}`).val();
-        var endDate = $(`#end_date_${rowId}`).val();
-        
-        console.log(`Calculating row ${rowId}: startDate=${startDate}, endDate=${endDate}`);
-        
-        var days = calculateDays(startDate, endDate);
-        
-        var ratePerDay = parseFloat($(`input[name="bookings[${rowId}][rate_per_day]"]`).val()) || 0;
-        var subTotal = days * ratePerDay;
-        
-        console.log(`Row ${rowId}: days=${days}, ratePerDay=${ratePerDay}, subTotal=${subTotal}`);
-        
-        $(`input[name="bookings[${rowId}][sub_total]"]`).val(subTotal.toFixed(2));
+    const afterDiscount = Math.max(0, subTotal - discountAmount);
+    const vat = ($row.find('.vat').val() == '1' && afterDiscount > 0) ? afterDiscount * VAT_RATE : 0;
+    const total = afterDiscount + vat;
+    const paid = parseFloat($row.find('.paid-amount').val()) || 0;
 
-        var discount = parseFloat($(`input[name="bookings[${rowId}][discount]"]`).val()) || 0;
-        var discountType = $(`select[name="bookings[${rowId}][discount_amount_type]"]`).val();
-        var discountAmount = 0;
+    $row.find('.vat-amount').val(vat.toFixed(2));
+    $row.find('.total-amount').val(total.toFixed(2));
+    $row.find('.remaining-balance').val((total - paid).toFixed(2));
+    $row.find('.discount-symbol').text(type === 'percentage' ? '%' : 'रू');
+}
 
-        if (discount > 0) {
-            if (discountType === 'percentage') {
-                discountAmount = subTotal * (discount / 100);
-            } else {
-                discountAmount = discount;
-            }
-        }
+/* ---------- ADD / REMOVE BOOKING ROW ---------- */
+function addBookingRow() {
+    rowCounter++;
+    itinCounters[rowCounter] = 0;
+    const $row = $(bookingRowHtml(rowCounter)).appendTo('#bookingsRowsContainer');
+    addItineraryRow($row);
+    updateRowTotals($row, true);
+}
 
-        var afterDiscount = Math.max(0, subTotal - discountAmount);
-        var applyVat = $(`select[name="bookings[${rowId}][vat]"]`).val() == '1';
-        var vatAmount = 0;
-        
-        if (applyVat && afterDiscount > 0) {
-            vatAmount = afterDiscount * VAT_RATE;
-        }
-        $(`input[name="bookings[${rowId}][tax]"]`).val(vatAmount.toFixed(2));
+$('#addBookingRowBtn').on('click', addBookingRow);
 
-        var total = afterDiscount + vatAmount;
-        $(`input[name="bookings[${rowId}][total_amount]"]`).val(total.toFixed(2));
-        
-        updateRemainingBalance(rowId);
-    }
-
-    function updateRemainingBalance(rowId) {
-        var total = parseFloat($(`input[name="bookings[${rowId}][total_amount]"]`).val()) || 0;
-        var paid = parseFloat($(`input[name="bookings[${rowId}][paid_amount]"]`).val()) || 0;
-        var remaining = total - paid;
-        // Store remaining balance in a hidden field or just calculate when needed
-    }
-
-    function updateDiscountSymbol(rowId) {
-        var type = $(`select[name="bookings[${rowId}][discount_amount_type]"]`).val();
-        $(`.discount-symbol[data-row="${rowId}"]`).text(type === 'percentage' ? '%' : 'रू');
-    }
-
-    // Attach event handlers for a specific row
-    function attachRowEventHandlers(rowId) {
-        console.log(`Attaching event handlers for row ${rowId}`);
-        setDefaultDates(rowId);
-        // Date change handlers
-        $(`#start_date_${rowId}`).off('change').on('change', function() {
-            console.log(`Start date changed for row ${rowId}`);
-            calculateRowTotal(rowId);
-        });
-        
-        $(`#end_date_${rowId}`).off('change').on('change', function() {
-            console.log(`End date changed for row ${rowId}`);
-            calculateRowTotal(rowId);
-        });
-        
-          $(`#start_date_${rowId}`).off('change').on('change', function() {
-            var startDate = $(this).val();
-            if (startDate) {
-                $(`#end_date_${rowId}`).val(startDate);
-                $(`#end_date_${rowId}`).trigger('change');
-            }
-        });
-        // Rate per day change
-        $(`input[name="bookings[${rowId}][rate_per_day]"]`).off('change keyup').on('change keyup', function() {
-            console.log(`Rate per day changed for row ${rowId}`);
-            calculateRowTotal(rowId);
-        });
-        
-        // Discount change
-        $(`.discount[data-row="${rowId}"]`).off('change keyup').on('change keyup', function() {
-            calculateRowTotal(rowId);
-        });
-        
-        // Discount type change
-        $(`.discount-type[data-row="${rowId}"]`).off('change').on('change', function() {
-            updateDiscountSymbol(rowId);
-            calculateRowTotal(rowId);
-        });
-        
-        // VAT change
-        $(`.vat[data-row="${rowId}"]`).off('change').on('change', function() {
-            calculateRowTotal(rowId);
-        });
-        
-        // Paid amount change
-        $(`.paid-amount[data-row="${rowId}"]`).off('change keyup').on('change keyup', function() {
-            updateRemainingBalance(rowId);
-        });
-        
-        // Trip category change - Load routes
-        $(`#trip_category_id_${rowId}`).off('change').on('change', function() {
-            var categoryId = $(this).val();
-            var routeSelect = $(`#trip_route_id_${rowId}`);
-            routeSelect.html('<option value="">Loading...</option>');
-            
-            if (categoryId) {
-                $.ajax({
-                    url: '/dashboard/get-trip-routes/' + categoryId,
-                    type: 'GET',
-                    success: function(routes) {
-                        var options = '<option value="">Select Route</option>';
-                        $.each(routes, function(index, route) {
-                            options += '<option value="' + route.id + '" ' +
-                                'data-car="' + (route.car_price || 0) + '" ' +
-                                'data-hiace="' + (route.hiace_price || 0) + '" ' +
-                                'data-coaster="' + (route.coaster_price || 0) + '" ' +
-                                'data-bus="' + (route.bus_price || 0) + '">' +
-                                route.title + '</option>';
-                        });
-                        routeSelect.html(options);
-                    }
-                });
-            } else {
-                routeSelect.html('<option value="">Select Route</option>');
-            }
-        });
-        
-        // Route selection - Set rate based on vehicle type
-        $(`#trip_route_id_${rowId}`).off('change').on('change', function() {
-            var vehicleType = $('#vehicle_id option:selected').data('type');
-            var selected = $(this).find(':selected');
-            var rate = 0;
-            
-            if (vehicleType && selected.val()) {
-                vehicleType = vehicleType.toLowerCase();
-                rate = selected.data(vehicleType) || 0;
-                
-                if (rate > 0) {
-                    $(`input[name="bookings[${rowId}][rate_per_day]"]`).val(rate);
-                    calculateRowTotal(rowId);
-                }
-            }
-        });
-        
-        updateDiscountSymbol(rowId);
-        
-        // Initial calculation for this row
-        setTimeout(function() {
-            calculateRowTotal(rowId);
-        }, 100);
-    }
-
-    // Add new booking row
-    $('#addBookingRowBtn').click(function() {
-        rowCounter++;
-        var newRowHtml = `
-            <div class="booking-row card card-info mb-3" data-row-index="${rowCounter}">
-                <div class="card-header">
-                    <h5 class="card-title">Booking #${rowCounter}</h5>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-danger btn-sm remove-row-btn" data-row-id="${rowCounter}">
-                            <i class="fas fa-trash"></i> Remove
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                       
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Trip Category</label>
-                                <div class="input-group">
-                                    <select name="bookings[${rowCounter}][trip_category_id]" id="trip_category_id_${rowCounter}" class="form-control trip-category-select" data-row="${rowCounter}">
-                                        <option value="">Select Category</option>
-                                        @foreach($tripCategories as $category)
-                                            <option value="{{ $category->id }}">
-                                                {{ $category->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-success add-category-btn">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Trip Route</label>
-                                <div class="input-group">
-                                    <select name="bookings[${rowCounter}][trip_route_id]" id="trip_route_id_${rowCounter}" class="form-control trip-route-select" data-row="${rowCounter}">
-                                        <option value="">Select Route</option>
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-success add-route-btn">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][rate_per_day]" class="form-control rate-per-day" data-row="${rowCounter}" value="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Pickup Destination</label>
-                                <input type="text" name="bookings[${rowCounter}][from_destination]" class="form-control" placeholder="Enter pickup location">
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Dropout Destination</label>
-                                <input type="text" name="bookings[${rowCounter}][to_destination]" class="form-control" placeholder="Enter dropoff location">
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label>No. of People</label>
-                                <input type="number" name="bookings[${rowCounter}][no_of_people]" class="form-control no-of-people" min="1" data-row="${rowCounter}">
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Start Date <span class="text-danger">*</span></label>
-                                <input type="date" name="bookings[${rowCounter}][start_date]" id="start_date_${rowCounter}" class="form-control start-date" data-row="${rowCounter}" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label>Start Time <span class="text-danger">*</span></label>
-                                <input type="time" name="bookings[${rowCounter}][start_time]" class="form-control start-time" data-row="${rowCounter}" required>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>End Date <span class="text-danger">*</span></label>
-                                <input type="date" name="bookings[${rowCounter}][end_date]" id="end_date_${rowCounter}" class="form-control end-date" data-row="${rowCounter}" required>
-                            </div>
-                        </div>
-
-                         <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Status</label>
-                                <select name="bookings[${rowCounter}][status]" class="form-control vat" data-row="${rowCounter}">
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <hr>
-                            <h6>Financial Details - Booking #${rowCounter}</h6>
-                        </div>
-
-                        
-
-                        
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Discount Type</label>
-                                <select name="bookings[${rowCounter}][discount_amount_type]" class="form-control discount-type" data-row="${rowCounter}">
-                                    <option value="amount">Fixed Amount</option>
-                                    <option value="percentage">Percentage</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Discount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text discount-symbol" data-row="${rowCounter}">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][discount]" class="form-control discount" data-row="${rowCounter}" value="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Apply VAT (13%)</label>
-                                <select name="bookings[${rowCounter}][vat]" class="form-control vat" data-row="${rowCounter}">
-                                    <option value="0">No</option>
-                                    <option value="1">Yes</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>VAT Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][tax]" class="form-control vat-amount" data-row="${rowCounter}" readonly>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Total Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][total_amount]" class="form-control total-amount" data-row="${rowCounter}" readonly>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Paid Amount</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input type="number" step="0.01" name="bookings[${rowCounter}][paid_amount]" class="form-control paid-amount" data-row="${rowCounter}" value="0">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label>Additional Notes</label>
-                                <textarea name="bookings[${rowCounter}][notes]" rows="2" class="form-control" placeholder="Any additional notes..."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        $('#bookingsRowsContainer').append(newRowHtml);
-        
-        // Attach event handlers for the new row
-        attachRowEventHandlers(rowCounter);
-    });
-
-    // Remove booking row
-    $(document).on('click', '.remove-row-btn', function() {
-        var rowId = $(this).data('row-id');
-        $(`.booking-row[data-row-index="${rowId}"]`).remove();
-    });
-
-    // Vehicle change - Update rates for all rows
-    $('#vehicle_id').on('change', function() {
-        $('.booking-row').each(function() {
-            var rowId = $(this).data('row-index');
-            $(`#trip_route_id_${rowId}`).trigger('change');
-        });
-    });
-
-    // Attach handlers for existing row (row 1) and trigger initial calculation
-    attachRowEventHandlers(1);
-
-    // Also trigger initial calculation for row 1 with a small delay to ensure DOM is ready
-    setTimeout(function() {
-        calculateRowTotal(1);
-    }, 200);
-
-    // AJAX functions for modals (keep your existing modal functions)
-    function reloadCustomers(selectedId = null) {
-        $.ajax({
-            url: "{{ route('admin.ajax.customers.list') }}",
-            type: "GET",
-            success: function(data) {
-                let options = '<option value="">Select Customer</option>';
-                data.forEach(function(c) {
-                    options += `<option value="${c.id}">${c.name}</option>`;
-                });
-                $('#customer_id').html(options);
-                if (selectedId) {
-                    $('#customer_id').val(selectedId);
-                }
-            }
-        });
-    }
-
-    function reloadCategoryDropdown(selectedId = null) {
-        $.ajax({
-            url: "{{ route('admin.ajax.trip-categories.list') }}",
-            type: "GET",
-            success: function(data) {
-                let options = '<option value="">Select Category</option>';
-                data.forEach(function(category) {
-                    options += `<option value="${category.id}">${category.name}</option>`;
-                });
-                $('.trip-category-select').html(options);
-                $('#r_category').html(options);
-                if (selectedId) {
-                    $('.trip-category-select').val(selectedId);
-                    $('#r_category').val(selectedId);
-                }
-            }
-        });
-    }
-
-    function reloadRoutes(selectedId = null) {
-        $.ajax({
-            url: "{{ route('admin.ajax.trip-routes.list') }}",
-            type: "GET",
-            success: function(data) {
-                let options = '<option value="">Select Route</option>';
-                data.forEach(function(route) {
-                    options += `<option value="${route.id}">${route.title}</option>`;
-                });
-                $('.trip-route-select').html(options);
-                if (selectedId) {
-                    $('.trip-route-select').val(selectedId);
-                }
-            }
-        });
-    }
-
-    // Modal handlers
-    $('#addCustomerBtn').click(() => $('#customerModal').modal('show'));
-  $(document).on('click', '.add-category-btn', function() {
-    $('#categoryModal').modal('show');
+$(document).on('click', '.remove-row-btn', function () {
+    if ($('.booking-row').length === 1) { alert('At least one booking is required.'); return; }
+    $(this).closest('.booking-row').remove();
 });
 
-// Route modal open
-$(document).on('click', '.add-route-btn', function() {
-    $('#routeModal').modal('show');
+$(document).on('click', '.add-itinerary-btn', function () {
+    addItineraryRow($(this).closest('.booking-row'));
 });
-    $('#addDriverBtn').click(() => $('#driverModal').modal('show'));
-    $('#addHelperBtn').click(() => $('#helperModal').modal('show'));
 
-    $('#saveCustomer').click(function() {
-        $.ajax({
-            url: "{{ route('admin.ajax.customers.store') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                name: $('#c_name').val(),
-                phone: $('#c_phone').val(),
-                email: $('#c_email').val(),
-                address: $('#c_address').val(),
-            },
-            success: function(res) {
-                if (res.success) {
-                    reloadCustomers(res.id);
-                    $('#customerModal').modal('hide');
-                    $('#c_name, #c_phone, #c_email, #c_address').val('');
-                }
-            }
-        });
-    });
+$(document).on('click', '.remove-itin-btn', function () {
+    const $row = $(this).closest('.booking-row');
+    $(this).closest('tr').remove();
+    updateRowTotals($row, true);
+});
 
-    $('#saveCategory').click(function() {
-        $.ajax({
-            url: "{{ route('admin.ajax.trip-categories.store') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                name: $('#cat_name').val(),
-                description: $('#cat_desc').val()
-            },
-            success: function(res) {
-                if (res.success) {
-                    reloadCategoryDropdown(res.id);
-                    $('#categoryModal').modal('hide');
-                    $('#cat_name, #cat_desc').val('');
-                }
-            }
-        });
-    });
+/* ---------- EVENTS ---------- */
+$(document).on('input change', '.itin-km, .itin-hours, .itin-overnight', function () {
+    calcItineraryRow($(this).closest('tr'));
+});
 
-    $('#saveRoute').click(function() {
-        $.ajax({
-            url: "{{ route('admin.ajax.trip-routes.store') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                trip_category_id: $('#r_category').val(),
-                title: $('#r_title').val(),
-                km: $('#r_km').val(),
-                car_price: $('#r_car').val(),
-                hiace_price: $('#r_hiace').val(),
-                coaster_price: $('#r_coaster').val(),
-                bus_price: $('#r_bus').val()
-            },
-            success: function(res) {
-                if (res.success) {
-                    reloadRoutes(res.id);
-                    $('#routeModal').modal('hide');
-                    $('#r_title, #r_km, #r_car, #r_hiace, #r_coaster, #r_bus').val('');
-                    $('.trip-category-select').trigger('change');
-                }
-            }
-        });
-    });
+$(document).on('input change', '.rate-per-day, .discount, .discount-type, .vat, .paid-amount', function () {
+    updateRowTotals($(this).closest('.booking-row'));
+});
 
-    $('#saveDriver').click(function() {
-        $.ajax({
-            url: "{{ route('admin.ajax.drivers.store') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                name: $('#d_name').val(),
-                phone: $('#d_phone').val(),
-                email: $('#d_email').val(),
-                license_number: $('#d_license').val()
-            },
-            success: function(res) {
-                if (res.success) {
-                    let options = '<option value="">Select Driver</option>';
-                    res.drivers.forEach(function(driver) {
-                        options += `<option value="${driver.id}">${driver.user.name}</option>`;
-                    });
-                    $('#driver_id').html(options);
-                    $('#driverModal').modal('hide');
-                    $('#d_name, #d_phone, #d_email, #d_license').val('');
-                }
-            }
-        });
-    });
+// start date -> copy to end date
+$(document).on('change', '.start-date', function () {
+    const $row = $(this).closest('.booking-row');
+    if ($(this).val()) $row.find('.end-date').val($(this).val());
+});
 
-    $('#saveHelper').click(function() {
-        $.ajax({
-            url: "{{ route('admin.ajax.helpers.store') }}",
-            type: "POST",
-            data: {
-                _token: "{{ csrf_token() }}",
-                name: $('#h_name').val(),
-                phone: $('#h_phone').val(),
-                email: $('#h_email').val()
-            },
-            success: function(res) {
-                if (res.success) {
-                    let options = '<option value="">Select Helper</option>';
-                    res.helpers.forEach(function(helper) {
-                        options += `<option value="${helper.id}">${helper.user.name}</option>`;
-                    });
-                    $('#helper_id').html(options);
-                    $('#helperModal').modal('hide');
-                    $('#h_name, #h_phone, #h_email').val('');
-                }
-            }
-        });
+// vehicle change -> load rates -> recalc every itinerary row in every booking
+$('#vehicle_id').on('change', function () {
+    const type = $(this).find(':selected').data('type');
+    if (!type) {
+        vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
+        recalcAll();
+        return;
+    }
+    $.get('/dashboard/get-vehicle-rate/' + encodeURIComponent(type), function (rate) {
+        vehicleRates = {
+            per_km_rate: parseFloat(rate.per_km_rate) || 0,
+            per_hour_rate: parseFloat(rate.per_hour_rate) || 0,
+            overnight_price: parseFloat(rate.overnight_price) || 0
+        };
+        recalcAll();
+    }).fail(function () {
+        vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
+        console.error('Could not load vehicle rates');
     });
 });
+
+function recalcAll() {
+    $('.itinerary-rows tr').each(function () { calcItineraryRow($(this)); });
+}
+
+/* ---------- MODALS ---------- */
+$('#addCustomerBtn').click(() => $('#customerModal').modal('show'));
+$('#addDriverBtn').click(() => $('#driverModal').modal('show'));
+$('#addHelperBtn').click(() => $('#helperModal').modal('show'));
+
+$('#saveCustomer').click(function () {
+    $.post("{{ route('admin.ajax.customers.store') }}", {
+        _token: "{{ csrf_token() }}",
+        name: $('#c_name').val(), phone: $('#c_phone').val(),
+        email: $('#c_email').val(), address: $('#c_address').val()
+    }, function (res) {
+        if (res.success) {
+            $.get("{{ route('admin.ajax.customers.list') }}", function (data) {
+                let o = '<option value="">Select Customer</option>';
+                data.forEach(c => o += `<option value="${c.id}">${c.name}</option>`);
+                $('#customer_id').html(o).val(res.id);
+            });
+            $('#customerModal').modal('hide');
+            $('#c_name, #c_phone, #c_email, #c_address').val('');
+        }
+    });
+});
+
+$('#saveDriver').click(function () {
+    $.post("{{ route('admin.ajax.drivers.store') }}", {
+        _token: "{{ csrf_token() }}",
+        name: $('#d_name').val(), phone: $('#d_phone').val(),
+        email: $('#d_email').val(), license_number: $('#d_license').val()
+    }, function (res) {
+        if (res.success) {
+            let o = '<option value="">Select Driver</option>';
+            res.drivers.forEach(d => o += `<option value="${d.id}">${d.user.name}</option>`);
+            $('#driver_id').html(o).val(res.id);
+            $('#driverModal').modal('hide');
+            $('#d_name, #d_phone, #d_email, #d_license').val('');
+        }
+    });
+});
+
+$('#saveHelper').click(function () {
+    $.post("{{ route('admin.ajax.helpers.store') }}", {
+        _token: "{{ csrf_token() }}",
+        name: $('#h_name').val(), phone: $('#h_phone').val(), email: $('#h_email').val()
+    }, function (res) {
+        if (res.success) {
+            let o = '<option value="">Select Helper</option>';
+            res.helpers.forEach(h => o += `<option value="${h.id}">${h.user.name}</option>`);
+            $('#helper_id').html(o).val(res.id);
+            $('#helperModal').modal('hide');
+            $('#h_name, #h_phone, #h_email').val('');
+        }
+    });
+});
+
+/* ---------- INIT ---------- */
+addBookingRow();
 </script>
+
+<style>
+.input-group-text { background-color: #e9ecef; }
+.form-group label { font-weight: 500; margin-bottom: 0.3rem; }
+hr { border-top: 2px solid rgba(0,0,0,.1); }
+</style>
 @endsection

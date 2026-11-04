@@ -624,113 +624,226 @@ class VehicleBookingController extends Controller
     /**
      * Store multiple bookings
      */
+    // public function multipleStore(Request $request)
+    // {
+    //     Gate::authorize('create_vehicle_bookings');
+
+    //     // Validate common fields
+    //     $request->validate([
+    //         'customer_id' => 'required|exists:customers,id',
+    //         'vehicle_id' => 'required|exists:vehicles,id',
+    //         'driver_id' => 'nullable|exists:crew_profiles,id',
+    //         'helper_id' => 'nullable|exists:crew_profiles,id',
+    //         'bookings' => 'required|array|min:1',
+    //         'bookings.*.trip_category_id' => 'nullable',
+    //         'bookings.*.trip_route_id' => 'nullable',
+    //         'bookings.*.start_date' => 'required|date',
+    //         'bookings.*.end_date' => 'required|date|after_or_equal:bookings.*.start_date',
+    //         'bookings.*.start_time' => 'required',
+    //         'bookings.*.rate_per_day' => 'nullable|numeric',
+    //         'bookings.*.sub_total' => 'nullable|numeric',
+    //         'bookings.*.discount' => 'nullable|numeric',
+    //         'bookings.*.tax' => 'nullable|numeric',
+    //         'bookings.*.status' => 'nullable|string',
+    //         'bookings.*.total_amount' => 'nullable|numeric',
+    //         'bookings.*.paid_amount' => 'nullable|numeric',
+    //     ]);
+
+    //     $createdBookings = [];
+    //     $errors = [];
+
+    //     foreach ($request->bookings as $key => $bookingData) {
+    //         try {
+    //             // Calculate hours if not provided
+    //             $startDateTime = Carbon::parse($bookingData['start_date'] . ' ' . $bookingData['start_time']);
+    //             $endDateTime = Carbon::parse($bookingData['end_date'] . ' ' . ($bookingData['end_time'] ?? '23:59:59'));
+    //             $noOfHours = $startDateTime->diffInHours($endDateTime);
+
+    //             $addData = [
+    //                 'customer_id' => $request->customer_id,
+    //                 'vehicle_id' => $request->vehicle_id,
+    //                 'driver_id' => $request->driver_id,
+    //                 'helper_id' => $request->helper_id,
+    //                 'passenger' => $request->passenger,
+    //                 'file_no' =>  $request->file_no ?? null,
+    //                 'signage_information' => $request->signage_information,
+    //                 'trip_category_id' => $bookingData['trip_category_id'] ?? null,
+    //                 'trip_route_id' => $bookingData['trip_route_id'] ?? null,
+    //                 'from_destination' => $bookingData['from_destination'] ?? null,
+    //                 'to_destination' => $bookingData['to_destination'] ?? null,
+    //                 'no_of_people' => $bookingData['no_of_people'] ?? null,
+    //                 'start_date' => $bookingData['start_date'],
+    //                 'end_date' => $bookingData['end_date'],
+    //                 'start_time' => $bookingData['start_time'],
+    //                 'end_time' => $bookingData['end_time'] ?? null,
+    //                 'no_of_hours' => $noOfHours,
+    //                 'rate_per_day' => $bookingData['rate_per_day'] ?? 0,
+    //                 'sub_total' => $bookingData['sub_total'] ?? 0,
+    //                 'discount_amount_type' => $bookingData['discount_amount_type'] ?? 'amount',
+    //                 'discount' => $bookingData['discount'] ?? 0,
+    //                 'vat' => $bookingData['vat'] ?? 0,
+    //                 'tax' => $bookingData['tax'] ?? 0,
+    //                 'total_amount' => $bookingData['total_amount'] ?? 0,
+    //                 'paid_amount' => $bookingData['paid_amount'] ?? 0,
+    //                 'payment_method' => $bookingData['payment_method'] ?? null,
+    //                 'payment_status' => ($bookingData['paid_amount'] ?? 0) > 0 ? 1 : 0,
+    //                 'notes' => $bookingData['notes'] ?? null,
+    //                 'status' => $bookingData['status'] ?? 'pending',
+    //             ];
+
+    //             $vehicleBooking = VehicleBooking::create($addData);
+
+    //             // Create payment record if paid amount exists
+    //             if (!empty($bookingData['paid_amount']) && $bookingData['paid_amount'] > 0) {
+    //                 $paymentData = [
+    //                     'vehicle_booking_id' => $vehicleBooking->id,
+    //                     'amount' => $bookingData['paid_amount'],
+    //                     'payment_method' => $bookingData['payment_method'] ?? 'cash',
+    //                     'transaction_reference' => (string) Str::uuid(),
+    //                     'payment_date' => now(),
+    //                     'notes' => $bookingData['notes'] ?? null,
+    //                 ];
+    //                 Payment::create($paymentData);
+    //             }
+
+    //             // Create proforma invoice
+    //             // $this->service->createProforma($vehicleBooking);
+
+    //             $createdBookings[] = $vehicleBooking->id;
+    //         } catch (\Exception $e) {
+    //             $errors[] = "Booking #" . ($key + 1) . " failed: " . $e->getMessage();
+    //         }
+    //     }
+
+    //     if (count($createdBookings) > 0) {
+    //         $message = count($createdBookings) . " booking(s) created successfully.";
+    //         if (count($errors) > 0) {
+    //             $message .= " But " . count($errors) . " failed.";
+    //             return redirect()->route('admin.vehicle_bookings.index')
+    //                 ->with('warning_message', $message)
+    //                 ->with('errors', $errors);
+    //         }
+    //         return redirect()->route('admin.vehicle_bookings.index')
+    //             ->with('success_message', $message);
+    //     }
+
+    //     return redirect()->route('admin.vehicle_bookings.index')
+    //         ->with('error_message', 'Failed to create any bookings. ' . implode(', ', $errors));
+    // }
+
+
+
     public function multipleStore(Request $request)
     {
         Gate::authorize('create_vehicle_bookings');
 
-        // Validate common fields
         $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'driver_id' => 'nullable|exists:crew_profiles,id',
-            'helper_id' => 'nullable|exists:crew_profiles,id',
-            'bookings' => 'required|array|min:1',
-            'bookings.*.trip_category_id' => 'nullable',
-            'bookings.*.trip_route_id' => 'nullable',
-            'bookings.*.start_date' => 'required|date',
-            'bookings.*.end_date' => 'required|date|after_or_equal:bookings.*.start_date',
-            'bookings.*.start_time' => 'required',
+            'vehicle_id'  => 'required|exists:vehicles,id',
+            'driver_id'   => 'nullable|exists:crew_profiles,id',
+            'helper_id'   => 'nullable|exists:crew_profiles,id',
+            'bookings'    => 'required|array|min:1',
+            'bookings.*.start_date'   => 'required|date',
+            'bookings.*.end_date'     => 'required|date|after_or_equal:bookings.*.start_date',
+            'bookings.*.start_time'   => 'required',
+            'bookings.*.no_of_people' => 'nullable|integer',
             'bookings.*.rate_per_day' => 'nullable|numeric',
-            'bookings.*.sub_total' => 'nullable|numeric',
-            'bookings.*.discount' => 'nullable|numeric',
-            'bookings.*.tax' => 'nullable|numeric',
-            'bookings.*.status' => 'nullable|string',
+            'bookings.*.discount'     => 'nullable|numeric',
+            'bookings.*.tax'          => 'nullable|numeric',
             'bookings.*.total_amount' => 'nullable|numeric',
-            'bookings.*.paid_amount' => 'nullable|numeric',
+            'bookings.*.paid_amount'  => 'nullable|numeric',
+            'bookings.*.status'       => 'nullable|string',
+            'bookings.*.itineraries'                  => 'nullable|array',
+            'bookings.*.itineraries.*.est_km'         => 'nullable|numeric|min:0',
+            'bookings.*.itineraries.*.est_hours'      => 'nullable|numeric|min:0',
+            'bookings.*.itineraries.*.itinerary_date' => 'nullable|date',
         ]);
 
         $createdBookings = [];
         $errors = [];
 
-        foreach ($request->bookings as $key => $bookingData) {
+        foreach ($request->bookings as $key => $b) {
             try {
-                // Calculate hours if not provided
-                $startDateTime = Carbon::parse($bookingData['start_date'] . ' ' . $bookingData['start_time']);
-                $endDateTime = Carbon::parse($bookingData['end_date'] . ' ' . ($bookingData['end_time'] ?? '23:59:59'));
-                $noOfHours = $startDateTime->diffInHours($endDateTime);
+                DB::transaction(function () use ($request, $b, &$createdBookings) {
+                    $startDateTime = Carbon::parse($b['start_date'] . ' ' . $b['start_time']);
+                    $endDateTime   = Carbon::parse($b['end_date'] . ' ' . ($b['end_time'] ?? '23:59:59'));
+                    $paid          = (float) ($b['paid_amount'] ?? 0);
 
-                $addData = [
-                    'customer_id' => $request->customer_id,
-                    'vehicle_id' => $request->vehicle_id,
-                    'driver_id' => $request->driver_id,
-                    'helper_id' => $request->helper_id,
-                    'passenger' => $request->passenger,
-                    'file_no' =>  $request->file_no ?? null,
-                    'signage_information' => $request->signage_information,
-                    'trip_category_id' => $bookingData['trip_category_id'] ?? null,
-                    'trip_route_id' => $bookingData['trip_route_id'] ?? null,
-                    'from_destination' => $bookingData['from_destination'] ?? null,
-                    'to_destination' => $bookingData['to_destination'] ?? null,
-                    'no_of_people' => $bookingData['no_of_people'] ?? null,
-                    'start_date' => $bookingData['start_date'],
-                    'end_date' => $bookingData['end_date'],
-                    'start_time' => $bookingData['start_time'],
-                    'end_time' => $bookingData['end_time'] ?? null,
-                    'no_of_hours' => $noOfHours,
-                    'rate_per_day' => $bookingData['rate_per_day'] ?? 0,
-                    'sub_total' => $bookingData['sub_total'] ?? 0,
-                    'discount_amount_type' => $bookingData['discount_amount_type'] ?? 'amount',
-                    'discount' => $bookingData['discount'] ?? 0,
-                    'vat' => $bookingData['vat'] ?? 0,
-                    'tax' => $bookingData['tax'] ?? 0,
-                    'total_amount' => $bookingData['total_amount'] ?? 0,
-                    'paid_amount' => $bookingData['paid_amount'] ?? 0,
-                    'payment_method' => $bookingData['payment_method'] ?? null,
-                    'payment_status' => ($bookingData['paid_amount'] ?? 0) > 0 ? 1 : 0,
-                    'notes' => $bookingData['notes'] ?? null,
-                    'status' => $bookingData['status'] ?? 'pending',
-                ];
+                    $addData = [
+                        'customer_id' => $this->currentUserIsCustomer == 'N'
+                            ? $request->customer_id
+                            : $this->currentUserCustomerId,
+                        'vehicle_id' => $request->vehicle_id,
+                        'driver_id'  => $request->driver_id,
+                        'helper_id'  => $request->helper_id,
+                        'passenger'  => $request->passenger,
+                        'file_no'    => $request->file_no,
+                        'signage_information' => $request->signage_information,
 
-                $vehicleBooking = VehicleBooking::create($addData);
+                        'from_destination' => $b['from_destination'] ?? null,
+                        'to_destination'   => $b['to_destination'] ?? null,
+                        'no_of_people'     => $b['no_of_people'] ?? null,
+                        'start_date' => $b['start_date'],
+                        'end_date'   => $b['end_date'],
+                        'start_time' => $b['start_time'],
+                        'end_time'   => $b['end_time'] ?? null,
+                        'no_of_hours' => (int) $startDateTime->diffInHours($endDateTime),
 
-                // Create payment record if paid amount exists
-                if (!empty($bookingData['paid_amount']) && $bookingData['paid_amount'] > 0) {
-                    $paymentData = [
-                        'vehicle_booking_id' => $vehicleBooking->id,
-                        'amount' => $bookingData['paid_amount'],
-                        'payment_method' => $bookingData['payment_method'] ?? 'cash',
-                        'transaction_reference' => (string) Str::uuid(),
-                        'payment_date' => now(),
-                        'notes' => $bookingData['notes'] ?? null,
+                        'rate_per_day' => $b['rate_per_day'] ?? 0,
+                        'sub_total'    => $b['rate_per_day'] ?? 0,
+                        'discount_amount_type' => $b['discount_amount_type'] ?? 'amount',
+                        'discount'     => $b['discount'] ?? 0,
+                        'vat'          => $b['vat'] ?? 0,
+                        'tax_amount_type' => 'percentage',
+                        'tax'          => $b['tax'] ?? 0,
+                        'total_amount' => $b['total_amount'] ?? 0,
+                        'remaining_balance' => $b['remaining_balance'] ?? 0,
+
+                        'paid_amount'    => $paid,
+                        'payment_method' => $b['payment_method'] ?? null,
+                        'payment_status' => ($b['payment_status'] ?? '') === '' ? 0 : $b['payment_status'],
+
+                        'notes'  => $b['notes'] ?? null,
+                        'status' => $b['status'] ?? 'pending',
                     ];
-                    Payment::create($paymentData);
-                }
 
-                // Create proforma invoice
-                // $this->service->createProforma($vehicleBooking);
+                    $vehicleBooking = VehicleBooking::create($addData);
 
-                $createdBookings[] = $vehicleBooking->id;
+                    if ($paid > 0) {
+                        Payment::create([
+                            'vehicle_booking_id'    => $vehicleBooking->id,
+                            'amount'                => $paid,
+                            'payment_method'        => $b['payment_method'] ?? 'cash',
+                            'transaction_reference' => (string) Str::uuid(),
+                            'payment_date'          => ($b['payment_date'] ?? now()->format('Y-m-d')) . ' ' . now()->format('H:i:s'),
+                            'notes'                 => $b['payment_note'] ?? null,
+                        ]);
+                    }
+
+                    if (!empty($b['itineraries'])) {
+                        $this->saveItineraries($vehicleBooking, $b['itineraries']);
+                    }
+
+                    $createdBookings[] = $vehicleBooking->id;
+                });
             } catch (\Exception $e) {
-                $errors[] = "Booking #" . ($key + 1) . " failed: " . $e->getMessage();
+                $errors[] = "Booking #" . ($key) . " failed: " . $e->getMessage();
             }
         }
 
         if (count($createdBookings) > 0) {
             $message = count($createdBookings) . " booking(s) created successfully.";
             if (count($errors) > 0) {
-                $message .= " But " . count($errors) . " failed.";
                 return redirect()->route('admin.vehicle_bookings.index')
-                    ->with('warning_message', $message)
+                    ->with('warning_message', $message . " But " . count($errors) . " failed.")
                     ->with('errors', $errors);
             }
-            return redirect()->route('admin.vehicle_bookings.index')
-                ->with('success_message', $message);
+            return redirect()->route('admin.vehicle_bookings.index')->with('success_message', $message);
         }
 
         return redirect()->route('admin.vehicle_bookings.index')
             ->with('error_message', 'Failed to create any bookings. ' . implode(', ', $errors));
     }
-
     // Add these methods to your VehicleBookingController
 
     public function getCustomersList()
