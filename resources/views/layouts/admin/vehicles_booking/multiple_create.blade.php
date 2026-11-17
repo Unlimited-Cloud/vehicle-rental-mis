@@ -244,32 +244,39 @@ function bookingRowHtml(i) {
 
             <hr>
             <h6><i class="fas fa-route mr-1"></i> Itinerary (Day-wise Plan)</h6>
-            <div class="table-responsive">
+            <div class="table-responsive itin-price-col">
             <table class="table table-bordered table-sm">
                 <thead class="thead-light">
                     <tr>
                         <th style="width:14%">Date</th><th style="width:15%">From</th><th style="width:15%">To</th>
                         <th style="width:9%">Est. KM</th><th style="width:9%">Est. Hours</th><th style="width:9%">Overnight</th>
-                        <th style="width:10%">Est. Price</th><th style="width:14%">Notes</th><th style="width:5%"></th>
+                       <th class="itin-price-col" style="width:10%">Est. Price</th><th style="width:14%">Notes</th><th style="width:5%"></th>
                     </tr>
                 </thead>
                 <tbody class="itinerary-rows"></tbody>
             </table>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-primary add-itinerary-btn mb-3">
+            <button type="button" class="btn btn-sm btn-outline-primary add-itinerary-btn mb-3 itin-price-col">
                 <i class="fas fa-plus mr-1"></i> Add Day
             </button>
 
             <hr>
             <h6>Financial Details</h6>
             <div class="row">
-                <div class="col-md-3"><div class="form-group">
-                    <label>Amount</label>
-                    <div class="input-group">
-                        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
-                        <input type="number" step="0.01" name="${p}[rate_per_day]" class="form-control rate-per-day" value="0">
-                    </div>
-                </div></div>
+              <div class="col-md-3"><div class="form-group">
+    <label>Price Type</label>
+    <select name="${p}[pricetype]" class="form-control price-type">
+        <option value="dynamic">Dynamic (from itinerary)</option>
+        <option value="static">Static (manual amount)</option>
+    </select>
+</div></div>
+<div class="col-md-3"><div class="form-group">
+    <label>Amount</label>
+    <div class="input-group">
+        <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
+        <input type="number" step="0.01" name="${p}[rate_per_day]" class="form-control rate-per-day" value="0" readonly>
+    </div>
+</div></div>
                 <div class="col-md-3"><div class="form-group">
                     <label>Discount Type</label>
                     <select name="${p}[discount_amount_type]" class="form-control discount-type">
@@ -304,6 +311,10 @@ function bookingRowHtml(i) {
                         <div class="input-group-prepend"><span class="input-group-text">रू</span></div>
                         <input type="number" step="0.01" name="${p}[total_amount]" class="form-control total-amount" value="0" readonly>
                     </div>
+                </div></div>
+                 <div class="col-md-12"><div class="form-group">
+                    <label>Trip Routes Itinerary</label>
+                    <textarea name="${p}[notes]" rows="2" class="form-control" placeholder="Any Trip Routes notes..."></textarea>
                 </div></div>
             </div>
 
@@ -351,10 +362,7 @@ function bookingRowHtml(i) {
                     <label>Payment Notes</label>
                     <textarea name="${p}[payment_note]" rows="2" class="form-control"></textarea>
                 </div></div>
-                <div class="col-md-12"><div class="form-group">
-                    <label>Additional Notes</label>
-                    <textarea name="${p}[notes]" rows="2" class="form-control" placeholder="Any additional notes..."></textarea>
-                </div></div>
+               
             </div>
         </div>
     </div>`;
@@ -379,7 +387,7 @@ function addItineraryRow($row, data = {}) {
                 <option value="0">No</option><option value="1">Yes</option>
             </select>
         </td>
-        <td>
+        <td class="itin-price-col">
             <input type="number" step="0.01" name="${n}[est_price]" class="form-control form-control-sm itin-price" value="0" readonly>
             <input type="hidden" name="${n}[per_km_rate]" class="itin-per-km" value="0">
             <input type="hidden" name="${n}[per_hour_rate]" class="itin-per-hour" value="0">
@@ -388,9 +396,12 @@ function addItineraryRow($row, data = {}) {
         <td><input type="text" name="${n}[notes]" class="form-control form-control-sm" placeholder="Notes"></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-danger remove-itin-btn"><i class="fas fa-trash"></i></button></td>
     </tr>`;
-    const $tr = $(tr).appendTo($row.find('.itinerary-rows'));
+   const $tr = $(tr).appendTo($row.find('.itinerary-rows'));
+    togglePriceUI($row);      // new rows respect the current price type
     calcItineraryRow($tr);
 }
+
+
 
 function calcItineraryRow($tr) {
     const km = parseFloat($tr.find('.itin-km').val()) || 0;
@@ -410,7 +421,7 @@ function calcItineraryRow($tr) {
 
 /* ---------- TOTALS ---------- */
 function updateRowTotals($row, fromItinerary = false) {
-    if (fromItinerary) {
+    if (fromItinerary && $row.find('.price-type').val() === 'dynamic') {
         let sum = 0;
         $row.find('.itin-price').each(function () { sum += parseFloat($(this).val()) || 0; });
         $row.find('.rate-per-day').val(sum.toFixed(2));
@@ -434,13 +445,27 @@ function updateRowTotals($row, fromItinerary = false) {
     $row.find('.discount-symbol').text(type === 'percentage' ? '%' : 'रू');
 }
 
+function togglePriceUI($row) {
+    const isStatic = $row.find('.price-type').val() === 'static';
+    // hide the pricing column and stop it from being submitted
+    $row.find('.itin-price-col').toggle(!isStatic);
+    $row.find('.itin-price-col :input').prop('disabled', isStatic);
+    // static: user types the amount; dynamic: amount comes from the itinerary
+    $row.find('.rate-per-day').prop('readonly', !isStatic);
+}
+
+function applyPriceType($row) {
+    togglePriceUI($row);
+    updateRowTotals($row, $row.find('.price-type').val() === 'dynamic');
+}
+
 /* ---------- ADD / REMOVE BOOKING ROW ---------- */
 function addBookingRow() {
     rowCounter++;
     itinCounters[rowCounter] = 0;
     const $row = $(bookingRowHtml(rowCounter)).appendTo('#bookingsRowsContainer');
     addItineraryRow($row);
-    updateRowTotals($row, true);
+    applyPriceType($row);
 }
 
 $('#addBookingRowBtn').on('click', addBookingRow);
@@ -452,6 +477,10 @@ $(document).on('click', '.remove-row-btn', function () {
 
 $(document).on('click', '.add-itinerary-btn', function () {
     addItineraryRow($(this).closest('.booking-row'));
+});
+
+$(document).on('change', '.price-type', function () {
+    applyPriceType($(this).closest('.booking-row'));
 });
 
 $(document).on('click', '.remove-itin-btn', function () {

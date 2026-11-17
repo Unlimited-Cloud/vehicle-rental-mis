@@ -60,6 +60,7 @@ use App\Http\Controllers\Admin\TripRouteVehiclePriceController;
 use App\Http\Controllers\Admin\TripRouteVehicleTypePriceController;
 
 
+
 Route::get('/', function () {
     return redirect()->route('login');
 });
@@ -185,6 +186,12 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
         Route::resource('fuel_purchased', FuelPurchaseController::class);
 
 
+        Route::get('vehicle-bookings/import', [VehicleBookingController::class, 'importForm'])
+            ->name('vehicle_bookings.import');
+        Route::get('vehicle-bookings/import/template', [VehicleBookingController::class, 'importTemplate'])
+            ->name('vehicle_bookings.import.template');
+        Route::post('vehicle-bookings/import', [VehicleBookingController::class, 'import'])
+            ->name('vehicle_bookings.import.store');
 
         Route::resource('emailtemplate_activities', EmailTemplateActivitiesController::class);
         Route::resource('email-templates', EmailTemplateController::class);
@@ -260,6 +267,8 @@ Route::prefix('dashboard')->name('admin.')->group(function () {
             Route::get('/export-excel', [ReportController::class, 'exportExcel'])->name('export-excel');
             Route::get('/export-client-report', [ReportController::class, 'exportClientReport'])->name('export-client');
         });
+
+
 
         Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{method}/{id}', [PaymentController::class, 'show'])->name('payments.show');

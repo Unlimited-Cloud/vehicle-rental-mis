@@ -29,6 +29,9 @@ use Illuminate\Support\Str;
 use App\Services\ProformaService;
 use App\Repositories\Interfaces\VehicleRepositoryInterface;
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Imports\BookingImport;
+use App\Exports\BookingImportTemplate;
+use App\Services\BookingImportService;
 
 class VehicleBookingController extends Controller
 {
@@ -194,7 +197,8 @@ class VehicleBookingController extends Controller
             'no_of_people' => 'nullable|integer',
             'notes' => 'nullable|string',
             'trip_category_id' => 'nullable',
-            'trip_route_id' => 'nullable'
+            'trip_route_id' => 'nullable',
+            'price_type' => 'nullable|in:dynamic,static',
         ]);
 
         $addData = $request->all();
@@ -222,8 +226,10 @@ class VehicleBookingController extends Controller
             $no_of_hours = $startDateTime->diffInHours($endDateTime);
         }
         $addData['no_of_hours'] = (int) $no_of_hours;
-        $addData['rate_per_day'] = $request->rate_per_day;
-        $addData['sub_total'] = $request->rate_per_day;
+        $addData = array_merge(
+            $addData,
+            $this->resolvePricing($request->all(), $request->itineraries ?? [])
+        );
         $addData['remaining_balance'] = $request->remaining_balance;
         $addData['vehicle_type'] = $request->vehicle_type;
 
@@ -341,8 +347,11 @@ class VehicleBookingController extends Controller
         }
         $updateData['no_of_hours'] = (int) $no_of_hours;
         $updateData['signage_information'] = $request->signage_information;
-        $updateData['rate_per_day'] = $request->rate_per_day;
-        $updateData['sub_total'] = $request->sub_total;
+        $updateData = array_merge($updateData, $this->resolvePricing(
+            $request->all(),
+            $request->itineraries ?? [],
+            $vehicleBooking->pricetype
+        ));
         $updateData['vat'] = $request->vat;
         $updateData['passenger'] = $request->passenger;
         $updateData['file_no'] = $request->file_no;
@@ -444,6 +453,54 @@ class VehicleBookingController extends Controller
             new VehicleBookingExport($request),
             $fileName
         );
+    }
+
+
+
+    public function importForm()
+    {
+        Gate::authorize('create_vehicle_bookings');
+
+        return view('layouts.admin.vehicles_booking.import');
+    }
+
+    public function importTemplate()
+    {
+        Gate::authorize('create_vehicle_bookings');
+
+        return Excel::download(new BookingImportTemplate(), 'vehicle_booking_import_template.xlsx');
+    }
+
+    public function import(Request $request, BookingImportService $service)
+    {
+        Gate::authorize('create_vehicle_bookings');
+
+        // .xlsx/.xls only: a CSV has a single sheet, so itineraries could not be imported
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:5120',
+        ]);
+
+        $data = new BookingImport();
+
+        try {
+            Excel::import($data, $request->file('file'));
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.vehicle_bookings.import')
+                ->with('error_message', 'Could not read the file: ' . $e->getMessage());
+        }
+
+        if ($data->bookings->isEmpty()) {
+            return redirect()->route('admin.vehicle_bookings.import')
+                ->with('error_message', 'No rows found on the "Bookings" sheet. Please use the downloaded template.');
+        }
+
+        $result = $service->run(
+            $data,
+            $this->currentUserIsCustomer == 'Y' ? $this->currentUserCustomerId : null,
+            $this->currentUserIsOwner == 'Y' ? $this->currentUserVehicleOwnerId : null
+        );
+
+        return redirect()->route('admin.vehicle_bookings.import')->with('import_result', $result);
     }
 
     public function getRoutes($category_id)
@@ -768,6 +825,7 @@ class VehicleBookingController extends Controller
                     $startDateTime = Carbon::parse($b['start_date'] . ' ' . $b['start_time']);
                     $endDateTime   = Carbon::parse($b['end_date'] . ' ' . ($b['end_time'] ?? '23:59:59'));
                     $paid          = (float) ($b['paid_amount'] ?? 0);
+                    $pricing = $this->resolvePricing($b, $b['itineraries'] ?? []);
 
                     $addData = [
                         'customer_id' => $this->currentUserIsCustomer == 'N'
@@ -789,8 +847,8 @@ class VehicleBookingController extends Controller
                         'end_time'   => $b['end_time'] ?? null,
                         'no_of_hours' => (int) $startDateTime->diffInHours($endDateTime),
 
-                        'rate_per_day' => $b['rate_per_day'] ?? 0,
-                        'sub_total'    => $b['rate_per_day'] ?? 0,
+                        // 'rate_per_day' => $b['rate_per_day'] ?? 0,
+                        // 'sub_total'    => $b['rate_per_day'] ?? 0,
                         'discount_amount_type' => $b['discount_amount_type'] ?? 'amount',
                         'discount'     => $b['discount'] ?? 0,
                         'vat'          => $b['vat'] ?? 0,
@@ -807,6 +865,7 @@ class VehicleBookingController extends Controller
                         'status' => $b['status'] ?? 'pending',
                     ];
 
+                    $addData = array_merge($addData, $pricing);
                     $vehicleBooking = VehicleBooking::create($addData);
 
                     if ($paid > 0) {
@@ -1025,6 +1084,31 @@ class VehicleBookingController extends Controller
         if (!empty($rows)) {
             \App\Models\Itinerary::insert($rows);
         }
+    }
+
+    /**
+     * dynamic => amount = sum of itinerary est_price
+     * static  => amount = what the user typed in the Amount field
+     */
+    private function resolvePricing(array $data, array $itineraries = [], $existingType = null): array
+    {
+        $priceType = $data['pricetype'] ?? $existingType ?? 'dynamic';
+        $priceType = $priceType === 'static' ? 'static' : 'dynamic';
+
+        $typed = (float) ($data['rate_per_day'] ?? 0);
+
+        if ($priceType === 'dynamic' && !empty($itineraries)) {
+            $amount = collect($itineraries)->sum(fn($i) => (float) ($i['est_price'] ?? 0));
+        } else {
+            // static, or dynamic with no itinerary rows submitted: keep what was sent
+            $amount = $typed;
+        }
+
+        return [
+            'pricetype'   => $priceType,
+            'rate_per_day' => $amount,
+            'sub_total'    => $amount,
+        ];
     }
 
     public function getVehicleRate($vehicleType)

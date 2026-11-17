@@ -36,6 +36,9 @@
                 <i class="fa fa-file-excel"></i> Export Excel
             </a>
             @endif
+             <a href="{{ route('admin.vehicle_bookings.import') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-import mr-1"></i> Import
+            </a>
 
             {{-- <!-- Filter Modal Trigger -->
             <button class="btn btn-info btn-sm" data-toggle="modal" data-target="#filterModal">
