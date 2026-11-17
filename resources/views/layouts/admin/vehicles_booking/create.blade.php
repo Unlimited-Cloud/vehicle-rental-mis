@@ -41,7 +41,7 @@
                                     <select name="customer_id" id="customer_id" class="form-control">
                                         <option value="">Select Customer</option>
                                         @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" 
+                                            <option value="{{ $customer->id }}"
                                                 {{ old('customer_id', $booking->customer_id ?? '') == $customer->id ? 'selected' : '' }}>
                                                 {{ $customer->name }}
                                             </option>
@@ -70,27 +70,6 @@
                                 <input type="text" name="file_no" value="{{ old('file_no', $booking->file_no ?? '') }}" class="form-control" placeholder="Enter file no">
                             </div>
                         </div>
-
-                        {{-- <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Vehicle Type</label>
-                                <input type="text" name="vehicle_type" id="vehicle_type" value="{{ old('vehicle_type', $booking->vehicle_type ?? '') }}" class="form-control" placeholder="Enter vehicle type">
-                            </div>
-                        </div> --}}
-
-                        {{-- <div class="col-md-4">
-                            <div class="form-group">
-                                <label>Vehicle  Type<span class="text-danger">*</span></label>
-                                <select name="vehicle_type" id="vehicle_type" class="form-control" required>
-                                    <option value="">Select Vehicle Type</option>
-                                    @foreach($vehicle_types as $vehicle_type)
-                                        <option value="{{ $vehicle_type->fuel_type }}" data-type="{{ $vehicle_type->fuel_type }}" {{ old('vehicle_type', $booking->vehicle_type ?? '') == $vehicle_type->fuel_type ? 'selected' : '' }}>
-                                            {{ ucfirst($vehicle_type->fuel_type) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div> --}}
 
                         <div class="col-md-4">
                             <div class="form-group">
@@ -133,53 +112,7 @@
                                 </select>
                             </div>
                         </div>
-{{-- <div class="col-md-4">
-    <div class="form-group">
-        <label for="trip_category_id">Trip Category</label>
-        <div class="input-group">
-            <select name="trip_category_id" id="trip_category_id" class="form-control">
-                <option value="">Select Category</option>
-                @foreach($tripCategories as $category)
-                    <option value="{{ $category->id }}" 
-                        {{ old('trip_category_id', $booking->trip_category_id ?? '') == $category->id ? 'selected' : '' }}>
-                        {{ $category->name }}
-                    </option>
-                @endforeach
-            </select>
-            <div class="input-group-append">
-                <button type="button" class="btn btn-success" id="addCategoryBtn">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="col-md-4">
-    <div class="form-group">
-        <label for="trip_route_id">Trip Route</label>
-        <div class="input-group">
-            <select name="trip_route_id" id="trip_route_id" class="form-control">
-                <option value="">Select Route</option>
-                @if(isset($booking) && $booking->trip_route_id)
-                    @php
-                        $selectedRoute = \App\Models\TripRoute::find($booking->trip_route_id);
-                    @endphp
-                    @if($selectedRoute)
-                        <option value="{{ $selectedRoute->id }}" selected>{{ $selectedRoute->title }}</option>
-                    @endif
-                @endif
-            </select>
-            <div class="input-group-append">
-                <button type="button" class="btn btn-success" id="addRouteBtn">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-</div> --}}
-
-                        
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label>Pickup Destination</label>
@@ -204,7 +137,7 @@
                         <div class="col-md-3">
                             <div class="form-group">
                                 <label>Start Date <span class="text-danger">*</span></label>
-                                <input type="date" id="start_date" name="start_date"  value="{{ old('start_date', $booking->start_date ?? $start ?? now()->format('Y-m-d')) }}"  class="form-control" required>
+                                <input type="date" id="start_date" name="start_date" value="{{ old('start_date', $booking->start_date ?? $start ?? now()->format('Y-m-d')) }}" class="form-control" required>
                             </div>
                         </div>
 
@@ -215,35 +148,17 @@
                             </div>
                         </div>
 
-                      <!-- Alternative: Simple icon button version -->
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>End Date <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                @php
-                                    // Set default value to today if no session data or old input is present
-                                    $endDateValue = session('warning_message') && session('end_date') ? session('end_date') : old('end_date', $booking->end_date ?? $end ?? date('Y-m-d'));
-                                @endphp
-                                <input type="date" id="end_date" name="end_date" value="{{ $endDateValue }}" class="form-control" required>
-                            
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>End Date <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    @php
+                                        $endDateValue = session('warning_message') && session('end_date') ? session('end_date') : old('end_date', $booking->end_date ?? $end ?? date('Y-m-d'));
+                                    @endphp
+                                    <input type="date" id="end_date" name="end_date" value="{{ $endDateValue }}" class="form-control" required>
+                                </div>
                             </div>
                         </div>
-                    </div>
-
-                        {{-- <div class="col-md-2">
-                            <div class="form-group">
-                                <label>End Time <span class="text-danger"></span></label>
-                                <input type="time" id="end_time" name="end_time" value="{{ old('end_time', $booking->end_time ?? $start ?? '') }}" class="form-control" required>
-                            </div>
-                        </div> --}}
-
-                        {{-- <div class="col-md-2">
-                            <div class="form-group">
-                                <label>No. of Hours</label>
-                                <input type="number" id="no_of_hours" name="no_of_hours" value="{{ old('no_of_hours', $booking->no_of_hours ?? '') }}" class="form-control">
-                                <small class="text-muted">Auto-calculated</small>
-                            </div>
-                        </div> --}}
 
                         <div class="col-md-4">
                             <div class="form-group">
@@ -256,39 +171,50 @@
                             </div>
                         </div>
                     </div>
-                    {{-- ITINERARY SECTION --}}
-                        <div class="col-md-12">
-                            <hr>
-                            <h4 class="mb-3"><i class="fas fa-route mr-1"></i> Itinerary (Day-wise Plan)</h4>
 
-                            <table class="table table-bordered table-sm" id="itineraryTable">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th style="width:14%">Date</th>
-                                        <th style="width:16%">From</th>
-                                        <th style="width:16%">To</th>
-                                        <th style="width:10%">Est. KM</th>
-                                        <th style="width:10%">Est. Hours</th>
-                                        <th style="width:10%">Overnight</th>
-                                        <th style="width:10%">Est. Price</th>
-                                        <th style="width:14%">Notes</th>
-                                        <th style="width:5%"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="itineraryRows">
-                                    {{-- rows injected by JS --}}
-                                </tbody>
-                            </table>
+                    {{-- ITINERARY SECTION (hidden + disabled when price type is static) --}}
+                    <div class="col-md-12" id="itinerarySection">
+                        <hr>
+                        <h4 class="mb-3"><i class="fas fa-route mr-1"></i> Itinerary (Day-wise Plan)</h4>
 
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="addItineraryRow">
-                                <i class="fas fa-plus mr-1"></i> Add Day
-                            </button>
-                        </div>
+                        <table class="table table-bordered table-sm" id="itineraryTable">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th style="width:14%">Date</th>
+                                    <th style="width:16%">From</th>
+                                    <th style="width:16%">To</th>
+                                    <th style="width:10%">Est. KM</th>
+                                    <th style="width:10%">Est. Hours</th>
+                                    <th style="width:10%">Overnight</th>
+                                    <th style="width:10%">Est. Price</th>
+                                    <th style="width:14%">Notes</th>
+                                    <th style="width:5%"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itineraryRows">
+                                {{-- rows injected by JS --}}
+                            </tbody>
+                        </table>
+
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="addItineraryRow">
+                            <i class="fas fa-plus mr-1"></i> Add Day
+                        </button>
+                    </div>
 
                     <hr>
                     <h4 class="mb-3">Financial Details</h4>
-                    
+
                     <div class="row">
+
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Price Type</label>
+                                <select name="pricetype" id="pricetype" class="form-control">
+                                    <option value="dynamic" {{ old('pricetype', $booking->pricetype ?? 'dynamic') == 'dynamic' ? 'selected' : '' }}>Dynamic (from itinerary)</option>
+                                    <option value="static" {{ old('pricetype', $booking->pricetype ?? 'dynamic') == 'static' ? 'selected' : '' }}>Static (manual amount)</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <div class="col-md-3">
                             <div class="form-group">
@@ -301,20 +227,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        
-
-                        {{-- <div class="col-md-3">
-                            <div class="form-group">
-                                <label>Sub Total</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text">रू</span>
-                                    </div>
-                                    <input id="sub_total" name="sub_total" type="number" step="0.01" value="{{ old('sub_total', $booking->sub_total ?? '0') }}" class="form-control" readonly>
-                                </div>
-                            </div>
-                        </div> --}}
 
                         <div class="col-md-3">
                             <div class="form-group">
@@ -453,7 +365,7 @@
                     </div>
 
                     <hr>
-                    
+
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
@@ -480,6 +392,7 @@
                     </button>
                 </div>
             </form>
+
             <div class="modal fade" id="customerModal">
                 <div class="modal-dialog">
                     <div class="modal-content p-3">
@@ -531,7 +444,6 @@
 @endsection
 
 @section('scripts')
-{{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script type="text/javascript">
@@ -540,7 +452,6 @@ const VAT_RATE = 0.13;
 
 // ===== GLOBAL FUNCTIONS (outside document.ready) =====
 
-// Function to calculate days
 function calculateDays() {
     var start_date = $("#start_date").val();
     var end_date = $("#end_date").val();
@@ -551,12 +462,11 @@ function calculateDays() {
         var diffTime = end - start;
         var days = diffTime / (1000 * 60 * 60 * 24);
         if (days < 0) days = 0;
-        return days + 1; 
+        return days + 1;
     }
     return 1;
 }
 
-// Update remaining balance
 function updateRemainingBalance() {
     var total = parseFloat($("#total_amount").val()) || 0;
     var paid = parseFloat($("#paid_amount").val()) || 0;
@@ -564,12 +474,10 @@ function updateRemainingBalance() {
     $("#remaining_balance").val(remaining.toFixed(2));
 }
 
-// Main calculation function - NOW GLOBAL
 function calculateTotal() {
-    var days = calculateDays();
     var rate_per_day = parseFloat($("#rate_per_day").val()) || 0;
-    
-    var sub_total = rate_per_day; 
+
+    var sub_total = rate_per_day;
     $("#sub_total").val(sub_total.toFixed(2));
 
     var discount = parseFloat($("#discount").val()) || 0;
@@ -587,7 +495,7 @@ function calculateTotal() {
     var after_discount = Math.max(0, sub_total - discount_amount);
     var apply_vat = $("#vat").val() == '1';
     var vat_amount = 0;
-    
+
     if (apply_vat && after_discount > 0) {
         vat_amount = after_discount * VAT_RATE;
     }
@@ -597,18 +505,6 @@ function calculateTotal() {
     $("#total_amount").val(total.toFixed(2));
 
     updateRemainingBalance();
-
-    console.log('Calculation:', {
-        days: days,
-        rate: rate_per_day,
-        sub_total: sub_total,
-        discount: discount,
-        discount_type: discount_type,
-        discount_amount: discount_amount,
-        after_discount: after_discount,
-        vat: vat_amount,
-        total: total
-    });
 }
 
 // ===== DOCUMENT READY =====
@@ -621,17 +517,16 @@ $(document).ready(function() {
         dropdownAutoWidth: false
     });
 
-    // Function to calculate hours between start and end datetime
     function calculateHours() {
         var start_date = $("#start_date").val();
         var start_time = $("#start_time").val();
         var end_date = $("#end_date").val();
         var end_time = $("#end_time").val();
-        
+
         if (start_date && start_time && end_date && end_time) {
             var start = new Date(start_date + 'T' + start_time);
             var end = new Date(end_date + 'T' + end_time);
-            
+
             if (end > start) {
                 var diffMs = end - start;
                 var diffHours = diffMs / (1000 * 60 * 60);
@@ -651,25 +546,16 @@ $(document).ready(function() {
         if (startDate) {
             $('#end_date').val(startDate);
             $('#end_date').trigger('change');
-            
-            var btn = $(this);
-            var originalHtml = btn.html();
-            btn.html('<i class="fas fa-check"></i>');
-            setTimeout(function() {
-                btn.html(originalHtml);
-            }, 1000);
         } else {
             alert('Please select a start date first');
         }
     });
 
-    // Update discount symbol
     function updateDiscountSymbol() {
         var type = $("#discount_amount_type").val();
         $("#discount_symbol").text(type === 'percentage' ? '%' : 'रू');
     }
 
-    // Event Listeners
     $("#start_date, #start_time, #end_date, #end_time").on("change", function() {
         calculateHours();
         calculateTotal();
@@ -684,7 +570,7 @@ $(document).ready(function() {
         updateRemainingBalance();
     });
 
-    // Trip Category Change - Load Routes
+    // Trip Category Change - Load Routes (only active if those fields exist)
     $('#trip_category_id').change(function() {
         var category_id = $(this).val();
         $('#trip_route_id').html('<option value="">Loading...</option>').trigger('change');
@@ -695,7 +581,7 @@ $(document).ready(function() {
                 type: 'GET',
                 success: function(routes) {
                     var options = '<option value="">Select Route</option>';
-                    
+
                     $.each(routes, function(index, route) {
                         options += '<option value="' + route.id + '" ' +
                             'data-car="' + (route.car_price || 0) + '" ' +
@@ -707,7 +593,7 @@ $(document).ready(function() {
                     });
 
                     $('#trip_route_id').html(options);
-                    
+
                     @if(isset($booking) && $booking->trip_route_id)
                         suppressRouteRateCalc = true;
                         $('#trip_route_id').val('{{ $booking->trip_route_id }}').trigger('change');
@@ -735,7 +621,7 @@ $(document).ready(function() {
         if (vehicleType && selected.val()) {
             vehicleType = vehicleType.toLowerCase();
             rate = selected.data(vehicleType) || 0;
-            
+
             if (rate > 0) {
                 $('#rate_per_day').val(rate);
                 calculateTotal();
@@ -743,14 +629,12 @@ $(document).ready(function() {
         }
     });
 
-    // Vehicle change - Update rate if route is selected
     $('#vehicle_id').change(function() {
         if ($('#trip_route_id').val()) {
             $('#trip_route_id').trigger('change');
         }
     });
 
-    // Auto-trigger category change on page load for edit mode
     @if(isset($booking) && $booking->trip_category_id)
         $('#trip_category_id').trigger('change');
     @endif
@@ -764,11 +648,31 @@ $(document).ready(function() {
         }, 500);
     @endif
 
-    // Initial discount symbol
     updateDiscountSymbol();
 });
 
-// ===== ITINERARY FUNCTIONS (outside document.ready) =====
+// ===== PRICE TYPE (dynamic / static) =====
+function isStaticPrice() {
+    return $('#pricetype').val() === 'static';
+}
+
+function togglePriceUI() {
+    var s = isStaticPrice();
+    $('#itinerarySection').toggle(!s);
+    $('#itinerarySection :input').prop('disabled', s);   // disabled inputs are not submitted
+    $('#rate_per_day').prop('readonly', !s);             // static: user types the amount
+}
+
+$('#pricetype').on('change', function () {
+    togglePriceUI();
+    if (isStaticPrice()) {
+        calculateTotal();
+    } else {
+        updateItineraryTotal();
+    }
+});
+
+// ===== ITINERARY FUNCTIONS =====
 let itineraryIndex = 0;
 let vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
 
@@ -796,12 +700,16 @@ function recalcAllRows() {
 }
 
 function updateItineraryTotal() {
+    // never overwrite a manually typed (static) amount
+    if (isStaticPrice()) {
+        calculateTotal();
+        return;
+    }
     var total = 0;
     $('.itinerary-est-price').each(function() {
         total += parseFloat($(this).val()) || 0;
     });
     $('#rate_per_day').val(total.toFixed(2));
-    // Now calculateTotal is globally accessible
     calculateTotal();
 }
 
@@ -843,12 +751,18 @@ function addItineraryRow(data = {}) {
 
     $('#itineraryRows').append(row);
 
+    // new rows added in static mode must stay disabled
+    if (isStaticPrice()) {
+        $('#itineraryRows tr[data-idx="' + idx + '"] :input').prop('disabled', true);
+    }
+
+    // only auto-price brand new rows, never rows loaded from the database
     if (!data.est_price && !data.itinerary_date) {
         calcRowPrice($('#itineraryRows tr[data-idx="' + idx + '"]'));
     }
 }
 
-// ===== EVENT HANDLERS (outside document.ready) =====
+// ===== EVENT HANDLERS =====
 $(document).on('input change', '.itinerary-est-km, .itinerary-est-hours, .itinerary-overnight', function() {
     calcRowPrice($(this).closest('tr'));
 });
@@ -862,53 +776,29 @@ $(document).on('click', '.removeItineraryRow', function() {
     updateItineraryTotal();
 });
 
-// Fetch vehicle rates whenever vehicle changes
-$('#vehicle_type').on('change', function() {
-    var vehicle_type = $(this).val();
-
-    if (!vehicle_type) {
+// Load per-km / per-hour / overnight rates for the selected vehicle's type
+function loadVehicleRates(recalc) {
+    var type = $('#vehicle_id option:selected').data('type');
+    if (!type) {
         vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
-        recalcAllRows();
+        if (recalc) recalcAllRows();
         return;
     }
-
-    $.ajax({
-        url: '/dashboard/get-vehicle-rate/' + vehicle_type,
-        type: 'GET',
-        success: function(rate) {
-            vehicleRates = {
-                per_km_rate: parseFloat(rate.per_km_rate) || 0,
-                per_hour_rate: parseFloat(rate.per_hour_rate) || 0,
-                overnight_price: parseFloat(rate.overnight_price) || 0
-            };
-            recalcAllRows();
-        },
-        error: function() {
-            vehicleRates = { per_km_rate: 0, per_hour_rate: 0, overnight_price: 0 };
-            console.error('Could not load vehicle rates');
-        }
+    $.get('/dashboard/get-vehicle-rate/' + encodeURIComponent(type), function (rate) {
+        vehicleRates = {
+            per_km_rate: parseFloat(rate.per_km_rate) || 0,
+            per_hour_rate: parseFloat(rate.per_hour_rate) || 0,
+            overnight_price: parseFloat(rate.overnight_price) || 0
+        };
+        if (recalc) recalcAllRows();
+    }).fail(function () {
+        console.error('Could not load vehicle rates');
     });
+}
 
-
-      $.ajax({
-        url: '/dashboard/get-vehicles-by-type/' + vehicle_type,
-        type: 'GET',
-        success: function(vehicles) {
-            var options = '<option value="">Select Vehicle</option>';
-            $.each(vehicles, function(i, v) {
-                options += '<option value="' + v.id + '" data-type="' + v.vehicle_type + '" data-seater="' + (v.seater ?? '') + '">' +
-                    v.vehicle_name +
-                    '</option>';
-            });
-            $('#vehicle_id').html(options);
-        },
-        error: function() {
-            $('#vehicle_id').html('<option value="">Error loading vehicles</option>');
-        }
-    });
+$('#vehicle_id').on('change', function () {
+    loadVehicleRates(true);
 });
-
-
 
 // Prefill rows in edit mode
 @if(isset($booking) && $booking->itineraries && $booking->itineraries->count())
@@ -930,16 +820,15 @@ $('#vehicle_type').on('change', function() {
     existingItineraries.forEach(function(item) {
         addItineraryRow(item);
     });
-    
-
-    @if($booking->vehicle_type)
-        $('#vehicle_type').trigger('change');
-    @endif
 @else
-    @if(isset($booking) && $booking->vehicle_type)
-        $('#vehicle_type').trigger('change');
-    @endif
     addItineraryRow();
+@endif
+
+// Apply the saved / default price type, then load rates WITHOUT recalculating
+// so saved prices are not wiped before the rates arrive
+togglePriceUI();
+@if(isset($booking))
+    loadVehicleRates(false);
 @endif
 
 // ===== MODAL FUNCTIONS =====
@@ -1086,8 +975,6 @@ $('#saveRoute').click(function () {
 });
 </script>
 
-
-
 <style>
 .text-danger {
     color: #dc3545;
@@ -1116,19 +1003,17 @@ hr {
 /* Fix Select2 + Bootstrap input-group layout */
 .input-group > .select2-container {
     flex: 1 1 auto;
-    width: 1% !important; /* forces it to shrink/grow like .form-control does in input-group */
+    width: 1% !important;
 }
 
 .input-group > .select2-container .select2-selection--single {
-    height: calc(2.25rem + 2px); /* match Bootstrap .form-control height */
+    height: calc(2.25rem + 2px);
     border: 1px solid #ced4da;
     border-radius: 0.25rem;
     display: flex;
     align-items: center;
 }
 
-/* When Select2 sits with a button after it, kill the right rounding
-   so it looks continuous with the input-group-append button */
 .input-group > .select2-container:not(:last-child) .select2-selection--single {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -1143,12 +1028,10 @@ hr {
     height: calc(2.25rem + 2px) !important;
 }
 
-/* Keep the clear (x) and arrow from overlapping/stacking oddly */
 .select2-selection__clear {
     margin-right: 6px;
 }
 
-/* Match focus state to other inputs */
 .select2-container--default.select2-container--focus .select2-selection--single,
 .select2-container--default .select2-selection--single:focus {
     border-color: #80bdff;
