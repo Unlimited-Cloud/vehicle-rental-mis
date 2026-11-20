@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\VehicleMomentController;
 use App\Http\Controllers\Api\LoginController;
 use App\Http\Controllers\Api\CustomerController;
+use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\EsewaPaymentController;
@@ -190,6 +191,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/vehicle-distance-from-gps', [GpsController::class, 'vehicleDistanceFromGps']);
     });
 });
+
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('driver')->group(function () {
+        Route::post('/login', [DriverController::class, 'login']);
+        Route::post('/logout', [DriverController::class, 'logout']);
+        Route::get('/get-vehicle', [DriverController::class, 'GetVehicle']);
+        Route::get('/get-helpers', [DriverController::class, 'getHelpers']);
+        Route::get('/driver-bookings/{driverId}', [DriverController::class, 'getDriverBookings']);
+        Route::get('/driver-upcoming-bookings/{driverId}', [DriverController::class, 'getDriverUpcomingBookings']);
+        Route::get('questionnaires', [DriverController::class, 'getAllQuestionnaire']);
+        Route::get('questionnaires/{id}', [DriverController::class, 'getQuestionnaire']);
+    });
+});
+
 Route::post('/complete-cod-payment-dashboard', [BookingController::class, 'completeCodPayment']);
 Route::get(
     '/khalti/confirm',
