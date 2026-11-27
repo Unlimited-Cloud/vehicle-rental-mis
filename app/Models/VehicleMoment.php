@@ -51,6 +51,13 @@ class VehicleMoment extends Model
 
         'estimated_return_to_pickup_km',
         'estimated_return_to_pickup_minutes',
+
+
+        'notes',
+        'pickup_destination',
+        'dropoff_destination',
+        'pax',
+        'fuel_charge',
     ];
     protected $appends = [
         'start_image_url',

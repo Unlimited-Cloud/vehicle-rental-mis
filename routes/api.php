@@ -70,7 +70,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/get-customerbooking/{customerUUId}', [BookingController::class, 'getCustomerBookings']);
         Route::get('/get-vehicle-drivers/{vehicleId}', [BookingController::class, 'getVehicleDrivers']);
-
+        Route::post('/bookings/airport', [BookingController::class, 'createAirportBooking']);
 
         Route::get('/get-category', [BookingController::class, 'tripcategory']);
         Route::get('/get-routes/{category_id}', [BookingController::class, 'tripRoutes']);
@@ -204,6 +204,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/driver-upcoming-bookings/{driverId}', [DriverController::class, 'getDriverUpcomingBookings']);
         Route::get('questionnaires', [DriverController::class, 'getAllQuestionnaire']);
         Route::get('questionnaires/{id}', [DriverController::class, 'getQuestionnaire']);
+        Route::post('/store-movements', [DriverController::class, 'storeMovements']);
     });
 });
 

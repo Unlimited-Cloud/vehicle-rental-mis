@@ -48,7 +48,7 @@ Text
 Yes / No
 </option>
 
-<option value="number"
+{{-- <option value="number"
 {{ old('type',$questionnaire->type ?? '')=='number'?'selected':'' }}>
 Number
 </option>
@@ -56,7 +56,7 @@ Number
 <option value="checkbox"
 {{ old('type',$questionnaire->type ?? '')=='checkbox'?'selected':'' }}>
 Checkbox
-</option>
+</option> --}}
 
 </select>
 </div>

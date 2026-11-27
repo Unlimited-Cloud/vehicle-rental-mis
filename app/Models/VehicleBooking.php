@@ -54,6 +54,7 @@ class VehicleBooking extends Model
         'overnight',
         'vehicle_type',
         'seater',
+        'remarks'
     ];
 
     protected $dates = ['start_date', 'end_date'];

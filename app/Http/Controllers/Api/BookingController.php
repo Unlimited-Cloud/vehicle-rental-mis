@@ -3024,4 +3024,190 @@ class BookingController extends Controller
             'message' => 'Vehicle is available.'
         ]);
     }
+
+
+
+
+    public function createAirportBooking(Request $request)
+    {
+        try {
+            Log::info("Airport Booking Request", ["body" => $request->all()]);
+
+            // Fixed pricing for airport transfers
+            $airportFare = 1400;
+            $vatPercent  = 13;
+
+            $airportLabels = [
+                'TIA'      => 'Tribhuvan International Airport (TIA)',
+                'DOMESTIC' => 'Tribhuvan Domestic Airport',
+            ];
+
+            $validator = Validator::make($request->all(), [
+                'customer_id'    => 'required|exists:customers,customer_uuid',
+                'airport_type'   => 'required|in:TIA,DOMESTIC',
+                'seater'         => 'required|exists:vehicles,seater',
+                'direction'      => 'required|in:from_airport,to_airport',
+                'location'       => 'required|string|max:255',
+
+                // Optional: default to now / same as start
+                'start_datetime' => 'nullable|date|after_or_equal:today',
+                'end_datetime'   => 'nullable|date',
+
+                'notes'          => 'nullable|string',
+                'no_of_people'   => 'nullable|string',
+                'signage_information' => 'nullable|string',
+
+                'contact_person' => 'nullable|string',
+                'contact_email'  => 'nullable|email',
+                'contact_number' => 'nullable|string',
+                'contact_address' => 'nullable|string',
+                'agent_code'     => 'nullable|exists:agents,agent_code',
+
+                'pickup_latitude'  => 'nullable|numeric',
+                'pickup_longitude' => 'nullable|numeric',
+            ]);
+
+            if ($validator->fails()) {
+                Log::info("airport booking validation failed", ["errors" => $validator->errors()]);
+                return response()->json([
+                    'status'  => false,
+                    'message' => $validator->errors()->first(),
+                    'errors'  => $validator->errors()
+                ], 422);
+            }
+
+            // Dates: start defaults to now, end defaults to start
+            $startDateTime = $request->filled('start_datetime')
+                ? \Carbon\Carbon::parse($request->start_datetime)
+                : now();
+
+            $endDateTime = $request->filled('end_datetime')
+                ? \Carbon\Carbon::parse($request->end_datetime)
+                : $startDateTime->copy();
+
+            if ($endDateTime->lt($startDateTime)) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'End date/time cannot be before start date/time',
+                    'errors'  => ['end_datetime' => ['End date/time cannot be before start date/time']]
+                ], 422);
+            }
+
+            // Fixed amount + VAT, no discount
+            $sub_total       = $airportFare;
+            $discount_amount = 0;
+            $taxable_amount  = $sub_total;
+            $tax_amount      = ($taxable_amount * $vatPercent) / 100;   // 182
+            $total_amount    = $taxable_amount + $tax_amount;           // 1582
+
+            $airportLabel = $airportLabels[$request->airport_type];
+
+            if ($request->direction === 'from_airport') {
+                $from_destination = $airportLabel;
+                $to_destination   = $request->location;
+            } else { // to_airport
+                $from_destination = $request->location;
+                $to_destination   = $airportLabel;
+            }
+            $customer = Customer::where('customer_uuid', $request->customer_id)->first();
+
+            $customerCode = substr(strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $customer->name)), 0, 5);
+            $file_no = 'FILE-' . $customerCode . '-' . $startDateTime->format('Ymd') . '-' . strtoupper(Str::random(4));
+
+            $booking = DB::transaction(function () use (
+                $request,
+                $customer,
+                $startDateTime,
+                $endDateTime,
+                $from_destination,
+                $to_destination,
+                $sub_total,
+                $discount_amount,
+                $tax_amount,
+                $total_amount,
+                $file_no
+            ) {
+                $booking = VehicleBooking::create([
+                    'customer_id' => $customer->id,
+                    'seater'      => $request->seater,
+                    'driver_id'   => null,
+
+                    'start_date' => $startDateTime->format('Y-m-d'),
+                    'start_time' => $startDateTime->format('H:i'),
+                    'end_date'   => $endDateTime->format('Y-m-d'),
+                    'end_time'   => $endDateTime->format('H:i'),
+
+                    'from_destination' => $from_destination,
+                    'to_destination'   => $to_destination,
+                    'notes'            => $request->notes ?? "Airport transfer from {$from_destination} to {$to_destination}",
+                    'no_of_people'     => $request->no_of_people,
+                    'signage_information' => $request->signage_information,
+
+                    'no_of_hour' => 0,
+                    'est_km'     => 0,
+                    'overnight'  => 0,
+
+                    'pricetype'       => 'static',   // fixed amount, not itinerary-driven
+                    'rate_per_day'    => $sub_total,
+                    'sub_total'       => $sub_total,
+                    'discount'        => $discount_amount,
+                    'tax_amount_type' => 'percentage',
+                    'tax'             => $tax_amount,
+                    'vat'             => '1',
+                    'total_amount'    => $total_amount,
+                    'remaining_balance' => $total_amount,
+
+                    'status'    => 'pending',
+                    'call_type' => 'api',
+
+                    'contact_person' => $request->contact_person,
+                    'contact_email'  => $request->contact_email,
+                    'contact_number' => $request->contact_number,
+                    'agent_code'     => $request->agent_code,
+                    'file_no'        => $file_no,
+                    'pickup_latitude'  => $request->pickup_latitude,
+                    'pickup_longitude' => $request->pickup_longitude,
+                    'remarks' => $request->direction === 'from_airport'
+                        ? 'Airport pickup booking created by customer'
+                        : 'Airport drop booking created by customer',
+                ]);
+
+
+                Passenger::create([
+                    'contact_person'  => $request->contact_person ?? $customer->name,
+                    'contact_email'   => $request->contact_email ?? $customer->email,
+                    'contact_number'  => $request->contact_number ?? $customer->phone,
+                    'contact_address' => $request->contact_address ?? 'Kathmandu',
+                    'customer_id'     => $customer->id,
+                    'booking_id'      => $booking->id,
+                ]);
+
+                BookingLog::create([
+                    'booking_id' => $booking->id,
+                    'status'     => 'pending',
+                    'remarks' => $request->direction === 'from_airport'
+                        ? 'Airport pickup booking created by customer'
+                        : 'Airport drop booking created by customer',
+                ]);
+
+                return $booking;
+            });
+
+            event(new EmailEvent($customer->email, 'create_booking', 'success', 'customer'));
+
+            return response()->json([
+                'status'  => true,
+                'message' => 'Airport booking created successfully',
+                'data'    => $booking->load('itineraries')
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('createAirportBooking failed: ' . $e->getMessage());
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Something went wrong',
+                'error'   => config('app.debug') ? $e->getMessage() : 'Unable to create booking'
+            ], 500);
+        }
+    }
 }
