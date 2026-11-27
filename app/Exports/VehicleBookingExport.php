@@ -113,11 +113,11 @@ class VehicleBookingExport implements FromCollection, WithHeadings, WithMapping,
 
         return [
             // Main columns matching table order
-            \Carbon\Carbon::parse($booking->start_date)->format('d-m-Y'),
+            \Carbon\Carbon::parse($booking->start_date)->format('Y-m-d'),
             \Carbon\Carbon::parse($booking->start_time)->format('h:i A'),
             $booking->customer->name ?? ($booking->passenger_name ?? 'N/A'),
             $booking->file_no ?? 'N/A',
-            $booking->tripRoute->title ?? 'N/A',
+            $booking->notes ?? 'N/A',
             $booking->rate_per_day ?? 0,
             $booking->total_amount ?? 0,
             $booking->vehicle->vehicle_name ?? 'N/A',
